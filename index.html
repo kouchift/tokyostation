@@ -1798,6 +1798,7 @@ var Map = (function () {
     svg.style.setProperty("--sthitr", (15 * upp).toFixed(2));
     var lv = $("#zlevel"); if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
+    if (RG.map3DMoved) RG.map3DMoved();
   }
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
 
@@ -5082,10 +5083,17 @@ function proj(x, y, hM, P) {
 function params() {
   var B = RG.Base || {};
   var tilt = (B.tilt == null ? 52 : B.tilt);
+  var k = Math.max(0.18, Math.cos(tilt * Math.PI / 180));
+  // 【重要】奥行きをつぶすと図形が上へ寄る。そのままだと «いま見ている場所» が
+  // 画面の外へ飛んでしまい、3Dを押しても何も起きていないように見える。
+  // 画面の中心が動かないように、ずれたぶんを戻す。
+  var v = RG.Map.viewBox ? RG.Map.viewBox() : { x: 0, y: 0, w: 2000, h: 2000 };
+  var cy = v.y + v.h / 2;
   return {
-    k: Math.max(0.18, Math.cos(tilt * Math.PI / 180)),   // 奥行きのつぶれ具合
-    z: (B.exagg == null ? 1 : B.exagg) * 0.55,           // 標高1mあたりの画面上の高さ
-    oy: 0
+    k: k,
+    z: (B.exagg == null ? 1 : B.exagg) * 0.55,   // 標高1mあたりの画面上の高さ
+    oy: cy * (1 - k) + v.h * 0.10,               // 中心を保ち、少しだけ下げて空を作る
+    vb: v
   };
 }
 
@@ -5150,7 +5158,7 @@ function draw() {
 
   var P = params();
   var out = [];
-  var VBW = (RG.Map.viewBox ? RG.Map.viewBox().w : 2000);
+
 
   // 1) 地形：奥（北）から手前（南）へ順に塗る
   var rows = terrain(P);
@@ -5225,10 +5233,12 @@ function draw() {
     // 地面の下に半透明の «地層» を敷いて、地下だと分かるようにする
     var gl = [];
     for (var lay = 1; lay <= 7; lay++) {
-      var yy = proj(0, 0, -lay * (RG.DEPTH_FLOOR_M || 6.5), P).y;
-      gl.push('<line class="u3g" x1="0" y1="' + yy.toFixed(1) + '" x2="' + VBW +
-              '" y2="' + yy.toFixed(1) + '"/>' +
-              '<text class="u3gl" x="6" y="' + (yy - 1.5).toFixed(1) + '">地下' + lay + "階</text>");
+      var yy = proj(0, P.vb.y + P.vb.h / 2, -lay * (RG.DEPTH_FLOOR_M || 6.5), P).y;
+      var vx = P.vb.x, vw = P.vb.w;
+      gl.push('<line class="u3g" x1="' + vx.toFixed(0) + '" y1="' + yy.toFixed(1) +
+              '" x2="' + (vx + vw).toFixed(0) + '" y2="' + yy.toFixed(1) + '"/>' +
+              '<text class="u3gl" x="' + (vx + vw * 0.008).toFixed(0) + '" y="' +
+              (yy - 1.5).toFixed(1) + '">地下' + lay + "階</text>");
     }
     out.push('<g class="u3grid">' + gl.join("") + "</g>");
 
@@ -5315,6 +5325,7 @@ RG.draw3D = function () {
   });
 };
 RG.draw3DNow = draw;
+RG.map3DMoved = function () { if ((RG.Base || {}).mode3d) RG.draw3D(); };
 
 function showBldg(b) {
   var near = RG.nearestStation ? RG.nearestStation(b.la, b.lo) : null;
