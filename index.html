@@ -1397,6 +1397,42 @@ body.secret .lbadge{min-width:25px;height:25px;font-size:11.5px;background:var(-
 .s3n{font-size:5.2px;font-weight:800;fill:#B8860B;pointer-events:none;
   paint-order:stroke;stroke:#fff;stroke-width:1.8px;stroke-linejoin:round}
 
+/* =========================================================================
+   重要: hidden 属性は必ず効かせる
+   ―― .booterr{display:flex} のような指定があると、hidden を書いても
+      CSS のほうが強くて表示されてしまう。実際にそれで
+      「データを読み込めませんでした」が出っぱなしになる不具合が起きた。
+   ========================================================================= */
+[hidden]{display:none !important}
+
+/* =========================================================================
+   v25：3Dで地下の深さを見せる
+   ========================================================================= */
+.u3grid{opacity:.5}
+.u3g{stroke:rgba(60,90,130,.28);stroke-width:.3;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+.u3gl{font-size:3.6px;fill:rgba(50,80,120,.75);font-family:var(--mono)}
+.u3e{fill:none;stroke-width:1.5;stroke-linecap:round;opacity:.9;vector-effect:non-scaling-stroke}
+.u3s{fill:none;stroke:rgba(40,70,110,.35);stroke-width:.4;stroke-dasharray:1.5 1.5;
+  vector-effect:non-scaling-stroke}
+.u3d{fill:none;stroke:#123E6B;stroke-width:2.1;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.u3n{font-size:4.2px;font-weight:800;fill:#0A2A4A;pointer-events:none;
+  paint-order:stroke;stroke:#fff;stroke-width:1.5px;stroke-linejoin:round}
+#map.d3on.seeunder .t3{opacity:.42}
+
+/* 駅カード：ホームの深さ */
+.dep{display:grid;grid-template-columns:1fr auto 10px;grid-template-rows:auto auto;gap:2px 10px;
+  padding:10px 12px;border-radius:10px;margin-bottom:6px;position:relative;overflow:hidden}
+.dep--u{background:linear-gradient(180deg,#EAF1F8,#D6E4F2)}
+.dep--o{background:linear-gradient(180deg,#FFF6E0,#FFEFC8)}
+.dep__k{font-size:11.5px;font-weight:700;color:var(--gray800)}
+.dep__v{grid-column:2;grid-row:1/3;align-self:center;font-family:var(--mono);font-size:19px;
+  font-weight:800;color:#123E6B;white-space:nowrap}
+.dep__s{grid-column:1;font-size:10px;color:var(--gray600);line-height:1.5}
+.dep__g{grid-column:3;grid-row:1/3;width:8px;background:rgba(18,62,107,.12);border-radius:4px;
+  position:relative;overflow:hidden}
+.dep__g i{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,#57B8FF,#0A2A4A);
+  border-radius:4px}
+
 </style>
 <meta name="description" content="東京23区669駅とスポット18,000件を、地図・スコア・ルート比較・おでかけプランで調べられる自由研究サイト。オープンデータだけで作りました。">
 <meta name="theme-color" content="#00224A">
@@ -2051,6 +2087,7 @@ var Map = (function () {
            select: select, screenPos: screenPos, screenPosXY: screenPosXY, paintIso: paintIso, paintPick: paintPick,
            paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine,
            drawBase: drawBase, project: project,
+           viewBox: function () { return { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; },
            gotoLatLng: gotoLatLng,
            paintWatch: paintWatch, paintLandmarks: paintLandmarks, buildLandmarks: buildLandmarks,
            paintMe: paintMe,
@@ -2206,6 +2243,24 @@ var Card = (function () {
     return '<div class="risks">' + out +
       '<p class="mini">出典: 東京都建設局「浸水予想区域図」／東京都財務局「地価公示」（CC BY 4.0）。' +
       "浸水は神田川・隅田川・石神井川の3流域のみのデータです。区域図が無い場所は「浸水しない」ではありません。</p></div>";
+  }
+
+  /* 地下の深さ・高架（OpenStreetMap の level タグより） */
+  function depthRow(st) {
+    var d = RG.DEPTH && RG.DEPTH[st.id];
+    if (!d) return "";
+    var t = [];
+    if (d.d) t.push('<div class="dep dep--u"><span class="dep__k">🕳️ ホームの深さ</span>' +
+      '<span class="dep__v">地下 ' + d.d + " 階</span>" +
+      '<span class="dep__s">およそ ' + d.m + "m（地下1階を6.5mとした推定）" +
+      (d.l ? " ／ " + esc(d.l.join("・")) : "") + "</span>" +
+      '<span class="dep__g"><i style="height:' + Math.min(100, d.d / 7 * 100) + '%"></i></span></div>');
+    if (d.u) t.push('<div class="dep dep--o"><span class="dep__k">🏗️ 高架ホーム</span>' +
+      '<span class="dep__v">' + d.u + " 階</span>" +
+      '<span class="dep__s">地上より高い位置にホームがあります</span></div>');
+    if (!t.length) return "";
+    return '<div class="sec"><div class="sec__h"><b>ホームの高さ</b>' +
+      "<em>出典: OpenStreetMap (ODbL)</em></div>" + t.join("") + "</div>";
   }
 
   function summary(s) {
@@ -2431,7 +2486,8 @@ var Card = (function () {
            congestion(s, d) +
            boarding(s, d) +
            town(s, d) +
-           summary(s) +
+           depthRow(s) +
+      summary(s) +
            heritageBlock(s) +
            videoBlock(s, d) +
            linksBlock(s) +
@@ -4628,7 +4684,7 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 var KEY = "tsg.basemap.v1";
 var DEF = {
   relief: false, mode3d: false, tilt: 52, exagg: 1.0, flood: false,
-  admin: true, blank: false, qbMini: false,
+  admin: true, blank: false, qbMini: false, under: true, seeUnder: true,
   lv: { 1: { on: true,  c: "#333333", w: 2.2 },
         2: { on: true,  c: "#0055AD", w: 1.1 },
         3: { on: false, c: "#999999", w: 0.5 } },
@@ -4716,6 +4772,7 @@ function apply() {
   var svg = $("#map");
   svg.classList.toggle("blank", !!B.blank);
   svg.classList.toggle("d3", !!B.mode3d);
+  svg.classList.toggle("seeunder", !!(B.mode3d && B.seeUnder));
   gRelief.style.display = (B.relief || B.mode3d) ? "" : "none";
   if (gFlood) gFlood.style.display = B.flood ? "" : "none";
   gAdmin.style.display = B.admin ? "" : "none";
@@ -4758,6 +4815,10 @@ function quickBar() {
     '<div class="qb__row qb__row--m">' +
       '<button class="qb__c" type="button" data-qb="relief" aria-pressed="' + !!B.relief + '">⛰️ 地形</button>' +
       '<button class="qb__c" type="button" data-qb="mode3d" aria-pressed="' + !!B.mode3d + '">🧊 3D</button>' +
+      (B.mode3d ? '<button class="qb__c" type="button" data-qb="under" aria-pressed="' + !!B.under +
+        '">🕳️ 地下</button>' +
+        '<button class="qb__c" type="button" data-qb="seeUnder" aria-pressed="' + !!B.seeUnder +
+        '">👓 地面をすかす</button>' : "") +
       '<button class="qb__c" type="button" data-qb="admin" aria-pressed="' + !!B.admin + '">🧭 行政区</button>' +
       '<button class="qb__c" type="button" data-qb="labels" aria-pressed="' + !!B.labels + '">🏷️ 区名</button>' +
       '<button class="qb__c" type="button" data-qb="blank" aria-pressed="' + !!B.blank + '">📄 白地図</button>' +
@@ -5089,6 +5150,7 @@ function draw() {
 
   var P = params();
   var out = [];
+  var VBW = (RG.Map.viewBox ? RG.Map.viewBox().w : 2000);
 
   // 1) 地形：奥（北）から手前（南）へ順に塗る
   var rows = terrain(P);
@@ -5154,6 +5216,61 @@ function draw() {
              '" width="' + (w * 2.8).toFixed(1) + '" height="' + Math.max(4, by - ty + w * 2).toFixed(1) +
              '" data-b3="' + esc(o.b.n) + '"/>');
   });
+
+  // 3.5) 地下：地面より下に、駅と地下鉄のトンネルを描く
+  //      「大江戸線って深いね！」が目で分かるようにするのがねらい。
+  var B2 = RG.Base || {};
+  if (B2.under !== false && RG.DEPTH) {
+    var D = RG.DEPTH;
+    // 地面の下に半透明の «地層» を敷いて、地下だと分かるようにする
+    var gl = [];
+    for (var lay = 1; lay <= 7; lay++) {
+      var yy = proj(0, 0, -lay * (RG.DEPTH_FLOOR_M || 6.5), P).y;
+      gl.push('<line class="u3g" x1="0" y1="' + yy.toFixed(1) + '" x2="' + VBW +
+              '" y2="' + yy.toFixed(1) + '"/>' +
+              '<text class="u3gl" x="6" y="' + (yy - 1.5).toFixed(1) + '">地下' + lay + "階</text>");
+    }
+    out.push('<g class="u3grid">' + gl.join("") + "</g>");
+
+    // 地下を走る区間（両端の駅がどちらも地下）
+    var tun = {};
+    (RG.NET.edges || []).forEach(function (e) {
+      var a = RG.byId[e[0]], b = RG.byId[e[1]];
+      if (!a || !b) return;
+      var da = D[a.id], db = D[b.id];
+      if (!(da && da.d) || !(db && db.d)) return;
+      var ha = (RG.elevOf ? RG.elevOf(a.id) : 0) - da.m;
+      var hb = (RG.elevOf ? RG.elevOf(b.id) : 0) - db.m;
+      var pa = proj(a.x, a.y, ha, P), pb = proj(b.x, b.y, hb, P);
+      var c = (RG.lineColor && RG.lineColor[e[2]]) || "#9AA0A6";
+      (tun[c] = tun[c] || []).push("M" + pa.x.toFixed(1) + " " + pa.y.toFixed(1) +
+                                  "L" + pb.x.toFixed(1) + " " + pb.y.toFixed(1));
+    });
+    Object.keys(tun).forEach(function (c) {
+      out.push('<path class="u3e" d="' + tun[c].join("") + '" stroke="' + c + '"/>');
+    });
+
+    // 地下駅：地表から縦にエレベーターシャフトを下ろす
+    var shafts = [], dots = [], deepLabels = [];
+    Object.keys(D).forEach(function (id) {
+      var st = RG.byId[id], info = D[id];
+      if (!st || !info.d) return;
+      var surf = RG.elevOf ? RG.elevOf(id) : 0;
+      var top = proj(st.x, st.y, surf, P);
+      var bot = proj(st.x, st.y, surf - info.m, P);
+      shafts.push("M" + top.x.toFixed(1) + " " + top.y.toFixed(1) +
+                  "L" + bot.x.toFixed(1) + " " + bot.y.toFixed(1));
+      dots.push("M" + bot.x.toFixed(1) + " " + bot.y.toFixed(1) + "l0 0");
+      if (info.d >= 5) {
+        deepLabels.push('<text class="u3n" x="' + bot.x.toFixed(1) + '" y="' +
+          (bot.y + 5).toFixed(1) + '" text-anchor="middle">' +
+          esc(st.n) + " 地下" + info.d + "階</text>");
+      }
+    });
+    if (shafts.length) out.push('<path class="u3s" d="' + shafts.join("") + '"/>');
+    if (dots.length) out.push('<path class="u3d" d="' + dots.join("") + '"/>');
+    out.push(deepLabels.join(""));
+  }
 
   // 4) 駅：669個を「点1本のpath」にまとめる。
   //    要素を1000個作ると傾きスライダーがカクつくため、線端を丸くした
@@ -6492,6 +6609,7 @@ var LAZY = [
   { f: "data/admin.js",     key: "admin",     label: "行政区の地図" },
   { f: "data/relief.js",    key: "relief",    label: "地形" },
   { f: "data/bldg3d.js",    key: "bldg",      label: "3Dの建物" },
+  { f: "data/depth.js",     key: "depth",     label: "地下の深さ" },
   { f: "data/crime.js",     key: "crime",     label: "安全のデータ" },
   { f: "data/poi.js",       key: "poi",       label: "駅のまわりの情報" },
   { f: "data/descs.js",     key: "descs",     label: "説明文" },
@@ -6528,7 +6646,7 @@ function setProgress(txt, pct) {
 function refresh(key) {
   loaded[key] = true;
   try {
-    if (key === "admin" || key === "relief" || key === "heat" || key === "bldg" || key === "crime") {
+    if (key === "admin" || key === "relief" || key === "heat" || key === "bldg" || key === "crime" || key === "depth") {
       if (RG.Map && RG.Map.drawBase) RG.Map.drawBase();
       if (RG.applyBasemap) RG.applyBasemap();
     }
@@ -6539,7 +6657,7 @@ function refresh(key) {
       if (RG.buildSearchIndex) RG.resetSearchIndex && RG.resetSearchIndex();
       if (RG.initLinesUI && RG.rebuildRail) RG.rebuildRail();
     }
-    if (key === "poi" || key === "descs") {
+    if (key === "poi" || key === "descs" || key === "depth") {
       if (RG.Card && RG.Card.refresh) RG.Card.refresh();
     }
   } catch (e) {
@@ -7077,6 +7195,18 @@ RG.BLDG3D = [{"n":"東京スカイツリー","la":35.71006,"lo":139.81072,"h":63
       «昼間に人が集まる街»でもあります。人口1000人あたりの率とあわせて見てください。
 */
 RG.CRIME = {"total": {"足立区": 4442, "荒川区": 1328, "文京区": 1194, "千代田区": 2532, "中央区": 1979, "江戸川区": 4222, "板橋区": 3420, "葛飾区": 3037, "北区": 2276, "江東区": 3332, "目黒区": 1419, "港区": 3188, "中野区": 2094, "練馬区": 3662, "大田区": 4370, "世田谷区": 4443, "渋谷区": 3849, "品川区": 2240, "新宿区": 6025, "杉並区": 2479, "墨田区": 2089, "台東区": 2731, "豊島区": 3730}, "rate": {"足立区": 7, "荒川区": 6.3, "文京区": 7.2, "千代田区": 51.1, "中央区": 32.8, "江戸川区": 6, "板橋区": 5.9, "葛飾区": 6.5, "北区": 6.5, "江東区": 9, "目黒区": 5.7, "港区": 24.9, "中野区": 6, "練馬区": 4.9, "大田区": 5.5, "世田谷区": 4.8, "渋谷区": 38.3, "品川区": 5.8, "新宿区": 77.2, "杉並区": 4.4, "墨田区": 11.2, "台東区": 30.3, "豊島区": 30.9}};
+
+/* 駅の深さ・高さ（自動生成: tools/build_depth.py）
+   d = 地下 何階か（OpenStreetMap のホームの level タグから。実データ）
+   m = およその深さ（メートル）。地下1階ぶんを 6.5m として計算した推定値
+   u = 高架 何階か
+   l = そのホームの路線名（OSM の表記）
+
+   ※ 「地下◯階」は実データ、「およそ◯m」は推定です。正確な深さは各社の資料をご覧ください。
+   出典: © OpenStreetMap contributors（ODbL 1.0）
+*/
+RG.DEPTH = {"新宿三丁目":{"d":3,"m":19.5,"l":["東京メトロ"]},"新線新宿":{"d":7,"m":45.5,"u":3,"l":["京王電鉄バス"]},"羽田空港第1ターミナル":{"d":2,"m":13.0,"u":1},"新宿西口":{"d":4,"m":26.0,"l":["都営バス"]},"羽田空港第2ターミナル":{"d":2,"m":13.0,"u":1},"京橋":{"d":2,"m":13.0},"東京":{"d":5,"m":32.5,"u":2,"l":["東京メトロ丸ノ内線"]},"新松戸":{"u":2},"松戸新田":{"u":0},"秋葉原":{"d":2,"m":13.0,"u":3},"水道橋":{"d":2,"m":13.0,"u":1},"代木":{"d":3,"m":19.5,"u":1},"羽田空港第3ターミナル":{"u":2},"高田馬場":{"u":1},"上野":{"d":2,"m":13.0,"u":1},"浜松町":{"u":3},"新橋":{"d":5,"m":32.5,"u":3},"有楽町":{"d":3,"m":19.5,"u":1,"l":["東京メトロ有楽町線"]},"神田":{"u":1},"神保町":{"d":3,"m":19.5},"駒込":{"d":2,"m":13.0},"原宿":{"d":3,"m":19.5,"u":2},"武蔵浦和":{"u":2,"l":["JR埼京線"]},"五反田":{"d":2,"m":13.0,"u":3},"綾瀬":{"u":1},"新宿":{"d":3,"m":19.5},"目白":{"d":1,"m":6.5},"赤羽":{"u":1},"祖師ヶ谷大蔵":{"u":1},"経堂":{"u":1},"千歳船橋":{"u":1},"西台":{"u":1},"市川塩浜":{"u":2},"梅ヶ丘":{"u":1},"日暮里":{"u":3},"中目黒":{"u":1},"喜多見":{"u":1},"狛江":{"u":1},"鶴見":{"u":2},"新木場":{"u":3},"武蔵小杉":{"u":1},"南流山":{"d":2,"m":13.0,"u":1},"糀谷":{"u":1},"蒲田_1":{"u":3},"川崎":{"u":1},"南新宿":{"u":1},"代木上原":{"u":2},"北千住":{"d":2,"m":13.0,"u":3},"品川":{"d":2,"m":13.0,"u":2},"草加":{"u":1},"登戸":{"u":2},"王子駅前":{"u":1},"豪徳寺":{"u":1},"浜町":{"d":3,"m":19.5},"八丁畷":{"u":1},"木場":{"d":1,"m":6.5},"小川町":{"d":4,"m":26.0},"九段下":{"d":2,"m":13.0,"l":["東京メトロ半蔵門線","都営地下鉄新宿線"]},"芝公園":{"d":2,"m":13.0,"l":["都営地下鉄三田線"]},"湯島":{"d":2,"m":13.0},"竹橋":{"d":2,"m":13.0,"l":["東京メトロ東西線"]},"大手町":{"d":4,"m":26.0,"l":["東京メトロ","都営地下鉄"]},"桜田門":{"d":2,"m":13.0,"l":["東京メトロ有楽町線"]},"日比谷":{"d":3,"m":19.5,"l":["東京メトロ千代田線","東京メトロ日比谷線","東京メトロ有楽町線"]},"霞ケ関":{"d":3,"m":19.5,"l":["丸ノ内線","千代田線","日比谷線"]},"新御茶ノ水":{"d":3,"m":19.5},"国会議事堂前":{"d":6,"m":39.0},"都庁前":{"d":3,"m":19.5,"l":["都営地下鉄大江戸線"]},"代木公園":{"d":2,"m":13.0},"明治神宮前":{"d":5,"m":32.5,"l":["副都心線"]},"国立競技場":{"d":3,"m":19.5},"巣鴨":{"d":2,"m":13.0},"半蔵門":{"d":2,"m":13.0},"新御徒町":{"d":4,"m":26.0,"l":["つくばエクスプレス","都営地下鉄大江戸線"]},"赤坂":{"d":2,"m":13.0},"赤坂見附":{"d":2,"m":13.0,"l":["Ginza Line","丸ノ内線"]},"要町":{"d":3,"m":19.5},"方南町":{"d":2,"m":13.0},"中野坂上":{"d":4,"m":26.0},"渋谷":{"d":5,"m":32.5,"u":3,"l":["銀座線"]},"目黒":{"d":4,"m":26.0},"白金台":{"d":3,"m":19.5},"白金高輪":{"d":3,"m":19.5},"四ツ谷":{"d":3,"m":19.5},"茗荷谷":{"d":2,"m":13.0},"池袋":{"d":4,"m":26.0},"永田町":{"d":6,"m":39.0},"六本木一丁目":{"d":4,"m":26.0},"浅草":{"d":4,"m":26.0,"l":["都営地下鉄"]},"南千住":{"u":1,"l":["東京メトロ"]},"つくばエクスプレス秋葉原":{"d":4,"m":26.0},"岩本町":{"d":3,"m":19.5},"日本橋":{"d":3,"m":19.5},"三越前":{"d":5,"m":32.5},"清澄白河":{"d":3,"m":19.5},"人形町":{"d":2,"m":13.0},"後楽園":{"d":6,"m":39.0,"u":2,"l":["丸ノ内線","南北線"]},"春日":{"d":6,"m":39.0,"l":["大江戸線","都営三田線"]},"新板橋":{"d":2,"m":13.0},"市ヶ谷":{"d":3,"m":19.5,"l":["都営地下鉄"]},"南北線市ケ谷":{"d":4,"m":26.0,"l":["南北線","有楽町線"]},"飯田橋":{"d":6,"m":39.0,"l":["南北線","有楽町線","東西線"]},"銀座":{"d":3,"m":19.5,"l":["丸ノ内線","日比谷線","銀座線"]},"豊洲":{"d":3,"m":19.5,"l":["有楽町線"]},"本郷三丁目":{"d":3,"m":19.5,"l":["大江戸線"]},"東池袋四丁目":{"d":2,"m":13.0},"恵比寿":{"d":2,"m":13.0},"月島":{"d":3,"m":19.5,"l":["大江戸線","有楽町線"]},"大門":{"d":5,"m":32.5,"l":["都営地下鉄"]},"モノレール浜松町":{"u":4,"l":["東京モノレール"]},"築地":{"d":1,"m":6.5,"l":["東京メトロ"]},"新富町":{"d":2,"m":13.0,"l":["有楽町線"]},"赤羽岩淵":{"d":2,"m":13.0},"東銀座":{"d":2,"m":13.0,"l":["銀座線"]},"田原町":{"d":1,"m":6.5,"l":["東京メトロ"]},"稲荷町":{"d":1,"m":6.5,"l":["東京メトロ"]},"青山一丁目":{"d":5,"m":32.5},"銀座一丁目":{"d":4,"m":26.0,"l":["東京メトロ"]},"辰巳":{"d":3,"m":19.5,"l":["有楽町線"]},"虎ノ門":{"d":1,"m":6.5,"l":["東京メトロ"]},"御成門":{"d":2,"m":13.0,"l":["都営地下鉄"]},"水天宮前":{"d":3,"m":19.5},"三田":{"d":3,"m":19.5},"田町":{"d":2,"m":13.0},"根津":{"d":1,"m":6.5},"東新宿":{"d":6,"m":39.0},"新銀座":{"d":4,"m":26.0},"押上":{"d":3,"m":19.5},"勝どき":{"d":3,"m":19.5},"乃木坂":{"d":2,"m":13.0},"大井競馬場前":{"u":2},"流通センター":{"u":2},"西日暮里":{"d":3,"m":19.5},"高砂":{"u":2},"天空橋":{"d":1,"m":6.5},"新中野":{"d":1,"m":6.5,"l":["東京メトロ"]},"西早稲田":{"d":1,"m":6.5},"麻布十番":{"d":1,"m":6.5},"六本木":{"d":2,"m":13.0},"新整備場":{"d":2,"m":13.0},"東中野":{"d":2,"m":13.0},"御茶ノ水":{"d":1,"m":6.5},"八丁堀":{"d":3,"m":19.5},"越中島":{"d":2,"m":13.0},"青砥":{"u":3},"初台":{"d":3,"m":19.5,"l":["京王線"]},"小竹向原":{"d":2,"m":13.0,"l":["東京メトロ;西武鉄道"]},"新宿御苑前":{"d":1,"m":6.5},"四谷三丁目":{"d":1,"m":6.5},"大師前":{"u":3},"東北沢":{"d":1,"m":6.5},"下北沢":{"d":2,"m":13.0},"蔵前":{"d":3,"m":19.5},"馬込":{"d":2,"m":13.0},"西馬込":{"d":3,"m":19.5},"泉岳寺":{"d":2,"m":13.0},"高輪台":{"d":2,"m":13.0},"戸越":{"d":2,"m":13.0},"中延":{"d":2,"m":13.0},"東京テレポート":{"d":3,"m":19.5},"町屋":{"d":3,"m":19.5},"旗の台":{"u":2},"大岡山":{"d":1,"m":6.5},"世田谷代田":{"d":2,"m":13.0},"新横浜":{"d":4,"m":26.0},"地下鉄成増":{"d":2,"m":13.0},"成城学園前":{"d":1,"m":6.5},"和泉多摩川":{"u":1},"大師橋":{"d":2,"m":13.0},"荏原中延":{"d":1,"m":6.5,"l":["東急電鉄"]},"千川":{"d":3,"m":19.5},"向河原":{"u":1},"整備場":{"u":2}};
+RG.DEPTH_FLOOR_M = 6.5;
 
 </script>
 <script>
