@@ -161,7 +161,47 @@ RG.setHeat = function (id) {
 
 /* -------------------------------------------------- 地図の上に出す切替バー
    設定を開かなくても、ここだけで地形・3D・行政区・ヒートマップを切り替えられる */
+/* 押した場所から «一番近いボタン» を探して動かす。
+   バーは押すたびに作り直されるため、要素ごとに手をつけると外れやすい。
+   一度だけ親に手をつけ、そこで受ける。 */
+function bindQuick() {
+  if (RG.__qbDelegated) return;
+  RG.__qbDelegated = true;
+  var q = $("#quickbar");
+  if (!q) return;
+  q.addEventListener("click", function (ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+    var b;
+    if ((b = t.closest("[data-qb]"))) {
+      var k = b.dataset.qb;
+      B[k] = !B[k];
+      if (k === "blank" && B.blank) B.admin = true;
+      if (k === "labels" && B.labels) B.admin = true;
+      apply();
+      if (RG.toggleSaid) RG.toggleSaid(k, B[k]);
+      if (k === "flood" && B.flood && RG.gotoFlood) RG.gotoFlood();
+      return;
+    }
+    if ((b = t.closest("[data-qh]"))) {
+      RG.setHeat(b.dataset.qh);
+      B.qbHeat = false; quickBar();
+      if (RG.tripStatus) {
+        var f = (RG.HEAT_FACTORS || []).filter(function (x) { return x.id === B.heat; })[0];
+        RG.tripStatus(f ? "🌡️ 区ごとに「" + f.label + "」で色分けしました" : "色分けをやめました",
+          f ? "ok" : "info", 3000);
+      }
+      return;
+    }
+    if (t.closest("#qb-heat")) { B.qbHeat = !B.qbHeat; quickBar(); return; }
+    if (t.closest("#qb-mini")) { B.qbMini = true; B.qbHeat = false; quickBar(); save(); return; }
+    if (t.closest("#qb-open")) { B.qbMini = false; quickBar(); save(); return; }
+    if (t.closest("#qb-open2")) { B.qbMini = false; B.qbHeat = true; quickBar(); save(); return; }
+  });
+}
+
 function quickBar() {
+  bindQuick();
   var q = $("#quickbar");
   if (!q) return;
   var F = RG.HEAT_FACTORS || [];
@@ -173,9 +213,6 @@ function quickBar() {
     q.innerHTML = '<button class="qb__open" type="button" id="qb-open">🗺️ 地図の設定</button>' +
       (cur ? '<button class="qb__open qb__open--h" type="button" id="qb-open2">' +
         cur.e + " " + esc(cur.label) + "</button>" : "");
-    var o1 = $("#qb-open", q), o2 = $("#qb-open2", q);
-    if (o1) o1.addEventListener("click", function () { B.qbMini = false; apply(); });
-    if (o2) o2.addEventListener("click", function () { B.qbMini = false; B.qbHeat = true; apply(); });
     return;
   }
 
@@ -212,28 +249,8 @@ function quickBar() {
         "</div></div>"
       : "");
 
-  var hb = $("#qb-heat", q);
-  if (hb) hb.addEventListener("click", function () { B.qbHeat = !B.qbHeat; apply(); });
-  var mb = $("#qb-mini", q);
-  if (mb) mb.addEventListener("click", function () { B.qbMini = true; B.qbHeat = false; apply(); });
-  $$("[data-qb]", q).forEach(function (b) {
-    b.addEventListener("click", function () {
-      var k = b.dataset.qb;
-      B[k] = !B[k];
-      if (k === "blank" && B.blank) B.admin = true;      // 白地図は区の線が要る
-      if (k === "labels" && B.labels) B.admin = true;    // 区名は区の線が要る
-      apply();
-      if (RG.toggleSaid) RG.toggleSaid(k, B[k]);
-      if (k === "flood" && B.flood && RG.gotoFlood) RG.gotoFlood();
-    });
-  });
-  $$("[data-qh]", q).forEach(function (b) {
-    b.addEventListener("click", function () {
-      RG.setHeat(b.dataset.qh);        // 軽い経路（地図全体を作り直さない）
-      B.qbHeat = false;
-      quickBar();                       // バーだけ畳む
-    });
-  });
+
+
 }
 /* 押したことが «必ず» 分かるように、言葉でも返す。
    地形や浸水は、見ている場所によっては変化が目に入らないため。 */

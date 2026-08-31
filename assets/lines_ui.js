@@ -632,6 +632,18 @@ RG.checkSecret = function (v) {
 };
 
 RG.rebuildRail = function () { try { build(); } catch (e) {} };
+/* 押した場所から «一番近いボタン» を探して動かす（作り直しで手が外れないように）。
+   地図の上や、作り直されたあとでも確実に効く。 */
+function delegate(root, sel, fn) {
+  root.addEventListener("click", function (ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+    var b = t.closest(sel);
+    if (b && root.contains(b)) fn(b, ev);
+  });
+}
+RG.delegateClick = delegate;
+
 RG.initLinesUI = function () {
   Rail.build();
   if (ST.secret) document.body.classList.add("secret");

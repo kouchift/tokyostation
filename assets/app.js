@@ -306,8 +306,15 @@ var Map = (function () {
     wrap = $(".mapwrap"); vb = { x: VB.x, y: VB.y, w: VB.w, h: VB.h };
     apply(); lod();
     var drag = null, pinch = null;
+    /* 地図の «ドラッグで動かす» 処理。
+       ここで setPointerCapture すると、以後のイベントが地図に吸い寄せられ、
+       地図の上に重ねたボタン（色分け・3D・地形…）を押しても
+       click が届かなくなる。UI の上で始まった操作は、地図では扱わない。 */
+    var UI_SEL = ".quickbar,.heatlegend,.navbar,.chips,.poipop,.zoombox,.lms__ui," +
+                 "button,a,input,select,textarea,label,[role=button]";
     wrap.addEventListener("pointerdown", function (e) {
       if (e.target.closest(".node")) return;
+      if (e.target.closest && e.target.closest(UI_SEL)) return;   // ボタンの上なら地図は動かさない
       wrap.setPointerCapture(e.pointerId);
       drag = { x: e.clientX, y: e.clientY, vx: vb.x, vy: vb.y };
       wrap.classList.add("dragging");
@@ -322,13 +329,16 @@ var Map = (function () {
       wrap.addEventListener(t, function () { drag = null; wrap.classList.remove("dragging"); });
     });
     wrap.addEventListener("wheel", function (e) {
+      if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.16 : 1 / 1.16);
     }, { passive: false });
     wrap.addEventListener("touchstart", function (e) {
+      if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       if (e.touches.length === 2) { drag = null;
         pinch = { d: dist(e.touches), vb: { x: vb.x, y: vb.y, w: vb.w, h: vb.h }, c: mid(e.touches) }; }
     }, { passive: true });
     wrap.addEventListener("touchmove", function (e) {
+      if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       if (!pinch || e.touches.length !== 2) return;
       e.preventDefault();
       var k = pinch.d / dist(e.touches), r = wrap.getBoundingClientRect();
