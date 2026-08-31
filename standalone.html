@@ -1959,6 +1959,37 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 .vf__nav{display:flex;gap:6px;margin-top:12px}
 .vf__next{margin-left:auto}
 
+/* =========================================================================
+   v40：はじめは «たたんだ» 状態にする
+   ―― 画面をあけておくのがいちばんのユーザービリティ。
+      使うときに押して開く。開いているものは ▴、閉じているものは ▾。
+   ========================================================================= */
+
+/* 週カレンダーを出発バーのすぐ下に、細く */
+.weekbar{padding:3px 9px;gap:6px;border-bottom:1px solid var(--grid);background:#FCFDFF}
+.weekbar .wb__m{height:30px;padding:0 10px;font-size:11.5px}
+.weekbar .wb__d{width:38px;padding:2px 0 3px}
+.weekbar .wb__w{font-size:8.5px}
+.weekbar .wb__n{font-size:13.5px}
+.weekbar .wb__r{font-size:7.5px}
+@media (pointer: coarse){ .weekbar .wb__d{width:42px;min-height:40px} .weekbar .wb__m{min-height:40px} }
+
+/* グループバーのたたんだ状態 */
+.groupbar.mini{display:flex;gap:6px;padding:5px 9px;border-bottom:1px solid var(--grid)}
+.gb__open{flex:1;min-height:36px;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--grid);border-radius:10px;background:#fff;font-size:12.5px;font-weight:700;
+  font-family:inherit;cursor:pointer}
+.gb__open:hover{background:var(--lb50);border-color:var(--lb400)}
+.gb__cnt{min-width:19px;height:19px;border-radius:10px;background:var(--lb900);color:#fff;
+  font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.gb__clr{flex:0 0 auto;min-height:36px;padding:0 12px;border:1px solid var(--border);border-radius:10px;
+  background:#fff;font-size:11.5px;font-family:inherit;cursor:pointer;color:var(--label)}
+.gb__g--x{min-width:48px;border-style:dashed}
+
+/* 地図の設定バー：たたんだ状態を目立たせすぎない */
+.quickbar.mini .qb__open{font-size:11.5px;height:30px;padding:0 11px}
+@media (pointer: coarse){ .quickbar.mini .qb__open{min-height:38px} }
+
 </style>
 <meta name="description" content="東京23区669駅とスポット18,000件を、地図・スコア・ルート比較・おでかけプランで調べられる自由研究サイト。オープンデータだけで作りました。">
 <meta name="theme-color" content="#00224A">
@@ -1986,10 +2017,10 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   </header>
 
   <div id="tripbar" class="tripbar" aria-label="出発地・出発時刻・提案の攻めかた"></div>
+  <div id="weekbar" class="weekbar"></div>
   <div id="t-status" class="tb__status" role="status"></div>
 
   <div id="loadbar" class="loadbar"></div>
-  <div id="weekbar" class="weekbar"></div>
   <div id="groupbar" class="groupbar"></div>
   <div id="boot-error" class="booterr" hidden>
     <b>データを読み込めませんでした</b>
@@ -4681,8 +4712,8 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 
 /* ------------------------------------------------ 保存（localStorage） */
 var KEY = "tsg.settings.v1";
-var DEF = { watch: ["中村橋"], secret: false, chains: [],
-            lmOn: true, lmScale: 0.75, lmOwn: true, railOpen: true, hideVisited: false,
+var DEF = { watch: ["中村橋"], secret: false, chains: [], railOpen: false,
+            lmOn: true, lmScale: 0.75, lmOwn: true, railOpen: false, hideVisited: false,
             meStyle: "dot", meColor: "", meLabel: true,
             genres: null, railTab: "line", poiScale: 1.0 };
 var ST = (function () {
@@ -4799,7 +4830,7 @@ var Rail = (function () {
         "</span>" +
         '<button class="lr__all" type="button">✕ 解除</button>' +
         '<button id="lr-toggle" class="lr__t" type="button" aria-expanded="' + (ST.railOpen ? "true" : "false") +
-        '">えらぶ ▾</button></div>' +
+        '">えらぶ ' + (ST.railOpen ? "▴" : "▾") + "</button></div>" +
       '<div class="lr__rows" data-pane="line">' + rows + "</div>" +
       '<div class="lr__rows" data-pane="poi" hidden>' + grow + "</div>";
     box.classList.toggle("open", !!ST.railOpen);
@@ -4809,8 +4840,10 @@ var Rail = (function () {
       $$("[data-pane]", box).forEach(function (p) { p.hidden = p.dataset.pane !== t; });
     }
     $$(".lr__tab", box).forEach(function (b) {
-      b.addEventListener("click", function () { showTab(b.dataset.tab); ST.railOpen = true;
-        box.classList.add("open"); $("#lr-toggle", box).setAttribute("aria-expanded", "true"); });
+      b.addEventListener("click", function () {
+        showTab(b.dataset.tab); ST.railOpen = true; save();
+        if (RG.paintRailToggle) RG.paintRailToggle();
+      });
     });
     showTab(ST.railTab || "line");
     var ga = $("[data-gall]", box);
@@ -4970,11 +5003,18 @@ var Rail = (function () {
       });
     });
     RG.syncMapButtons = syncMapButtons;
+    function paintToggle() {
+      var t = $("#lr-toggle", box);
+      if (!t) return;
+      box.classList.toggle("open", !!ST.railOpen);
+      t.setAttribute("aria-expanded", String(!!ST.railOpen));
+      t.textContent = ST.railOpen ? "とじる ▴" : "えらぶ ▾";
+    }
+    RG.paintRailToggle = paintToggle;
     $("#lr-toggle", box).addEventListener("click", function () {
-      ST.railOpen = !ST.railOpen; save();
-      box.classList.toggle("open", ST.railOpen);
-      this.setAttribute("aria-expanded", String(ST.railOpen));
+      ST.railOpen = !ST.railOpen; save(); paintToggle();
     });
+    paintToggle();
     $$(".lr__i", box).forEach(function (b) {
       b.addEventListener("click", function () { toggle(b.dataset.line); });
       b.addEventListener("mouseenter", function (e) { show(b.dataset.line, b); });
@@ -5324,7 +5364,7 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 var KEY = "tsg.basemap.v1";
 var DEF = {
   relief: false, mode3d: false, tilt: 52, exagg: 1.0, flood: false,
-  admin: true, blank: false, qbMini: false, qbHeat: false, under: true, seeUnder: true,
+  admin: true, blank: false, qbMini: true, qbHeat: false, under: true, seeUnder: true,
   lv: { 1: { on: true,  c: "#333333", w: 2.2 },
         2: { on: true,  c: "#0055AD", w: 1.1 },
         3: { on: false, c: "#999999", w: 0.5 } },
@@ -7442,6 +7482,21 @@ RG.buildGroupBar = function () {
   if (!host) return;
   var c = cur();
   var open = RG.__grpOpen || null;
+  // たたんだ状態：ボタン1つだけ。押すと目的の一覧が開く。
+  if (!RG.__grpShow) {
+    var picked = c.filter(function (x) { return x !== "__none__"; });
+    host.className = "groupbar mini";
+    host.innerHTML = '<button class="gb__open" type="button" id="gb-open">📍 スポットをさがす' +
+      (picked.length ? '<span class="gb__cnt">' + picked.length + "</span>" : "") + " ▾</button>" +
+      (picked.length ? '<button class="gb__clr" type="button" id="gb-off">✕ 解除</button>' : "");
+    $("#gb-open", host).addEventListener("click", function () {
+      RG.__grpShow = true; RG.buildGroupBar();
+    });
+    var off = $("#gb-off", host);
+    if (off) off.addEventListener("click", function () { setGenres([]); RG.buildGroupBar(); });
+    return;
+  }
+  host.className = "groupbar";
   host.innerHTML =
     '<div class="gb__row">' +
       '<button class="gb__g' + (!c.length ? " on" : "") + '" type="button" data-grp="__all">' +
@@ -7456,6 +7511,8 @@ RG.buildGroupBar = function () {
       }).join("") +
       '<button class="gb__g' + (c[0] === "__none__" ? " on" : "") + '" type="button" data-grp="__none">' +
         '<span class="gb__e">✕</span><span class="gb__l">なし</span></button>' +
+      '<button class="gb__g gb__g--x" type="button" id="gb-hide" title="たたむ">' +
+        '<span class="gb__e">▴</span><span class="gb__l">とじる</span></button>' +
     "</div>" +
     (open ? groupPanel(open) : "");
   $$("[data-grp]", host).forEach(function (b) {
@@ -7483,6 +7540,10 @@ RG.buildGroupBar = function () {
       setGenres(i >= 0 ? c2.filter(function (x) { return x !== id; }) : c2.concat([id]));
       RG.buildGroupBar();
     });
+  });
+  var hd = $("#gb-hide", host);
+  if (hd) hd.addEventListener("click", function () {
+    RG.__grpShow = false; RG.__grpOpen = null; RG.buildGroupBar();
   });
   var only = $("#gb-only", host);
   if (only) only.addEventListener("click", function () {

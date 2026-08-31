@@ -1949,3 +1949,34 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   font-size:15px;font-weight:800;font-family:inherit;cursor:pointer}
 .vf__nav{display:flex;gap:6px;margin-top:12px}
 .vf__next{margin-left:auto}
+
+/* =========================================================================
+   v40：はじめは «たたんだ» 状態にする
+   ―― 画面をあけておくのがいちばんのユーザービリティ。
+      使うときに押して開く。開いているものは ▴、閉じているものは ▾。
+   ========================================================================= */
+
+/* 週カレンダーを出発バーのすぐ下に、細く */
+.weekbar{padding:3px 9px;gap:6px;border-bottom:1px solid var(--grid);background:#FCFDFF}
+.weekbar .wb__m{height:30px;padding:0 10px;font-size:11.5px}
+.weekbar .wb__d{width:38px;padding:2px 0 3px}
+.weekbar .wb__w{font-size:8.5px}
+.weekbar .wb__n{font-size:13.5px}
+.weekbar .wb__r{font-size:7.5px}
+@media (pointer: coarse){ .weekbar .wb__d{width:42px;min-height:40px} .weekbar .wb__m{min-height:40px} }
+
+/* グループバーのたたんだ状態 */
+.groupbar.mini{display:flex;gap:6px;padding:5px 9px;border-bottom:1px solid var(--grid)}
+.gb__open{flex:1;min-height:36px;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--grid);border-radius:10px;background:#fff;font-size:12.5px;font-weight:700;
+  font-family:inherit;cursor:pointer}
+.gb__open:hover{background:var(--lb50);border-color:var(--lb400)}
+.gb__cnt{min-width:19px;height:19px;border-radius:10px;background:var(--lb900);color:#fff;
+  font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.gb__clr{flex:0 0 auto;min-height:36px;padding:0 12px;border:1px solid var(--border);border-radius:10px;
+  background:#fff;font-size:11.5px;font-family:inherit;cursor:pointer;color:var(--label)}
+.gb__g--x{min-width:48px;border-style:dashed}
+
+/* 地図の設定バー：たたんだ状態を目立たせすぎない */
+.quickbar.mini .qb__open{font-size:11.5px;height:30px;padding:0 11px}
+@media (pointer: coarse){ .quickbar.mini .qb__open{min-height:38px} }

@@ -13,7 +13,7 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 var KEY = "tsg.basemap.v1";
 var DEF = {
   relief: false, mode3d: false, tilt: 52, exagg: 1.0, flood: false,
-  admin: true, blank: false, qbMini: false, qbHeat: false, under: true, seeUnder: true,
+  admin: true, blank: false, qbMini: true, qbHeat: false, under: true, seeUnder: true,
   lv: { 1: { on: true,  c: "#333333", w: 2.2 },
         2: { on: true,  c: "#0055AD", w: 1.1 },
         3: { on: false, c: "#999999", w: 0.5 } },

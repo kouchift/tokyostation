@@ -8,8 +8,8 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 
 /* ------------------------------------------------ 保存（localStorage） */
 var KEY = "tsg.settings.v1";
-var DEF = { watch: ["中村橋"], secret: false, chains: [],
-            lmOn: true, lmScale: 0.75, lmOwn: true, railOpen: true, hideVisited: false,
+var DEF = { watch: ["中村橋"], secret: false, chains: [], railOpen: false,
+            lmOn: true, lmScale: 0.75, lmOwn: true, railOpen: false, hideVisited: false,
             meStyle: "dot", meColor: "", meLabel: true,
             genres: null, railTab: "line", poiScale: 1.0 };
 var ST = (function () {
@@ -126,7 +126,7 @@ var Rail = (function () {
         "</span>" +
         '<button class="lr__all" type="button">✕ 解除</button>' +
         '<button id="lr-toggle" class="lr__t" type="button" aria-expanded="' + (ST.railOpen ? "true" : "false") +
-        '">えらぶ ▾</button></div>' +
+        '">えらぶ ' + (ST.railOpen ? "▴" : "▾") + "</button></div>" +
       '<div class="lr__rows" data-pane="line">' + rows + "</div>" +
       '<div class="lr__rows" data-pane="poi" hidden>' + grow + "</div>";
     box.classList.toggle("open", !!ST.railOpen);
@@ -136,8 +136,10 @@ var Rail = (function () {
       $$("[data-pane]", box).forEach(function (p) { p.hidden = p.dataset.pane !== t; });
     }
     $$(".lr__tab", box).forEach(function (b) {
-      b.addEventListener("click", function () { showTab(b.dataset.tab); ST.railOpen = true;
-        box.classList.add("open"); $("#lr-toggle", box).setAttribute("aria-expanded", "true"); });
+      b.addEventListener("click", function () {
+        showTab(b.dataset.tab); ST.railOpen = true; save();
+        if (RG.paintRailToggle) RG.paintRailToggle();
+      });
     });
     showTab(ST.railTab || "line");
     var ga = $("[data-gall]", box);
@@ -297,11 +299,18 @@ var Rail = (function () {
       });
     });
     RG.syncMapButtons = syncMapButtons;
+    function paintToggle() {
+      var t = $("#lr-toggle", box);
+      if (!t) return;
+      box.classList.toggle("open", !!ST.railOpen);
+      t.setAttribute("aria-expanded", String(!!ST.railOpen));
+      t.textContent = ST.railOpen ? "とじる ▴" : "えらぶ ▾";
+    }
+    RG.paintRailToggle = paintToggle;
     $("#lr-toggle", box).addEventListener("click", function () {
-      ST.railOpen = !ST.railOpen; save();
-      box.classList.toggle("open", ST.railOpen);
-      this.setAttribute("aria-expanded", String(ST.railOpen));
+      ST.railOpen = !ST.railOpen; save(); paintToggle();
     });
+    paintToggle();
     $$(".lr__i", box).forEach(function (b) {
       b.addEventListener("click", function () { toggle(b.dataset.line); });
       b.addEventListener("mouseenter", function (e) { show(b.dataset.line, b); });

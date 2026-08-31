@@ -51,6 +51,21 @@ RG.buildGroupBar = function () {
   if (!host) return;
   var c = cur();
   var open = RG.__grpOpen || null;
+  // たたんだ状態：ボタン1つだけ。押すと目的の一覧が開く。
+  if (!RG.__grpShow) {
+    var picked = c.filter(function (x) { return x !== "__none__"; });
+    host.className = "groupbar mini";
+    host.innerHTML = '<button class="gb__open" type="button" id="gb-open">📍 スポットをさがす' +
+      (picked.length ? '<span class="gb__cnt">' + picked.length + "</span>" : "") + " ▾</button>" +
+      (picked.length ? '<button class="gb__clr" type="button" id="gb-off">✕ 解除</button>' : "");
+    $("#gb-open", host).addEventListener("click", function () {
+      RG.__grpShow = true; RG.buildGroupBar();
+    });
+    var off = $("#gb-off", host);
+    if (off) off.addEventListener("click", function () { setGenres([]); RG.buildGroupBar(); });
+    return;
+  }
+  host.className = "groupbar";
   host.innerHTML =
     '<div class="gb__row">' +
       '<button class="gb__g' + (!c.length ? " on" : "") + '" type="button" data-grp="__all">' +
@@ -65,6 +80,8 @@ RG.buildGroupBar = function () {
       }).join("") +
       '<button class="gb__g' + (c[0] === "__none__" ? " on" : "") + '" type="button" data-grp="__none">' +
         '<span class="gb__e">✕</span><span class="gb__l">なし</span></button>' +
+      '<button class="gb__g gb__g--x" type="button" id="gb-hide" title="たたむ">' +
+        '<span class="gb__e">▴</span><span class="gb__l">とじる</span></button>' +
     "</div>" +
     (open ? groupPanel(open) : "");
   $$("[data-grp]", host).forEach(function (b) {
@@ -92,6 +109,10 @@ RG.buildGroupBar = function () {
       setGenres(i >= 0 ? c2.filter(function (x) { return x !== id; }) : c2.concat([id]));
       RG.buildGroupBar();
     });
+  });
+  var hd = $("#gb-hide", host);
+  if (hd) hd.addEventListener("click", function () {
+    RG.__grpShow = false; RG.__grpOpen = null; RG.buildGroupBar();
   });
   var only = $("#gb-only", host);
   if (only) only.addEventListener("click", function () {
