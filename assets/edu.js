@@ -15,6 +15,7 @@ var NAT = { enter: 282000, year: 535800 };
 
 /* ------------------------------------------------- 偏差値の «相対評価» */
 var HRANK = null;
+RG.__hrankReset = function () { HRANK = null; };
 function hensachi(name) {
   var H = RG.HENSACHI || {};
   if (H[name] != null) return H[name];
@@ -101,7 +102,8 @@ RG.showUniv = function (idx) {
         (u.y ? " ・ " + esc(u.y) + " 年" : "") + "</p></div>" +
       (h ? '<span class="uni__h" style="background:' + h.c + '">偏差値<b>' + h.v + "</b>" +
         "<i>" + h.r.n + "校中 " + h.r.r + "位</i></span>"
-         : '<span class="uni__h uni__h--none">偏差値<b>—</b><i>未入力</i></span>') +
+         : '<button class="uni__h uni__h--none" type="button" data-hs="' + esc(u.b) +
+           '">偏差値<b>＋</b><i>入れる</i></button>') +
     "</div>" +
     feeHead(u.f, u.web) +
     (u.x ? '<div class="wk"><p class="wk__x">' + esc(u.x) + "</p>" +
@@ -143,6 +145,8 @@ RG.showUniv = function (idx) {
     "<b>偏差値は同梱していません。</b>予備校各社が調べた数字で複製が禁じられているためです。" +
     "data/user_hensachi.js にご自分で調べた値を書くと、色と順位が出ます。</p></div>";
   var m = RG.openModal("🎓 " + u.n, html);
+  var hb = m.querySelector("[data-hs]");
+  if (hb) hb.addEventListener("click", function () { RG.showHensachiEdit(hb.dataset.hs); });
   $$("[data-camp]", m).forEach(function (b) {
     b.addEventListener("click", function () {
       var j = +b.dataset.camp, c = RG.UNIV[j];
@@ -167,7 +171,8 @@ RG.showHigh = function (idx) {
       '<span class="uni__f">' + esc(F.label || "") + "</span> 高等学校</p></div>" +
       (h ? '<span class="uni__h" style="background:' + h.c + '">偏差値<b>' + h.v + "</b>" +
         "<i>" + h.r.n + "校中 " + h.r.r + "位</i></span>"
-         : '<span class="uni__h uni__h--none">偏差値<b>—</b><i>未入力</i></span>') +
+         : '<button class="uni__h uni__h--none" type="button" data-hs="' + esc(s.n) +
+           '">偏差値<b>＋</b><i>入れる</i></button>') +
     "</div>" +
     '<div class="smkg">' +
       (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
@@ -183,6 +188,22 @@ RG.showHigh = function (idx) {
 };
 
 /* --------------------------------------------------------- 地図へ取り込む */
+/* 偏差値が変わったら、色だけ塗り直す（作り直しはしない＝速い） */
+RG.remergeEdu = function () {
+  var F = RG.EDU_FOUND || {};
+  (RG.MAPPOI || []).forEach(function (p) {
+    if (p.univ != null) {
+      var u = RG.UNIV[p.univ];
+      var h = RG.hensachiColor(u.b) || RG.hensachiColor(u.n);
+      p.bc = h ? h.c : (F[u.f] || {}).c || "#888";
+    } else if (p.high != null) {
+      var s2 = RG.HIGH[p.high];
+      var h2 = RG.hensachiColor(s2.n);
+      p.bc = h2 ? h2.c : (F[s2.f] || {}).c || "#888";
+    }
+  });
+  if (RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
+};
 RG.mergeEdu = function () {
   if (RG.__eduMerged || !RG.UNIV) return;
   RG.__eduMerged = true;

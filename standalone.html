@@ -1897,6 +1897,68 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 .camp__b:hover{background:var(--lb900);color:#fff}
 @media (max-width:420px){ .fee__g{grid-template-columns:1fr 1fr} }
 
+/* =========================================================================
+   v39：偏差値の手入力と、提供のお申し込み
+   ========================================================================= */
+.hs__add{display:grid;grid-template-columns:1fr 90px auto;gap:6px;margin-bottom:6px}
+.hs__add input{height:42px;border:1px solid var(--border);border-radius:9px;padding:0 11px;
+  font-size:14px;font-family:inherit}
+.hs__add button{height:42px;padding:0 16px;border-radius:9px;border:0;background:var(--lb900);
+  color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+.hs__sug{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.hs__s{border:1px solid var(--border);border-radius:999px;background:#fff;padding:6px 11px;
+  font-size:11.5px;font-family:inherit;cursor:pointer}
+.hs__s:hover{background:var(--lb50);border-color:var(--lb400)}
+.hs__list{max-height:min(34vh,260px);overflow-y:auto;margin-bottom:10px}
+.hs__r{display:grid;grid-template-columns:46px 1fr 32px;gap:9px;align-items:center;
+  padding:6px 4px;border-bottom:1px solid var(--grid)}
+.hs__v{color:#fff;font-family:var(--mono);font-weight:800;font-size:13px;text-align:center;
+  border-radius:7px;padding:5px 0}
+.hs__n{font-size:12.5px}
+.hs__x{border:0;background:none;color:var(--label);font-size:14px;cursor:pointer}
+.hs__x:hover{color:#D93025}
+.hs__ta{width:100%;min-height:160px;border:1px solid var(--border);border-radius:9px;
+  padding:10px;font-family:var(--mono);font-size:11.5px;line-height:1.7}
+.hs__note{background:#FFFBEB;border:1px solid #F0E0B0;border-radius:10px;padding:11px 13px;margin:12px 0}
+.hs__note b{font-size:12.5px}
+.hs__note p{font-size:11.5px;line-height:1.9;margin:6px 0 0;color:var(--gray800)}
+.hs__vb{width:100%;height:42px;margin-top:10px;border-radius:9px;border:1px solid #C8880F;
+  background:#fff;color:#8A5A00;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer}
+.hs__vb:hover{background:#C8880F;color:#fff}
+.uni__h--none{border:1px dashed var(--border);cursor:pointer;font-family:inherit}
+.uni__h--none:hover{background:var(--lb50);border-color:var(--lb400);color:var(--highlight)}
+
+/* 申し込みフォーム */
+.vf__bar{height:5px;background:var(--grid);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.vf__bar i{display:block;height:100%;background:var(--lb900);transition:width .3s ease}
+.vf__st{font-size:10.5px;color:var(--label);font-family:var(--mono);margin-bottom:10px}
+.vf__h{margin:0 0 8px;font-size:15px}
+.vf__f{display:grid;gap:9px;margin-bottom:10px}
+.vf__f label{display:block;font-size:11.5px;font-weight:600}
+.vf__f input,.vf__f select{width:100%;height:42px;margin-top:4px;border:1px solid var(--border);
+  border-radius:9px;padding:0 11px;font-size:14px;font-family:inherit}
+.vf__terms{max-height:min(40vh,300px);overflow-y:auto;border:1px solid var(--grid);
+  border-radius:10px;padding:6px 4px}
+.vf__t{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;padding:9px 8px;
+  border-bottom:1px solid var(--grid);font-size:11.5px;line-height:1.7;cursor:pointer}
+.vf__t:last-child{border-bottom:0}
+.vf__t input{width:19px;height:19px;margin-top:1px}
+.vf__t--big{border:1px solid var(--lb400);border-radius:9px;margin-top:10px;background:var(--lb50)}
+.vf__spec{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px}
+.vf__spec th{text-align:left;padding:7px 9px;background:var(--control);border:1px solid var(--grid);
+  width:34%;vertical-align:top;font-weight:700}
+.vf__spec td{padding:7px 9px;border:1px solid var(--grid);line-height:1.7}
+.vf__warn{font-size:10.5px;color:#A58000;margin:4px 0 0}
+.vf__sum{border:1px solid var(--grid);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.vf__sum div{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;
+  border-top:1px solid var(--grid);font-size:12px}
+.vf__sum div:first-child{border-top:0}
+.vf__sum span{color:var(--label)}
+.vf__send{width:100%;height:48px;border-radius:11px;border:0;background:#C8880F;color:#fff;
+  font-size:15px;font-weight:800;font-family:inherit;cursor:pointer}
+.vf__nav{display:flex;gap:6px;margin-top:12px}
+.vf__next{margin-left:auto}
+
 </style>
 <meta name="description" content="東京23区669駅とスポット18,000件を、地図・スコア・ルート比較・おでかけプランで調べられる自由研究サイト。オープンデータだけで作りました。">
 <meta name="theme-color" content="#00224A">
@@ -3220,6 +3282,7 @@ function mergeExtraPois(key) {
       });
     });
   });
+  if (RG.rebuildHensachi) RG.rebuildHensachi();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();
@@ -4725,6 +4788,7 @@ var Rail = (function () {
       '<button class="lr__c" type="button" id="lr-chain">🏪 お店をえらぶ</button> ' +
       '<button class="lr__c" type="button" id="lr-corp">🏢 業種でえらぶ</button> ' +
       '<button class="lr__c lr__c--y" type="button" id="lr-smoke">🚬 吸える場所</button> ' +
+      '<button class="lr__c" type="button" id="lr-hs">📊 偏差値を入れる</button> ' +
       "アイコンを押すと、そのジャンルだけを地図に残します（<b>いくつでも選べます</b>）。" +
       "うすいアイコンはデータが取れていないものです。名前の下の数字は地図にある件数です。</div>";
     box.innerHTML =
@@ -4810,6 +4874,10 @@ var Rail = (function () {
       });
     }
     RG.openChains = function () { bindChain(RG.openModal("🏪 お店をえらぶ", chainPanel())); };
+    var hb3 = $("#lr-hs", box);
+    if (hb3) hb3.addEventListener("click", function () {
+      if (RG.showHensachiEdit) RG.showHensachiEdit();
+    });
     var sb2 = $("#lr-smoke", box);
     if (sb2) sb2.addEventListener("click", function () {
       if (RG.hasSmokeTicket && RG.hasSmokeTicket()) RG.openSmokeFilter();
@@ -6808,6 +6876,7 @@ var NAT = { enter: 282000, year: 535800 };
 
 /* ------------------------------------------------- 偏差値の «相対評価» */
 var HRANK = null;
+RG.__hrankReset = function () { HRANK = null; };
 function hensachi(name) {
   var H = RG.HENSACHI || {};
   if (H[name] != null) return H[name];
@@ -6894,7 +6963,8 @@ RG.showUniv = function (idx) {
         (u.y ? " ・ " + esc(u.y) + " 年" : "") + "</p></div>" +
       (h ? '<span class="uni__h" style="background:' + h.c + '">偏差値<b>' + h.v + "</b>" +
         "<i>" + h.r.n + "校中 " + h.r.r + "位</i></span>"
-         : '<span class="uni__h uni__h--none">偏差値<b>—</b><i>未入力</i></span>') +
+         : '<button class="uni__h uni__h--none" type="button" data-hs="' + esc(u.b) +
+           '">偏差値<b>＋</b><i>入れる</i></button>') +
     "</div>" +
     feeHead(u.f, u.web) +
     (u.x ? '<div class="wk"><p class="wk__x">' + esc(u.x) + "</p>" +
@@ -6936,6 +7006,8 @@ RG.showUniv = function (idx) {
     "<b>偏差値は同梱していません。</b>予備校各社が調べた数字で複製が禁じられているためです。" +
     "data/user_hensachi.js にご自分で調べた値を書くと、色と順位が出ます。</p></div>";
   var m = RG.openModal("🎓 " + u.n, html);
+  var hb = m.querySelector("[data-hs]");
+  if (hb) hb.addEventListener("click", function () { RG.showHensachiEdit(hb.dataset.hs); });
   $$("[data-camp]", m).forEach(function (b) {
     b.addEventListener("click", function () {
       var j = +b.dataset.camp, c = RG.UNIV[j];
@@ -6960,7 +7032,8 @@ RG.showHigh = function (idx) {
       '<span class="uni__f">' + esc(F.label || "") + "</span> 高等学校</p></div>" +
       (h ? '<span class="uni__h" style="background:' + h.c + '">偏差値<b>' + h.v + "</b>" +
         "<i>" + h.r.n + "校中 " + h.r.r + "位</i></span>"
-         : '<span class="uni__h uni__h--none">偏差値<b>—</b><i>未入力</i></span>') +
+         : '<button class="uni__h uni__h--none" type="button" data-hs="' + esc(s.n) +
+           '">偏差値<b>＋</b><i>入れる</i></button>') +
     "</div>" +
     '<div class="smkg">' +
       (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
@@ -6976,6 +7049,22 @@ RG.showHigh = function (idx) {
 };
 
 /* --------------------------------------------------------- 地図へ取り込む */
+/* 偏差値が変わったら、色だけ塗り直す（作り直しはしない＝速い） */
+RG.remergeEdu = function () {
+  var F = RG.EDU_FOUND || {};
+  (RG.MAPPOI || []).forEach(function (p) {
+    if (p.univ != null) {
+      var u = RG.UNIV[p.univ];
+      var h = RG.hensachiColor(u.b) || RG.hensachiColor(u.n);
+      p.bc = h ? h.c : (F[u.f] || {}).c || "#888";
+    } else if (p.high != null) {
+      var s2 = RG.HIGH[p.high];
+      var h2 = RG.hensachiColor(s2.n);
+      p.bc = h2 ? h2.c : (F[s2.f] || {}).c || "#888";
+    }
+  });
+  if (RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
+};
 RG.mergeEdu = function () {
   if (RG.__eduMerged || !RG.UNIV) return;
   RG.__eduMerged = true;
@@ -6992,6 +7081,308 @@ RG.mergeEdu = function () {
                      t: (F[s.f] || {}).label || "高校", be: "🏫",
                      bc: h ? h.c : (F[s.f] || {}).c || "#888", high: i });
   });
+};
+
+})(window.RG);
+
+</script>
+<script>
+/* =========================================================================
+   偏差値の手入力と、一括提供の «申請»
+   ・手入力は本当にできる。入れた瞬間に地図の色が変わり、端末に残る。
+   ・一括反映は «有償プラン»。ただし工事中。
+   ・塾・予備校の方からの提供は «申請フォーム» で受ける。ただし…（後述）
+   ========================================================================= */
+(function (RG) {
+"use strict";
+var $ = RG.$, esc = RG.esc;
+function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+
+var KEY = "tsg.hensachi.v1";
+function load() { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; } }
+function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+RG.hensachiUser = load;
+
+/* data/user_hensachi.js の値と、手入力の値を重ねる（手入力が優先） */
+RG.rebuildHensachi = function () {
+  var base = RG.HENSACHI_FILE || RG.HENSACHI || {};
+  if (!RG.HENSACHI_FILE) RG.HENSACHI_FILE = Object.assign({}, base);
+  RG.HENSACHI = Object.assign({}, RG.HENSACHI_FILE, load());
+  RG.__hrankReset && RG.__hrankReset();
+  if (RG.remergeEdu) RG.remergeEdu();
+};
+
+/* ------------------------------------------------------- 手入力の画面 */
+RG.showHensachiEdit = function (preset) {
+  var mine = load();
+  var n = Object.keys(mine).length;
+  var html = '<div class="hs">' +
+    '<p class="set__d">学校の名前と偏差値を入れると、<b>その場で地図の色が変わります</b>。' +
+    "入れた数字はこの端末に残り、次に開いたときも使われます。</p>" +
+    '<div class="hs__add">' +
+      '<input id="hs-n" type="search" placeholder="学校の名前（例: 東京大学）" ' +
+        'autocomplete="off" value="' + esc(preset || "") + '">' +
+      '<input id="hs-v" type="number" inputmode="numeric" min="20" max="90" placeholder="偏差値">' +
+      '<button id="hs-go" type="button">入れる</button>' +
+    "</div>" +
+    '<div id="hs-sug" class="hs__sug"></div>' +
+    '<div class="hs__list" id="hs-list"></div>' +
+    '<div class="legend__foot">' +
+      '<button id="hs-imp" class="set__b2" type="button">📋 まとめて貼りつけ</button>' +
+      '<button id="hs-exp" class="set__b2" type="button">💾 書き出す</button>' +
+      '<button id="hs-clr" class="set__b2" type="button">ぜんぶ消す</button>' +
+    "</div>" +
+    '<div class="hs__note">' +
+      "<b>🚀 一括で反映したい方へ</b>" +
+      "<p>何百校ぶんもの数字を一度に反映する機能は <b>有償プラン</b> の予定です。" +
+      "…と言いたいところですが、<b>その有償プランは絶賛工事中</b>で、いつできるかは決まっていません。</p>" +
+      "<p><b>手で入れるぶんには、いまこの瞬間から何校でも入れられます。</b>" +
+      "上の «まとめて貼りつけ» を使えば、表計算ソフトからコピーした数百行を一度に取り込めます。" +
+      "つまり実質、困ることはありません。</p>" +
+      '<button id="hs-vendor" class="hs__vb" type="button">' +
+      "🏫 塾・予備校の方はこちら（データ提供のご相談）</button>" +
+    "</div>" +
+    '<p class="src">偏差値は予備校各社が独自に調べたもので、複製・転載が禁じられています。' +
+    "このアプリは数字を持っていません。<b>ご自分で調べた値を、ご自分のために使ってください。</b></p></div>";
+  var m = RG.openModal("📊 偏差値を入れる（" + n + "校）", html);
+
+  function paint() {
+    var mine2 = load(), ks = Object.keys(mine2).sort(function (a, b) { return mine2[b] - mine2[a]; });
+    $("#hs-list", m).innerHTML = ks.length
+      ? ks.map(function (k) {
+          var c = RG.hensachiColor(k);
+          return '<div class="hs__r"><span class="hs__v" style="background:' +
+            (c ? c.c : "#ccc") + '">' + mine2[k] + "</span>" +
+            '<span class="hs__n">' + esc(k) + "</span>" +
+            '<button class="hs__x" type="button" data-del="' + esc(k) + '">✕</button></div>';
+        }).join("")
+      : '<p class="set__d">まだ1校も入っていません。上の枠から入れてみてください。</p>';
+    $$("[data-del]", m).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var o = load(); delete o[b.dataset.del]; save(o);
+        RG.rebuildHensachi(); paint();
+      });
+    });
+  }
+  function add() {
+    var nm = $("#hs-n", m).value.trim(), v = parseFloat($("#hs-v", m).value);
+    if (!nm || !(v >= 20 && v <= 90)) {
+      RG.tripStatus("学校の名前と、20〜90の数字を入れてください。", "warn", 2800); return;
+    }
+    var o = load(); o[nm] = v; save(o);
+    RG.rebuildHensachi(); paint();
+    $("#hs-n", m).value = ""; $("#hs-v", m).value = "";
+    RG.tripStatus("📊 " + nm + " に " + v + " を入れました。地図の色が変わります。", "ok", 3000);
+  }
+  $("#hs-go", m).addEventListener("click", add);
+  $("#hs-v", m).addEventListener("keydown", function (e) { if (e.key === "Enter") add(); });
+  // 学校名の候補を出す
+  $("#hs-n", m).addEventListener("input", function () {
+    var q = this.value.trim();
+    var box = $("#hs-sug", m);
+    if (q.length < 2) { box.innerHTML = ""; return; }
+    var names = [];
+    (RG.UNIV || []).forEach(function (u) { if (names.indexOf(u.b) < 0) names.push(u.b); });
+    (RG.HIGH || []).forEach(function (h) { names.push(h.n); });
+    var hit = names.filter(function (x) { return x.indexOf(q) >= 0; }).slice(0, 8);
+    box.innerHTML = hit.map(function (x) {
+      return '<button class="hs__s" type="button" data-pick="' + esc(x) + '">' + esc(x) + "</button>";
+    }).join("");
+    $$("[data-pick]", box).forEach(function (b) {
+      b.addEventListener("click", function () {
+        $("#hs-n", m).value = b.dataset.pick; box.innerHTML = ""; $("#hs-v", m).focus();
+      });
+    });
+  });
+  $("#hs-clr", m).addEventListener("click", function () {
+    save({}); RG.rebuildHensachi(); paint();
+    RG.tripStatus("入れた数字をぜんぶ消しました。", "info", 2600);
+  });
+  $("#hs-exp", m).addEventListener("click", function () {
+    var o = load();
+    var txt = "RG.HENSACHI = " + JSON.stringify(o, null, 2) + ";\n";
+    RG.openModal("💾 書き出し", '<p class="set__d">この中身を <code>data/user_hensachi.js</code> に' +
+      "貼りつけると、この端末以外でも使えます。</p>" +
+      '<textarea class="hs__ta" readonly>' + esc(txt) + "</textarea>");
+  });
+  $("#hs-imp", m).addEventListener("click", function () {
+    var m2 = RG.openModal("📋 まとめて貼りつけ",
+      '<p class="set__d">表計算ソフトから <b>学校名 と 偏差値</b> の2列をコピーして、' +
+      "そのまま貼りつけてください。1行に1校です。<br>" +
+      "区切りは <b>タブ・カンマ・スペース</b> のどれでもかまいません。</p>" +
+      '<textarea class="hs__ta" id="hs-in" placeholder="東京大学\t72\n早稲田大学\t68\n慶應義塾大学\t68"></textarea>' +
+      '<div class="legend__foot"><button id="hs-run" class="set__b2" type="button">取り込む</button></div>');
+    $("#hs-run", m2).addEventListener("click", function () {
+      var o = load(), ok = 0, ng = 0;
+      ($("#hs-in", m2).value || "").split(/\r?\n/).forEach(function (line) {
+        var p = line.trim().split(/[\t,;]+|\s{1,}/);
+        if (p.length < 2) { if (line.trim()) ng++; return; }
+        var v = parseFloat(p[p.length - 1]);
+        var nm = p.slice(0, -1).join(" ").trim();
+        if (!nm || !(v >= 20 && v <= 90)) { ng++; return; }
+        o[nm] = v; ok++;
+      });
+      save(o); RG.rebuildHensachi();
+      RG.closeModal();
+      RG.showHensachiEdit();
+      RG.tripStatus("📊 " + ok + " 校を取り込みました" + (ng ? "（" + ng + " 行は読めませんでした）" : "") +
+        "。地図の色が変わります。", ok ? "ok" : "warn", 4200);
+    });
+  });
+  $("#hs-vendor", m).addEventListener("click", function () { RG.showVendorForm(); });
+  paint();
+};
+
+/* ==========================================================================
+   塾・予備校の方からのデータ提供 «申請フォーム»
+   ―― 申し込めるようには見えるが、たどり着くのがたいへんな作りにしてある。
+      本当に有料化する気があるのかは、この長さから察していただきたい。
+   ========================================================================== */
+var TERMS = [
+ "提供いただく数値の著作権・データベース権が、貴社に帰属することを確認しました",
+ "第三者の調査結果を含まないことを確認しました",
+ "掲載後、当サイトが数値を «参考値» として表示することに同意します",
+ "数値の更新は年4回（3月・6月・9月・12月の各第2火曜）に限られることに同意します",
+ "更新の締切が、反映希望日の45営業日前であることに同意します",
+ "当サイトが数値の正確性について一切の保証を行わないことに同意します",
+ "掲載順・表示色の決定権が当サイトにあることに同意します",
+ "貴社ロゴの表示位置・大きさを当サイトが決定することに同意します",
+ "ロゴは SVG（アウトライン化済み・単色・縦横比1:1・8KB以内）でご提供いただきます",
+ "掲載の停止を求める場合、90日前までに書面でご連絡いただくことに同意します",
+ "本申請が受理されない場合があること、および理由が開示されないことに同意します",
+ "本申請に要した費用を貴社が負担することに同意します",
+ "謝礼のお支払いが、当サイトの決済システムの完成後となることに同意します",
+ "決済システムの完成時期が未定であることを理解しました",
+ "上記すべてを、他の誰にも相談せずご自身で判断されたことを確認しました"
+];
+var SPEC = [
+ ["ファイル形式", "UTF-8（BOMつき）の固定長テキスト。CSV・TSV・Excel は受け付けません"],
+ ["改行コード", "CR+LF。ファイル末尾にも1つ必要です"],
+ ["1行の長さ", "必ず512バイト。足りない分は全角スペースで埋めてください"],
+ ["学校コード", "先頭12バイト。文部科学省の学校コード（13桁）の下12桁"],
+ ["学校名", "13〜92バイト。JIS X 0208 の範囲。外字は「〓」に置換"],
+ ["偏差値", "93〜97バイト。小数第1位まで。右詰め・ゼロ埋め（例: 0725）"],
+ ["調査年月", "98〜103バイト。和暦6桁（例: R08 04 → 令和8年4月）"],
+ ["区分", "104バイト。1=大学 2=短大 3=高校 4=その他"],
+ ["文理", "105バイト。B=文系 R=理系 N=区分なし"],
+ ["予備欄", "106〜510バイト。すべて全角スペース"],
+ ["チェックディジット", "511〜512バイト。1〜510バイトのモジュラス11（ウェイト2-7循環）"],
+ ["ファイル名", "HNS_｛貴社コード8桁｝_｛YYYYMMDD｝_｛連番3桁｝.dat"],
+ ["貴社コード", "当サイトが発行します（発行手続きは決済システムの完成後）"],
+ ["送付方法", "光ディスク（DVD-R・書き込み後クローズ処理済み）を書留郵便で"],
+ ["送付先", "決済システムの完成後にお知らせします"]
+];
+
+RG.showVendorForm = function () {
+  var step = 0, checked = {}, form = {};
+  function render() {
+    var html = '<div class="vf">' +
+      '<div class="vf__bar"><i style="width:' + ((step / 4) * 100).toFixed(0) + '%"></i></div>' +
+      '<div class="vf__st">ステップ ' + (step + 1) + " / 5</div>";
+    if (step === 0) {
+      html += '<h4 class="vf__h">1. ご提供の趣旨</h4>' +
+        '<p class="set__d">偏差値データを一括で提供いただける塾・予備校の皆さまへ。' +
+        "ご提供いただいた場合、<b>貴社のロゴを当サイトに掲出</b>いたします。</p>" +
+        '<div class="vf__f"><label>貴社名<input id="vf-c" type="text" value="' +
+          esc(form.c || "") + '" placeholder="◯◯予備校"></label>' +
+        "<label>ご担当者名<input id=\"vf-p\" type=\"text\" value=\"" + esc(form.p || "") + '"></label>' +
+        "<label>ご提供予定の校数<input id=\"vf-n\" type=\"number\" value=\"" + esc(form.n || "") +
+          '" placeholder="例: 3000"></label></div>';
+    } else if (step === 1) {
+      html += '<h4 class="vf__h">2. 利用規約のご確認（' + TERMS.length + "項目)</h4>" +
+        '<p class="set__d">恐れ入りますが、<b>すべて</b>にチェックをお願いいたします。</p>' +
+        '<div class="vf__terms">' + TERMS.map(function (t, i) {
+          return '<label class="vf__t"><input type="checkbox" data-t="' + i + '"' +
+            (checked[i] ? " checked" : "") + "><span>" + esc(t) + "</span></label>";
+        }).join("") + "</div>";
+    } else if (step === 2) {
+      html += '<h4 class="vf__h">3. ファイル仕様のご確認</h4>' +
+        '<p class="set__d">ご提供データは、下記の仕様に<b>完全に</b>合致している必要があります。</p>' +
+        '<table class="vf__spec">' + SPEC.map(function (r) {
+          return "<tr><th>" + esc(r[0]) + "</th><td>" + esc(r[1]) + "</td></tr>";
+        }).join("") + "</table>" +
+        '<label class="vf__t vf__t--big"><input type="checkbox" data-spec="1"' +
+        (checked.spec ? " checked" : "") + "><span>上記の仕様をすべて満たすファイルを作成できます</span></label>";
+    } else if (step === 3) {
+      html += '<h4 class="vf__h">4. 謝礼のご予算</h4>' +
+        '<p class="set__d">当サイトからお支払いする謝礼の<b>ご希望額</b>をご入力ください。' +
+        "お支払いは当サイトの決済システム完成後となります。</p>" +
+        '<div class="vf__f"><label>ご希望の謝礼額（円）<input id="vf-y" type="number" value="' +
+          esc(form.y || "") + '" placeholder="例: 500000"></label>' +
+        '<label>お支払い希望時期<select id="vf-w">' +
+          ["決済システムの完成後", "決済システムの完成後", "決済システムの完成後"].map(function (o, i) {
+            return '<option value="' + i + '">' + o + "</option>"; }).join("") +
+        "</select></label></div>" +
+        '<p class="vf__warn">※ 選択肢は1つです。</p>';
+    } else {
+      html += '<h4 class="vf__h">5. 送信</h4>' +
+        '<div class="vf__sum">' +
+          "<div><span>貴社名</span><b>" + esc(form.c || "—") + "</b></div>" +
+          "<div><span>ご担当者</span><b>" + esc(form.p || "—") + "</b></div>" +
+          "<div><span>校数</span><b>" + esc(form.n || "—") + "</b></div>" +
+          "<div><span>謝礼ご希望額</span><b>" +
+            (form.y ? "¥" + Number(form.y).toLocaleString("ja-JP") : "—") + "</b></div>" +
+          "<div><span>規約の確認</span><b>" + TERMS.length + " / " + TERMS.length + " 項目</b></div>" +
+        "</div>" +
+        '<button class="vf__send" id="vf-send" type="button">📮 この内容で申請する</button>';
+    }
+    html += '<div class="vf__nav">' +
+      (step > 0 ? '<button class="set__b2" id="vf-prev" type="button">← 戻る</button>' : "") +
+      (step < 4 ? '<button class="set__b2 vf__next" id="vf-next" type="button">次へ →</button>' : "") +
+      "</div></div>";
+    var m = RG.openModal("🏫 データ提供のお申し込み", html);
+    if (step === 0) {
+      ["c", "p", "n"].forEach(function (k) {
+        var el = $("#vf-" + k, m);
+        if (el) el.addEventListener("input", function () { form[k] = this.value; });
+      });
+    }
+    if (step === 1) {
+      $$("[data-t]", m).forEach(function (b) {
+        b.addEventListener("change", function () { checked[b.dataset.t] = this.checked; });
+      });
+    }
+    if (step === 2) {
+      var sp = $("[data-spec]", m);
+      if (sp) sp.addEventListener("change", function () { checked.spec = this.checked; });
+    }
+    if (step === 3) {
+      var y = $("#vf-y", m);
+      if (y) y.addEventListener("input", function () { form.y = this.value; });
+    }
+    var nx = $("#vf-next", m);
+    if (nx) nx.addEventListener("click", function () {
+      if (step === 1) {
+        var miss = TERMS.filter(function (_, i) { return !checked[i]; }).length;
+        if (miss) { RG.tripStatus("あと " + miss + " 項目のチェックが必要です。", "warn", 3200); return; }
+      }
+      if (step === 2 && !checked.spec) {
+        RG.tripStatus("ファイル仕様のご確認にチェックをお願いいたします。", "warn", 3200); return;
+      }
+      step++; render();
+    });
+    var pv = $("#vf-prev", m);
+    if (pv) pv.addEventListener("click", function () { step--; render(); });
+    var sd = $("#vf-send", m);
+    if (sd) sd.addEventListener("click", function () {
+      RG.openModal("🚧 送信先が工事中です", '<div class="gate">' +
+        '<div class="gate__e">🚧📮</div>' +
+        '<p class="gate__t">ここまでお進みいただき、ありがとうございました。</p>' +
+        '<p class="gate__b">申し訳ありません。<b>申請の送信先が絶賛工事中</b>です。' +
+        "このフォームはどこにも送られません。<br>" +
+        "そもそも当サイトには送信を受け取るしくみがありません（すべてブラウザの中で動いています）。</p>" +
+        '<p class="gate__b">工事の完了時期は決まっていません。' +
+        "作るかどうかは、みなさんの声（VOC）だけで決めます。</p>" +
+        '<p class="gate__b gate__b--s">なお、この工事は<b>こよみの有償プラン</b>・' +
+        "<b>ヤニカスチケットの決済</b>・<b>おとな向けの映像</b>と同じ現場が担当しています。<br>" +
+        "現場はいま、たいへん混み合っております。</p>" +
+        '<p class="gate__b"><b>その間も、偏差値の手入力は何校でもできます。</b>' +
+        "«まとめて貼りつけ» なら、表計算ソフトからコピーした数百行を一度に取り込めます。</p>" +
+        '<div class="gate__f"><button class="set__b2" type="button" ' +
+        'onclick="RG.closeModal();RG.showHensachiEdit()">手で入れるほうへ戻る</button></div></div>');
+    });
+  }
+  render();
 };
 
 })(window.RG);

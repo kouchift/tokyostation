@@ -1254,6 +1254,7 @@ function mergeExtraPois(key) {
       });
     });
   });
+  if (RG.rebuildHensachi) RG.rebuildHensachi();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();

@@ -115,6 +115,7 @@ var Rail = (function () {
       '<button class="lr__c" type="button" id="lr-chain">🏪 お店をえらぶ</button> ' +
       '<button class="lr__c" type="button" id="lr-corp">🏢 業種でえらぶ</button> ' +
       '<button class="lr__c lr__c--y" type="button" id="lr-smoke">🚬 吸える場所</button> ' +
+      '<button class="lr__c" type="button" id="lr-hs">📊 偏差値を入れる</button> ' +
       "アイコンを押すと、そのジャンルだけを地図に残します（<b>いくつでも選べます</b>）。" +
       "うすいアイコンはデータが取れていないものです。名前の下の数字は地図にある件数です。</div>";
     box.innerHTML =
@@ -200,6 +201,10 @@ var Rail = (function () {
       });
     }
     RG.openChains = function () { bindChain(RG.openModal("🏪 お店をえらぶ", chainPanel())); };
+    var hb3 = $("#lr-hs", box);
+    if (hb3) hb3.addEventListener("click", function () {
+      if (RG.showHensachiEdit) RG.showHensachiEdit();
+    });
     var sb2 = $("#lr-smoke", box);
     if (sb2) sb2.addEventListener("click", function () {
       if (RG.hasSmokeTicket && RG.hasSmokeTicket()) RG.openSmokeFilter();

@@ -1887,3 +1887,65 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   font-size:11.5px;font-family:inherit;color:var(--highlight);cursor:pointer}
 .camp__b:hover{background:var(--lb900);color:#fff}
 @media (max-width:420px){ .fee__g{grid-template-columns:1fr 1fr} }
+
+/* =========================================================================
+   v39：偏差値の手入力と、提供のお申し込み
+   ========================================================================= */
+.hs__add{display:grid;grid-template-columns:1fr 90px auto;gap:6px;margin-bottom:6px}
+.hs__add input{height:42px;border:1px solid var(--border);border-radius:9px;padding:0 11px;
+  font-size:14px;font-family:inherit}
+.hs__add button{height:42px;padding:0 16px;border-radius:9px;border:0;background:var(--lb900);
+  color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+.hs__sug{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.hs__s{border:1px solid var(--border);border-radius:999px;background:#fff;padding:6px 11px;
+  font-size:11.5px;font-family:inherit;cursor:pointer}
+.hs__s:hover{background:var(--lb50);border-color:var(--lb400)}
+.hs__list{max-height:min(34vh,260px);overflow-y:auto;margin-bottom:10px}
+.hs__r{display:grid;grid-template-columns:46px 1fr 32px;gap:9px;align-items:center;
+  padding:6px 4px;border-bottom:1px solid var(--grid)}
+.hs__v{color:#fff;font-family:var(--mono);font-weight:800;font-size:13px;text-align:center;
+  border-radius:7px;padding:5px 0}
+.hs__n{font-size:12.5px}
+.hs__x{border:0;background:none;color:var(--label);font-size:14px;cursor:pointer}
+.hs__x:hover{color:#D93025}
+.hs__ta{width:100%;min-height:160px;border:1px solid var(--border);border-radius:9px;
+  padding:10px;font-family:var(--mono);font-size:11.5px;line-height:1.7}
+.hs__note{background:#FFFBEB;border:1px solid #F0E0B0;border-radius:10px;padding:11px 13px;margin:12px 0}
+.hs__note b{font-size:12.5px}
+.hs__note p{font-size:11.5px;line-height:1.9;margin:6px 0 0;color:var(--gray800)}
+.hs__vb{width:100%;height:42px;margin-top:10px;border-radius:9px;border:1px solid #C8880F;
+  background:#fff;color:#8A5A00;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer}
+.hs__vb:hover{background:#C8880F;color:#fff}
+.uni__h--none{border:1px dashed var(--border);cursor:pointer;font-family:inherit}
+.uni__h--none:hover{background:var(--lb50);border-color:var(--lb400);color:var(--highlight)}
+
+/* 申し込みフォーム */
+.vf__bar{height:5px;background:var(--grid);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.vf__bar i{display:block;height:100%;background:var(--lb900);transition:width .3s ease}
+.vf__st{font-size:10.5px;color:var(--label);font-family:var(--mono);margin-bottom:10px}
+.vf__h{margin:0 0 8px;font-size:15px}
+.vf__f{display:grid;gap:9px;margin-bottom:10px}
+.vf__f label{display:block;font-size:11.5px;font-weight:600}
+.vf__f input,.vf__f select{width:100%;height:42px;margin-top:4px;border:1px solid var(--border);
+  border-radius:9px;padding:0 11px;font-size:14px;font-family:inherit}
+.vf__terms{max-height:min(40vh,300px);overflow-y:auto;border:1px solid var(--grid);
+  border-radius:10px;padding:6px 4px}
+.vf__t{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;padding:9px 8px;
+  border-bottom:1px solid var(--grid);font-size:11.5px;line-height:1.7;cursor:pointer}
+.vf__t:last-child{border-bottom:0}
+.vf__t input{width:19px;height:19px;margin-top:1px}
+.vf__t--big{border:1px solid var(--lb400);border-radius:9px;margin-top:10px;background:var(--lb50)}
+.vf__spec{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px}
+.vf__spec th{text-align:left;padding:7px 9px;background:var(--control);border:1px solid var(--grid);
+  width:34%;vertical-align:top;font-weight:700}
+.vf__spec td{padding:7px 9px;border:1px solid var(--grid);line-height:1.7}
+.vf__warn{font-size:10.5px;color:#A58000;margin:4px 0 0}
+.vf__sum{border:1px solid var(--grid);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.vf__sum div{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;
+  border-top:1px solid var(--grid);font-size:12px}
+.vf__sum div:first-child{border-top:0}
+.vf__sum span{color:var(--label)}
+.vf__send{width:100%;height:48px;border-radius:11px;border:0;background:#C8880F;color:#fff;
+  font-size:15px;font-weight:800;font-family:inherit;cursor:pointer}
+.vf__nav{display:flex;gap:6px;margin-top:12px}
+.vf__next{margin-left:auto}
