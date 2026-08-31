@@ -10,6 +10,18 @@ var $ = RG.$, esc = RG.esc;
 function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
 
 var AKEY = "tsg.adult.v1";
+
+/* 有償プランの合いことばの照合。
+   合いことばそのものはこのファイルにも説明書にも書きません。
+   入力された文字列から数を作り、あらかじめ用意した数と合うかだけを見ます。
+   （元の文字列を復元することはできません） */
+var GATE = 2085747948;
+function digest(s) {
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h;
+}
+function okPass(s) { return digest(String(s || "").trim()) === GATE; }
 function on() { try { return localStorage.getItem(AKEY) === "1"; } catch (e) { return false; } }
 function setOn(v) { try { v ? localStorage.setItem(AKEY, "1") : localStorage.removeItem(AKEY); } catch (e) {} }
 RG.adultOn = on;
@@ -21,27 +33,14 @@ RG.showAdultGate = function () {
     '<p class="gate__t">おっと…その先は <b>おとなの領域</b> です。</p>' +
     '<p class="gate__b">このサイトは小学生からお年寄りまで使います。' +
     "そのため、ラブホテルやアダルトショップは<b>はじめから地図に出しません</b>。</p>" +
-    '<p class="gate__b">どうしても見たい方は、' +
-    "<b>⚙️設定 → いちばん下の «くわしい設定» → «表示するものを増やす»</b> の中に" +
-    "切り替えがあります。<br>そこまでたどり着けた方は、たぶん大人です。</p>" +
+    '<p class="gate__b">ご覧になるには <b>2つ</b> が必要です。<br>' +
+    "① <b>⚙️設定 → いちばん下の «くわしい設定» → «表示するものを増やす»</b> まで進む<br>" +
+    "② <b>有償プランの合いことば</b>を入れる</p>" +
+    '<p class="gate__b gate__b--s">なお、有償プランのお申し込み口は絶賛工事中です。' +
+    "いまのところ新しくご加入いただく方法はありません。</p>" +
     '<div class="gate__f"><button class="set__b2" type="button" onclick="RG.closeModal()">' +
     "わかりました</button></div></div>";
   RG.openModal("😅 おとなの領域", html);
-};
-
-/* ---------------------------------------- アダルト系ライブ映像（有償プラン） */
-RG.showAdultCam = function () {
-  RG.openModal("😅 おっとっと", '<div class="gate">' +
-    '<div class="gate__e">🫠💦</div>' +
-    '<p class="gate__t">おとな向けのライブ映像は <b>有償プラン</b> の予定です。</p>' +
-    '<p class="gate__b">…と言いたいところですが、その有償プランは' +
-    "<b>絶賛工事中</b>で、いつできるかは決まっていません。<br>" +
-    "作るかどうかは、みなさんの声（VOC）だけで決めます。</p>" +
-    '<p class="gate__b gate__b--s">なお、この工事は<b>こよみの有償プラン</b>と' +
-    "<b>ヤニカスチケットの決済</b>と同じ現場が担当しています。<br>" +
-    "現場はいま、たいへん混み合っております。</p>" +
-    '<div class="gate__f"><button class="set__b2" type="button" onclick="RG.closeModal()">' +
-    "残念でした</button></div></div>");
 };
 
 /* ------------------------------------------------------- 施設1件のカード */
@@ -104,6 +103,21 @@ RG.adultSwitchHTML = function () {
 RG.bindAdultSwitch = function (root) {
   var a = $("#ad-sw", root);
   if (a) a.addEventListener("change", function () {
+    var self = this;
+    if (self.checked && !on()) {
+      // 入れるときは、有償プランの合いことばが要ります
+      self.checked = false;
+      RG.askAdultPass(function () {
+        self.checked = true;
+        setOn(true);
+        RG.__adultMerged = false;
+        if (RG.mergeAdult) RG.mergeAdult();
+        if (RG.Map.rebuildPOI) RG.Map.rebuildPOI();
+        if (RG.rebuildRail) RG.rebuildRail();
+        RG.tripStatus("🔞 おとな向けの施設を地図に出しました。", "info", 3000);
+      });
+      return;
+    }
     setOn(this.checked);
     RG.__adultMerged = false;
     if (RG.mergeAdult) RG.mergeAdult();
@@ -128,6 +142,55 @@ RG.bindAdultSwitch = function (root) {
     if (RG.Map.rebuildPOI) RG.Map.rebuildPOI();
     if (RG.rebuildRail) RG.rebuildRail();
   });
+};
+
+/* ------------------------------------------- 有償プランの合いことばを聞く */
+RG.askAdultPass = function (onOK) {
+  var html = '<div class="pw">' +
+    '<div class="pw__e">🔐</div>' +
+    '<p class="pw__t">ここから先は <b>有償プラン</b> の方だけがご覧になれます。</p>' +
+    '<p class="pw__b">おとな向けの施設（ラブホテル・アダルトショップ）と、' +
+    "おとな向けのライブ映像は、<b>有償プランにご加入いただいた方にお伝えする合いことば</b>を" +
+    "入れていただくと表示できます。</p>" +
+    '<div class="pw__f"><input id="pw-in" type="password" inputmode="numeric" ' +
+      'autocomplete="off" placeholder="合いことば" maxlength="24">' +
+      '<button id="pw-go" type="button">確かめる</button></div>' +
+    '<p class="pw__ng" id="pw-ng" hidden>合いことばがちがいます。</p>' +
+    '<div class="pw__note"><b>💰 ご加入について</b>' +
+    "<p>有償プランのお申し込み口は<b>絶賛工事中</b>で、いつできるかは決まっていません。" +
+    "作るかどうかは、みなさんの声（VOC）だけで決めます。<br>" +
+    "つまり、いまのところ新しくご加入いただく方法はありません。</p>" +
+    "<p>この工事は、こよみの有償プラン・ヤニカスチケットの決済・" +
+    "偏差値の一括反映と同じ現場が担当しています。現場はたいへん混み合っております。</p></div>" +
+    '<p class="src">18歳未満の方はご覧になれません。' +
+    "合いことばはこの端末にのみ記録され、どこにも送られません。</p></div>";
+  var m = RG.openModal("🔐 合いことばの確認", html);
+  function go() {
+    var v = $("#pw-in", m).value;
+    if (okPass(v)) { RG.closeModal(); if (onOK) onOK(); return; }
+    var ng = $("#pw-ng", m);
+    if (ng) ng.hidden = false;
+    $("#pw-in", m).value = "";
+    $("#pw-in", m).focus();
+  }
+  $("#pw-go", m).addEventListener("click", go);
+  $("#pw-in", m).addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
+  setTimeout(function () { var el = $("#pw-in", m); if (el) el.focus(); }, 50);
+};
+
+/* おとな向けのライブ映像も、同じ合いことばの先にある */
+RG.showAdultCam = function () {
+  if (!on()) { RG.askAdultPass(function () { RG.showAdultCam(); }); return; }
+  RG.openModal("😅 おっとっと", '<div class="gate">' +
+    '<div class="gate__e">🫠💦</div>' +
+    '<p class="gate__t">合いことばの確認、ありがとうございました。</p>' +
+    '<p class="gate__b">…なのですが、<b>肝心の映像を配信するしくみが絶賛工事中</b>です。' +
+    "いつできるかは決まっていません。</p>" +
+    '<p class="gate__b gate__b--s">この工事は、こよみの有償プラン・ヤニカスチケットの決済・' +
+    "偏差値の一括反映・提供のお申し込み口と同じ現場が担当しています。<br>" +
+    "現場はいま、たいへん混み合っております。</p>" +
+    '<div class="gate__f"><button class="set__b2" type="button" onclick="RG.closeModal()">' +
+    "残念でした</button></div></div>");
 };
 
 /* --------------------------------------------------------- 取り込み */

@@ -58,13 +58,38 @@ RG.showTicket = function () {
   var m = RG.openModal("🎫 ヤニカスチケット", html);
   var on = $("#tk-on", m);
   if (on) on.addEventListener("click", function () {
+    // 発券の前に、確認を1枚はさむ
+    RG.openModal("🚬 発券のまえに", '<div class="pw">' +
+      '<div class="pw__e">🔞🚬</div>' +
+      '<p class="pw__t">つぎの3つをお確かめください。</p>' +
+      '<label class="vf__t"><input type="checkbox" data-sk1><span>' +
+        "<b>20歳以上</b>です（20歳未満の喫煙は法律で禁じられています）</span></label>" +
+      '<label class="vf__t"><input type="checkbox" data-sk2><span>' +
+        "表示される場所は <b>OpenStreetMap の登録内容</b> であり、" +
+        "実際の可否は<b>現地の表示に従う</b>ことを理解しました</span></label>" +
+      '<label class="vf__t"><input type="checkbox" data-sk3><span>' +
+        "<b>路上喫煙は多くの区で禁止</b>されており、過料が科される場合があることを理解しました</span></label>" +
+      '<div class="pw__note"><p>この確認は端末の中だけで完結し、どこにも送られません。</p></div>' +
+      '<div class="gate__f"><button class="tkt__go" type="button" id="sk-ok">' +
+      "3つとも確認しました</button></div></div>");
+    var mm = document.querySelector(".modal");
+    $("#sk-ok", mm).addEventListener("click", function () {
+      var all = ["sk1", "sk2", "sk3"].every(function (k) {
+        var c = mm.querySelector("[data-" + k + "]"); return c && c.checked;
+      });
+      if (!all) { RG.tripStatus("3つとも確認をお願いします。", "warn", 2800); return; }
+      doIssue();
+    });
+    return;
+  });
+  function doIssue() {
     giveTicket(); RG.closeModal();
     if (RG.mergeSmoke) RG.mergeSmoke();
     if (RG.settings) RG.settings.genres = ["smoke"];
     if (RG.Map.setGenres) RG.Map.setGenres(["smoke"]);
     if (RG.rebuildRail) RG.rebuildRail();
     RG.tripStatus("🚬 発券しました。地図に喫煙できる場所を出しています。", "ok", 3600);
-  });
+  }
   var off = $("#tk-off", m);
   if (off) off.addEventListener("click", function () {
     dropTicket(); RG.closeModal();

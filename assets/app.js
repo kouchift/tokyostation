@@ -1279,28 +1279,79 @@ function mergeExtraPois(key) {
 RG.mergeExtraPois = mergeExtraPois;
 
 RG.boot = function () {
+  /* 起動の手順。
+     ひとつの部品でつまずいても «そこで全部止まる» ことがないように、
+     段ごとに分けて、失敗したものを覚えておく。
+     地図が出ることを何より優先する。 */
+  var failed = [];
+  function step(name, fn, vital) {
+    try { fn(); }
+    catch (err) {
+      failed.push({ n: name, e: (err && err.message) || String(err), vital: !!vital });
+      if (window.console) console.error("[起動] " + name + " でつまずきました:", err);
+    }
+  }
   if (!RG.MAPPOI) RG.MAPPOI = [];
-  mergeExtraPois();
-  buildIndex(); Card.init();
-  Map.draw(); Map.initViewport();
-  (RG.initSearchUI ? RG.initSearchUI() : initSearch()); initChips(); initSheetDrag();
-  if (RG.initPlannerUI) RG.initPlannerUI();
-  Map.drawBase();
-  Map.buildPOI();
-  if (RG.initLinesUI) RG.initLinesUI();
-  if (RG.initPlan) RG.initPlan();
-  $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
-  $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
-  $("#zfit").addEventListener("click", Map.fitAll);
-  $("#zhub").addEventListener("click", function () { Map.focus(RG.HUB, 300); });
-  $("#btn-hub").addEventListener("click", function () { Card.open(RG.HUB); });
+
+  // ---- ここから下は «地図が出るまで» に必要なもの ----
+  step("スポットの取り込み", function () { mergeExtraPois(); });
+  step("検索の索引", function () { buildIndex(); });
+  step("駅カード", function () { Card.init(); });
+  step("路線図の描画", function () { Map.draw(); Map.initViewport(); }, true);
+
+  // ---- ここから下は «無くても地図は見られる» もの ----
+  step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
+  step("フィルタ", function () { initChips(); });
+  step("シートの操作", function () { initSheetDrag(); });
+  step("出発バー", function () { if (RG.initPlannerUI) RG.initPlannerUI(); });
+  step("地形・行政区", function () { Map.drawBase(); });
+  step("スポットの描画", function () { Map.buildPOI(); });
+  step("路線レール", function () { if (RG.initLinesUI) RG.initLinesUI(); });
+  step("おでかけプラン", function () { if (RG.initPlan) RG.initPlan(); });
+  step("偏差値", function () { if (RG.rebuildHensachi) RG.rebuildHensachi(); });
+  step("学校", function () { if (RG.mergeEdu) RG.mergeEdu(); });
+  step("地図のボタン", function () {
+    $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
+    $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
+    $("#zfit").addEventListener("click", Map.fitAll);
+    $("#zhub").addEventListener("click", function () { Map.focus(RG.HUB, 300); });
+    var bh = $("#btn-hub");
+    if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
+  });
+  step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
+  step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });
+  step("文字の大きさ", function () {
+    if (RG.settings && RG.settings.bigtext) document.documentElement.classList.add("bigtext");
+  });
+
   var sl = $("#statline");
   if (sl) sl.textContent = RG.NET.stations.length + "駅 / " + RG.NET.lines.length + "路線";
-  Map.focus(RG.HUB, 700);
-  if (RG.buildWeekBar) RG.buildWeekBar();
-  if (RG.buildGroupBar) RG.buildGroupBar();
-  // 保存されている «文字を大きく» を反映
-  if (RG.settings && RG.settings.bigtext) document.documentElement.classList.add("bigtext");
+  step("最初の表示位置", function () { Map.focus(RG.HUB, 700); });
+
+  RG.bootFailed = failed;
+  if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);
+  return failed;
+};
+
+/* つまずいた部品を、画面の下に静かに知らせる（地図は使えるまま） */
+RG.showBootTrouble = function (failed) {
+  var vital = failed.filter(function (f) { return f.vital; });
+  var box = document.getElementById("boot-warn");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "boot-warn"; box.className = "bootwarn";
+    document.body.appendChild(box);
+  }
+  box.innerHTML =
+    '<div class="bootwarn__b">' +
+      "<b>" + (vital.length ? "⚠ 地図をうまく描けませんでした" : "⚠ 一部が読み込めませんでした") + "</b>" +
+      "<p>" + failed.map(function (f) { return f.n; }).join("・") +
+      " でつまずきました。ファイルが足りていない可能性があります。</p>" +
+      '<div class="bootwarn__f">' +
+        '<a class="bootwarn__x" href="check.html">📋 ファイルを点検する</a>' +
+        '<button class="bootwarn__x" type="button" onclick="location.reload()">再読み込み</button>' +
+        '<button class="bootwarn__x" type="button" onclick="this.closest(\'.bootwarn\').remove()">閉じる</button>' +
+      "</div></div>";
 };
 
 })(window);

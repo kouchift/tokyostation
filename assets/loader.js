@@ -89,7 +89,12 @@ function refresh(key) {
 
 RG.startApp = function () {
   setProgress("路線図をよみこんでいます", 8);
-  Promise.all(CORE.map(load)).then(function () {
+  // どのファイルが読めなかったかを覚えておく
+  var bad = [];
+  Promise.all(CORE.map(function (f) {
+    return load(f).catch(function () { bad.push(f); });
+  })).then(function () {
+    if (bad.length) throw new Error(bad.join(" / "));
     setProgress("地図をえがいています", 30);
     // まず地図を出す。ここまでが体感の速さを決める
     RG.boot();
@@ -113,7 +118,13 @@ RG.startApp = function () {
     setProgress("よみこみに失敗しました", 100);
     if (window.console) console.error(e);
     var m = document.getElementById("boot-error");
-    if (m) m.hidden = false;
+    if (m) {
+      m.hidden = false;
+      var p2 = m.querySelector("p");
+      if (p2) p2.innerHTML = "つぎのファイルが見つかりませんでした。<br><code>" +
+        String(e.message || "").replace(/</g, "&lt;") + "</code><br>" +
+        'アップロードもれがないか、<a href="check.html">📋 ファイル点検</a> で確かめてください。';
+    }
   });
 };
 

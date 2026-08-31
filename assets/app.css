@@ -1957,13 +1957,29 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
    ========================================================================= */
 
 /* 週カレンダーを出発バーのすぐ下に、細く */
-.weekbar{padding:3px 9px;gap:6px;border-bottom:1px solid var(--grid);background:#FCFDFF}
-.weekbar .wb__m{height:30px;padding:0 10px;font-size:11.5px}
-.weekbar .wb__d{width:38px;padding:2px 0 3px}
-.weekbar .wb__w{font-size:8.5px}
-.weekbar .wb__n{font-size:13.5px}
-.weekbar .wb__r{font-size:7.5px}
-@media (pointer: coarse){ .weekbar .wb__d{width:42px;min-height:40px} .weekbar .wb__m{min-height:40px} }
+.weekbar{padding:5px 10px 6px;gap:8px;background:none}
+.weekbar .wb__m{height:44px;padding:0 13px;font-size:12.5px;font-weight:700;
+  background:#fff;border:1px solid var(--grid);border-radius:10px;flex:0 0 auto}
+.weekbar .wb__row{gap:4px}
+.weekbar .wb__d{width:48px;min-height:44px;padding:3px 0 4px;background:#fff;
+  border:1px solid rgba(0,0,0,.06);border-radius:10px;justify-content:center;gap:1px}
+.weekbar .wb__w{font-size:9.5px;font-weight:700;color:#5F6B7A}
+.weekbar .wb__n{font-size:17px;font-weight:800;line-height:1.05;color:#1B2735}
+.weekbar .wb__r{font-size:8.5px;color:#7A8494;letter-spacing:-.02em}
+.weekbar .wb__d.sun .wb__w,.weekbar .wb__d.sun .wb__n,
+.weekbar .wb__d.hol .wb__w,.weekbar .wb__d.hol .wb__n{color:#D93025}
+.weekbar .wb__d.sat .wb__w,.weekbar .wb__d.sat .wb__n{color:#1A73E8}
+.weekbar .wb__d.today{background:var(--lb900);border-color:var(--lb900);
+  box-shadow:0 2px 7px rgba(0,85,173,.3)}
+.weekbar .wb__d.today .wb__w,.weekbar .wb__d.today .wb__n,
+.weekbar .wb__d.today .wb__r{color:#fff}
+.weekbar .wb__d.old{opacity:.45}
+@media (max-width:520px){
+  .weekbar{gap:5px;padding:5px 7px 6px}
+  .weekbar .wb__m{height:42px;padding:0 9px;font-size:11.5px}
+  .weekbar .wb__d{width:42px;min-height:42px}
+  .weekbar .wb__n{font-size:15.5px}
+}
 
 /* グループバーのたたんだ状態 */
 .groupbar.mini{display:flex;gap:6px;padding:5px 9px;border-bottom:1px solid var(--grid)}
@@ -1980,3 +1996,42 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 /* 地図の設定バー：たたんだ状態を目立たせすぎない */
 .quickbar.mini .qb__open{font-size:11.5px;height:30px;padding:0 11px}
 @media (pointer: coarse){ .quickbar.mini .qb__open{min-height:38px} }
+
+/* =========================================================================
+   v41：出発バーと週カレンダーをひとつの帯に／起動でつまずいたときの知らせ
+   ========================================================================= */
+/* 出発バーと週カレンダーは «ひとつの帯»。ただし縦に2段に分けて、どちらも見やすく */
+.topbar{background:linear-gradient(180deg,#F2F7FF,#EAF2FC);border-bottom:1px solid var(--grid)}
+.topbar .tripbar{background:none;border:0;padding:6px 10px}
+.topbar .weekbar{background:none;border:0;border-top:1px solid rgba(0,0,0,.08);
+  padding:5px 10px 6px;align-items:stretch}
+
+.bootwarn{position:fixed;left:10px;right:10px;bottom:10px;z-index:90;display:flex;justify-content:center}
+.bootwarn__b{max-width:520px;width:100%;background:#FFFBEB;border:1px solid #E0BC72;
+  border-radius:12px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.16)}
+.bootwarn__b b{font-size:13px;color:#8A5A00}
+.bootwarn__b p{font-size:11.5px;line-height:1.75;margin:5px 0 9px;color:var(--gray800)}
+.bootwarn__f{display:flex;gap:6px;flex-wrap:wrap}
+.bootwarn__x{height:36px;padding:0 13px;border-radius:8px;border:1px solid #E0BC72;background:#fff;
+  color:#8A5A00;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;
+  text-decoration:none;display:flex;align-items:center}
+.bootwarn__x:hover{background:#C8880F;color:#fff}
+.booterr code{display:block;background:#F1F5F9;border-radius:8px;padding:8px 10px;margin:6px 0;
+  font-size:11px;word-break:break-all}
+
+
+/* 合いことばの画面 */
+.pw{text-align:center;padding:4px 2px}
+.pw__e{font-size:40px;line-height:1.2}
+.pw__t{font-size:14px;font-weight:700;line-height:1.8;margin:8px 0}
+.pw__b{font-size:12px;line-height:1.9;color:var(--gray800);margin:0 0 12px;text-align:left}
+.pw__f{display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:8px}
+.pw__f input{height:48px;border:1px solid var(--border);border-radius:10px;padding:0 13px;
+  font-size:17px;font-family:var(--mono);letter-spacing:.3em;text-align:center}
+.pw__f button{height:48px;padding:0 18px;border:0;border-radius:10px;background:var(--lb900);
+  color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.pw__ng{font-size:12px;color:#D93025;font-weight:700;margin:0 0 10px}
+.pw__note{background:#FFFBEB;border:1px solid #F0E0B0;border-radius:10px;padding:10px 12px;
+  margin-bottom:12px;text-align:left}
+.pw__note b{font-size:12px}
+.pw__note p{font-size:11.5px;line-height:1.9;margin:5px 0 0;color:var(--gray800)}
