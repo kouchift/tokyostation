@@ -25,13 +25,11 @@ DATA = ["network", "config", "lines_meta", "genres", "score", "areas",
         "landmarks", "mappois", "heat", "admin", "relief", "poi", "descs",
         "tokyo_od2", "tokyo_od", "flood", "events", "chains", "user_pois", "bldg3d", "crime", "depth", "wikiinfo", "corp", "smoking", "camadult", "osm10", "user_hensachi", "edu", "koyomi", "bigevents"]
 blob = "\n".join(read("data/%s.js" % d) for d in DATA if os.path.exists("data/%s.js" % d))
-html = html.replace("<script>RG.startApp();</script>",
-                    "<script>\n" + blob + "\n</script>\n<script>RG.startApp();</script>")
+html = html.replace("<script>\n/* \u90e8\u54c1\u306e", "<script>\n" + blob + "\n</script>\n<script>\n/* \u90e8\u54c1\u306e")
 
 # 駅の詳細データを全部埋め込む（単一ファイルでは動的ロードできないため）
 details = "\n".join(read(p) for p in sorted(glob.glob("data/details/*.js")))
-html = html.replace("<script>RG.startApp();</script>",
-                    "<script>\n" + details + "\n</script>\n<script>RG.startApp();</script>")
+html = html.replace("<script>\n/* \u90e8\u54c1\u306e", "<script>\n" + details + "\n</script>\n<script>\n/* \u90e8\u54c1\u306e")
 
 # 地形画像も data URI にして 1 ファイルに収める
 import base64
@@ -41,7 +39,11 @@ for _rp, _mt in (("assets/relief.jpg", "image/jpeg"), ("assets/flood.png", "imag
         html = html.replace('"' + _rp + '"', '"data:' + _mt + ";base64," + _b + '"')
 
 # standalone 版は全部が1ファイルに入っているので、段階読み込みは使わず即起動する
-html = html.replace("<script>RG.startApp();</script>", "<script>RG.boot();</script>")
+
+
+# 単一ファイル版はデータが中に入っているので、段階読み込みではなくその場で起動する
+html = html.replace('typeof window.RG.startApp !== "function"', 'typeof window.RG.boot !== "function"')
+html = html.replace("window.RG.startApp();", "window.RG.boot();")
 
 io.open("standalone.html", "w", encoding="utf-8").write(html)
 left = re.findall(r'(?:src|href)="((?!http)[^"]+)"', html)
