@@ -2040,3 +2040,42 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 .ver{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;border:1px solid var(--grid);
   background:#fff;font-size:9.5px;font-family:var(--mono);color:var(--label);cursor:pointer;line-height:1.5}
 .ver:hover{background:var(--lb900);color:#fff;border-color:var(--lb900)}
+
+/* =========================================================================
+   v46：下のレールは «上向き» に開きます
+   ―― これまでは下へ伸びていたため、開いた中身が画面の外に出て
+      押せませんでした。バーの «真上» に重ねて開くようにします。
+   ========================================================================= */
+.linerail{position:relative}
+.linerail .lr__rows{
+  position:absolute;left:0;right:0;bottom:100%;      /* バーのすぐ上に開く */
+  background:#fff;border-top:1px solid var(--grid);
+  border-bottom:1px solid var(--grid);
+  box-shadow:0 -10px 28px rgba(0,0,0,.16);
+  max-height:min(56vh,460px);overflow-y:auto;overscroll-behavior:contain;
+  padding:6px 0 8px;z-index:24
+}
+/* 開いているあいだは、バー自身が «閉じるボタン» だと分かるように */
+.linerail.open .lr__bar{background:linear-gradient(180deg,#EAF2FC,#F5F9FF)}
+@media (max-height:640px){ .linerail .lr__rows{max-height:52vh} }
+@media (max-width:420px){ .linerail .lr__rows{max-height:min(58vh,420px)} }
+
+/* v46：建物の写真を並べて見る */
+.gal{margin-bottom:11px}
+.gal__main{position:relative;border-radius:10px;overflow:hidden;background:var(--control)}
+.gal__main img{width:100%;max-height:250px;object-fit:cover;display:block}
+.gal__nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:52px;border:0;
+  background:rgba(0,0,0,.42);color:#fff;font-size:24px;cursor:pointer;line-height:1}
+.gal__nav:hover{background:rgba(0,0,0,.66)}
+.gal__nav--p{left:0;border-radius:0 8px 8px 0}
+.gal__nav--n{right:0;border-radius:8px 0 0 8px}
+.gal__c{position:absolute;top:8px;right:8px;padding:3px 9px;border-radius:999px;
+  background:rgba(0,0,0,.6);color:#fff;font-size:10.5px;font-family:var(--mono)}
+.gal__src{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;font-size:9.5px;color:#fff;
+  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.66));text-decoration:none}
+.gal__thumbs{display:flex;gap:4px;margin-top:5px;overflow-x:auto;scrollbar-width:none}
+.gal__thumbs::-webkit-scrollbar{display:none}
+.gal__t{flex:0 0 auto;width:62px;height:44px;padding:0;border:2px solid transparent;border-radius:7px;
+  overflow:hidden;background:var(--control);cursor:pointer}
+.gal__t img{width:100%;height:100%;object-fit:cover;display:block}
+.gal__t.on{border-color:var(--lb900)}

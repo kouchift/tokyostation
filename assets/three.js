@@ -423,11 +423,25 @@ function showBldg(b) {
   var near = RG.nearestStation ? RG.nearestStation(b.la, b.lo) : null;
   var ground = RG.reliefAt ? RG.reliefAt(b.la, b.lo) : 0;
   var ll = b.la + "," + b.lo;
+  var pics = (b.imgs && b.imgs.length) ? b.imgs : (b.img ? [b.img] : []);
   var html = '<div class="spotcard">' +
-    (b.img
-      ? '<a class="bldg__img" href="' + esc(RG.cpage(b.img)) + '" target="_blank" rel="noopener">' +
-        '<img src="' + esc(RG.cimg(b.img, 640)) + '" alt="' + esc(b.n) + 'の外観" loading="lazy">' +
-        '<span class="bldg__cap">📷 Wikimedia Commons（押すと出典と大きな画像）</span></a>'
+    (pics.length
+      ? '<div class="gal" data-gal>' +
+        '<div class="gal__main"><img id="gal-img" src="' + esc(RG.cimg(pics[0], 720)) +
+          '" alt="' + esc(b.n) + 'の外観" loading="lazy">' +
+          (pics.length > 1 ? '<button class="gal__nav gal__nav--p" type="button" data-gal-p>‹</button>' +
+            '<button class="gal__nav gal__nav--n" type="button" data-gal-n>›</button>' +
+            '<span class="gal__c" id="gal-c">1 / ' + pics.length + "</span>" : "") +
+          '<a class="gal__src" id="gal-src" href="' + esc(RG.cpage(pics[0])) +
+            '" target="_blank" rel="noopener">📷 出典と大きな画像</a>' +
+        "</div>" +
+        (pics.length > 1
+          ? '<div class="gal__thumbs">' + pics.map(function (f, i) {
+              return '<button class="gal__t' + (i ? "" : " on") + '" type="button" data-gal-i="' + i +
+                '"><img src="' + esc(RG.cimg(f, 160)) + '" alt="" loading="lazy"></button>';
+            }).join("") + "</div>"
+          : "") +
+        "</div>"
       : '<div class="spotcard__ph" style="--lc:' + b.c + '">' +
         '<span class="spotcard__phe">' + b.e + "</span>" +
         '<span class="spotcard__phn">' + esc(b.n) + "</span>" +
@@ -457,6 +471,27 @@ function showBldg(b) {
     '<p class="src">高さ・階数・写真: Wikidata / Wikimedia Commons。建物の輪郭: © OpenStreetMap contributors（ODbL）。' +
     "地面の高さ: 国土地理院 標高タイル。</p></div>";
   var m = RG.openModal(b.e + " " + b.n, html);
+  // 写真の送り・戻し・サムネ
+  if (pics.length > 1) {
+    var cur = 0;
+    var img = m.querySelector("#gal-img"), cnt = m.querySelector("#gal-c"),
+        src = m.querySelector("#gal-src");
+    function show(i) {
+      cur = (i + pics.length) % pics.length;
+      img.src = RG.cimg(pics[cur], 720);
+      cnt.textContent = (cur + 1) + " / " + pics.length;
+      src.href = RG.cpage(pics[cur]);
+      Array.prototype.forEach.call(m.querySelectorAll("[data-gal-i]"), function (t, j) {
+        t.classList.toggle("on", j === cur);
+        if (j === cur && t.scrollIntoView) t.scrollIntoView({ block: "nearest", inline: "center" });
+      });
+    }
+    m.querySelector("[data-gal-p]").addEventListener("click", function () { show(cur - 1); });
+    m.querySelector("[data-gal-n]").addEventListener("click", function () { show(cur + 1); });
+    Array.prototype.forEach.call(m.querySelectorAll("[data-gal-i]"), function (t) {
+      t.addEventListener("click", function () { show(+t.dataset.galI); });
+    });
+  }
   var g = m.querySelector("[data-goto]");
   if (g) g.addEventListener("click", function () { RG.closeModal(); RG.openStation(g.dataset.goto); });
   function ex(k, v, s2) {

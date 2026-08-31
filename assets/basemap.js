@@ -302,7 +302,19 @@ RG.showState = function () {
       return "<tr><th>" + RG.esc(r[0]) + "</th><td>" + RG.esc(String(r[1])) + "</td></tr>";
     }).join("") + "</table>" +
     '<div class="legend__foot"><a class="set__b2" href="check.html">📋 ファイル点検</a>' +
-    '<button class="set__b2" type="button" onclick="location.reload()">再読み込み</button></div>');
+    '<button class="set__b2" type="button" onclick="location.reload()">再読み込み</button>' +
+    '<button class="set__b2" type="button" id="sw-clear">🧹 覚えている分を捨てて読み直す</button></div>');
+  var swb = document.getElementById("sw-clear");
+  if (swb) swb.addEventListener("click", function () {
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller)
+        navigator.serviceWorker.controller.postMessage("clear");
+      if (window.caches) caches.keys().then(function (ks) {
+        ks.forEach(function (k) { caches.delete(k); });
+      });
+    } catch (e) { }
+    setTimeout(function () { location.reload(true); }, 400);
+  });
 };
 
 RG.quickBar = quickBar;
