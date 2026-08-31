@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ファイル点検 — 東京ステーションガイド</title>
+<style>
+ body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+   margin:0;padding:18px;background:#F7F9FC;color:#1a1a1a;line-height:1.7}
+ h1{font-size:19px;margin:0 0 4px}
+ p{font-size:13px;color:#555;margin:0 0 14px}
+ .sum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+ .card{flex:1;min-width:120px;background:#fff;border:1px solid #E2E8F0;border-radius:10px;
+   padding:12px 14px;text-align:center}
+ .card b{display:block;font-size:26px;font-family:ui-monospace,monospace}
+ .card span{font-size:11px;color:#666}
+ .ok b{color:#1E8E3E}.ng b{color:#D93025}.wt b{color:#8A8F98}
+ .bar{height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;margin-bottom:14px}
+ .bar i{display:block;height:100%;background:#1E8E3E;width:0;transition:width .2s}
+ table{width:100%;border-collapse:collapse;background:#fff;font-size:12px}
+ th,td{padding:6px 9px;border-bottom:1px solid #EEF1F5;text-align:left}
+ th{background:#F1F5F9;position:sticky;top:0}
+ td.st{width:60px;font-weight:700}
+ tr.ng td{background:#FEF2F2}
+ tr.ng td.st{color:#D93025}
+ tr.ok td.st{color:#1E8E3E}
+ .miss{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+ .miss h2{font-size:14px;margin:0 0 6px;color:#B91C1C}
+ .miss textarea{width:100%;min-height:100px;font-family:ui-monospace,monospace;font-size:11.5px;
+   border:1px solid #FCA5A5;border-radius:8px;padding:8px}
+ button{height:40px;padding:0 16px;border:0;border-radius:9px;background:#0055AD;color:#fff;
+   font-size:14px;font-weight:700;cursor:pointer}
+ .hide{display:none}
+</style></head><body>
+<h1>📋 ファイル点検</h1>
+<p>このページが置かれている場所に、必要なファイルがそろっているかを調べます。
+アップロードもれがあれば、下に足りないファイルの一覧が出ます。</p>
+<div class="sum">
+ <div class="card ok"><b id="c-ok">0</b><span>そろっている</span></div>
+ <div class="card ng"><b id="c-ng">0</b><span>足りない</span></div>
+ <div class="card wt"><b id="c-wt">0</b><span>調べています</span></div>
+</div>
+<div class="bar"><i id="bar"></i></div>
+<div class="miss hide" id="miss">
+ <h2>⚠ 足りないファイル</h2>
+ <p>下の一覧をコピーして、その分だけアップロードし直してください。</p>
+ <textarea id="misslist" readonly></textarea>
+</div>
+<table><thead><tr><th>ファイル</th><th>本来の大きさ</th><th class="st">結果</th></tr></thead>
+<tbody id="rows"></tbody></table>
+<script>
+var FILES = [{"p": ".gitignore", "s": 61}, {"p": ".nojekyll", "s": 0}, {"p": "DATA_SOURCES.md", "s": 5253}, {"p": "LICENSE", "s": 2185}, {"p": "README.md", "s": 196045}, {"p": "assets/adult.js", "s": 10084}, {"p": "assets/app.css", "s": 118474}, {"p": "assets/app.js", "s": 68915}, {"p": "assets/basemap.js", "s": 20767}, {"p": "assets/corp.js", "s": 8872}, {"p": "assets/edu.js", "s": 11649}, {"p": "assets/flood.png", "s": 30485}, {"p": "assets/geohelp.js", "s": 14370}, {"p": "assets/groups.js", "s": 9758}, {"p": "assets/hensachi.js", "s": 18670}, {"p": "assets/koyomi.js", "s": 20482}, {"p": "assets/koyomi2.js", "s": 5711}, {"p": "assets/lines_ui.js", "s": 36081}, {"p": "assets/loader.js", "s": 5913}, {"p": "assets/logbook.js", "s": 14739}, {"p": "assets/logos/README.txt", "s": 861}, {"p": "assets/nav.js", "s": 7379}, {"p": "assets/plan.js", "s": 21941}, {"p": "assets/planner.js", "s": 17122}, {"p": "assets/plannerui.js", "s": 49201}, {"p": "assets/relief.jpg", "s": 35869}, {"p": "assets/score.js", "s": 5928}, {"p": "assets/search.js", "s": 8458}, {"p": "assets/smoking.js", "s": 9410}, {"p": "assets/three.js", "s": 23426}, {"p": "assets/wikicard.js", "s": 7470}, {"p": "data/admin.js", "s": 189812}, {"p": "data/areas.js", "s": 3478}, {"p": "data/bigevents.js", "s": 12416}, {"p": "data/bldg3d.js", "s": 33759}, {"p": "data/camadult.js", "s": 73786}, {"p": "data/chains.js", "s": 556653}, {"p": "data/config.js", "s": 5912}, {"p": "data/corp.js", "s": 28749}, {"p": "data/crime.js", "s": 1359}, {"p": "data/depth.js", "s": 6865}, {"p": "data/descs.js", "s": 220751}, {"p": "data/details/_TEMPLATE.js.txt", "s": 2176}, {"p": "data/details/中村橋.js", "s": 2824}, {"p": "data/details/池袋.js", "s": 1636}, {"p": "data/details/練馬.js", "s": 1702}, {"p": "data/edu.js", "s": 246182}, {"p": "data/events.js", "s": 10847}, {"p": "data/flood.js", "s": 5251}, {"p": "data/genres.js", "s": 10214}, {"p": "data/heat.js", "s": 8532}, {"p": "data/koyomi.js", "s": 318302}, {"p": "data/landmarks.js", "s": 30580}, {"p": "data/lines_meta.js", "s": 11193}, {"p": "data/mappois.js", "s": 242800}, {"p": "data/network.js", "s": 177811}, {"p": "data/osm10.js", "s": 382906}, {"p": "data/poi.js", "s": 438376}, {"p": "data/relief.js", "s": 52774}, {"p": "data/score.js", "s": 4651}, {"p": "data/smoking.js", "s": 207470}, {"p": "data/tokyo_od.js", "s": 807818}, {"p": "data/tokyo_od2.js", "s": 259289}, {"p": "data/user_hensachi.js", "s": 852}, {"p": "data/user_pois.js", "s": 1047}, {"p": "data/wikiinfo.js", "s": 48208}, {"p": "index.html", "s": 5568}, {"p": "tools/build_admin.py", "s": 4631}, {"p": "tools/build_bigevents.py", "s": 13795}, {"p": "tools/build_bldg3d.py", "s": 6169}, {"p": "tools/build_cam_adult.py", "s": 3711}, {"p": "tools/build_chains.py", "s": 3132}, {"p": "tools/build_corp.py", "s": 8042}, {"p": "tools/build_depth.py", "s": 3848}, {"p": "tools/build_edu.py", "s": 7946}, {"p": "tools/build_heat.py", "s": 10897}, {"p": "tools/build_koyomi.py", "s": 6642}, {"p": "tools/build_landmarks.py", "s": 7082}, {"p": "tools/build_lines_meta.py", "s": 8201}, {"p": "tools/build_mappois.py", "s": 8722}, {"p": "tools/build_network.py", "s": 16972}, {"p": "tools/build_osm10.py", "s": 4707}, {"p": "tools/build_poi.py", "s": 12597}, {"p": "tools/build_relief.py", "s": 7296}, {"p": "tools/build_smoking.py", "s": 4289}, {"p": "tools/build_standalone.py", "s": 2704}, {"p": "tools/fetch_chains.py", "s": 7432}, {"p": "tools/fetch_events.py", "s": 5997}, {"p": "tools/fetch_tokyo_od.py", "s": 7067}, {"p": "tools/fetch_tokyo_od2.py", "s": 8849}, {"p": "tools/merge_tokyo_od.py", "s": 4190}, {"p": "tools/merge_tokyo_od2.py", "s": 7216}, {"p": "tools/station_survey_template.csv", "s": 527}];
+var rows = document.getElementById("rows");
+var ok = 0, ng = 0, wt = FILES.length, missing = [];
+function fmt(n){ return n >= 1048576 ? (n/1048576).toFixed(2)+" MB"
+                : n >= 1024 ? (n/1024).toFixed(0)+" KB" : n+" B"; }
+function paint(){
+  document.getElementById("c-ok").textContent = ok;
+  document.getElementById("c-ng").textContent = ng;
+  document.getElementById("c-wt").textContent = wt;
+  document.getElementById("bar").style.width = ((ok+ng)/FILES.length*100).toFixed(1)+"%";
+  if (missing.length){
+    document.getElementById("miss").classList.remove("hide");
+    document.getElementById("misslist").value = missing.join("\n");
+  }
+}
+FILES.forEach(function(f, i){
+  var tr = document.createElement("tr");
+  tr.innerHTML = '<td>'+f.p+'</td><td>'+fmt(f.s)+'</td><td class="st">…</td>';
+  rows.appendChild(tr);
+  fetch(f.p, {method:"HEAD", cache:"no-store"}).then(function(r){
+    wt--;
+    if (r.ok){ ok++; tr.className="ok"; tr.lastChild.textContent="○"; }
+    else { ng++; tr.className="ng"; tr.lastChild.textContent="✕ "+r.status; missing.push(f.p); }
+    paint();
+  }).catch(function(){
+    wt--; ng++; tr.className="ng"; tr.lastChild.textContent="✕"; missing.push(f.p); paint();
+  });
+});
+paint();
+</script></body></html>
