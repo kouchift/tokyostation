@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Kouchi
+Copyright (c) 2026 東京ステーションガイド（自由研究プロジェクト）
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+【重要】このライセンスは「このリポジトリのプログラム（HTML/CSS/JavaScript とビルド用スクリプト）」
+にのみ適用されます。data/ に入っているデータは、それぞれ別のライセンスです。
+
+  Wikidata                        … CC0 1.0（パブリックドメイン）
+  Wikipedia 日本語版の抜粋（descs） … CC BY-SA 4.0（継承が必要）
+  Wikimedia Commons の画像         … ファイルごとに異なる（表示時に個別表示）
+  東京都オープンデータカタログ        … CC BY 4.0（出典表示が必要）
+  国土数値情報（行政区域・地価）      … 出典明示で利用可
+  国土地理院 標高タイル              … 国土地理院コンテンツ利用規約
+  OpenStreetMap（チェーン店・住所検索）… ODbL 1.0（表示と継承が必要）
+  東京銭湯マップ（銭湯の位置）        … 東京都公衆浴場業生活衛生同業組合の公開情報
+
+詳しくは DATA_SOURCES.md をご覧ください。
