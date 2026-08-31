@@ -217,7 +217,15 @@ function quickBar() {
   var mb = $("#qb-mini", q);
   if (mb) mb.addEventListener("click", function () { B.qbMini = true; B.qbHeat = false; apply(); });
   $$("[data-qb]", q).forEach(function (b) {
-    b.addEventListener("click", function () { B[b.dataset.qb] = !B[b.dataset.qb]; apply(); });
+    b.addEventListener("click", function () {
+      var k = b.dataset.qb;
+      B[k] = !B[k];
+      if (k === "blank" && B.blank) B.admin = true;      // 白地図は区の線が要る
+      if (k === "labels" && B.labels) B.admin = true;    // 区名は区の線が要る
+      apply();
+      if (RG.toggleSaid) RG.toggleSaid(k, B[k]);
+      if (k === "flood" && B.flood && RG.gotoFlood) RG.gotoFlood();
+    });
   });
   $$("[data-qh]", q).forEach(function (b) {
     b.addEventListener("click", function () {
@@ -227,6 +235,59 @@ function quickBar() {
     });
   });
 }
+/* 押したことが «必ず» 分かるように、言葉でも返す。
+   地形や浸水は、見ている場所によっては変化が目に入らないため。 */
+var SAY = {
+  relief: ["⛰️ 地形の起伏を出しました", "地形を消しました",
+           "白っぽい濃淡が土地の高さです。上野〜本郷あたりが分かりやすいです"],
+  flood:  ["🌊 浸水予想を重ねました", "浸水予想を消しました",
+           "神田川・隅田川・石神井川の3流域だけです。ほかの場所では見えません"],
+  mode3d: ["🧊 3D表示にしました", "2D表示に戻しました",
+           "東京タワーやスカイツリーが立ち上がります。地下も見られます"],
+  admin:  ["🧭 区の境目を出しました", "区の境目を消しました",
+           "区を押すと、その区のカードが開きます"],
+  labels: ["🏷️ 区の名前を出しました", "区の名前を消しました", ""],
+  blank:  ["📄 白地図にしました", "白地図をやめました",
+           "路線も駅も消え、区の線だけが残ります"],
+  under:  ["🕳️ 地下を出しました", "地下を消しました", "地下鉄のホームの深さが見えます"],
+  seeUnder: ["👓 地面をすかしました", "地面を元に戻しました", ""]
+};
+RG.toggleSaid = function (k, on) {
+  var s = SAY[k];
+  if (!s || !RG.tripStatus) return;
+  var msg = on ? s[0] : s[1];
+  if (on && s[2]) msg += "。" + s[2];
+  RG.tripStatus(msg, on ? "ok" : "info", on && s[2] ? 4200 : 2600);
+};
+
+/* 浸水を出したとき、対象の流域が画面の外なら、そこへ寄せる */
+RG.gotoFlood = function () {
+  if (RG.Map && RG.Map.flyTo) RG.Map.flyTo(35.7180, 139.7450, 900);
+};
+
+/* いまの画面の状態をまとめて見せる（差し替えの確認用） */
+RG.showState = function () {
+  function yn(v) { return v ? "○" : "—"; }
+  var g = (RG.settings && RG.settings.genres) || [];
+  var rows = [
+    ["いま動いている版", (RG.VERSION || "不明") + "（" + (RG.BUILT || "?") + " に作成）"],
+    ["駅 / 路線", (RG.NET ? RG.NET.stations.length + " / " + RG.NET.lines.length : "—")],
+    ["スポットの数", (RG.MAPPOI || []).length.toLocaleString("ja-JP")],
+    ["⛰️ 地形", yn(B.relief)], ["🌊 浸水", yn(B.flood)], ["🧊 3D", yn(B.mode3d)],
+    ["🧭 行政区", yn(B.admin)], ["🏷️ 区名", yn(B.labels)], ["📄 白地図", yn(B.blank)],
+    ["🌡️ 色分け", B.heat || "なし"],
+    ["📍 選んでいるジャンル", g.length ? g.join("・") : "ぜんぶ"],
+    ["つまずいた段", (RG.bootFailed || []).length ? RG.bootFailed.map(function (f) { return f.n; }).join("・") : "なし"]
+  ];
+  RG.openModal("🔎 いまの状態", '<p class="set__d">差し替えがうまくいっているかの確認に使えます。' +
+    "うまく動かないときは、この画面を見せていただければ原因を絞れます。</p>" +
+    '<table class="vf__spec">' + rows.map(function (r) {
+      return "<tr><th>" + RG.esc(r[0]) + "</th><td>" + RG.esc(String(r[1])) + "</td></tr>";
+    }).join("") + "</table>" +
+    '<div class="legend__foot"><a class="set__b2" href="check.html">📋 ファイル点検</a>' +
+    '<button class="set__b2" type="button" onclick="location.reload()">再読み込み</button></div>');
+};
+
 RG.quickBar = quickBar;
 RG.initQuickBar = function () { quickBar(); };
 

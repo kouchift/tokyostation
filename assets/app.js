@@ -1325,7 +1325,13 @@ RG.boot = function () {
   });
 
   var sl = $("#statline");
-  if (sl) sl.textContent = RG.NET.stations.length + "駅 / " + RG.NET.lines.length + "路線";
+  if (sl) {
+    sl.innerHTML = RG.NET.stations.length + "駅 / " + RG.NET.lines.length + "路線" +
+      (RG.VERSION ? ' <button class="ver" type="button" id="ver-btn" title="いま動いている版">' +
+        RG.VERSION + "</button>" : "");
+    var vb2 = $("#ver-btn");
+    if (vb2) vb2.addEventListener("click", function () { if (RG.showState) RG.showState(); });
+  }
   step("最初の表示位置", function () { Map.focus(RG.HUB, 700); });
 
   RG.bootFailed = failed;

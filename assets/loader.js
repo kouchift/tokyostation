@@ -8,7 +8,7 @@
 "use strict";
 
 /* 第1段：これが無いと地図が描けないもの（合計 約200KB） */
-var CORE = ["data/network.js", "data/config.js", "data/lines_meta.js",
+var CORE = ["data/version.js", "data/network.js", "data/config.js", "data/lines_meta.js",
             "data/genres.js", "data/score.js", "data/areas.js"];
 
 /* 第2段以降：あとから足せるもの。上から順に読む。

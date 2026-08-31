@@ -2035,3 +2035,8 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   margin-bottom:12px;text-align:left}
 .pw__note b{font-size:12px}
 .pw__note p{font-size:11.5px;line-height:1.9;margin:5px 0 0;color:var(--gray800)}
+
+/* 版の表示 */
+.ver{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;border:1px solid var(--grid);
+  background:#fff;font-size:9.5px;font-family:var(--mono);color:var(--label);cursor:pointer;line-height:1.5}
+.ver:hover{background:var(--lb900);color:#fff;border-color:var(--lb900)}
