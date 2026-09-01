@@ -23,7 +23,7 @@ html = re.sub(r'<script src="([^"]+)"></script>', sub_script, html)
 # 段階読み込み用のデータも、単一ファイル版では直接埋め込む
 DATA = ["version", "network", "config", "lines_meta", "genres", "score", "areas",
         "landmarks", "mappois", "heat", "admin", "relief", "poi", "descs",
-        "tokyo_od2", "tokyo_od", "flood", "events", "chains", "user_pois", "bldg3d", "crime", "depth", "wikiinfo", "corp", "smoking", "camadult", "osm10", "user_hensachi", "edu", "koyomi", "bigevents"]
+        "tokyo_od2", "tokyo_od", "flood", "events", "chains2", "user_pois", "bldg3d", "crime", "depth", "wikiinfo", "corp", "smoking", "camadult", "osm10", "user_hensachi", "edu", "koyomi", "bigevents"]
 blob = "\n".join(read("data/%s.js" % d) for d in DATA if os.path.exists("data/%s.js" % d))
 html = html.replace("<script>\n/* \u90e8\u54c1\u306e", "<script>\n" + blob + "\n</script>\n<script>\n/* \u90e8\u54c1\u306e")
 
