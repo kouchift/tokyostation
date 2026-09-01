@@ -16,7 +16,8 @@ var GROUPS = [
   { id: "help",  e: "🆘", label: "こまったとき", c: "#E53935",
     ids: ["toilet", "baby", "water", "hosp", "pharm", "aed", "shelter", "wifi", "civic", "library"] },
   { id: "eat",   e: "🍜", label: "食べる・買う", c: "#F0851E",
-    ids: ["cvs", "food", "super", "drug", "disc", "life", "shopping"] },
+    ids: ["cvs", "burger", "gyudon", "noodle", "family", "pizza", "chuka", "cafe",
+          "food", "super", "drug", "elec", "cloth", "disc", "life", "shopping"] },
   { id: "move",  e: "🚶", label: "移動する",     c: "#0079C2",
     ids: ["cycle", "locker", "bike", "camspot"] },
   { id: "money", e: "💰", label: "お金・手続き", c: "#00897B",
@@ -51,18 +52,40 @@ RG.buildGroupBar = function () {
   if (!host) return;
   var c = cur();
   var open = RG.__grpOpen || null;
+  function picked() { return c.filter(function (x) { return x !== "__none__"; }); }
   // たたんだ状態：ボタン1つだけ。押すと目的の一覧が開く。
   if (!RG.__grpShow) {
-    var picked = c.filter(function (x) { return x !== "__none__"; });
+    var picked = picked();
     host.className = "groupbar mini";
     host.innerHTML = '<button class="gb__open" type="button" id="gb-open">📍 スポットをさがす' +
       (picked.length ? '<span class="gb__cnt">' + picked.length + "</span>" : "") + " ▾</button>" +
-      (picked.length ? '<button class="gb__clr" type="button" id="gb-off">✕ 解除</button>' : "");
+      // いま何を選んでいるかを、名前つきの札で並べる
+      (picked.length ? '<div class="sel">' + picked.map(function (id) {
+        var g = genreOf(id);
+        if (!g) return "";
+        return '<button class="sel__c" type="button" data-unsel="' + esc(id) +
+          '" style="--lc:' + g.c + '" title="' + esc(g.label) + " をやめる\">" +
+          '<span class="sel__e">' + g.e + "</span>" +
+          '<span class="sel__n">' + esc(g.label) + "</span>" +
+          '<span class="sel__k">' + countOf(id) + "</span>" +
+          '<span class="sel__x">✕</span></button>';
+      }).join("") + "</div>" : "") +
+      (picked.length ? '<button class="gb__clr" type="button" id="gb-off">ぜんぶ解除</button>' : "");
     $("#gb-open", host).addEventListener("click", function () {
       RG.__grpShow = true; RG.buildGroupBar();
     });
     var off = $("#gb-off", host);
     if (off) off.addEventListener("click", function () { setGenres([]); RG.buildGroupBar(); });
+    // 札の ✕ を押すと、そのジャンルだけをやめる
+    $$("[data-unsel]", host).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var id = b.dataset.unsel;
+        setGenres(cur().filter(function (x) { return x !== id; }));
+        RG.buildGroupBar();
+        var g = genreOf(id);
+        if (g && RG.tripStatus) RG.tripStatus(g.e + " 「" + g.label + "」をやめました", "info", 2200);
+      });
+    });
     return;
   }
   host.className = "groupbar";
@@ -83,6 +106,16 @@ RG.buildGroupBar = function () {
       '<button class="gb__g gb__g--x" type="button" id="gb-hide" title="たたむ">' +
         '<span class="gb__e">▴</span><span class="gb__l">とじる</span></button>' +
     "</div>" +
+    (picked().length ? '<div class="sel sel--row">' + picked().map(function (id) {
+      var g = genreOf(id);
+      if (!g) return "";
+      return '<button class="sel__c" type="button" data-unsel="' + esc(id) +
+        '" style="--lc:' + g.c + '">' +
+        '<span class="sel__e">' + g.e + "</span>" +
+        '<span class="sel__n">' + esc(g.label) + "</span>" +
+        '<span class="sel__k">' + countOf(id) + "</span>" +
+        '<span class="sel__x">✕</span></button>';
+    }).join("") + "</div>" : "") +
     (open ? groupPanel(open) : "");
   $$("[data-grp]", host).forEach(function (b) {
     b.addEventListener("click", function () {
@@ -107,6 +140,13 @@ RG.buildGroupBar = function () {
       var c2 = cur().filter(function (x) { return x !== "__none__"; });
       var i = c2.indexOf(id);
       setGenres(i >= 0 ? c2.filter(function (x) { return x !== id; }) : c2.concat([id]));
+      RG.buildGroupBar();
+    });
+  });
+  $$("[data-unsel]", host).forEach(function (b) {
+    b.addEventListener("click", function () {
+      var id = b.dataset.unsel;
+      setGenres(cur().filter(function (x) { return x !== id; }));
       RG.buildGroupBar();
     });
   });
@@ -140,7 +180,8 @@ function groupPanel(gid) {
       var on = c.indexOf(id) >= 0;
       var n = countOf(id);
       return '<button class="gi' + (on ? " on" : "") + (g.enabled ? "" : " off") +
-        '" type="button" data-gid="' + esc(id) + '" style="--lc:' + g.c + '">' +
+        '" type="button" data-gid="' + esc(id) + '" style="--lc:' + g.c +
+        '" data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '">' +
         '<span class="gi__e">' + g.e + "</span>" +
         '<span class="gi__l">' + esc(g.label) + "</span>" +
         '<span class="gi__n">' + (g.enabled ? (n ? n : (g.optIn ? "▶" : "—")) : "—") + "</span>" +
@@ -184,5 +225,44 @@ RG.showOsm10 = function (p) {
     "営業時間や料金は変わることがあります。行く前に公式情報をご確認ください。</p></div>";
   RG.openModal((M.e || "📍") + " " + p.n, html);
 };
+
+
+/* ------------------------------------------------ マウスを乗せたときの説明
+   data-tip="題名｜説明" を付けた要素なら、どこでもふきだしが出ます。
+   指で触る端末では «長押し» で出ます（クリックの邪魔はしません）。 */
+(function () {
+  var tip = null, t = null;
+  function box() {
+    if (!tip) { tip = document.createElement("div"); tip.className = "tip"; document.body.appendChild(tip); }
+    return tip;
+  }
+  function show(el) {
+    var v = el.getAttribute("data-tip");
+    if (!v) return;
+    var p = v.split("｜");
+    var b = box();
+    b.innerHTML = "<b>" + esc(p[0]) + "</b>" + (p[1] ? "<i>" + esc(p[1]) + "</i>" : "");
+    var r = el.getBoundingClientRect();
+    b.classList.add("on");
+    var w = b.offsetWidth || 220, h = b.offsetHeight || 50;
+    var x = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8));
+    var y = r.top - h - 8;
+    if (y < 8) y = r.bottom + 8;
+    b.style.left = x + "px"; b.style.top = y + "px";
+  }
+  function hide() { if (tip) tip.classList.remove("on"); }
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target && e.target.closest && e.target.closest("[data-tip]");
+    clearTimeout(t);
+    if (!el) { hide(); return; }
+    t = setTimeout(function () { show(el); }, 260);
+  });
+  document.addEventListener("pointerout", function () { clearTimeout(t); hide(); });
+  document.addEventListener("pointerdown", function () { clearTimeout(t); hide(); });
+  document.addEventListener("focusin", function (e) {
+    var el = e.target && e.target.closest && e.target.closest("[data-tip]");
+    if (el) show(el); else hide();
+  });
+})();
 
 })(window.RG);

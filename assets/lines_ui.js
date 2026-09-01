@@ -106,6 +106,7 @@ var Rail = (function () {
         var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
         return '<button class="lr__i lr__i--g' + (g.enabled ? "" : " off") + '" type="button" ' +
           'data-genre="' + esc(g.id) + '" style="--lc:' + g.c + '" aria-pressed="false" ' +
+          'data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '" ' +
           (g.enabled ? "" : "disabled ") + 'aria-label="' + esc(g.label) + '">' +
           '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>" +
           (g.optIn ? '<span class="lr__dot">▶</span>' : "") + "</button>"; }).join("") +
@@ -116,6 +117,8 @@ var Rail = (function () {
       '<button class="lr__c" type="button" id="lr-corp">🏢 業種でえらぶ</button> ' +
       '<button class="lr__c lr__c--y" type="button" id="lr-smoke">🚬 吸える場所</button> ' +
       '<button class="lr__c" type="button" id="lr-hs">📊 偏差値を入れる</button> ' +
+      '<button class="lr__c lr__c--p" type="button" id="lr-pins">📌 自分のピン</button> ' +
+      '<button class="lr__c lr__c--p" type="button" id="lr-pin">📌 自分のピン</button> ' +
       "アイコンを押すと、そのジャンルだけを地図に残します（<b>いくつでも選べます</b>）。" +
       "うすいアイコンはデータが取れていないものです。名前の下の数字は地図にある件数です。</div>";
     box.innerHTML =
@@ -202,7 +205,89 @@ var Rail = (function () {
           x.setAttribute("aria-pressed", String(ST.chains.indexOf(x.dataset.brand) >= 0)); });
       });
     }
-    RG.openChains = function () { bindChain(RG.openModal("🏪 お店をえらぶ", chainPanel())); };
+    /* お店をえらぶ（ジャンル → ブランドの2段） */
+    RG.openChains = function (cat) {
+      var CT = RG.CHAIN_CATS || [];
+      var BR = (RG.CHAIN_BRANDS || []).filter(function (b) { return (b.k || 0) > 0; });
+      if (!BR.length) { bindChain(RG.openModal("🏪 お店をえらぶ", chainPanel())); return; }
+      var cur = RG.chainFilter;
+      function pick(cid, bid) {
+        RG.chainFilter = bid;
+        var ids = cid ? [cid] : CT.map(function (c) { return c.id; });
+        if (RG.setGenreList) RG.setGenreList(ids);
+        else { ST.genres = ids; if (RG.Map.setGenres) RG.Map.setGenres(ids); }
+        RG.closeModal();
+        var b2 = BR.filter(function (x) { return x.i === bid; })[0];
+        if (RG.tripStatus) RG.tripStatus(
+          b2 ? b2.e + " 「" + b2.n + "」だけを出しています（" + (b2.k || 0) + "店）"
+             : cid ? "🏪 この種類のお店をぜんぶ出しています"
+                   : "🏪 チェーン店をぜんぶ出しています", "ok", 3200);
+      }
+      if (!cat) {
+        var html = '<p class="set__d">お店の種類をえらぶと、その中のブランドが出ます。' +
+          "ブランドごとに、ロゴの色に近い色で地図に出ます。</p>" +
+          '<div class="legend__foot"><button id="cp-all" class="set__b2" type="button">ぜんぶ表示</button>' +
+          '<button id="cp-off" class="set__b2" type="button">お店を消す</button></div>' +
+          '<div class="cc">' + CT.map(function (c) {
+            var bs = BR.filter(function (b) { return b.cat === c.id; });
+            if (!bs.length) return "";
+            var k = bs.reduce(function (a, b) { return a + (b.k || 0); }, 0);
+            return '<button class="cc__b" type="button" data-cc="' + c.id + '">' +
+              '<span class="cc__e">' + c.e + "</span>" +
+              '<span class="cc__t"><b>' + esc(c.n) + "</b><i>" + bs.length + "社 ・ " +
+                k.toLocaleString("ja-JP") + "店</i></span>" +
+              '<span class="cc__d">' + bs.slice(0, 6).map(function (b) {
+                return '<i style="background:' + b.c + '"></i>'; }).join("") + "</span>" +
+              '<span class="cc__x">›</span></button>';
+          }).join("") + "</div>" +
+          '<p class="src">位置: © OpenStreetMap contributors（ODbL 1.0）。<br>' +
+          "色は<b>ロゴの色の目安</b>です。企業ロゴは商標のため使わず、色と絵文字で見分けています。</p>";
+        var m = RG.openModal("🏪 お店をえらぶ", html);
+        $("#cp-all", m).addEventListener("click", function () { pick(null, null); });
+        $("#cp-off", m).addEventListener("click", function () {
+          RG.chainFilter = null;
+          var g = (ST.genres || []).filter(function (x) {
+            return !CT.some(function (c) { return c.id === x; });
+          });
+          if (RG.setGenreList) RG.setGenreList(g);
+          RG.closeModal();
+        });
+        $$("[data-cc]", m).forEach(function (b) {
+          b.addEventListener("click", function () { RG.openChains(b.dataset.cc); });
+        });
+        return;
+      }
+      var c2 = CT.filter(function (x) { return x.id === cat; })[0] || {};
+      var bs2 = BR.filter(function (b) { return b.cat === cat; })
+                  .sort(function (a, b) { return (b.k || 0) - (a.k || 0); });
+      var h2 = '<button class="cp__back" type="button" id="cp-back">‹ 種類をえらび直す</button>' +
+        '<p class="set__d">' + (c2.e || "") + " <b>" + esc(c2.n || "") + "</b>　" + bs2.length +
+        "社。押すとそのブランドだけが地図に残ります。</p>" +
+        '<div class="legend__foot"><button id="cp-cat" class="set__b2" type="button">' +
+        "この種類をぜんぶ表示</button></div>" +
+        '<div class="brands">' + bs2.map(function (b) {
+          return '<button class="brand' + (cur === b.i ? " on" : "") + '" type="button" data-cb="' +
+            b.i + '" style="--bc:' + b.c + '">' +
+            '<span class="brand__e">' + b.e + "</span>" +
+            '<span class="brand__n">' + esc(b.n) + "</span>" +
+            '<span class="brand__k">' + (b.k || 0) + "</span></button>";
+        }).join("") + "</div>" +
+        '<p class="src">色は<b>ロゴの色の目安</b>です（企業ロゴは商標のため使っていません）。</p>';
+      var m2 = RG.openModal((c2.e || "🏪") + " " + (c2.n || "お店"), h2);
+      $("#cp-back", m2).addEventListener("click", function () { RG.openChains(); });
+      $("#cp-cat", m2).addEventListener("click", function () { pick(cat, null); });
+      $$("[data-cb]", m2).forEach(function (b) {
+        b.addEventListener("click", function () { pick(cat, +b.dataset.cb); });
+      });
+    };
+    var pb2 = $("#lr-pin", box);
+    if (pb2) pb2.addEventListener("click", function () {
+      if (RG.openPinFilter) RG.openPinFilter();
+    });
+    var pb = $("#lr-pins", box);
+    if (pb) pb.addEventListener("click", function () {
+      if (RG.openPinFilter) RG.openPinFilter();
+    });
     var hb3 = $("#lr-hs", box);
     if (hb3) hb3.addEventListener("click", function () {
       if (RG.showHensachiEdit) RG.showHensachiEdit();
@@ -340,9 +425,7 @@ var Rail = (function () {
       ev.stopPropagation(); ev.preventDefault();
       hide(); if (RG.showLine) RG.showLine(lb.dataset.lineinfo);
     });
-    var w = pop.offsetWidth, x = Math.min(innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
-    pop.style.left = x + "px";
-    pop.style.top = (r.top - pop.offsetHeight - 10) + "px";
+    if (RG.placePop) RG.placePop(pop, { x: r.left + r.width / 2, y: r.top, h: r.height });
   }
   var popT = null, popOver = false;
   function hide() {
@@ -370,7 +453,7 @@ var Rail = (function () {
         '<div class="lp__b">区ごとの色づけをやめて、ふつうの地図に戻します。</div>';
     pop.style.display = "block";
     var w = pop.offsetWidth, x = Math.min(innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
-    pop.style.left = x + "px"; pop.style.top = (r.top - pop.offsetHeight - 10) + "px";
+    if (RG.placePop) RG.placePop(pop, { x: r.left + r.width / 2, y: r.top, h: r.height });
   }
   function genreMeta(id) {
     return (RG.GENRES || []).filter(function (g) { return g.id === id; })[0] || {};
@@ -390,7 +473,7 @@ var Rail = (function () {
                  : '<div class="lp__b" style="color:#A58000">⚠ データ未取得<br>' + esc(g.reason || "") + "</div>");
     pop.style.display = "block";
     var w = pop.offsetWidth, x = Math.min(innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
-    pop.style.left = x + "px"; pop.style.top = (r.top - pop.offsetHeight - 10) + "px";
+    if (RG.placePop) RG.placePop(pop, { x: r.left + r.width / 2, y: r.top, h: r.height });
   }
   function toggleGenre(id) {
     var cur = ST.genres || [];

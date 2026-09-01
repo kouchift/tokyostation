@@ -82,11 +82,30 @@ RG.showLine = function (name) {
   var meta = (RG.LINEMETA || {})[name] || {};
   var col = (RG.lineColor && RG.lineColor[name]) || "#9AA0A6";
   // この路線が通る駅（地図のデータから）
-  var stns = [], seen = {};
+  /* この路線が通る駅を «並び順» にそろえる。
+     つながり（区間）をたどって、端の駅から順に並べる。 */
+  var adj = {}, seen = {};
   (RG.NET.edges || []).forEach(function (e) {
     if (e[2] !== name) return;
-    [e[0], e[1]].forEach(function (id) { if (!seen[id]) { seen[id] = 1; stns.push(id); } });
+    (adj[e[0]] = adj[e[0]] || []).push(e[1]);
+    (adj[e[1]] = adj[e[1]] || []).push(e[0]);
+    seen[e[0]] = 1; seen[e[1]] = 1;
   });
+  var all = Object.keys(seen);
+  var stns = [];
+  if (all.length) {
+    // つながりが1本だけの駅（＝端）から始める。無ければ適当な駅から
+    // 端（つながりが1本だけの駅）から始める。環状線には端が無いので適当な駅から。
+    var start = all.filter(function (id) { return (adj[id] || []).length === 1; })[0] || all[0];
+    var done = {}, id = start;
+    // «次の駅» を1つずつたどる（枝分かれしたら、まだ通っていないほうへ）
+    while (id && !done[id]) {
+      done[id] = 1; stns.push(id);
+      var nx = (adj[id] || []).filter(function (x) { return !done[x]; });
+      id = nx[0];
+    }
+    all.forEach(function (x) { if (!done[x]) stns.push(x); });   // 取り残しを足す
+  }
   // 深さのある駅
   var deep = stns.map(function (id) {
     var d = (RG.DEPTH || {})[id];
@@ -115,6 +134,18 @@ RG.showLine = function (name) {
       '<button class="lnk" type="button" id="lc-hl"><span>✨</span>地図でこの路線を強調</button>' +
       (stns.length ? '<button class="lnk" type="button" data-goto="' + esc(stns[0]) + '"><span>🚉</span>' +
         esc(stns[0]) + "駅から見る</button>" : "") + "</div>" +
+    // 駅の一覧（押すとその駅のカードへ）
+    (stns.length
+      ? '<div class="lcst"><div class="lcst__h">🚉 この地図に出てくる駅<em>' + stns.length +
+        "駅・押すとその駅がひらきます</em></div>" +
+        '<div class="lcst__l">' + stns.map(function (id, i) {
+          var d = (RG.DEPTH || {})[id];
+          return '<button class="lcst__b" type="button" data-st="' + esc(id) + '" style="--lc:' + col + '">' +
+            '<span class="lcst__n">' + (i + 1) + "</span>" +
+            '<span class="lcst__t">' + esc(id) + "</span>" +
+            (d && d.d ? '<span class="lcst__d">地下' + d.d + "階</span>" : "") + "</button>";
+        }).join("") + "</div></div>"
+      : "") +
     '<p class="src">路線の情報: Wikidata (CC0) / Wikipedia (CC BY-SA 4.0)。' +
     "ラインカラーは各社の公表色です。</p></div>";
   var m = RG.openModal((RG.lineBadge ? "" : "") + name, html);

@@ -91,6 +91,13 @@ function buildIndex() {
   RG.project = function (la, lo) {
     return { x: pad + (mx(lo) - x0) * sc, y: pad + (y0 - my(la)) * sc };
   };
+  /* 地図の座標から緯度経度へ戻す（見えている範囲の升目を知るために使う） */
+  RG.unproject = function (x, y) {
+    var lo = ((x - pad) / sc + x0) * 180 / Math.PI;
+    var t = y0 - (y - pad) / sc;
+    var la = (2 * Math.atan(Math.exp(t)) - Math.PI / 2) * 180 / Math.PI;
+    return { la: la, lo: lo };
+  };
   RG.lineColor = {};
   N.lines.forEach(function (l) {
     var m = RG.LINEMETA && RG.LINEMETA[l.name];
@@ -260,12 +267,43 @@ var Map = (function () {
     });
     var map = {};
     Object.keys(byLine).forEach(function (k) {
+      // 見えている線
       var p = el("path", { class: "ln", d: byLine[k].join(""),
                            stroke: RG.lineColor[k] || "#9AA0A6", "stroke-width": 3.4,
                            fill: "none", "stroke-linecap": "round" });
-      gE.appendChild(p); map[k] = [p];
+      // 押すための «太い透明な線»（細い線は指では狙えないため）
+      var hit = el("path", { class: "ln__hit", d: byLine[k].join(""),
+                             stroke: "transparent", "stroke-width": 13,
+                             fill: "none", "stroke-linecap": "round" });
+      hit.dataset.line = k;
+      hit.setAttribute("tabindex", "0");
+      hit.setAttribute("role", "button");
+      hit.setAttribute("aria-label", k + " をひらく");
+      gE.appendChild(hit); gE.appendChild(p); map[k] = [p, hit];
     });
     edgeByLine = map;
+    /* 路線の線を押すと、その路線のカードが開く（駅の一覧も入っています）。
+       マウスを乗せると、路線名がふきだしで出ます。 */
+    gE.addEventListener("click", function (ev) {
+      var t = ev.target;
+      if (!t || !t.dataset || !t.dataset.line) return;
+      ev.stopPropagation();
+      if (RG.showLine) RG.showLine(t.dataset.line);
+    });
+    gE.addEventListener("pointerover", function (ev) {
+      var t = ev.target;
+      if (!t || !t.dataset || !t.dataset.line) return;
+      hoverLine(t.dataset.line, ev.clientX, ev.clientY);
+    });
+    gE.addEventListener("pointerout", function (ev) {
+      var t = ev.target;
+      if (t && t.dataset && t.dataset.line) hideLineTip();
+    });
+    gE.addEventListener("keydown", function (ev) {
+      var t = ev.target;
+      if (!t || !t.dataset || !t.dataset.line) return;
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); RG.showLine(t.dataset.line); }
+    });
 
     RG.NET.stations.forEach(function (s) {
       var big = s.rank < 40 || (s.ls || []).length >= 4;
@@ -289,7 +327,12 @@ var Map = (function () {
 
   function lod() {
     var z = VB.w / vb.w;
-    var k = Math.round(Math.min(800, Math.max(22, 22 * z * z)));
+    // 広く見ているときは «大事な駅» だけ。寄るほど増やす。
+    // 関東ぜんぶで2,500駅あるので、上限もそれに合わせる。
+    // 広く見ているときは «大事な駅» だけ。寄るほど増やす。
+    // 関東ぜんぶで2,400駅あるので、増えかたも大きくする。
+    var maxN = (RG.NET.stations || []).length;
+    var k = Math.round(Math.min(maxN, Math.max(30, 30 * Math.pow(z, 2.2))));
     RG.NET.stations.forEach(function (s) { node[s.id].classList.toggle("lod", s.rank >= k); });
     svg.style.setProperty("--lblscale", (1 / Math.pow(z, 0.55)).toFixed(3));
     // 画面上で常に同じ大きさの当たり判定になるよう、地図座標へ換算する
@@ -299,6 +342,15 @@ var Map = (function () {
     var lv = $("#zlevel"); if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
     if (RG.map3DMoved) RG.map3DMoved();
+    // 見えている升目のスポットを読む（区にまたがっていても、見えている升目は全部読む）
+    if (RG.loadTilesFor && vb) {
+      clearTimeout(tileT);
+      tileT = setTimeout(function () {
+        var a = RG.unproject(vb.x, vb.y + vb.h), b = RG.unproject(vb.x + vb.w, vb.y);
+        RG.loadTilesFor({ s: Math.min(a.la, b.la), n: Math.max(a.la, b.la),
+                          w: Math.min(a.lo, b.lo), e: Math.max(a.lo, b.lo) });
+      }, 260);
+    }
   }
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
 
@@ -385,6 +437,38 @@ var Map = (function () {
     vb.x = q.x - vb.w / 2; vb.y = q.y - vb.h / 2;
     apply();
   }
+  /* 路線名のふきだし（マウスを乗せたとき） */
+  var lineTip = null, lineTipT = null;
+  function hoverLine(name, cx, cy) {
+    clearTimeout(lineTipT);
+    if (!lineTip) {
+      lineTip = document.createElement("div");
+      lineTip.className = "lntip";
+      document.body.appendChild(lineTip);
+    }
+    var m = (RG.LINEMETA || {})[name] || {};
+    lineTip.innerHTML = '<span class="lntip__c" style="background:' +
+      (RG.lineColor[name] || "#9AA0A6") + '"></span>' +
+      '<b>' + RG.esc(name) + "</b>" +
+      (m.op ? '<i>' + RG.esc(m.op) + "</i>" : "") +
+      '<em>押すとこの路線のことが見られます</em>';
+    lineTip.style.left = Math.min(cx + 12, innerWidth - 230) + "px";
+    lineTip.style.top = Math.max(8, cy - 54) + "px";
+    lineTip.classList.add("on");
+    // 線を太くして «いまここ» を分かるように
+    Object.keys(edgeByLine).forEach(function (k) {
+      edgeByLine[k].forEach(function (p) { p.classList.toggle("hi", k === name); });
+    });
+  }
+  function hideLineTip() {
+    lineTipT = setTimeout(function () {
+      if (lineTip) lineTip.classList.remove("on");
+      Object.keys(edgeByLine).forEach(function (k) {
+        edgeByLine[k].forEach(function (p) { p.classList.remove("hi"); });
+      });
+    }, 120);
+  }
+
   function screenPosXY(x, y) {
     var r = wrap.getBoundingClientRect();
     return { x: r.left + (x - vb.x) / vb.w * r.width, y: r.top + (y - vb.y) / vb.h * r.height };
@@ -504,6 +588,7 @@ var Map = (function () {
     }
     return OPTIN;
   }
+  var tileT = null;
   function poiLOD() {
     if (!poiReady) return;
     var z = VB.w / vb.w;
@@ -517,7 +602,9 @@ var Map = (function () {
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
       // ジャンルを選んでいるときは «そのジャンルは全部» 見せる（ズーム段階を無視）
-      if (!picked && (p.ti > maxTier || p.s < minStar)) continue;
+      // ピンで絞っているときは «自分が付けたもの» なので、ズームに関係なく必ず出す
+      var pinned = RG.pinFilter != null;
+      if (!picked && !pinned && (p.ti > maxTier || p.s < minStar)) continue;
       if (picked && poiOn.indexOf(p.g) < 0) continue;
       // ジャンルを選んでいるときは «そのジャンルは全部» 見せる（ズーム段階を無視）
 
@@ -525,6 +612,13 @@ var Map = (function () {
       if (!picked && optInSet()[p.g]) continue;
       if (p.chain && RG.chainOn && RG.chainOn.length && RG.chainOn.indexOf(p.brand) < 0) continue;
       // 上場企業は業種でしぼりこめる
+      // 自分のピンで絞り込む
+      if (RG.pinFilter != null && RG.pinsOf) {
+        var mine = RG.pinsOf(p);
+        if (RG.pinFilter === "any") { if (!mine.length) continue; }
+        else if (mine.indexOf(RG.pinFilter) < 0) continue;
+      }
+      if (p.chain && RG.chainFilter != null && p.brand !== RG.chainFilter) continue;
       if (p.smoke && RG.smokeFilter && p.sk !== RG.smokeFilter) continue;
       if (p.corp && RG.corpFilter) {
         if (RG.corpFilter.i33 && p.i33 !== RG.corpFilter.i33) continue;
@@ -556,6 +650,11 @@ var Map = (function () {
       if (j >= show.length) { n.style.display = "none"; n.__p = null; continue; }
       var t = show[j], g = genreOf(t.g);
       if (t.bc) g = { e: t.be || g.e, c: t.bc };
+      var myPins = RG.pinsOf ? RG.pinsOf(t) : [];
+      if (myPins.length) {
+        var pd = (RG.pinDefs ? RG.pinDefs() : [])[myPins[0]];
+        if (pd) g = { e: pd.e, c: "#C8880F" };
+      }
       n.__p = t; n.style.display = "";
       n.setAttribute("class", "poi poi--t" + t.ti + " poi--" + t.g +
         (RG.visitCount && RG.visitCount(t.n) > 0 ? " visited" : ""));
@@ -1148,6 +1247,64 @@ var Card = (function () {
 })();
 RG.Card = Card;
 RG.openStation = function (id) { Card.open(id); };
+
+/* =========================================================================
+   ふきだしの置き場所を決める（パソコン・スマホ縦・スマホ横 で分ける）
+   ―― これまでは «上に出す» の一手だったため、
+      画面の上のほうを押すと、ふきだしが画面の外へはみ出していました。
+      いまは «入るほうへ» 置きます。狭い画面では下から出る板にします。
+   ========================================================================= */
+RG.placePop = function (pop, anchor, opt) {
+  opt = opt || {};
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var narrow = vw < 560;                     // スマホの縦
+  var shortH = vh < 480;                     // スマホの横（高さが足りない）
+  pop.classList.remove("pop--sheet", "pop--below", "pop--above");
+
+  // 狭い画面では、位置を細かく合わせるより «下から出す板» のほうが押しやすい
+  if (narrow && !opt.noSheet) {
+    pop.classList.add("pop--sheet");
+    pop.style.left = ""; pop.style.top = ""; pop.style.right = ""; pop.style.bottom = "";
+    return "sheet";
+  }
+  var w = pop.offsetWidth || 240, h = pop.offsetHeight || 120;
+  var ax = anchor.x, ay = anchor.y, ah = anchor.h || 0;
+  var m = 8;
+  // 上に置けるか。置けないなら下。どちらも無理なら、入るところへ寄せる
+  var above = ay - h - 12, below = ay + ah + 12;
+  var top;
+  if (above >= m) { top = above; pop.classList.add("pop--above"); }
+  else if (below + h <= vh - m) { top = below; pop.classList.add("pop--below"); }
+  else { top = Math.max(m, Math.min(vh - h - m, ay - h / 2)); }
+  if (shortH) { pop.style.maxHeight = (vh - m * 2) + "px"; pop.style.overflowY = "auto"; }
+  pop.style.left = Math.min(vw - w - m, Math.max(m, ax - w / 2)) + "px";
+  pop.style.top = top + "px";
+  pop.style.right = ""; pop.style.bottom = "";
+  return "float";
+};
+
+/* その場所の «上のほう» にある駅・スポットを探す。
+   指は太いので、少しずれても拾えるように、まわりも見る。
+   指の端末では広め（18px）、マウスでは狭め（8px）。 */
+RG.hitAbove = function (cx, cy) {
+  var r = RG.isTouchDevice() ? 18 : 8;
+  var best = null, bd = 1e9;
+  var sel = ".node, .poi";
+  Array.prototype.forEach.call(document.querySelectorAll(sel), function (n) {
+    if (n.style.display === "none" || n.classList.contains("lod")) return;
+    var b = n.getBoundingClientRect();
+    if (!b.width && !b.height) return;
+    var x = b.left + b.width / 2, y = b.top + b.height / 2;
+    var d = Math.hypot(x - cx, y - cy);
+    if (d <= r + Math.max(b.width, b.height) / 2 && d < bd) { bd = d; best = n; }
+  });
+  return best;
+};
+
+/* 指で使っているかどうか（マウスが無い端末） */
+RG.isTouchDevice = function () {
+  return window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+};
 RG.focusStation = function (id) { Map.focus(id, 260); };
 RG.paintIso = function (m) { Map.paintIso(m); };
 RG.paintPick = function (a) { Map.paintPick(a); };
@@ -1245,15 +1402,21 @@ function mergeExtraPois(key) {
       });
     });
   }
-  if (RG.CHAIN_ROWS) once("chains", function () {
-    var BR = {};
-    (RG.CHAIN_BRANDS || []).forEach(function (b) { BR[b.id] = b; });
+  // チェーン店（ジャンル → ブランドの2段）
+  if (RG.CHAIN_ROWS && RG.CHAIN_BRANDS) once("chain2", function () {
+    var BR = {}, CT = {};
+    (RG.CHAIN_BRANDS || []).forEach(function (b) { BR[b.i] = b; });
+    (RG.CHAIN_CATS || []).forEach(function (c) { CT[c.id] = c; });
     RG.CHAIN_ROWS.forEach(function (r, i) {
-      var b = BR[r[0]]; if (!b) return;
-      RG.MAPPOI.push({ i: "c" + i, n: r[3] || b.n, la: r[1], lo: r[2], g: b.cat,
-                       s: 2.5, ti: 2, t: b.n, brand: b.id, bc: b.c, be: b.e, chain: 1 });
+      var b = BR[r[0]];
+      if (!b) return;
+      var c = CT[b.cat] || {};
+      RG.MAPPOI.push({ i: "ch" + i, n: r[3] || b.n, la: r[1], lo: r[2], g: b.cat,
+                       s: 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
+                       brand: b.i, chain: 1, cat: b.cat });
     });
   });
+
   if (RG.OSM10) once("osm10", function () {
     var M = RG.OSM10_META || {};
     Object.keys(RG.OSM10).forEach(function (gid) {
@@ -1328,7 +1491,24 @@ RG.boot = function () {
     var bh = $("#btn-hub");
     if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
   });
+  step("升目の目次", function () {
+    if (RG.initTiles) RG.initTiles(function (meta) {
+      if (!meta) return;
+      // いま見えている範囲のぶんだけ読む
+      if (RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
+    });
+  });
+  step("別スレッドの検索索引", function () {
+    if (!RG.askWorker || !RG.hasWorker || !RG.hasWorker()) return;
+    var items = (RG.MAPPOI || []).slice(0, 30000).map(function (p) {
+      return { n: p.n, t: p.t, a: p.ad, la: p.la, lo: p.lo, g: p.g };
+    });
+    RG.askWorker({ cmd: "index", items: items }, function (r) {
+      RG.workerIndexed = r && r.ok ? r.n : 0;
+    });
+  });
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
+  step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });
   step("文字の大きさ", function () {
     if (RG.settings && RG.settings.bigtext) document.documentElement.classList.add("bigtext");

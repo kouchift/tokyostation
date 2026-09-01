@@ -267,7 +267,34 @@ function draw() {
 
   // 3) 建物：奥のものから描く（手前が前に来るように）
   var bs = (RG.BLDG3D || []).map(function (b) { return building(b, P); });
+  /* 名前の «場所とり»。
+     すでに置いた名前と重なるなら、その名前は出さない。
+     目立つものから先に place() を呼ぶので、残るのは目立つほうになる。 */
+  var slots = [];
+  function place(cx, cy, w, h) {
+    var x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h, y1 = cy + h * 0.25;
+    for (var i = 0; i < slots.length; i++) {
+      var s2 = slots[i];
+      if (x0 < s2[2] && x1 > s2[0] && y0 < s2[3] && y1 > s2[1]) return false;
+    }
+    slots.push([x0, y0, x1, y1]);
+    return true;
+  }
+  /* 字の大きさは、いま見えている広さに合わせる。
+     広く見ているとき（＝込み合う）は小さく、寄っているときは大きく。 */
+  var vw = (RG.Map && RG.Map.viewBox) ? RG.Map.viewBox().w : 700;
+  var fontK = Math.max(0.62, Math.min(1.5, Math.pow(vw / 420, 0.42)));
+
+  // 目立つ順（有名 → 高い）に名前を置く。手前・奥の描き順とは別に決める。
+  var nameOrder = bs.slice().sort(function (a, b) {
+    var fa = (a.b.sl || 0) + a.b.h / 12, fb = (b.b.sl || 0) + b.b.h / 12;
+    return fb - fa;
+  });
+  var rank = {};
+  nameOrder.forEach(function (o, i) { rank[o.b.n] = i; });
+
   bs.sort(function (a, b) { return a.depth - b.depth; });
+  var labels = [];
   bs.forEach(function (o) {
     var b = o.b;
     // 有名さで «描きこみの度合い» を変える。
@@ -298,21 +325,52 @@ function draw() {
     }
 
     // 名前：有名なものは小さく上品に、そうでないものは大きめにして存在を伝える
-    var showName = !QUICK && (tier <= 1 || b.h >= 90);
-    if (showName) {
-      var fs = tier === 0 ? 4.6 : tier === 1 ? 5.2 : 6.0;
-      var eo = tier === 0 ? 6.6 : 5.4;
-      out.push('<text class="b3e" x="' + cx.toFixed(1) + '" y="' + (ty - 2.6).toFixed(1) +
-               '" font-size="' + eo + '" text-anchor="middle" opacity="' +
-               Math.max(op, 0.75).toFixed(2) + '">' + b.e + "</text>");
-      out.push('<text class="b3n b3n--t' + tier + '" x="' + cx.toFixed(1) + '" y="' +
-               (ty - 2.6 - eo * 0.95).toFixed(1) + '" font-size="' + fs +
-               '" text-anchor="middle" data-b3="' + esc(b.n) + '">' + esc(b.n) + "</text>");
+    // 名前を出すかどうか。
+    // 込み合ったところで全部出すと読めなくなるため、
+    //  ・目立つもの（有名・高い）を先に置く
+    //  ・すでに置いた名前と重なる場所には置かない
+    // という順で決める（この判断は下の labelSlots が持っています）。
+    var wantName = !QUICK && (tier <= 1 || b.h >= 110);
+    if (wantName) { labels.push({ b: b, cx: cx, ty: ty, tier: tier, op: op, r: rank[b.n] || 0 }); }
+    if (false) {
+      // 画面の広さに合わせて字の大きさを決める。ズームが浅いほど小さく。
+      var fs = (tier === 0 ? 4.2 : tier === 1 ? 3.9 : 3.6) * fontK;
+      var eo = (tier === 0 ? 5.6 : 4.6) * fontK;
+      var ny = ty - 2.4 * fontK;
+      var w = b.n.length * fs * 0.98 + 4;      // だいたいの幅
+      if (place(cx, ny - eo, w, (fs + eo) * 1.15)) {
+        out.push('<text class="b3e" x="' + cx.toFixed(1) + '" y="' + ny.toFixed(1) +
+                 '" font-size="' + eo.toFixed(1) + '" text-anchor="middle" opacity="' +
+                 Math.max(op, 0.75).toFixed(2) + '">' + b.e + "</text>");
+        out.push('<text class="b3n b3n--t' + tier + '" x="' + cx.toFixed(1) + '" y="' +
+                 (ny - eo * 0.95).toFixed(1) + '" font-size="' + fs.toFixed(1) +
+                 '" text-anchor="middle" data-b3="' + esc(b.n) + '">' + esc(b.n) + "</text>");
+      }
     }
     out.push('<rect class="b3hit" x="' + (cx - rw * 1.6).toFixed(1) + '" y="' + (ty - 13).toFixed(1) +
              '" width="' + (rw * 3.2).toFixed(1) + '" height="' + Math.max(6, H + 13).toFixed(1) +
              '" data-b3="' + esc(b.n) + '"/>');
   });
+
+  /* 名前は «目立つ順» に置く。重なったら置かない。
+     こうすると、込み合ったところでも読める名前だけが残る。 */
+  labels.sort(function (a, b) { return a.r - b.r; });
+  var shown = 0;
+  labels.forEach(function (L) {
+    var fs = (L.tier === 0 ? 4.2 : L.tier === 1 ? 3.9 : 3.6) * fontK;
+    var eo = (L.tier === 0 ? 5.6 : 4.6) * fontK;
+    var ny = L.ty - 2.4 * fontK;
+    var w = L.b.n.length * fs * 0.98 + 4;
+    if (!place(L.cx, ny - eo, w, (fs + eo) * 1.15)) return;
+    shown++;
+    out.push('<text class="b3e" x="' + L.cx.toFixed(1) + '" y="' + ny.toFixed(1) +
+             '" font-size="' + eo.toFixed(1) + '" text-anchor="middle" opacity="' +
+             Math.max(L.op, 0.75).toFixed(2) + '">' + L.b.e + "</text>");
+    out.push('<text class="b3n b3n--t' + L.tier + '" x="' + L.cx.toFixed(1) + '" y="' +
+             (ny - eo * 0.95).toFixed(1) + '" font-size="' + fs.toFixed(1) +
+             '" text-anchor="middle" data-b3="' + esc(L.b.n) + '">' + esc(L.b.n) + "</text>");
+  });
+  RG.__b3names = { want: labels.length, shown: shown };
 
   // 3.5) 地下：地面より下に、駅と地下鉄のトンネルを描く
   //      「大江戸線って深いね！」が目で分かるようにするのがねらい。
@@ -417,6 +475,87 @@ RG.draw3DNow = draw;
 /* スライダーを動かしている間だけ «軽い描き方» にする */
 RG.draw3DQuick = function () { QUICK = true; RG.draw3D(); };
 RG.draw3DFull = function () { QUICK = false; RG.draw3D(); };
+
+/* ---------------------------------------------------- マウスで角度を変える
+   ―― 「設定で角度固定」ではなく、地図の上で右ドラッグ（または Shift＋ドラッグ）
+      すると、その場で見下ろす角度が変わります。
+      重くならないよう、動かしているあいだは «軽い描き方» にしています。
+      指の端末では、2本指の上下でも変えられます。 */
+RG.initTiltDrag = function () {
+  var wrap = document.querySelector(".mapwrap");
+  if (!wrap || RG.__tiltBound) return;
+  RG.__tiltBound = true;
+  var B = RG.Base, drag = null, hint = null;
+
+  function say(t) {
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.className = "tiltHint";
+      document.querySelector(".mapwrap").appendChild(hint);
+    }
+    hint.textContent = t;
+    hint.classList.add("on");
+  }
+  function bye() { if (hint) hint.classList.remove("on"); }
+
+  wrap.addEventListener("pointerdown", function (e) {
+    if (!B.mode3d) return;
+    if (e.target.closest && e.target.closest(
+      ".quickbar,.heatlegend,.navbar,.chips,.poipop,button,a,input,select,textarea,label")) return;
+    // 右ボタン、または Shift を押しながら
+    if (!(e.button === 2 || e.shiftKey)) return;
+    e.preventDefault();
+    drag = { y: e.clientY, x: e.clientX, t: B.tilt == null ? 52 : B.tilt,
+             r: B.rot == null ? 0 : B.rot };
+    wrap.setPointerCapture(e.pointerId);
+    QUICK = true;
+    say("見下ろす角度 " + Math.round(drag.t) + "°");
+  });
+  wrap.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    var t = drag.t + (e.clientY - drag.y) * 0.14;
+    B.tilt = Math.max(0, Math.min(78, t));
+    say("見下ろす角度 " + Math.round(B.tilt) + "°" +
+        (B.tilt < 12 ? "（ほぼ真横）" : B.tilt > 70 ? "（ほぼ真上）" : ""));
+    RG.draw3D();
+  });
+  ["pointerup", "pointercancel"].forEach(function (t) {
+    wrap.addEventListener(t, function () {
+      if (!drag) return;
+      drag = null; QUICK = false; RG.draw3D();
+      if (RG.saveBase) RG.saveBase();
+      setTimeout(bye, 900);
+    });
+  });
+  // 右クリックのメニューは邪魔なので、3Dのときだけ止める
+  wrap.addEventListener("contextmenu", function (e) { if (B.mode3d) e.preventDefault(); });
+
+  // 指の端末：2本指の上下で角度を変える
+  var pinchY = null;
+  wrap.addEventListener("touchstart", function (e) {
+    if (!B.mode3d || e.touches.length !== 2) { pinchY = null; return; }
+    pinchY = { y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+               t: B.tilt == null ? 52 : B.tilt,
+               d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                             e.touches[0].clientY - e.touches[1].clientY) };
+  }, { passive: true });
+  wrap.addEventListener("touchmove", function (e) {
+    if (!pinchY || e.touches.length !== 2) return;
+    var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                       e.touches[0].clientY - e.touches[1].clientY);
+    if (Math.abs(d - pinchY.d) > 26) return;      // 広げ縮めは «拡大» なので触らない
+    var y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    B.tilt = Math.max(0, Math.min(78, pinchY.t + (y - pinchY.y) * 0.13));
+    QUICK = true; RG.draw3D();
+    say("見下ろす角度 " + Math.round(B.tilt) + "°");
+  }, { passive: true });
+  wrap.addEventListener("touchend", function () {
+    if (!pinchY) return;
+    pinchY = null; QUICK = false; RG.draw3D();
+    if (RG.saveBase) RG.saveBase();
+    setTimeout(bye, 900);
+  }, { passive: true });
+};
 RG.map3DMoved = function () { if ((RG.Base || {}).mode3d) RG.draw3D(); };
 
 function showBldg(b) {

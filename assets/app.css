@@ -2079,3 +2079,218 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   overflow:hidden;background:var(--control);cursor:pointer}
 .gal__t img{width:100%;height:100%;object-fit:cover;display:block}
 .gal__t.on{border-color:var(--lb900)}
+
+/* =========================================================================
+   v47：自分のピン
+   ========================================================================= */
+.lr__c--p{border-color:#C8880F;color:#8A5A00;font-weight:700}
+.pins{border:1px solid #F0D9A8;background:#FFFBF0;border-radius:10px;padding:9px 11px;margin-bottom:11px}
+.pins__h{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.pins__h em{font-style:normal;font-size:9.5px;color:var(--label);font-weight:400}
+.pins__b{display:grid;grid-template-columns:repeat(auto-fit,minmax(82px,1fr));gap:5px}
+.pin{display:flex;flex-direction:column;align-items:center;gap:1px;min-height:52px;padding:6px 4px;
+  border:1.5px solid var(--grid);border-radius:9px;background:#fff;font-family:inherit;cursor:pointer}
+.pin:hover{border-color:#C8880F;background:#FFF7E4}
+.pin.on{background:#C8880F;border-color:#C8880F}
+.pin.on .pin__n{color:#fff}
+.pin__e{font-size:19px;line-height:1.1}
+.pin__n{font-size:9.5px;font-weight:600;text-align:center;line-height:1.2}
+.pe{border:1px solid var(--grid);border-radius:10px;padding:9px 11px;margin-bottom:8px}
+.pe__h{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.pe__e{font-size:24px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--grid);border-radius:9px;background:var(--control)}
+.pe__n{flex:1;height:40px;border:1px solid var(--border);border-radius:9px;padding:0 11px;
+  font-size:14px;font-family:inherit}
+.pe__g{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:3px;
+  max-height:132px;overflow-y:auto}
+.pe__b{height:38px;border:1px solid transparent;border-radius:8px;background:#fff;font-size:19px;
+  cursor:pointer;line-height:1}
+.pe__b:hover{background:var(--lb50)}
+.pe__b.on{border-color:var(--lb900);background:var(--lb50)}
+.pi__drop{border:2px dashed var(--border);border-radius:11px;padding:16px;text-align:center;margin-bottom:11px}
+.pi__d{font-size:11px;color:var(--label);margin:8px 0 0}
+.pi__prev{margin-bottom:11px}
+.pi__row{display:flex;gap:11px;align-items:center;border:1px solid var(--grid);border-radius:10px;padding:10px}
+.pi__row>img{width:74px;height:74px;object-fit:contain;border-radius:8px;background:var(--control)}
+.pi__row b{display:block;font-size:12.5px}
+.pi__row i{display:block;font-style:normal;font-size:10.5px;color:var(--label)}
+.pi__sm{margin-left:auto}
+.pi__sm img{width:26px;height:26px;object-fit:contain}
+
+/* v47：お店をえらぶ（ジャンル → ブランドの2段） */
+.cc{display:grid;gap:5px;margin-bottom:10px}
+.cc__b{display:grid;grid-template-columns:34px 1fr auto 14px;gap:10px;align-items:center;
+  padding:10px 11px;border:1px solid var(--grid);border-radius:10px;background:#fff;
+  font-family:inherit;text-align:left;cursor:pointer}
+.cc__b:hover{background:var(--lb50);border-color:var(--lb400)}
+.cc__e{font-size:21px}
+.cc__t b{display:block;font-size:13px}
+.cc__t i{display:block;font-style:normal;font-size:10px;color:var(--label)}
+.cc__d{display:flex;gap:3px}
+.cc__d i{width:11px;height:11px;border-radius:3px;display:block}
+.cc__x{color:var(--label);font-size:16px}
+.cp__back{border:0;background:none;color:var(--highlight);font-size:12px;font-family:inherit;
+  cursor:pointer;padding:2px 0 8px}
+.brands{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:5px}
+.brand{display:grid;grid-template-columns:26px 1fr auto;gap:7px;align-items:center;
+  padding:9px 10px;border:1px solid var(--grid);border-left:5px solid var(--bc);
+  border-radius:9px;background:#fff;font-family:inherit;text-align:left;cursor:pointer}
+.brand:hover{background:color-mix(in srgb,var(--bc) 10%,#fff)}
+.brand.on{background:var(--bc);border-color:var(--bc)}
+.brand.on .brand__n,.brand.on .brand__k{color:#fff}
+.brand__e{font-size:15px}
+.brand__n{font-size:11.5px;font-weight:600;line-height:1.3;overflow:hidden}
+.brand__k{font-size:10px;color:var(--label);font-family:var(--mono)}
+
+/* =========================================================================
+   v48：いま選んでいるものを見せる／マウスを乗せたときの説明／路線を押す
+   ========================================================================= */
+
+/* いま選んでいるジャンルの札 */
+.sel{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+.sel::-webkit-scrollbar{display:none}
+.sel--row{padding:0 9px 7px;border-bottom:1px solid var(--grid);margin-bottom:2px}
+.sel__c{flex:0 0 auto;display:flex;align-items:center;gap:5px;height:32px;padding:0 6px 0 9px;
+  border:1.5px solid var(--lc);border-radius:999px;background:color-mix(in srgb,var(--lc) 12%,#fff);
+  font-family:inherit;cursor:pointer;white-space:nowrap}
+.sel__c:hover{background:var(--lc)}
+.sel__c:hover .sel__n,.sel__c:hover .sel__k,.sel__c:hover .sel__x{color:#fff}
+.sel__e{font-size:14px}
+.sel__n{font-size:11.5px;font-weight:700}
+.sel__k{font-size:9.5px;color:var(--label);font-family:var(--mono)}
+.sel__x{font-size:11px;color:var(--label);margin-left:1px}
+@media (pointer: coarse){ .sel__c{height:38px} }
+
+/* マウスを乗せたときの説明 */
+.tip{position:fixed;z-index:120;max-width:250px;padding:8px 11px;border-radius:9px;
+  background:#0F1A2B;color:#fff;font-size:11.5px;line-height:1.6;pointer-events:none;
+  opacity:0;transform:translateY(3px);transition:opacity .13s,transform .13s;
+  box-shadow:0 6px 20px rgba(0,0,0,.28)}
+.tip.on{opacity:1;transform:none}
+.tip b{display:block;font-size:12.5px}
+.tip i{display:block;font-style:normal;color:rgba(255,255,255,.82);margin-top:2px;font-size:11px}
+
+/* 路線の線：押せるように、乗せたら太く */
+.ln__hit{cursor:pointer}
+.ln.hi{stroke-width:6 !important;filter:drop-shadow(0 0 3px rgba(0,0,0,.35))}
+.lntip{position:fixed;z-index:120;padding:8px 11px;border-radius:9px;background:#0F1A2B;color:#fff;
+  font-size:12px;line-height:1.55;pointer-events:none;opacity:0;transition:opacity .13s;
+  box-shadow:0 6px 20px rgba(0,0,0,.28);max-width:220px}
+.lntip.on{opacity:1}
+.lntip__c{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;
+  vertical-align:middle}
+.lntip b{font-size:12.5px}
+.lntip i{display:block;font-style:normal;font-size:10.5px;color:rgba(255,255,255,.8)}
+.lntip em{display:block;font-style:normal;font-size:9.5px;color:rgba(255,255,255,.62);margin-top:3px}
+
+/* v48：路線カードの駅一覧 */
+.lcst{border:1px solid var(--grid);border-radius:10px;padding:9px 11px;margin-bottom:11px}
+.lcst__h{display:flex;align-items:baseline;gap:7px;font-size:12px;font-weight:700;margin-bottom:7px}
+.lcst__h em{font-style:normal;font-size:10px;color:var(--label);font-weight:400}
+.lcst__l{display:flex;flex-wrap:wrap;gap:4px;max-height:min(38vh,280px);overflow-y:auto}
+.lcst__b{display:flex;align-items:center;gap:5px;padding:6px 10px 6px 6px;border:1px solid var(--grid);
+  border-left:4px solid var(--lc);border-radius:8px;background:#fff;font-family:inherit;cursor:pointer}
+.lcst__b:hover{background:color-mix(in srgb,var(--lc) 12%,#fff);border-color:var(--lc)}
+.lcst__n{min-width:19px;height:19px;border-radius:5px;background:var(--control);color:var(--label);
+  font-size:9.5px;font-family:var(--mono);display:flex;align-items:center;justify-content:center}
+.lcst__t{font-size:12px;font-weight:600}
+.lcst__d{font-size:9px;color:#8A5A00;background:#FFFBEB;border-radius:4px;padding:1px 5px}
+@media (pointer: coarse){ .lcst__b{min-height:40px} }
+
+/* v49：3Dの名前を読みやすく／角度をマウスで変える */
+.b3n{paint-order:stroke;stroke:#fff;stroke-width:2.1px;stroke-linejoin:round}
+.b3n--t0{fill:#08243F;stroke-width:2.4px}
+.b3n--t1{fill:#26405C}
+.b3n--t2{fill:#54657A;stroke-width:2.6px}
+.tiltHint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:26;
+  padding:7px 14px;border-radius:999px;background:rgba(15,26,43,.86);color:#fff;
+  font-size:12.5px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .16s;
+  box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.tiltHint.on{opacity:1}
+.mapwrap.d3drag{cursor:ns-resize}
+
+/* v50：自分のピン */
+.lr__c--p{border-color:#C8880F;color:#8A5A00;font-weight:700}
+.pins{border:1px solid #F0D9A8;background:#FFFBF0;border-radius:10px;padding:9px 11px;margin-bottom:11px}
+.pins__h{display:flex;align-items:baseline;gap:7px;font-size:12px;font-weight:700;margin-bottom:7px}
+.pins__h em{font-style:normal;font-size:10px;color:var(--label);font-weight:400}
+.pins__b{display:flex;flex-wrap:wrap;gap:5px}
+.pin{display:flex;align-items:center;gap:5px;min-height:36px;padding:0 11px;border:1.5px solid var(--grid);
+  border-radius:999px;background:#fff;font-family:inherit;cursor:pointer}
+.pin:hover{border-color:#C8880F;background:#FFF5DC}
+.pin.on{background:#C8880F;border-color:#C8880F}
+.pin.on .pin__n{color:#fff}
+.pin__e{font-size:15px}
+.pin__n{font-size:11.5px;font-weight:600}
+.pe{border:1px solid var(--grid);border-radius:10px;padding:9px 11px;margin-bottom:8px}
+.pe__h{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.pe__e{font-size:24px;width:36px;text-align:center}
+.pe__n{flex:1;height:40px;border:1px solid var(--border);border-radius:9px;padding:0 11px;
+  font-size:14px;font-family:inherit}
+.pe__g{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:3px;
+  max-height:132px;overflow-y:auto}
+.pe__b{height:38px;border:1px solid transparent;border-radius:8px;background:var(--control);
+  font-size:17px;cursor:pointer;padding:0}
+.pe__b:hover{background:#FFF5DC}
+.pe__b.on{border-color:#C8880F;background:#FFF0CC}
+.pi__drop{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;margin-bottom:11px}
+.pi__d{font-size:11px;color:var(--label);margin:8px 0 0}
+.pi__prev{border:1px solid var(--grid);border-radius:10px;padding:11px;margin-bottom:11px}
+.pi__row{display:grid;grid-template-columns:72px 1fr auto;gap:11px;align-items:center}
+.pi__row>img{width:72px;height:72px;object-fit:contain;background:var(--control);border-radius:8px}
+.pi__row b{font-size:12.5px}
+.pi__row i{display:block;font-style:normal;font-size:10.5px;color:var(--label)}
+.pi__sm img{width:26px;height:26px;object-fit:contain}
+
+/* =========================================================================
+   v52：スマホ（縦・横）とパソコンで、ふきだしの出しかたを分ける
+   ========================================================================= */
+
+/* 狭い画面では «下から出る板» にする。指で届く場所に必ず出る。 */
+.pop--sheet{
+  position:fixed !important;left:0 !important;right:0 !important;bottom:0 !important;
+  top:auto !important;width:100% !important;max-width:none !important;
+  border-radius:16px 16px 0 0 !important;
+  max-height:min(56vh,420px);overflow-y:auto;overscroll-behavior:contain;
+  box-shadow:0 -10px 30px rgba(0,0,0,.24) !important;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom,0px)) !important;
+  animation:popUp .16s ease-out
+}
+@keyframes popUp{from{transform:translateY(18px);opacity:.4}to{transform:none;opacity:1}}
+.pop--sheet::before{content:"";display:block;width:36px;height:4px;border-radius:2px;
+  background:rgba(0,0,0,.18);margin:0 auto 8px}
+
+/* ふきだしの «向き» が分かるように、小さな三角を出す */
+.pop--above::after,.pop--below::after{content:"";position:absolute;left:50%;
+  margin-left:-7px;border:7px solid transparent}
+.pop--above::after{top:100%;border-top-color:#fff}
+.pop--below::after{bottom:100%;border-bottom-color:#fff}
+
+/* スマホの横向き（高さが足りない）：中でスクロールできるように */
+@media (max-height:480px){
+  .modal__bd{max-height:calc(100vh - 96px);overflow-y:auto}
+  .sheet{max-height:88vh}
+  .lr__rows{max-height:46vh}
+  .weekbar{padding:3px 8px}
+  .weekbar .wb__d{min-height:38px;width:40px}
+  .weekbar .wb__n{font-size:14px}
+  .topbar .tripbar{padding:4px 9px}
+}
+
+/* スマホの縦：画面の下は指が届きやすいので、大事なボタンを下に */
+@media (max-width:560px){
+  .modal{align-items:flex-end}
+  .modal__box{width:100%;max-width:none;border-radius:16px 16px 0 0;
+    max-height:90vh;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .modal__hd{position:sticky;top:0;background:#fff;z-index:2}
+  .legend__foot{position:sticky;bottom:0;background:#fff;padding:8px 0;
+    border-top:1px solid var(--grid);z-index:2}
+  .lnks{grid-template-columns:1fr}
+  .wls{grid-template-columns:1fr 1fr}
+}
+
+/* 指の端末では、地図の駅とスポットの当たり判定を広げる */
+@media (pointer:coarse){
+  .node .hit{r:calc(var(--hitr,12) * 1.5)}
+  .poi{--poihit:1.5}
+}

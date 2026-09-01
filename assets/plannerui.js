@@ -228,11 +228,7 @@ RG.spotTip = function (p, P, isOwn) {
     ev.stopPropagation(); tipOver = false; poiPop.style.display = "none";
   });
   var sp = RG.Map.screenPosXY ? RG.Map.screenPosXY(P.x, P.y) : null;
-  if (sp) {
-    var w = poiPop.offsetWidth;
-    poiPop.style.left = Math.min(innerWidth - w - 8, Math.max(8, sp.x - w / 2)) + "px";
-    poiPop.style.top = Math.max(8, sp.y - poiPop.offsetHeight - 14) + "px";
-  }
+  if (sp && RG.placePop) RG.placePop(poiPop, { x: sp.x, y: sp.y, h: 18 });
 };
 
 /* YouTube のURLから動画IDを取り出す（youtu.be / watch?v= / live/ に対応） */
@@ -381,6 +377,7 @@ RG.showSpot = function (p) {
     '<div class="spotcard__st">' + stars(p.s || 3) +
       '<span class="spotcard__why">行く価値のめやす</span>' +
       (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
+    (RG.pinRow ? RG.pinRow(p) : "") +
     cameraBlock(p) +
     fromHtml +
     (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
@@ -424,6 +421,7 @@ RG.showSpot = function (p) {
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
     "<b>レビューサイトの評価点ではありません。</b><br>出典: Wikidata (CC0 1.0) / 画像: Wikimedia Commons</p></div>";
   var m = modal(g.e + " " + p.n, html);
+  if (RG.bindPinRow) RG.bindPinRow(m, p);
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });
   var db2 = m.querySelector("[data-dest2]");

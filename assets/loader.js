@@ -32,6 +32,7 @@ var LAZY = [
   { f: "data/tokyo_od.js",  key: "od",        label: "生活インフラ" },
   { f: "data/flood.js",     key: "flood",     label: "浸水想定" },
   { f: "data/events.js",    key: "events",    label: "イベント" },
+  { f: "data/chains2.js",  key: "chain2",    label: "チェーン店" },
   { f: "data/chains.js",    key: "chains",    label: "チェーン店" },
   { f: "data/corp.js",      key: "corp",      label: "上場企業" },
   { f: "data/smoking.js",   key: "smoke",     label: "喫煙できる場所" },
@@ -79,6 +80,12 @@ function refresh(key) {
       if (RG.initLinesUI && RG.rebuildRail) RG.rebuildRail();
     }
     if (key === "koyomi") { if (RG.buildWeekBar) RG.buildWeekBar(); }
+    // 升目ごとの読み込みを用意する（見ている場所のスポットだけ、あとから届く）
+    if (key === "osm10" && RG.initTiles) RG.initTiles(function (meta) {
+      if (meta && RG.tripStatus)
+        RG.tripStatus("🗺️ 見ている場所のスポットを、あとから足していきます（升目 " +
+                      Object.keys(meta.tiles).length + " 枚）", "info", 3000);
+    });
     if (key === "poi" || key === "descs" || key === "depth") {
       if (RG.Card && RG.Card.refresh) RG.Card.refresh();
     }

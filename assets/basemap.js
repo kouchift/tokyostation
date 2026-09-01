@@ -58,6 +58,12 @@ function build(svg, project) {
     pth.style.cursor = "pointer";
     pth.addEventListener("click", function (ev) {
       if (!B.admin || B.blank) return;
+      /* 区の «面» は駅やスポットの下に敷いてあるが、
+         指でタップすると面のほうが先に反応することがある。
+         押した場所の真上に駅やスポットがあるなら、そちらにゆずる。
+         （«行き先に設定» したいのに区の紹介が出てしまうため） */
+      var near = RG.hitAbove && RG.hitAbove(ev.clientX, ev.clientY);
+      if (near) { near.dispatchEvent(new MouseEvent("click", { bubbles: true })); return; }
       ev.stopPropagation();
       if (RG.showWard) RG.showWard(m.n);
     });
@@ -130,6 +136,7 @@ function apply() {
   save();
 }
 RG.applyBasemap = apply;
+RG.saveBase = save;
 
 /* 色分けだけを変える軽い経路。
    apply() は地形・行政区・3D・バーの作り直しまで走るため 120ms かかっていた。
@@ -181,6 +188,7 @@ function bindQuick() {
       apply();
       if (RG.toggleSaid) RG.toggleSaid(k, B[k]);
       if (k === "flood" && B.flood && RG.gotoFlood) RG.gotoFlood();
+      if (k === "mode3d" && B.mode3d && RG.initTiltDrag) RG.initTiltDrag();
       return;
     }
     if ((b = t.closest("[data-qh]"))) {
@@ -260,7 +268,8 @@ var SAY = {
   flood:  ["🌊 浸水予想を重ねました", "浸水予想を消しました",
            "神田川・隅田川・石神井川の3流域だけです。ほかの場所では見えません"],
   mode3d: ["🧊 3D表示にしました", "2D表示に戻しました",
-           "東京タワーやスカイツリーが立ち上がります。地下も見られます"],
+           "右ドラッグ（または Shift＋ドラッグ）で見下ろす角度を変えられます。" +
+           "指なら2本指の上下です"],
   admin:  ["🧭 区の境目を出しました", "区の境目を消しました",
            "区を押すと、その区のカードが開きます"],
   labels: ["🏷️ 区の名前を出しました", "区の名前を消しました", ""],
