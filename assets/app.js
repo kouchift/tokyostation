@@ -325,24 +325,83 @@ var Map = (function () {
     if (node[RG.HUB]) node[RG.HUB].classList.add("hub");
   }
 
+  /* -----------------------------------------------------------------
+     どこまで見せるかを決める（ズームに応じて）
+
+     これまでは «丸を出すなら名前も出す» という一段だけでした。
+     関東ぜんぶで2,400駅あるので、それでは名前が重なって読めません。
+
+     いまは3つを別々に決めます。
+       ① 丸（駅の点）  … 早めに出す。地図の «かたち» が分かるように
+       ② 名前          … 遅めに出す。しかも «重なるなら出さない»
+       ③ 路線の線      … 遠目では薄く、寄るほどはっきり
+     ----------------------------------------------------------------- */
   function lod() {
     var z = VB.w / vb.w;
-    // 広く見ているときは «大事な駅» だけ。寄るほど増やす。
-    // 関東ぜんぶで2,500駅あるので、上限もそれに合わせる。
-    // 広く見ているときは «大事な駅» だけ。寄るほど増やす。
-    // 関東ぜんぶで2,400駅あるので、増えかたも大きくする。
     var maxN = (RG.NET.stations || []).length;
-    var k = Math.round(Math.min(maxN, Math.max(30, 30 * Math.pow(z, 2.2))));
-    RG.NET.stations.forEach(function (s) { node[s.id].classList.toggle("lod", s.rank >= k); });
-    svg.style.setProperty("--lblscale", (1 / Math.pow(z, 0.55)).toFixed(3));
-    // 画面上で常に同じ大きさの当たり判定になるよう、地図座標へ換算する
-    var upp = vb.w / Math.max(320, wrap.getBoundingClientRect().width);
+    var rect = wrap.getBoundingClientRect();
+    var W = Math.max(320, rect.width), H = Math.max(240, rect.height);
+
+    // ① 丸を出す数。寄るほど増やす。
+    var kDot = Math.round(Math.min(maxN, Math.max(30, 30 * Math.pow(z, 2.2))));
+
+    // ② 名前を出せる «上限の数»。
+    //    画面の広さから «無理なく置ける数» を見積もる。
+    //    ひとつの名前におよそ 78×22px が要るとして、その4割までに抑える。
+    var room = Math.floor((W * H) / (78 * 22) * 0.40);
+    var kName = Math.max(6, Math.min(kDot, room));
+
+    // 文字の大きさ。寄るほど少しだけ大きく（ただし控えめに）
+    var ls = Math.min(1.15, Math.max(0.72, 1 / Math.pow(z, 0.5)));
+    svg.style.setProperty("--lblscale", ls.toFixed(3));
+
+    // ③ 路線の線。遠目では細く薄く、寄るほどはっきり
+    var lw = Math.min(3.6, Math.max(1.2, 1.2 + 1.1 * Math.log(Math.max(1, z))));
+    var lo = Math.min(1, Math.max(0.34, 0.34 + 0.20 * Math.log(Math.max(1, z))));
+    svg.style.setProperty("--lnw", (lw * (vb.w / W)).toFixed(2));
+    svg.style.setProperty("--lnop", lo.toFixed(2));
+
+    // 見えている範囲だけを相手にする（画面の外は考えない）
+    var pad = vb.w * 0.08;
+    var x0 = vb.x - pad, x1 = vb.x + vb.w + pad;
+    var y0 = vb.y - pad, y1 = vb.y + vb.h + pad;
+
+    // 名前の «場所とり»。大事な駅から順に置き、重なるものは出さない。
+    var slots = [];
+    var upx = vb.w / W;                       // 地図の1単位が画面の何pxか の逆
+    var lblW = 78 * upx * ls, lblH = 20 * upx * ls;
+    var shown = 0;
+    var list = RG.NET.stations;
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i], n = node[s.id];
+      if (!n) continue;
+      var inView = s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1;
+      var dotOn = s.rank < kDot;
+      n.classList.toggle("lod", !dotOn);
+      // 名前は「見えている・大事・重ならない」の3つがそろったときだけ
+      var nameOn = false;
+      if (dotOn && inView && shown < kName) {
+        var a0 = s.x - lblW / 2, a1 = s.x + lblW / 2;
+        var b0 = s.y - lblH, b1 = s.y + lblH * 0.4;
+        var hit = false;
+        for (var j = 0; j < slots.length; j++) {
+          var q = slots[j];
+          if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { hit = true; break; }
+        }
+        if (!hit) { slots.push([a0, b0, a1, b1]); nameOn = true; shown++; }
+      }
+      n.classList.toggle("noname", !nameOn);
+    }
+    RG.__lblInfo = { z: +z.toFixed(2), dots: kDot, room: room, names: shown };
+
+    var upp = vb.w / W;
     svg.style.setProperty("--hitr", (12 * upp).toFixed(2));
     svg.style.setProperty("--sthitr", (15 * upp).toFixed(2));
-    var lv = $("#zlevel"); if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
+    var lv = $("#zlevel");
+    if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
+    if (RG.admLOD) RG.admLOD();
     if (RG.map3DMoved) RG.map3DMoved();
-    // 見えている升目のスポットを読む（区にまたがっていても、見えている升目は全部読む）
     if (RG.loadTilesFor && vb) {
       clearTimeout(tileT);
       tileT = setTimeout(function () {
@@ -568,6 +627,8 @@ var Map = (function () {
     n.appendChild(el("circle", { class: "poi__c", r: 5 }));
     n.appendChild(el("text", { class: "poi__e", "text-anchor": "middle" }));
     n.appendChild(el("circle", { class: "poi__hit", r: 10 }));
+    // 名前。寄ったときだけ出す（poiLOD が決める）
+    n.appendChild(el("text", { class: "poi__t", "text-anchor": "middle" }));
     n.addEventListener("click", function (ev) { ev.stopPropagation(); if (n.__p) RG.showSpot(n.__p); });
     n.addEventListener("mouseenter", function () { if (n.__p) RG.spotTip(n.__p, { x: n.__p.x, y: n.__p.y }); });
     n.addEventListener("mouseleave", function () { RG.spotTip(null); });
@@ -637,8 +698,15 @@ var Map = (function () {
     var shrink = z >= 12 ? 0.72 : z >= 6 ? 0.86 : 1;
     var eff = poiScale * shrink;
     var cell = (22 * eff) * (vb.w / wpx);
+    /* 画面に «無理なく置ける数» を見積もる。
+       アイコン1つにおよそ 30×30px が要るとして、画面の18%まで。
+       駅名と同じ考えかたで、混みすぎないようにする。 */
+    var hpx = Math.max(240, wrap.getBoundingClientRect().height);
+    var room = Math.floor((wpx * hpx) / (30 * 30) * 0.18);
+    var cap = Math.max(24, Math.min(POOL_MAX, room));
+    var poiSlots = [];
     var used = {}, show = [];
-    for (var k = 0; k < cand.length && show.length < POOL_MAX; k++) {
+    for (var k = 0; k < cand.length && show.length < cap; k++) {
       var q = cand[k];
       var key = Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key]) continue;
@@ -664,7 +732,33 @@ var Map = (function () {
       c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y); c0.setAttribute("style", "--pc:" + g.c);
       e0.setAttribute("x", t.x); e0.setAttribute("y", t.y + 2.4); e0.textContent = g.e;
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
+      /* 名前は «寄っていて、かつ数が少ない» ときだけ。
+         駅名と同じく、重なるものは出さない。 */
+      var t0 = n.childNodes[3];
+      if (t0) {
+        // 名前を出すかどうかは «画面が混んでいないか» で決める。
+        // アイコンが少ないほど、名前を出す余裕がある。
+        var wantT = show.length <= 70;
+        var okT = false;
+        if (wantT) {
+          var tw = Math.min(9, (t.n || "").length) * 7.2 * (vb.w / wpx);
+          var th = 15 * (vb.w / wpx);
+          var a0 = t.x - tw / 2, a1 = t.x + tw / 2, b0 = t.y + th * 0.5, b1 = t.y + th * 1.7;
+          var bad = false;
+          for (var m2 = 0; m2 < poiSlots.length; m2++) {
+            var r2 = poiSlots[m2];
+            if (a0 < r2[2] && a1 > r2[0] && b0 < r2[3] && b1 > r2[1]) { bad = true; break; }
+          }
+          if (!bad) { poiSlots.push([a0, b0, a1, b1]); okT = true; }
+        }
+        if (okT) {
+          t0.setAttribute("x", t.x); t0.setAttribute("y", t.y + 13 * (vb.w / wpx));
+          t0.textContent = (t.n || "").slice(0, 9);
+          t0.style.display = "";
+        } else { t0.textContent = ""; t0.style.display = "none"; }
+      }
     }
+    RG.__poiInfo = { cap: cap, shown: show.length, names: poiSlots.length };
     svg.style.setProperty("--poiscale", eff);
     svg.classList.toggle("poipick", !!picked);
     var cnt = $("#poicount");

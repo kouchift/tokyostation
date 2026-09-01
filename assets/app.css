@@ -90,7 +90,8 @@ button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
 }
 
 /* 路線図パーツ */
-.ln{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ln{stroke-width:var(--lnw,3.4) !important;opacity:var(--lnop,1);
+  transition:opacity .12s linear;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .st-hit{fill:transparent;cursor:pointer}          /* 44px 相当の当たり判定 */
 .st-dot{fill:#fff;stroke:#333;stroke-width:3;pointer-events:none}
 .st-dot.ic{stroke-width:4}
@@ -365,13 +366,15 @@ body.night{--bg:#F2F3F7}
 .mapwrap{background:#F8F8FB}
 #map{ --lblscale:1 }
 .st-lbl{
-  font-size:calc(9px * var(--lblscale, 1));
-  font-weight:600;fill:#1a1a1a;pointer-events:none;
-  paint-order:stroke;stroke:#F8F8FB;stroke-width:calc(2.4px * var(--lblscale,1));stroke-linejoin:round;
+  font-size:calc(8.4px * var(--lblscale, 1));
+  font-weight:600;fill:#33404F;pointer-events:none;
+  paint-order:stroke;stroke:#F8F8FB;stroke-width:calc(2.6px * var(--lblscale,1));stroke-linejoin:round;
 }
-.node.big .st-lbl{font-size:calc(12px * var(--lblscale,1));fill:#000}
-.st-dot{fill:#fff;stroke:#444;stroke-width:1.6;pointer-events:none}
-.node.big .st-dot{stroke-width:2.4}
+.node.big .st-lbl{font-size:calc(10.6px * var(--lblscale,1));fill:#101820;font-weight:700}
+.st-dot{fill:#fff;stroke:#5A6472;stroke-width:1.3;pointer-events:none}
+.node.big .st-dot{stroke:#2A3644;stroke-width:2.1}
+/* 名前は «出せるとき» だけ。重なるときは丸だけ残す。 */
+.node.noname .st-lbl{display:none}
 .node.lod .st-lbl{display:none}
 .node.lod.sel .st-lbl,.node.lod.hub .st-lbl,.node.lod.pick .st-lbl{display:block}
 .node.hub .st-dot{stroke:#C81432;stroke-width:3.4;fill:#FFE9ED}
@@ -568,7 +571,8 @@ body.secret .lbadge{min-width:25px;height:25px;font-size:11.5px;background:var(-
 .lp__t{margin-top:5px;font-size:10px;color:var(--label)}
 
 /* 路線強調モード */
-#map.linemode .ln{opacity:.13}
+#map.linemode .ln{stroke-width:var(--lnw,3.4) !important;opacity:var(--lnop,1);
+  transition:opacity .12s linear;opacity:.13}
 #map.linemode .ln.on{opacity:1;stroke-width:5.2}
 #map.linemode .node{opacity:.2}
 #map.linemode .node.online{opacity:1}
@@ -2293,4 +2297,31 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 @media (pointer:coarse){
   .node .hit{r:calc(var(--hitr,12) * 1.5)}
   .poi{--poihit:1.5}
+}
+
+
+/* =========================================================================
+   v53：遠目では «地図のかたち»、寄ると «駅の名前»
+   ========================================================================= */
+#map{ --lnw:3.4; --lnop:1 }
+.ln{stroke-width:var(--lnw) !important;opacity:var(--lnop);
+  transition:opacity .12s linear, stroke-width .12s linear}
+/* えらんだ路線・指している路線は、いつでもはっきり */
+.ln.on,.ln.hi{opacity:1 !important}
+/* 丸も、遠目では小さく控えめに */
+#map{ --dotr:1 }
+.node .st-dot{r:calc(2.6px * var(--dotr,1))}
+.node.big .st-dot{r:calc(3.8px * var(--dotr,1))}
+/* えらんだ駅・注視駅は、遠目でも必ず名前を出す */
+.node.sel .st-lbl,.node.hub .st-lbl,.node.pick .st-lbl{display:block !important}
+.node.sel,.node.hub,.node.pick{ --lblscale:1 }
+
+/* v54：スポットの名前と、区の名前もズードに合わせる */
+#map{ --admscale:1 }
+.adm__t{font-size:calc(9px * var(--admscale,1)) !important}
+.poi__t{
+  font-size:calc(7.6px * var(--poiscale,1));
+  font-weight:600;fill:#3A4552;pointer-events:none;
+  paint-order:stroke;stroke:#F8F8FB;stroke-width:calc(2.2px * var(--poiscale,1));
+  stroke-linejoin:round
 }

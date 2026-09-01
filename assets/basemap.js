@@ -76,7 +76,18 @@ function build(svg, project) {
       var sx = 0, sy = 0, c = 0;
       for (var i = 0; i < best.length; i += 2) { sx += best[i]; sy += best[i + 1]; c++; }
       var p = project(sy / c, sx / c);
-      gLabel.appendChild(el("text", { class: "adm__t", x: p.x, y: p.y, "text-anchor": "middle", text: m.n }));
+      // 区の «広がり»（いちばん大きいリングの点の数）を覚えておく。
+      // 遠目では大きな区の名前だけを出すために使う。
+      var span = 0;
+      if (best && best.length >= 4) {
+        var xs2 = [], ys2 = [];
+        for (var q2 = 0; q2 < best.length; q2 += 2) { xs2.push(best[q2]); ys2.push(best[q2 + 1]); }
+        span = (Math.max.apply(null, xs2) - Math.min.apply(null, xs2)) +
+               (Math.max.apply(null, ys2) - Math.min.apply(null, ys2));
+      }
+      var lb = el("text", { class: "adm__t", x: p.x, y: p.y, "text-anchor": "middle", text: m.n });
+      lb.dataset.w = span.toFixed(1);
+      gLabel.appendChild(lb);
     }
   });
   // レベル1（都）：レベル2の全リングを1本にまとめて太線で
@@ -135,6 +146,49 @@ function apply() {
   quickBar();
   save();
 }
+/* 区の名前を、ズームに応じて出し分ける。
+   ―― これまでは45件が «いつも» 出ていました。
+      遠目では大きな区だけ、寄るほど小さな区まで出します。
+      面の大きさ（おおよその広がり）を «大事さ» の目安に使います。 */
+RG.admLOD = function () {
+  var svg = $("#map");
+  if (!svg || !gLabel) return;
+  var vb = (RG.Map && RG.Map.viewBox) ? RG.Map.viewBox() : null;
+  if (!vb) return;
+  var wrap = document.querySelector(".mapwrap");
+  var r = wrap ? wrap.getBoundingClientRect() : { width: 900, height: 600 };
+  var W = Math.max(320, r.width), H = Math.max(240, r.height);
+  var upx = vb.w / W;
+  var texts = $$(".adm__t", gLabel);
+  // 画面に置ける数（区名は駅名より大きいので、ゆったりめに見積もる）
+  var room = Math.max(3, Math.floor((W * H) / (110 * 26) * 0.30));
+  // 大きい区から順に置く（面の広がり＝おおよその大事さ）
+  var arr = texts.map(function (t2) {
+    return { t: t2, x: +t2.getAttribute("x"), y: +t2.getAttribute("y"),
+             w: +(t2.dataset.w || 0) };
+  }).sort(function (a, b) { return b.w - a.w; });
+  var slots = [], shown = 0;
+  arr.forEach(function (o) {
+    var inView = o.x > vb.x && o.x < vb.x + vb.w && o.y > vb.y && o.y < vb.y + vb.h;
+    var lw = (o.t.textContent.length * 10 + 8) * upx, lh = 18 * upx;
+    var ok = false;
+    if (inView && shown < room) {
+      var a0 = o.x - lw / 2, a1 = o.x + lw / 2, b0 = o.y - lh, b1 = o.y + lh * 0.4;
+      var bad = false;
+      for (var i = 0; i < slots.length; i++) {
+        var q = slots[i];
+        if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; }
+      }
+      if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; shown++; }
+    }
+    o.t.style.display = ok ? "" : "none";
+  });
+  // 字の大きさも、寄るほど控えめに
+  var z = 2000 / vb.w;
+  svg.style.setProperty("--admscale", Math.min(1.25, Math.max(0.7, 1 / Math.pow(z, 0.42))).toFixed(3));
+  RG.__admInfo = { room: room, shown: shown, of: texts.length };
+};
+
 RG.applyBasemap = apply;
 RG.saveBase = save;
 
