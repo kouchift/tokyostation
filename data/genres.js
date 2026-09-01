@@ -46,6 +46,28 @@ RG.GENRES = [
     src: "https://www.1010.or.jp/map/" },
 
   /* ---- 出かける計画に効く10ジャンル（OpenStreetMap ODbL）---- */
+  /* ---- チェーン店（ジャンル → ブランドの2段。tools/build_chains2.py）---- */
+  { id: "burger", e: "🍔", label: "ハンバーガー", c: "#D62300", enabled: true, optIn: true, chaincat: true,
+    desc: "マクドナルド・モスバーガー・ケンタッキーなど6社" },
+  { id: "gyudon", e: "🍚", label: "牛丼・定食",   c: "#EA5504", enabled: true, optIn: true, chaincat: true,
+    desc: "松屋・すき家・吉野家・大戸屋など8社" },
+  { id: "noodle", e: "🍜", label: "ラーメン・そば・うどん", c: "#C8102E", enabled: true, optIn: true, chaincat: true,
+    desc: "日高屋・丸亀製麺・富士そばなど9社" },
+  { id: "family", e: "🍛", label: "ファミレス・カレー", c: "#00954F", enabled: true, optIn: true, chaincat: true,
+    desc: "サイゼリヤ・ガスト・CoCo壱番屋など8社" },
+  { id: "pizza",  e: "🍕", label: "ピザ・宅配",   c: "#EE3124", enabled: true, optIn: true, chaincat: true,
+    desc: "ドミノ・ピザーラ・ピザハットの3社" },
+  { id: "chuka",  e: "🥟", label: "中華",         c: "#B8860B", enabled: true, optIn: true, chaincat: true,
+    desc: "餃子の王将・大阪王将・バーミヤンの3社" },
+  { id: "elec",   e: "📱", label: "家電・携帯",   c: "#0068B7", enabled: true, optIn: true, chaincat: true,
+    desc: "ヤマダ・ビックカメラ・ヨドバシ・携帯ショップなど9社" },
+  { id: "cloth",  e: "👕", label: "アパレル・靴", c: "#E4007F", enabled: true, optIn: true, chaincat: true,
+    desc: "ユニクロ・GU・しまむら・ABCマートなど11社" },
+  { id: "net",    e: "🖥️", label: "ネットカフェ", c: "#F39800", enabled: true, optIn: true, chaincat: true,
+    desc: "快活CLUB・自遊空間など5社" },
+  { id: "kara",   e: "🎤", label: "カラオケ",     c: "#E60012", enabled: true, optIn: true, chaincat: true,
+    desc: "ビッグエコー・カラオケ館・まねきねこなど7社" },
+
   { id: "univ",    e: "🎓", label: "大学",         c: "#5E35B1", enabled: true, optIn: true, edu: true,
     desc: "大学・短大のキャンパス。押すと学部・学費・概要が見られます" },
   { id: "high",    e: "🏫", label: "高校",         c: "#00838F", enabled: true, optIn: true, edu: true,
