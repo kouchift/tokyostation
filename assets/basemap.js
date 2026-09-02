@@ -161,7 +161,8 @@ RG.admLOD = function () {
   var upx = vb.w / W;
   var texts = $$(".adm__t", gLabel);
   // 画面に置ける数（区名は駅名より大きいので、ゆったりめに見積もる）
-  var room = Math.max(3, Math.floor((W * H) / (110 * 26) * 0.30));
+  // 区の名前は «土地の見当» を付けるためのもの。多くて6つで足ります。
+  var room = Math.max(2, Math.min(6, Math.floor((W * H) / (1280 * 640) * 6)));
   // 大きい区から順に置く（面の広がり＝おおよその大事さ）
   var arr = texts.map(function (t2) {
     return { t: t2, x: +t2.getAttribute("x"), y: +t2.getAttribute("y"),
@@ -182,11 +183,74 @@ RG.admLOD = function () {
       if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; shown++; }
     }
     o.t.style.display = ok ? "" : "none";
+    if (ok) {
+      // 画面で 12.5px に見えるように、地図の単位へ直して与える
+      o.t.setAttribute("font-size", ((RG.MAPSIZE ? RG.MAPSIZE.adm : 12.5) * upx).toFixed(2));
+      o.t.setAttribute("stroke-width", ((RG.MAPSIZE ? RG.MAPSIZE.admSw : 3.4) * upx).toFixed(2));
+      o.t.setAttribute("letter-spacing", (1.6 * upx).toFixed(2));
+    }
   });
   // 字の大きさも、寄るほど控えめに
   var z = 2000 / vb.w;
   svg.style.setProperty("--admscale", Math.min(1.25, Math.max(0.7, 1 / Math.pow(z, 0.42))).toFixed(3));
   RG.__admInfo = { room: room, shown: shown, of: texts.length };
+};
+
+/* -------------------------------------------------- 全国の市区町村の地名
+   東京の «区の面» は東京にしかありません。
+   全国では «面» のかわりに «地名» を置きます（面を持つと数十MBになるため）。
+   人口の多い街から順に置き、重なるものは出しません。 */
+var gJP = null;
+RG.buildJPAdmin = function () {
+  if (!RG.JP_ADMIN || gJP) return;
+  var svg = $("#map"); if (!svg) return;
+  gJP = el("g", { class: "jpadm" });
+  var host = svg.querySelector(".adm-labels") || svg;
+  host.parentNode.insertBefore(gJP, host);
+  RG.JP_ADMIN.forEach(function (m, i) {
+    var p = RG.project ? RG.project(m.la, m.lo) : null;
+    if (!p) return;
+    var t = el("text", { class: "jpadm__t", x: p.x.toFixed(1), y: p.y.toFixed(1),
+                         "text-anchor": "middle", text: m.n });
+    t.dataset.i = i;
+    t.style.display = "none";
+    gJP.appendChild(t);
+  });
+};
+/* 出す数と大きさを、ズードに合わせて決める（駅名と同じ考えかた） */
+RG.jpAdmLOD = function () {
+  if (!gJP || !RG.Map || !RG.Map.viewBox) return;
+  var vb = RG.Map.viewBox();
+  var wrap = document.querySelector(".mapwrap");
+  var r = wrap ? wrap.getBoundingClientRect() : { width: 900, height: 600 };
+  var W = Math.max(320, r.width), H = Math.max(240, r.height);
+  var upx = vb.w / W;
+  var room = Math.max(3, Math.min(14, Math.round((W * H) / (1280 * 640) * 14)));
+  var slots = [], shown = 0;
+  var ts = gJP.childNodes;
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i];
+    var x = +t.getAttribute("x"), y = +t.getAttribute("y");
+    var inv = x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h;
+    var ok = false;
+    if (inv && shown < room) {
+      var lw = (t.textContent.length * 12 + 10) * upx, lh = 20 * upx;
+      var a0 = x - lw / 2, a1 = x + lw / 2, b0 = y - lh, b1 = y + lh * 0.4;
+      var bad = false;
+      for (var j = 0; j < slots.length; j++) {
+        var q = slots[j];
+        if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; }
+      }
+      if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; shown++; }
+    }
+    t.style.display = ok ? "" : "none";
+    if (ok) {
+      t.setAttribute("font-size", (14 * upx).toFixed(2));
+      t.setAttribute("stroke-width", (3.6 * upx).toFixed(2));
+      t.setAttribute("letter-spacing", (1.8 * upx).toFixed(2));
+    }
+  }
+  RG.__jpAdmInfo = { room: room, shown: shown, of: ts.length };
 };
 
 RG.applyBasemap = apply;
@@ -364,7 +428,7 @@ RG.showState = function () {
     '<table class="vf__spec">' + rows.map(function (r) {
       return "<tr><th>" + RG.esc(r[0]) + "</th><td>" + RG.esc(String(r[1])) + "</td></tr>";
     }).join("") + "</table>" +
-    '<div class="legend__foot"><a class="set__b2" href="check.html">📋 ファイル点検</a>' +
+    '<div class="legend__foot">' +
     '<button class="set__b2" type="button" onclick="location.reload()">再読み込み</button>' +
     '<button class="set__b2" type="button" id="sw-clear">🧹 覚えている分を捨てて読み直す</button></div>');
   var swb = document.getElementById("sw-clear");

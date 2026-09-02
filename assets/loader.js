@@ -38,6 +38,8 @@ var LAZY = [
   { f: "data/smoking.js",   key: "smoke",     label: "喫煙できる場所" },
   { f: "data/camadult.js",  key: "camadult",  label: "カメラほか" },
   { f: "data/osm10.js",     key: "osm10",     label: "くらしの施設" },
+  { f: "data/kanto_lm.js",  key: "klm",       label: "全国の見どころ" },
+  { f: "data/jp_admin.js",  key: "jpadm",     label: "全国の市区町村" },
   { f: "data/user_hensachi.js", key: "hensachi", label: "偏差値" },
   { f: "data/edu.js",       key: "edu",       label: "学校" },
   { f: "data/user_pois.js", key: "user",      label: "自分のスポット" }
@@ -130,7 +132,7 @@ RG.startApp = function () {
       var p2 = m.querySelector("p");
       if (p2) p2.innerHTML = "つぎのファイルが見つかりませんでした。<br><code>" +
         String(e.message || "").replace(/</g, "&lt;") + "</code><br>" +
-        'アップロードもれがないか、<a href="check.html">📋 ファイル点検</a> で確かめてください。';
+        "ファイルがそろっているかご確認ください。";
     }
   });
 };

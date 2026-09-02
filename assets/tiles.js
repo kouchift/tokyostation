@@ -48,6 +48,11 @@ RG.initTiles = function (done) {
 /* いま見えている範囲（＋まわり1枚ぶん）の升目を読む */
 RG.loadTilesFor = function (bbox, after) {
   if (!META) { if (after) after(0); return; }
+  // 広く見ているときは読まない（何百枚も読んでしまうため）。
+  // 0.35度＝およそ35km四方より狭くなってから読みはじめる。
+  // （都心から千葉・埼玉が一望できるくらいの広さでは、まだ読まない）
+  var span = Math.max(bbox.n - bbox.s, bbox.e - bbox.w);
+  if (span > 0.35) { if (after) after(0); return; }
   var x0 = Math.floor(bbox.w / CELL) - 1, x1 = Math.floor(bbox.e / CELL) + 1;
   var y0 = Math.floor(bbox.s / CELL) - 1, y1 = Math.floor(bbox.n / CELL) + 1;
   var need = [];
@@ -59,6 +64,14 @@ RG.loadTilesFor = function (bbox, after) {
     }
   }
   if (!need.length) { if (after) after(0); return; }
+  // 一度に読む枚数の上限。近いものから順に。
+  var cx = (bbox.w + bbox.e) / 2 / CELL, cy = (bbox.s + bbox.n) / 2 / CELL;
+  need.sort(function (a, b) {
+    var pa = a.split("_"), pb = b.split("_");
+    return (Math.abs(pa[0] - cx) + Math.abs(pa[1] - cy)) -
+           (Math.abs(pb[0] - cx) + Math.abs(pb[1] - cy));
+  });
+  need = need.slice(0, 40);
   var left = need.length, got = 0;
   need.forEach(function (k) {
     pending[k] = 1;
@@ -88,6 +101,8 @@ function addRows(rows) {
     if (seen[key]) return;
     seen[key] = 1;
     var g = G[r.g] || {};
+    // ジャンルの定義が無いときも、せめて印が出るようにする
+    if (!g.e) g = { e: "📍", c: "#F0851E", label: r.g };
     var p = { i: "T" + (++n) + "_" + i, n: r.n || g.label || "", la: r.la, lo: r.lo, g: r.g,
               s: r.chain ? 2.5 : 3.0, ti: r.chain ? 2 : 1,
               t: r.t || g.label, be: r.be || g.e, bc: r.bc || g.c };

@@ -315,6 +315,7 @@ RG.showSpot = function (p) {
   if (p.adult && RG.showAdult) { RG.showAdult(p.adult); return; }
   if (p.camspot && RG.showCamSpot) { RG.showCamSpot(p.camspot); return; }
   if (p.osm10 && RG.showOsm10) { RG.showOsm10(p); return; }
+  if (p.klm && RG.showKantoLM) { RG.showKantoLM(p); return; }
   if (p.univ != null && RG.showUniv) { RG.showUniv(p.univ); return; }
   if (p.high != null && RG.showHigh) { RG.showHigh(p.high); return; }
   var g = (RG.GENRES || []).filter(function (x) { return x.id === p.g; })[0] || { e: "📍", label: "スポット", c: "#0055AD" };

@@ -12,9 +12,9 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 /* 目的でまとめる。ここに載っていないジャンルは «そのほか» に入る */
 var GROUPS = [
   { id: "see",   e: "👀", label: "見る・行く",   c: "#7B3FE4",
-    ids: ["bunkazai", "history", "worship", "leisure", "museum", "park", "view", "landmark"] },
+    ids: ["klm", "bunkazai", "history", "worship", "leisure", "museum", "park", "view", "landmark"] },
   { id: "help",  e: "🆘", label: "こまったとき", c: "#E53935",
-    ids: ["toilet", "baby", "water", "hosp", "pharm", "aed", "shelter", "wifi", "civic", "library"] },
+    ids: ["toilet", "baby", "water", "hosp", "pharm", "police", "aed", "shelter", "wifi", "civic", "library"] },
   { id: "eat",   e: "🍜", label: "食べる・買う", c: "#F0851E",
     ids: ["cvs", "burger", "gyudon", "noodle", "family", "pizza", "chuka", "cafe",
           "food", "super", "drug", "elec", "cloth", "disc", "life", "shopping"] },
@@ -264,5 +264,26 @@ RG.showOsm10 = function (p) {
     if (el) show(el); else hide();
   });
 })();
+
+
+/* ------------------------------------------------ 関東の見どころのカード */
+RG.showKantoLM = function (p) {
+  var r = p.klm, near = RG.nearestStation ? RG.nearestStation(p.la, p.lo) : null;
+  RG.openModal(r.e + " " + r.n, '<div class="smk">' +
+    '<div class="smk__hd" style="--lc:' + r.c + '">' +
+      '<span class="smk__e">' + r.e + "</span>" +
+      "<div><h3>" + esc(r.n) + '</h3><p class="smk__k">' + esc(r.t || "見どころ") +
+      (r.sl ? " ・ " + r.sl + " 言語版で紹介" : "") + "</p></div></div>" +
+    '<div class="smkg">' +
+      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+        "駅 徒歩約" + near.min + "分</b></div>" : "") +
+      (r.sl ? '<div class="smkr"><span>🌏 知られかた</span><b>' + r.sl +
+        " の言語版に記事があります</b></div>" : "") +
+    "</div>" +
+    RG.outLinks({ wiki: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.n),
+                  yt: r.n, map: p.la + "," + p.lo, news: r.n }) +
+    (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "行きかたを見る") : "") +
+    '<p class="src">出典: Wikidata (CC0)。営業時間や休みは公式でご確認ください。</p></div>');
+};
 
 })(window.RG);

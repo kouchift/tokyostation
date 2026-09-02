@@ -10,6 +10,32 @@ var RG = global.RG = global.RG || {};
 RG.details = {};
 RG.HUB = "中村橋";
 
+/* =========================================================================
+   地図の «文字と印» の大きさ（画面で何px に見せるか）
+
+   ここの数字を変えると、地図の見た目が変わります。
+   SVG の中の px は «地図の単位» でズームと一緒に伸び縮みするため、
+   毎回この値を «画面の1px = 地図の何単位か» に掛け直して使っています。
+   ですから、ここに書いた数字は «どのズームでも画面でこの大きさ» になります。
+   ========================================================================= */
+RG.MAPSIZE = {
+  lbl:    10.5,   // ふつうの駅名
+  lblBig: 12,     // 大きい駅の駅名
+  lblSel: 12.5,   // 選んだ駅・出発駅・注視駅の駅名
+  stroke: 3,      // 駅名の白いふち
+  dot:    2.8,    // ふつうの駅の丸（半径）
+  dotBig: 4,      // 大きい駅
+  dotHub: 4.8,    // 注視駅
+  dotSel: 5.2,    // 選んだ駅
+  dotSw:  1.2,    // 丸の枠の太さ
+  adm:    12.5,   // 区の名前
+  admSw:  3.4,    // 区の名前の白いふち
+  poiE:   13,     // スポットの絵文字
+  poiEBig:15,     // 目立つスポットの絵文字
+  poiC:   7,      // スポットの丸（半径）
+  poiT:   10      // スポットの名前
+};
+
 RG.registerDetail = function (key, d) { RG.details[key] = d; };
 
 /* ------------------------------------------------------------ utilities */
@@ -336,71 +362,130 @@ var Map = (function () {
        ② 名前          … 遅めに出す。しかも «重なるなら出さない»
        ③ 路線の線      … 遠目では薄く、寄るほどはっきり
      ----------------------------------------------------------------- */
+  /* -----------------------------------------------------------------
+     どこまで見せるかを決める
+
+     ■ 考えかた（地図として «読める» ことを最優先にする）
+       紙の地図や Google マップがそうであるように、
+       «ひと目で数えられる量» を超えると、地図は読めなくなります。
+       目安として、画面の中に置くものを次のように抑えます。
+
+         駅の丸    … 多くて 90個（画面いっぱいでも、目が追える量）
+         駅の名前  … 多くて 26個（重なるものは出さない）
+         区の名前  … 多くて  6個
+         スポット  … 多くて 48個
+
+       いずれも «大事な順» に置き、あふれたぶんは出しません。
+       寄れば画面に入る数が減るので、自然と細かいものが見えてきます。
+     ----------------------------------------------------------------- */
   function lod() {
     var z = VB.w / vb.w;
-    var maxN = (RG.NET.stations || []).length;
     var rect = wrap.getBoundingClientRect();
     var W = Math.max(320, rect.width), H = Math.max(240, rect.height);
+    var area = (W * H) / (1280 * 640);          // 画面の広さ（基準に対する倍率）
 
-    // ① 丸を出す数。寄るほど増やす。
-    var kDot = Math.round(Math.min(maxN, Math.max(30, 30 * Math.pow(z, 2.2))));
+    // 画面に置く «上限»。画面が広ければ少しだけ増やす。
+    var maxDot = Math.round(90 * Math.min(1.6, Math.max(0.55, area)));
+    var maxName = Math.round(26 * Math.min(1.6, Math.max(0.55, area)));
 
-    // ② 名前を出せる «上限の数»。
-    //    画面の広さから «無理なく置ける数» を見積もる。
-    //    ひとつの名前におよそ 78×22px が要るとして、その4割までに抑える。
-    var room = Math.floor((W * H) / (78 * 22) * 0.40);
-    var kName = Math.max(6, Math.min(kDot, room));
+    /* いちばん大事な値。
+       SVG の中の «px» は地図の単位なので、ズームすると一緒に拡大されます。
+       «画面で何px に見せたいか» を書けるように、
+       «画面の1px = 地図の何単位か» を配ります。
+       以後、文字も丸も calc(N * var(--u)) と書けば、
+       どこまで寄っても «画面で N px» のままになります。 */
+    /* 画面の1px が地図の何単位かを出し、
+       文字と丸の大きさを «その場で» 与える。
+       CSS の calc は環境によって効きかたが違うので、属性で確実に指定する。 */
+    var u = vb.w / W;
+    svg.style.setProperty("--u", u.toFixed(4) + "px");
+    svg.style.setProperty("--lblscale", "1");
+    var PX = RG.MAPSIZE;
+    RG.__u = u;
 
-    // 文字の大きさ。寄るほど少しだけ大きく（ただし控えめに）
-    var ls = Math.min(1.15, Math.max(0.72, 1 / Math.pow(z, 0.5)));
-    svg.style.setProperty("--lblscale", ls.toFixed(3));
-
-    // ③ 路線の線。遠目では細く薄く、寄るほどはっきり
-    var lw = Math.min(3.6, Math.max(1.2, 1.2 + 1.1 * Math.log(Math.max(1, z))));
-    var lo = Math.min(1, Math.max(0.34, 0.34 + 0.20 * Math.log(Math.max(1, z))));
+    // 路線の線。遠目は細く淡く、寄るとしっかり。
+    var lw = Math.min(3.2, Math.max(1.5, 1.5 + 0.85 * Math.log(Math.max(1, z))));
     svg.style.setProperty("--lnw", (lw * (vb.w / W)).toFixed(2));
-    svg.style.setProperty("--lnop", lo.toFixed(2));
+    svg.style.setProperty("--lnop", Math.min(0.95, Math.max(0.30, 0.30 + 0.19 * Math.log(Math.max(1, z)))).toFixed(2));
 
-    // 見えている範囲だけを相手にする（画面の外は考えない）
-    var pad = vb.w * 0.08;
+    // 見えている範囲（すこしだけ外まで）
+    var pad = vb.w * 0.05;
     var x0 = vb.x - pad, x1 = vb.x + vb.w + pad;
     var y0 = vb.y - pad, y1 = vb.y + vb.h + pad;
 
-    // 名前の «場所とり»。大事な駅から順に置き、重なるものは出さない。
-    var slots = [];
-    var upx = vb.w / W;                       // 地図の1単位が画面の何pxか の逆
-    var lblW = 78 * upx * ls, lblH = 20 * upx * ls;
-    var shown = 0;
+    // 画面に入っている駅を、大事な順にならべる
+    var inv = [];
     var list = RG.NET.stations;
     for (var i = 0; i < list.length; i++) {
-      var s = list[i], n = node[s.id];
-      if (!n) continue;
-      var inView = s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1;
-      var dotOn = s.rank < kDot;
-      n.classList.toggle("lod", !dotOn);
-      // 名前は「見えている・大事・重ならない」の3つがそろったときだけ
-      var nameOn = false;
-      if (dotOn && inView && shown < kName) {
-        var a0 = s.x - lblW / 2, a1 = s.x + lblW / 2;
-        var b0 = s.y - lblH, b1 = s.y + lblH * 0.4;
-        var hit = false;
-        for (var j = 0; j < slots.length; j++) {
-          var q = slots[j];
-          if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { hit = true; break; }
-        }
-        if (!hit) { slots.push([a0, b0, a1, b1]); nameOn = true; shown++; }
-      }
-      n.classList.toggle("noname", !nameOn);
+      var s0 = list[i];
+      if (s0.x < x0 || s0.x > x1 || s0.y < y0 || s0.y > y1) continue;
+      inv.push(s0);
+      if (inv.length >= 600) break;              // 数えすぎない
     }
-    RG.__lblInfo = { z: +z.toFixed(2), dots: kDot, room: room, names: shown };
+    // stations は «大事な順» に並んでいるので、この順で使えばよい
 
-    var upp = vb.w / W;
-    svg.style.setProperty("--hitr", (12 * upp).toFixed(2));
-    svg.style.setProperty("--sthitr", (15 * upp).toFixed(2));
+    var upx = vb.w / W;
+    var dotGap = 26 * upx;                       // 丸どうしを離す（画面上で26px）
+    var lblW = 74 * upx, lblH = 19 * upx;
+    var dotSlots = {}, nameSlots = [];
+    var nDot = 0, nName = 0;
+    var show = {};
+
+    for (var k = 0; k < inv.length; k++) {
+      var s = inv[k];
+      var dotOn = false, nameOn = false;
+      // ① 丸：近くにもう丸があるなら置かない（まばらに散らす）
+      if (nDot < maxDot) {
+        var key = Math.round(s.x / dotGap) + "," + Math.round(s.y / dotGap);
+        if (!dotSlots[key]) { dotSlots[key] = 1; dotOn = true; nDot++; }
+      }
+      // ② 名前：丸を出したもののうち、重ならないものだけ
+      if (dotOn && nName < maxName) {
+        var a0 = s.x - lblW / 2, a1 = s.x + lblW / 2;
+        var b0 = s.y - lblH, b1 = s.y + lblH * 0.45;
+        var bad = false;
+        for (var j = 0; j < nameSlots.length; j++) {
+          var q = nameSlots[j];
+          if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; }
+        }
+        if (!bad) { nameSlots.push([a0, b0, a1, b1]); nameOn = true; nName++; }
+      }
+      show[s.id] = dotOn ? (nameOn ? 2 : 1) : 0;
+    }
+    // 画面の外・あふれたものは消す。出すものには «画面での大きさ» を与える。
+    for (var m = 0; m < list.length; m++) {
+      var t = list[m], n = node[t.id];
+      if (!n) continue;
+      var v = show[t.id] || 0;
+      n.classList.toggle("lod", v === 0);
+      n.classList.toggle("noname", v !== 2);
+      if (!v) continue;
+      var isBig = n.classList.contains("big");
+      var isSel = n.classList.contains("sel") || n.classList.contains("pick");
+      var isHub = n.classList.contains("hub");
+      var dotEl = n.querySelector(".st-dot"), lblEl = n.querySelector(".st-lbl");
+      if (dotEl) {
+        var r0 = isSel ? PX.dotSel : isHub ? PX.dotHub : isBig ? PX.dotBig : PX.dot;
+        dotEl.setAttribute("r", (r0 * u).toFixed(2));
+        dotEl.setAttribute("stroke-width", (PX.dotSw * u * (isBig || isSel || isHub ? 1.5 : 1)).toFixed(2));
+      }
+      if (lblEl && v === 2) {
+        var f0 = isSel || isHub ? PX.lblSel : isBig ? PX.lblBig : PX.lbl;
+        lblEl.setAttribute("font-size", (f0 * u).toFixed(2));
+        lblEl.setAttribute("stroke-width", (PX.stroke * u).toFixed(2));
+        // 文字は丸のすぐ下に置く（大きさに合わせて位置も動かす）
+        lblEl.setAttribute("y", (t.y + (f0 + 6) * u).toFixed(1));
+      }
+    }
+    RG.__lblInfo = { z: +z.toFixed(2), dots: nDot, names: nName, cap: maxDot };
+
+    svg.style.setProperty("--hitr", (12 * upx).toFixed(2));
+    svg.style.setProperty("--sthitr", (15 * upx).toFixed(2));
     var lv = $("#zlevel");
     if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
     if (RG.admLOD) RG.admLOD();
+    if (RG.jpAdmLOD) RG.jpAdmLOD();
     if (RG.map3DMoved) RG.map3DMoved();
     if (RG.loadTilesFor && vb) {
       clearTimeout(tileT);
@@ -408,7 +493,7 @@ var Map = (function () {
         var a = RG.unproject(vb.x, vb.y + vb.h), b = RG.unproject(vb.x + vb.w, vb.y);
         RG.loadTilesFor({ s: Math.min(a.la, b.la), n: Math.max(a.la, b.la),
                           w: Math.min(a.lo, b.lo), e: Math.max(a.lo, b.lo) });
-      }, 260);
+      }, 300);
     }
   }
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
@@ -702,8 +787,9 @@ var Map = (function () {
        アイコン1つにおよそ 30×30px が要るとして、画面の18%まで。
        駅名と同じ考えかたで、混みすぎないようにする。 */
     var hpx = Math.max(240, wrap.getBoundingClientRect().height);
-    var room = Math.floor((wpx * hpx) / (30 * 30) * 0.18);
-    var cap = Math.max(24, Math.min(POOL_MAX, room));
+    // 画面に置くスポットは、多くて48個まで（画面が広ければ少しだけ増やす）
+    var area2 = (wpx * hpx) / (1280 * 640);
+    var cap = Math.round(48 * Math.min(1.6, Math.max(0.55, area2)));
     var poiSlots = [];
     var used = {}, show = [];
     for (var k = 0; k < cand.length && show.length < cap; k++) {
@@ -729,16 +815,24 @@ var Map = (function () {
       n.setAttribute("aria-label", t.n);
       n.setAttribute("tabindex", t.ti === 0 ? "0" : "-1");
       var c0 = n.childNodes[0], e0 = n.childNodes[1], h0 = n.childNodes[2];
-      c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y); c0.setAttribute("style", "--pc:" + g.c);
-      e0.setAttribute("x", t.x); e0.setAttribute("y", t.y + 2.4); e0.textContent = g.e;
+      var uu = vb.w / wpx;               // 画面の1px = 地図の何単位か
+      c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y);
+      c0.setAttribute("r", (RG.MAPSIZE.poiC * uu).toFixed(2));
+      c0.setAttribute("style", "--pc:" + g.c);
+      e0.setAttribute("x", t.x); e0.setAttribute("y", t.y + 4.6 * uu);
+      e0.setAttribute("font-size", ((t.ti === 0 ? RG.MAPSIZE.poiEBig : RG.MAPSIZE.poiE) * uu).toFixed(2));
+      e0.textContent = g.e;
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
+      h0.setAttribute("r", (14 * uu).toFixed(2));
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
          駅名と同じく、重なるものは出さない。 */
       var t0 = n.childNodes[3];
       if (t0) {
         // 名前を出すかどうかは «画面が混んでいないか» で決める。
         // アイコンが少ないほど、名前を出す余裕がある。
-        var wantT = show.length <= 70;
+        // 寄って画面が空いてきたら、名前を出す。
+        // «アイコンが上限に届いていない» ＝ まわりに余裕がある、という目安。
+        var wantT = show.length < cap;
         var okT = false;
         if (wantT) {
           var tw = Math.min(9, (t.n || "").length) * 7.2 * (vb.w / wpx);
@@ -752,7 +846,9 @@ var Map = (function () {
           if (!bad) { poiSlots.push([a0, b0, a1, b1]); okT = true; }
         }
         if (okT) {
-          t0.setAttribute("x", t.x); t0.setAttribute("y", t.y + 13 * (vb.w / wpx));
+          t0.setAttribute("x", t.x); t0.setAttribute("y", t.y + 19 * uu);
+          t0.setAttribute("font-size", (RG.MAPSIZE.poiT * uu).toFixed(2));
+          t0.setAttribute("stroke-width", (2.8 * uu).toFixed(2));
           t0.textContent = (t.n || "").slice(0, 9);
           t0.style.display = "";
         } else { t0.textContent = ""; t0.style.display = "none"; }
@@ -1522,6 +1618,14 @@ function mergeExtraPois(key) {
     });
   });
   if (RG.rebuildHensachi) RG.rebuildHensachi();
+  // 関東の見どころ
+  if (RG.KANTO_LM) once("klm", function () {
+    RG.KANTO_LM.forEach(function (r, i) {
+      RG.MAPPOI.push({ i: "kl" + i, n: r.n, la: r.la, lo: r.lo, g: "klm",
+                       s: 3.0 + Math.min(2, (r.sl || 0) / 20), ti: (r.sl || 0) >= 12 ? 0 : 1,
+                       t: r.t, be: r.e, bc: r.c, sl: r.sl, klm: r });
+    });
+  });
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();
@@ -1603,6 +1707,7 @@ RG.boot = function () {
   });
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
+  step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });
   step("文字の大きさ", function () {
     if (RG.settings && RG.settings.bigtext) document.documentElement.classList.add("bigtext");
@@ -1638,7 +1743,6 @@ RG.showBootTrouble = function (failed) {
       "<p>" + failed.map(function (f) { return f.n; }).join("・") +
       " でつまずきました。ファイルが足りていない可能性があります。</p>" +
       '<div class="bootwarn__f">' +
-        '<a class="bootwarn__x" href="check.html">📋 ファイルを点検する</a>' +
         '<button class="bootwarn__x" type="button" onclick="location.reload()">再読み込み</button>' +
         '<button class="bootwarn__x" type="button" onclick="this.closest(\'.bootwarn\').remove()">閉じる</button>' +
       "</div></div>";

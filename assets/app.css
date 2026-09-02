@@ -2325,3 +2325,131 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   paint-order:stroke;stroke:#F8F8FB;stroke-width:calc(2.2px * var(--poiscale,1));
   stroke-linejoin:round
 }
+
+/* =========================================================================
+   v56：地図として «読める» 見た目に
+
+   ■ 考えかた
+     地図の主役は «土地のかたち» で、文字と印はその案内役です。
+     案内役が主役より目立つと、地図は読めなくなります。
+       ・文字は小さく、灰色がかった黒に（真っ黒は強すぎる）
+       ・丸は小さく、細い枠に（塗りは白のまま抜けを作る）
+       ・大事なもの（大きい駅・選んだ駅）だけ、はっきりさせる
+     色数を増やさず、«濃さ» の差だけで大事さを表します。
+   ========================================================================= */
+
+/* ---- 駅の名前 ---------------------------------------------------- */
+.st-lbl{
+  font-size:8px;                       /* 寄っても大きくしない */
+  font-weight:500;
+  fill:#5A6472;                        /* 灰色がかった黒。真っ黒は強すぎる */
+  letter-spacing:.01em;
+  pointer-events:none;
+  paint-order:stroke;
+  stroke:#F8F8FB;stroke-width:2.4px;stroke-linejoin:round;
+}
+/* 大きい駅だけ、はっきり見せる */
+.node.big .st-lbl{font-size:9.5px;font-weight:700;fill:#1F2933}
+/* 選んだ駅・出発駅・注視駅は、いちばんはっきり */
+.node.sel .st-lbl,.node.hub .st-lbl,.node.pick .st-lbl{
+  font-size:10px;font-weight:800;fill:#0B2E55;stroke-width:3px}
+
+/* ---- 駅の丸 ------------------------------------------------------ */
+.node .st-dot{
+  r:2.2px;                             /* 小さく。点として散らす */
+  fill:#fff;stroke:#8A93A0;stroke-width:1.1;
+  pointer-events:none;
+  transition:r .12s ease
+}
+.node.big .st-dot{r:3.2px;stroke:#39434F;stroke-width:1.7}
+.node.hub .st-dot{r:4px;stroke:#C81432;stroke-width:2.4;fill:#FFF1F3}
+.node.sel .st-dot{r:4.6px;stroke:#0055AD;stroke-width:2.8;fill:#FFD54A}
+/* 名前が出ていない駅の丸は、さらに控えめに */
+.node.noname .st-dot{opacity:.55}
+.node.noname.big .st-dot{opacity:.85}
+
+/* ---- 区の名前 ---------------------------------------------------- */
+.adm__t{
+  font-size:11px !important;
+  font-weight:700;
+  fill:#9AA4B0 !important;             /* 背景になじませる。読めるが主張しない */
+  letter-spacing:.14em;                /* 字間を空けて «地名» らしく */
+  pointer-events:none;
+  paint-order:stroke;stroke:#F8F8FB;stroke-width:3px;stroke-linejoin:round;
+}
+
+/* ---- スポット ---------------------------------------------------- */
+.poi__t{
+  font-size:7.4px;font-weight:500;fill:#6B7684;pointer-events:none;
+  paint-order:stroke;stroke:#F8F8FB;stroke-width:2.2px;stroke-linejoin:round
+}
+
+/* ---- 路線 -------------------------------------------------------- */
+.ln{stroke-linecap:round;stroke-linejoin:round}
+/* 選んだ路線・指している路線は、いつでもはっきり */
+.ln.on,.ln.hi{opacity:1 !important}
+
+/* ---- 背景 -------------------------------------------------------- */
+/* 地図の紙の色を、ほんの少し暖かく。文字とのなじみが良くなる */
+.mapwrap{background:#FAFAFC}
+
+/* =========================================================================
+   v57：SVG の中の «px» は地図の単位。ズームで一緒に拡大されてしまう。
+   ―― これが «文字とアイコンが巨大になる» 原因でした。
+      --u（画面の1px＝地図の何単位か）を使い、
+      すべての大きさを «画面での見た目のpx» で書き直します。
+   ========================================================================= */
+#map{ --u:1px }
+
+/* ---- 文字を選択できないように（ドラッグで文字が青くなるのを防ぐ）---- */
+#map, #map text{
+  -webkit-user-select:none; -moz-user-select:none; user-select:none;
+  -webkit-touch-callout:none
+}
+
+/* ---- 駅の名前：画面で 11px（大きい駅は 12.5px）---------------------- */
+/* 大きさ（font-size・r・stroke-width）は JavaScript が属性で与えます。
+   ここでは «色と太さ» だけを決めます。 */
+.st-lbl{
+  font-weight:500 !important;
+  fill:#66707D !important;
+  letter-spacing:0;
+  pointer-events:none;
+  paint-order:stroke;
+  stroke:#FAFAFC !important;
+  stroke-linejoin:round
+}
+.node.big .st-lbl{font-weight:700 !important;fill:#28323E !important}
+.node.sel .st-lbl,.node.hub .st-lbl,.node.pick .st-lbl{
+  font-weight:800 !important;fill:#0B2E55 !important}
+
+/* ---- 駅の丸：画面で 直径 6〜11px ------------------------------------ */
+.node .st-dot{fill:#fff !important;stroke:#9AA3AF !important}
+.node.big .st-dot{stroke:#39434F !important}
+.node.hub .st-dot{stroke:#C81432 !important;fill:#FFF1F3 !important}
+.node.sel .st-dot{stroke:#0055AD !important;fill:#FFD54A !important}
+.node.noname .st-dot{opacity:.5}
+.node.noname.big .st-dot{opacity:.85}
+
+/* ---- 区の名前：画面で 13px、うすく ---------------------------------- */
+.adm__t{
+  font-weight:700 !important;fill:#A8B1BC !important;pointer-events:none;
+  paint-order:stroke;stroke:#FAFAFC !important;stroke-linejoin:round}
+
+/* ---- スポット：絵文字は画面で 13px、名前は 10px ---------------------- */
+.poi__t{font-weight:500 !important;fill:#78828F !important;pointer-events:none;
+  paint-order:stroke;stroke:#FAFAFC !important;stroke-linejoin:round}
+
+/* ---- 路線：画面で 1.5〜3.2px ---------------------------------------- */
+.ln{stroke-linecap:round;stroke-linejoin:round}
+.ln.on,.ln.hi{opacity:1 !important}
+
+/* ---- 3D の文字も同じ考えで ------------------------------------------ */
+
+
+/* v61：全国の市区町村の地名 */
+.jpadm__t{
+  font-weight:800 !important;fill:#B4BDC8 !important;pointer-events:none;
+  paint-order:stroke;stroke:#FAFAFC !important;stroke-linejoin:round;
+  -webkit-user-select:none;user-select:none
+}
