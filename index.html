@@ -2335,6 +2335,73 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   stroke-linejoin:round
 }
 
+/* =========================================================================
+   v56：地図として «読める» 見た目に
+
+   ■ 考えかた
+     地図の主役は «土地のかたち» で、文字と印はその案内役です。
+     案内役が主役より目立つと、地図は読めなくなります。
+       ・文字は小さく、灰色がかった黒に（真っ黒は強すぎる）
+       ・丸は小さく、細い枠に（塗りは白のまま抜けを作る）
+       ・大事なもの（大きい駅・選んだ駅）だけ、はっきりさせる
+     色数を増やさず、«濃さ» の差だけで大事さを表します。
+   ========================================================================= */
+
+/* ---- 駅の名前 ---------------------------------------------------- */
+.st-lbl{
+  font-size:8px;                       /* 寄っても大きくしない */
+  font-weight:500;
+  fill:#5A6472;                        /* 灰色がかった黒。真っ黒は強すぎる */
+  letter-spacing:.01em;
+  pointer-events:none;
+  paint-order:stroke;
+  stroke:#F8F8FB;stroke-width:2.4px;stroke-linejoin:round;
+}
+/* 大きい駅だけ、はっきり見せる */
+.node.big .st-lbl{font-size:9.5px;font-weight:700;fill:#1F2933}
+/* 選んだ駅・出発駅・注視駅は、いちばんはっきり */
+.node.sel .st-lbl,.node.hub .st-lbl,.node.pick .st-lbl{
+  font-size:10px;font-weight:800;fill:#0B2E55;stroke-width:3px}
+
+/* ---- 駅の丸 ------------------------------------------------------ */
+.node .st-dot{
+  r:2.2px;                             /* 小さく。点として散らす */
+  fill:#fff;stroke:#8A93A0;stroke-width:1.1;
+  pointer-events:none;
+  transition:r .12s ease
+}
+.node.big .st-dot{r:3.2px;stroke:#39434F;stroke-width:1.7}
+.node.hub .st-dot{r:4px;stroke:#C81432;stroke-width:2.4;fill:#FFF1F3}
+.node.sel .st-dot{r:4.6px;stroke:#0055AD;stroke-width:2.8;fill:#FFD54A}
+/* 名前が出ていない駅の丸は、さらに控えめに */
+.node.noname .st-dot{opacity:.55}
+.node.noname.big .st-dot{opacity:.85}
+
+/* ---- 区の名前 ---------------------------------------------------- */
+.adm__t{
+  font-size:11px !important;
+  font-weight:700;
+  fill:#9AA4B0 !important;             /* 背景になじませる。読めるが主張しない */
+  letter-spacing:.14em;                /* 字間を空けて «地名» らしく */
+  pointer-events:none;
+  paint-order:stroke;stroke:#F8F8FB;stroke-width:3px;stroke-linejoin:round;
+}
+
+/* ---- スポット ---------------------------------------------------- */
+.poi__t{
+  font-size:7.4px;font-weight:500;fill:#6B7684;pointer-events:none;
+  paint-order:stroke;stroke:#F8F8FB;stroke-width:2.2px;stroke-linejoin:round
+}
+
+/* ---- 路線 -------------------------------------------------------- */
+.ln{stroke-linecap:round;stroke-linejoin:round}
+/* 選んだ路線・指している路線は、いつでもはっきり */
+.ln.on,.ln.hi{opacity:1 !important}
+
+/* ---- 背景 -------------------------------------------------------- */
+/* 地図の紙の色を、ほんの少し暖かく。文字とのなじみが良くなる */
+.mapwrap{background:#FAFAFC}
+
 </style>
 <meta name="description" content="東京23区669駅とスポット18,000件を、地図・スコア・ルート比較・おでかけプランで調べられる自由研究サイト。オープンデータだけで作りました。">
 <meta name="theme-color" content="#00224A">
@@ -2742,67 +2809,96 @@ var Map = (function () {
        ② 名前          … 遅めに出す。しかも «重なるなら出さない»
        ③ 路線の線      … 遠目では薄く、寄るほどはっきり
      ----------------------------------------------------------------- */
+  /* -----------------------------------------------------------------
+     どこまで見せるかを決める
+
+     ■ 考えかた（地図として «読める» ことを最優先にする）
+       紙の地図や Google マップがそうであるように、
+       «ひと目で数えられる量» を超えると、地図は読めなくなります。
+       目安として、画面の中に置くものを次のように抑えます。
+
+         駅の丸    … 多くて 90個（画面いっぱいでも、目が追える量）
+         駅の名前  … 多くて 26個（重なるものは出さない）
+         区の名前  … 多くて  6個
+         スポット  … 多くて 48個
+
+       いずれも «大事な順» に置き、あふれたぶんは出しません。
+       寄れば画面に入る数が減るので、自然と細かいものが見えてきます。
+     ----------------------------------------------------------------- */
   function lod() {
     var z = VB.w / vb.w;
-    var maxN = (RG.NET.stations || []).length;
     var rect = wrap.getBoundingClientRect();
     var W = Math.max(320, rect.width), H = Math.max(240, rect.height);
+    var area = (W * H) / (1280 * 640);          // 画面の広さ（基準に対する倍率）
 
-    // ① 丸を出す数。寄るほど増やす。
-    var kDot = Math.round(Math.min(maxN, Math.max(30, 30 * Math.pow(z, 2.2))));
+    // 画面に置く «上限»。画面が広ければ少しだけ増やす。
+    var maxDot = Math.round(90 * Math.min(1.6, Math.max(0.55, area)));
+    var maxName = Math.round(26 * Math.min(1.6, Math.max(0.55, area)));
 
-    // ② 名前を出せる «上限の数»。
-    //    画面の広さから «無理なく置ける数» を見積もる。
-    //    ひとつの名前におよそ 78×22px が要るとして、その4割までに抑える。
-    var room = Math.floor((W * H) / (78 * 22) * 0.40);
-    var kName = Math.max(6, Math.min(kDot, room));
+    // 文字は寄っても大きくしない（地図の文字は小さいほうが上品）
+    svg.style.setProperty("--lblscale", "1");
 
-    // 文字の大きさ。寄るほど少しだけ大きく（ただし控えめに）
-    var ls = Math.min(1.15, Math.max(0.72, 1 / Math.pow(z, 0.5)));
-    svg.style.setProperty("--lblscale", ls.toFixed(3));
-
-    // ③ 路線の線。遠目では細く薄く、寄るほどはっきり
-    var lw = Math.min(3.6, Math.max(1.2, 1.2 + 1.1 * Math.log(Math.max(1, z))));
-    var lo = Math.min(1, Math.max(0.34, 0.34 + 0.20 * Math.log(Math.max(1, z))));
+    // 路線の線。遠目は細く淡く、寄るとしっかり。
+    var lw = Math.min(3.2, Math.max(1.5, 1.5 + 0.85 * Math.log(Math.max(1, z))));
     svg.style.setProperty("--lnw", (lw * (vb.w / W)).toFixed(2));
-    svg.style.setProperty("--lnop", lo.toFixed(2));
+    svg.style.setProperty("--lnop", Math.min(0.95, Math.max(0.30, 0.30 + 0.19 * Math.log(Math.max(1, z)))).toFixed(2));
 
-    // 見えている範囲だけを相手にする（画面の外は考えない）
-    var pad = vb.w * 0.08;
+    // 見えている範囲（すこしだけ外まで）
+    var pad = vb.w * 0.05;
     var x0 = vb.x - pad, x1 = vb.x + vb.w + pad;
     var y0 = vb.y - pad, y1 = vb.y + vb.h + pad;
 
-    // 名前の «場所とり»。大事な駅から順に置き、重なるものは出さない。
-    var slots = [];
-    var upx = vb.w / W;                       // 地図の1単位が画面の何pxか の逆
-    var lblW = 78 * upx * ls, lblH = 20 * upx * ls;
-    var shown = 0;
+    // 画面に入っている駅を、大事な順にならべる
+    var inv = [];
     var list = RG.NET.stations;
     for (var i = 0; i < list.length; i++) {
-      var s = list[i], n = node[s.id];
-      if (!n) continue;
-      var inView = s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1;
-      var dotOn = s.rank < kDot;
-      n.classList.toggle("lod", !dotOn);
-      // 名前は「見えている・大事・重ならない」の3つがそろったときだけ
-      var nameOn = false;
-      if (dotOn && inView && shown < kName) {
-        var a0 = s.x - lblW / 2, a1 = s.x + lblW / 2;
-        var b0 = s.y - lblH, b1 = s.y + lblH * 0.4;
-        var hit = false;
-        for (var j = 0; j < slots.length; j++) {
-          var q = slots[j];
-          if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { hit = true; break; }
-        }
-        if (!hit) { slots.push([a0, b0, a1, b1]); nameOn = true; shown++; }
-      }
-      n.classList.toggle("noname", !nameOn);
+      var s0 = list[i];
+      if (s0.x < x0 || s0.x > x1 || s0.y < y0 || s0.y > y1) continue;
+      inv.push(s0);
+      if (inv.length >= 600) break;              // 数えすぎない
     }
-    RG.__lblInfo = { z: +z.toFixed(2), dots: kDot, room: room, names: shown };
+    // stations は «大事な順» に並んでいるので、この順で使えばよい
 
-    var upp = vb.w / W;
-    svg.style.setProperty("--hitr", (12 * upp).toFixed(2));
-    svg.style.setProperty("--sthitr", (15 * upp).toFixed(2));
+    var upx = vb.w / W;
+    var dotGap = 26 * upx;                       // 丸どうしを離す（画面上で26px）
+    var lblW = 74 * upx, lblH = 19 * upx;
+    var dotSlots = {}, nameSlots = [];
+    var nDot = 0, nName = 0;
+    var show = {};
+
+    for (var k = 0; k < inv.length; k++) {
+      var s = inv[k];
+      var dotOn = false, nameOn = false;
+      // ① 丸：近くにもう丸があるなら置かない（まばらに散らす）
+      if (nDot < maxDot) {
+        var key = Math.round(s.x / dotGap) + "," + Math.round(s.y / dotGap);
+        if (!dotSlots[key]) { dotSlots[key] = 1; dotOn = true; nDot++; }
+      }
+      // ② 名前：丸を出したもののうち、重ならないものだけ
+      if (dotOn && nName < maxName) {
+        var a0 = s.x - lblW / 2, a1 = s.x + lblW / 2;
+        var b0 = s.y - lblH, b1 = s.y + lblH * 0.45;
+        var bad = false;
+        for (var j = 0; j < nameSlots.length; j++) {
+          var q = nameSlots[j];
+          if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; }
+        }
+        if (!bad) { nameSlots.push([a0, b0, a1, b1]); nameOn = true; nName++; }
+      }
+      show[s.id] = dotOn ? (nameOn ? 2 : 1) : 0;
+    }
+    // 画面の外・あふれたものは消す
+    for (var m = 0; m < list.length; m++) {
+      var t = list[m], n = node[t.id];
+      if (!n) continue;
+      var v = show[t.id] || 0;
+      n.classList.toggle("lod", v === 0);
+      n.classList.toggle("noname", v !== 2);
+    }
+    RG.__lblInfo = { z: +z.toFixed(2), dots: nDot, names: nName, cap: maxDot };
+
+    svg.style.setProperty("--hitr", (12 * upx).toFixed(2));
+    svg.style.setProperty("--sthitr", (15 * upx).toFixed(2));
     var lv = $("#zlevel");
     if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
@@ -2814,7 +2910,7 @@ var Map = (function () {
         var a = RG.unproject(vb.x, vb.y + vb.h), b = RG.unproject(vb.x + vb.w, vb.y);
         RG.loadTilesFor({ s: Math.min(a.la, b.la), n: Math.max(a.la, b.la),
                           w: Math.min(a.lo, b.lo), e: Math.max(a.lo, b.lo) });
-      }, 260);
+      }, 300);
     }
   }
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
@@ -3108,8 +3204,9 @@ var Map = (function () {
        アイコン1つにおよそ 30×30px が要るとして、画面の18%まで。
        駅名と同じ考えかたで、混みすぎないようにする。 */
     var hpx = Math.max(240, wrap.getBoundingClientRect().height);
-    var room = Math.floor((wpx * hpx) / (30 * 30) * 0.18);
-    var cap = Math.max(24, Math.min(POOL_MAX, room));
+    // 画面に置くスポットは、多くて48個まで（画面が広ければ少しだけ増やす）
+    var area2 = (wpx * hpx) / (1280 * 640);
+    var cap = Math.round(48 * Math.min(1.6, Math.max(0.55, area2)));
     var poiSlots = [];
     var used = {}, show = [];
     for (var k = 0; k < cand.length && show.length < cap; k++) {
@@ -3144,7 +3241,9 @@ var Map = (function () {
       if (t0) {
         // 名前を出すかどうかは «画面が混んでいないか» で決める。
         // アイコンが少ないほど、名前を出す余裕がある。
-        var wantT = show.length <= 70;
+        // 寄って画面が空いてきたら、名前を出す。
+        // «アイコンが上限に届いていない» ＝ まわりに余裕がある、という目安。
+        var wantT = show.length < cap;
         var okT = false;
         if (wantT) {
           var tw = Math.min(9, (t.n || "").length) * 7.2 * (vb.w / wpx);
@@ -6302,7 +6401,8 @@ RG.admLOD = function () {
   var upx = vb.w / W;
   var texts = $$(".adm__t", gLabel);
   // 画面に置ける数（区名は駅名より大きいので、ゆったりめに見積もる）
-  var room = Math.max(3, Math.floor((W * H) / (110 * 26) * 0.30));
+  // 区の名前は «土地の見当» を付けるためのもの。多くて6つで足ります。
+  var room = Math.max(2, Math.min(6, Math.floor((W * H) / (1280 * 640) * 6)));
   // 大きい区から順に置く（面の広がり＝おおよその大事さ）
   var arr = texts.map(function (t2) {
     return { t: t2, x: +t2.getAttribute("x"), y: +t2.getAttribute("y"),
@@ -11206,8 +11306,8 @@ RG.startApp = function () {
 
 <script>
 /* いま動いている版 */
-RG.VERSION = "v55";
-RG.BUILT = "2026-09-01 23:17";
+RG.VERSION = "v56";
+RG.BUILT = "2026-09-01 23:34";
 
 /* 東京23区とその周辺の鉄道ネットワーク（自動生成: tools/build_network.py）
    出典: Wikidata (https://www.wikidata.org) — ライセンス CC0 1.0（パブリックドメイン）
