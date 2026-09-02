@@ -73,6 +73,12 @@ RG.GENRES = [
   { id: "high",    e: "🏫", label: "高校",         c: "#00838F", enabled: true, optIn: true, edu: true,
     desc: "高等学校。偏差値を自分で入れると色がつきます" },
 
+  { id: "klm",     e: "🎡", label: "見どころ", c: "#E4007F", enabled: true, optIn: true, kanto: true,
+    desc: "テーマパーク・城・神社・美術館・温泉・道の駅など4,109か所（日本全国）" },
+
+  { id: "police",  e: "🚓", label: "交番・警察",   c: "#1565C0", enabled: true, optIn: true, osm10: true,
+    desc: "落とし物や道を聞きたいときに。関東ぜんぶで3,595か所" },
+
   { id: "hosp",    e: "🏥", label: "病院・診療所",  c: "#E53935", enabled: true, optIn: true, osm10: true,
     desc: "急なけがや体調不良のときに。救急対応の有無が分かるものもあります" },
   { id: "pharm",   e: "💊", label: "薬局",         c: "#43A047", enabled: true, optIn: true, osm10: true,
