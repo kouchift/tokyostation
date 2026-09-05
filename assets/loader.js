@@ -66,12 +66,18 @@ var ONDEMAND = [
 var loaded = {}, inflight = {};
 RG.dataReady = loaded;
 
+/* 版の印。index.html の <html data-build> と同じ。
+   古い Service Worker が «前の版のファイル» を返さないように、URL に付ける */
+var BUILD = document.documentElement.getAttribute("data-build") || "";
+RG.BUILD = BUILD;
+function withV(src) { return BUILD ? src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=" + BUILD : src; }
+RG.withV = withV;
 function load(src) {
   if (loaded[src]) return Promise.resolve(src);
   if (inflight[src]) return inflight[src];
   inflight[src] = new Promise(function (res, rej) {
     var s = document.createElement("script");
-    s.src = src; s.async = true;
+    s.src = withV(src); s.async = true;
     s.onload = function () { loaded[src] = true; res(src); };
     s.onerror = function () { rej(new Error(src)); };
     document.head.appendChild(s);
@@ -212,8 +218,9 @@ RG.startApp = function (netPromise) {
     if (bad.length) throw new Error(bad.join(" / "));
     RG.NET = RG.decodeNet(r[1]);
     setProgress("地図をえがいています", 45);
-    // 描画の前に1フレーム返して、進捗バーが出るようにする
-    return new Promise(function (res) { requestAnimationFrame(function () { res(); }); });
+    // 描画の前にいったん返して、進捗バーが出るようにする
+    // （requestAnimationFrame は裏のタブでは止まるので使わない）
+    return new Promise(function (res) { setTimeout(res, 0); });
   }).then(function () {
     RG.boot();
     setProgress("", 100);

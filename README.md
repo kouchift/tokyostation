@@ -37,6 +37,9 @@ data/network.js を作り直す → python3 tools/build_netjson.py  # net.json �
 
 読み込みの順番と「使うときだけ読む」データの一覧は `assets/loader.js` の先頭に書いてあります。
 
+**版を上げるとき（差し替えが古いキャッシュに負けないように）** — 次の3か所の数字をそろえて上げます。
+`index.html` の `data-build="64"` と `?v=64`（一括置換）／ `sw.js` の `CACHE` と `V` ／ `data/version.js`。
+
 ---
 
 
