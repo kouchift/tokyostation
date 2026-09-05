@@ -2485,3 +2485,22 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 /* 新幹線は駅間が長く直線が目立つので、細い破線で控えめに */
 .ln--shin{stroke-dasharray:6 5;opacity:calc(var(--lnop,1) * .55) !important}
 #map.far .ln--shin{opacity:calc(var(--lnop,1) * .35) !important}
+/* スマホで画面が横に 900px ほど伸びていた不具合の修正。
+   grid の子要素は既定で «中身の幅より縮まない» ため、出発バーやヘッダーの中身が
+   画面幅を押し広げ、ズームボタンが画面外へ出ていた。 */
+html,body{max-width:100vw;overflow-x:hidden}
+.app{width:100%;max-width:100vw;min-width:0;overflow:hidden}
+.app>*{min-width:0;max-width:100vw}
+.hdr{min-width:0;flex-wrap:nowrap}
+.hdr__search{flex:1 1 90px;min-width:70px}
+.hdr__search input{min-width:0}
+.hdr__mark{flex:0 1 auto;min-width:0;overflow:hidden}
+.hdr__mark span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar,.tripbar,.weekbar,.groupbar,.linerail,.chips{min-width:0;max-width:100vw}
+.mapwrap{min-width:0;max-width:100vw}
+@media (max-width:560px){
+  .hdr{gap:6px;padding:0 8px}
+  .hdr__mark{font-size:12px}
+  .hdr__btn{min-width:32px;height:32px;padding:0 8px;font-size:12px}
+  .hdr__search input{height:32px;padding:0 10px 0 28px;font-size:13px}
+}

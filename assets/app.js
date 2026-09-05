@@ -126,8 +126,10 @@ function emojiImg(e) {
     cx.font = Math.round(S * 0.78) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
     cx.textAlign = "center"; cx.textBaseline = "middle";
     cx.fillText(e, S / 2, S / 2 + S * 0.04);
-    url = cv.toDataURL("image/png");
-    if (url.length < 200) url = null;           // 何も描けていない
+    // 何も描けていない（絵文字フォントが無い環境）なら <text> にする
+    var px = cx.getImageData(0, 0, S, S).data, ink = 0;
+    for (var i = 3; i < px.length; i += 16) if (px[i] > 40) { ink++; if (ink > 6) break; }
+    url = ink > 6 ? cv.toDataURL("image/png") : null;
   } catch (err) { url = null; }
   emojiCache[e] = url;
   return url;

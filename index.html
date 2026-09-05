@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-build="64">
+<html lang="ja" data-build="65">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
@@ -13,14 +13,14 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
 <!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
-<link rel="preload" href="data/net.json?v=64" as="fetch" crossorigin="anonymous">
-<link rel="preload" href="assets/app.bundle.js?v=64" as="script">
-<link rel="preload" href="data/config.js?v=64" as="script">
-<link rel="preload" href="data/lines_meta.js?v=64" as="script">
-<link rel="preload" href="data/genres.js?v=64" as="script">
-<link rel="preload" href="data/score.js?v=64" as="script">
-<link rel="preload" href="data/areas.js?v=64" as="script">
-<link rel="stylesheet" href="assets/app.css?v=64">
+<link rel="preload" href="data/net.json?v=65" as="fetch" crossorigin="anonymous">
+<link rel="preload" href="assets/app.bundle.js?v=65" as="script">
+<link rel="preload" href="data/config.js?v=65" as="script">
+<link rel="preload" href="data/lines_meta.js?v=65" as="script">
+<link rel="preload" href="data/genres.js?v=65" as="script">
+<link rel="preload" href="data/score.js?v=65" as="script">
+<link rel="preload" href="data/areas.js?v=65" as="script">
+<link rel="stylesheet" href="assets/app.css?v=65">
 <style>
 /* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
 .mapwrap{min-height:52vh;background:#F5F6F8}
@@ -90,14 +90,14 @@
 </div>
 
 <!-- ▼ 本体：assets/*.js を tools/build_bundle.js で1本にまとめたもの（直すときは元ファイルを） -->
-<script src="assets/app.bundle.js?v=64" defer></script>
+<script src="assets/app.bundle.js?v=65" defer></script>
 <script>
 /* 起動。
    ・data/net.json（駅・路線）は bundle と並列で取りに行く
    ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
    ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
-  var netP = fetch("data/net.json?v=64", { credentials: "same-origin" })
+  var netP = fetch("data/net.json?v=65", { credentials: "same-origin" })
     .then(function (r) { if (!r.ok) throw new Error("net.json " + r.status); return r.json(); })
     .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
@@ -117,7 +117,7 @@
       panic("読み込みが終わりませんでした。通信状態をご確認のうえ、再読み込みしてください。");
     }, 30000);
   }
-  var sc = document.querySelector('script[src="assets/app.bundle.js?v=64"]');
+  var sc = document.querySelector('script[src="assets/app.bundle.js?v=65"]');
   if (window.RG && window.RG.startApp) go();
   else if (sc) { sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); }); }
   // 地図の最初の駅が出たら骨組みを消す
