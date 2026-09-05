@@ -19,21 +19,64 @@ RG.HUB = "中村橋";
    ですから、ここに書いた数字は «どのズームでも画面でこの大きさ» になります。
    ========================================================================= */
 RG.MAPSIZE = {
-  lbl:    10.5,   // ふつうの駅名
-  lblBig: 12,     // 大きい駅の駅名
-  lblSel: 12.5,   // 選んだ駅・出発駅・注視駅の駅名
-  stroke: 3,      // 駅名の白いふち
-  dot:    2.8,    // ふつうの駅の丸（半径）
-  dotBig: 4,      // 大きい駅
-  dotHub: 4.8,    // 注視駅
-  dotSel: 5.2,    // 選んだ駅
-  dotSw:  1.2,    // 丸の枠の太さ
-  adm:    12.5,   // 区の名前
-  admSw:  3.4,    // 区の名前の白いふち
-  poiE:   13,     // スポットの絵文字
-  poiEBig:15,     // 目立つスポットの絵文字
-  poiC:   7,      // スポットの丸（半径）
-  poiT:   10      // スポットの名前
+  /* --- 引きぐあいごとの «見え方» の表 -----------------------------------
+     地図をどれだけ引いているかで、大きさも数も変えます。
+     ここの数字を書き替えれば、地図の見た目がそのまま変わります。
+
+       全国 … 日本ぜんぶが入るくらい（ズーム ×1）
+       都市 … 都心とそのまわり      （ズーム ×4）
+       駅前 … 駅のまわり            （ズーム ×22）
+
+     あいだの引きぐあいでは、この3つの間をなめらかにつなぎます。
+     px は «画面で何px に見えるか»。どこまで寄っても、この大きさのままです。
+  --------------------------------------------------------------------- */
+  steps: [
+    /* 引きぐあい  駅名   丸の半径  丸   名前  区名  地名  スポット */
+    { z:  1,      lbl: 3.5,  dot: 1.2,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  3 },
+    { z:  4,      lbl: 8.5,  dot: 2.2,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
+    { z: 22,      lbl: 8.5,  dot: 3.3,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
+  ],
+  /* 上の «駅名» と «丸» は «大きい駅» のときの大きさです。
+     ふつうの駅・選んだ駅は、それに対する «割合» で決めます。 */
+  lblSmall: 0.86,   // ふつうの駅名は、大きい駅の 86%
+  lblSelR:  1.10,   // 選んだ駅・出発駅は 110%
+  dotSmall: 0.70,   // ふつうの駅の丸は 70%
+  dotHubR:  1.25,   // 注視駅
+  dotSelR:  1.38,   // 選んだ駅
+  dotSw:    0.32,   // 丸の枠の太さ（半径に対する割合）
+  strokeR:  0.30,   // 文字の白いふち（文字の大きさに対する割合）
+  admR:     1.25,   // 区の名前は、駅名（大きい駅）の 125%
+  jpadmR:   1.40,   // 全国の市区町村の地名は 140%
+  poiER:    1.25,   // スポットの絵文字
+  poiEBigR: 1.45,   // 目立つスポットの絵文字
+  poiCR:    0.62,   // スポットの丸（半径）＝絵文字に対する割合
+  poiTR:    1.00    // スポットの名前
+};
+
+/* いまの引きぐあいでの «大きさと数» を、表から取り出す。
+   3つの目印のあいだは、なめらかにつなぐ（引きぐあいの対数で等分）。 */
+RG.mapSizeAt = function (z) {
+  var S = RG.MAPSIZE, st = S.steps;
+  var u = Math.log(Math.max(1, z)) / Math.LN2;          // ×1→0 ×4→2 ×22→4.46
+  var us = st.map(function (x) { return Math.log(Math.max(1, x.z)) / Math.LN2; });
+  var i = (u <= us[1]) ? 0 : 1;
+  var t = (u - us[i]) / Math.max(0.0001, us[i + 1] - us[i]);
+  t = Math.max(0, Math.min(1, t));
+  function mix(k) { return st[i][k] + (st[i + 1][k] - st[i][k]) * t; }
+  var lbl = mix("lbl"), dot = mix("dot");
+  return {
+    lbl: lbl * S.lblSmall, lblBig: lbl, lblSel: lbl * S.lblSelR,
+    stroke: lbl * S.strokeR,
+    dot: dot * S.dotSmall, dotBig: dot, dotHub: dot * S.dotHubR, dotSel: dot * S.dotSelR,
+    dotSw: dot * S.dotSw,
+    adm: lbl * S.admR, admSw: lbl * S.admR * S.strokeR,
+    jpadm: lbl * S.jpadmR,
+    poiE: lbl * S.poiER, poiEBig: lbl * S.poiEBigR,
+    poiC: lbl * S.poiER * S.poiCR, poiT: lbl * S.poiTR,
+    maxDot: Math.round(mix("dots")), maxName: Math.round(mix("names")),
+    maxAdm: Math.round(mix("adm")), maxJpAdm: Math.round(mix("jpadm")),
+    maxPoi: Math.round(mix("poi"))
+  };
 };
 
 RG.registerDetail = function (key, d) { RG.details[key] = d; };
@@ -385,8 +428,11 @@ var Map = (function () {
     var area = (W * H) / (1280 * 640);          // 画面の広さ（基準に対する倍率）
 
     // 画面に置く «上限»。画面が広ければ少しだけ増やす。
-    var maxDot = Math.round(90 * Math.min(1.6, Math.max(0.55, area)));
-    var maxName = Math.round(26 * Math.min(1.6, Math.max(0.55, area)));
+    var SZ = RG.mapSizeAt(z);
+    RG.__SZ = SZ;
+    // 画面が広ければ少しだけ増やす（1280×640 を目安に）
+    var maxDot = Math.round(SZ.maxDot * Math.min(1.5, Math.max(0.6, area)));
+    var maxName = Math.round(SZ.maxName * Math.min(1.5, Math.max(0.6, area)));
 
     /* いちばん大事な値。
        SVG の中の «px» は地図の単位なので、ズームすると一緒に拡大されます。
@@ -400,7 +446,7 @@ var Map = (function () {
     var u = vb.w / W;
     svg.style.setProperty("--u", u.toFixed(4) + "px");
     svg.style.setProperty("--lblscale", "1");
-    var PX = RG.MAPSIZE;
+    var PX = SZ;
     RG.__u = u;
 
     // 路線の線。遠目は細く淡く、寄るとしっかり。
@@ -425,8 +471,13 @@ var Map = (function () {
     // stations は «大事な順» に並んでいるので、この順で使えばよい
 
     var upx = vb.w / W;
-    var dotGap = 26 * upx;                       // 丸どうしを離す（画面上で26px）
-    var lblW = 74 * upx, lblH = 19 * upx;
+    var dotGap = (SZ.dotBig * 8 + 10) * upx;   // 丸どうしの間かく                       // 丸どうしを離す（画面上で26px）
+    var lblH = (SZ.lblBig * 1.55) * upx;
+    // 名前の «場所とり» は、その駅名の «字数ぶん» だけ取る。
+    // 一律に広く取ると、置けるはずの名前まで弾かれてしまう。
+    function lblWidth(name, big) {
+      return (Math.min(7, (name || "").length) * (big ? SZ.lblBig : SZ.lbl) * 0.92 + 4) * upx;
+    }
     var dotSlots = {}, nameSlots = [];
     var nDot = 0, nName = 0;
     var show = {};
@@ -441,7 +492,9 @@ var Map = (function () {
       }
       // ② 名前：丸を出したもののうち、重ならないものだけ
       if (dotOn && nName < maxName) {
-        var a0 = s.x - lblW / 2, a1 = s.x + lblW / 2;
+        var nd0 = node[s.id];
+        var lw2 = lblWidth(s.n, nd0 && nd0.classList.contains("big"));
+        var a0 = s.x - lw2 / 2, a1 = s.x + lw2 / 2;
         var b0 = s.y - lblH, b1 = s.y + lblH * 0.45;
         var bad = false;
         for (var j = 0; j < nameSlots.length; j++) {
@@ -789,7 +842,8 @@ var Map = (function () {
     var hpx = Math.max(240, wrap.getBoundingClientRect().height);
     // 画面に置くスポットは、多くて48個まで（画面が広ければ少しだけ増やす）
     var area2 = (wpx * hpx) / (1280 * 640);
-    var cap = Math.round(48 * Math.min(1.6, Math.max(0.55, area2)));
+    var SZ2 = RG.__SZ || RG.mapSizeAt(1);
+    var cap = Math.round(SZ2.maxPoi * Math.min(1.5, Math.max(0.6, area2)));
     var poiSlots = [];
     var used = {}, show = [];
     for (var k = 0; k < cand.length && show.length < cap; k++) {
@@ -817,10 +871,10 @@ var Map = (function () {
       var c0 = n.childNodes[0], e0 = n.childNodes[1], h0 = n.childNodes[2];
       var uu = vb.w / wpx;               // 画面の1px = 地図の何単位か
       c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y);
-      c0.setAttribute("r", (RG.MAPSIZE.poiC * uu).toFixed(2));
+      c0.setAttribute("r", (SZ2.poiC * uu).toFixed(2));
       c0.setAttribute("style", "--pc:" + g.c);
       e0.setAttribute("x", t.x); e0.setAttribute("y", t.y + 4.6 * uu);
-      e0.setAttribute("font-size", ((t.ti === 0 ? RG.MAPSIZE.poiEBig : RG.MAPSIZE.poiE) * uu).toFixed(2));
+      e0.setAttribute("font-size", ((t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * uu).toFixed(2));
       e0.textContent = g.e;
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
       h0.setAttribute("r", (14 * uu).toFixed(2));
@@ -847,7 +901,7 @@ var Map = (function () {
         }
         if (okT) {
           t0.setAttribute("x", t.x); t0.setAttribute("y", t.y + 19 * uu);
-          t0.setAttribute("font-size", (RG.MAPSIZE.poiT * uu).toFixed(2));
+          t0.setAttribute("font-size", (SZ2.poiT * uu).toFixed(2));
           t0.setAttribute("stroke-width", (2.8 * uu).toFixed(2));
           t0.textContent = (t.n || "").slice(0, 9);
           t0.style.display = "";

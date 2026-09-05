@@ -162,7 +162,8 @@ RG.admLOD = function () {
   var texts = $$(".adm__t", gLabel);
   // 画面に置ける数（区名は駅名より大きいので、ゆったりめに見積もる）
   // 区の名前は «土地の見当» を付けるためのもの。多くて6つで足ります。
-  var room = Math.max(2, Math.min(6, Math.floor((W * H) / (1280 * 640) * 6)));
+  var SZ = RG.__SZ || (RG.mapSizeAt ? RG.mapSizeAt(1) : null);
+  var room = SZ ? Math.max(1, Math.round(SZ.maxAdm * Math.min(1.5, Math.max(0.6, (W * H) / (1280 * 640))))) : 4;
   // 大きい区から順に置く（面の広がり＝おおよその大事さ）
   var arr = texts.map(function (t2) {
     return { t: t2, x: +t2.getAttribute("x"), y: +t2.getAttribute("y"),
@@ -185,8 +186,8 @@ RG.admLOD = function () {
     o.t.style.display = ok ? "" : "none";
     if (ok) {
       // 画面で 12.5px に見えるように、地図の単位へ直して与える
-      o.t.setAttribute("font-size", ((RG.MAPSIZE ? RG.MAPSIZE.adm : 12.5) * upx).toFixed(2));
-      o.t.setAttribute("stroke-width", ((RG.MAPSIZE ? RG.MAPSIZE.admSw : 3.4) * upx).toFixed(2));
+      o.t.setAttribute("font-size", ((SZ ? SZ.adm : 11) * upx).toFixed(2));
+      o.t.setAttribute("stroke-width", ((SZ ? SZ.admSw : 3) * upx).toFixed(2));
       o.t.setAttribute("letter-spacing", (1.6 * upx).toFixed(2));
     }
   });
@@ -225,7 +226,8 @@ RG.jpAdmLOD = function () {
   var r = wrap ? wrap.getBoundingClientRect() : { width: 900, height: 600 };
   var W = Math.max(320, r.width), H = Math.max(240, r.height);
   var upx = vb.w / W;
-  var room = Math.max(3, Math.min(14, Math.round((W * H) / (1280 * 640) * 14)));
+  var SZ = RG.__SZ || (RG.mapSizeAt ? RG.mapSizeAt(1) : null);
+  var room = SZ ? Math.max(1, Math.round(SZ.maxJpAdm * Math.min(1.5, Math.max(0.6, (W * H) / (1280 * 640))))) : 7;
   var slots = [], shown = 0;
   var ts = gJP.childNodes;
   for (var i = 0; i < ts.length; i++) {
@@ -234,7 +236,7 @@ RG.jpAdmLOD = function () {
     var inv = x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h;
     var ok = false;
     if (inv && shown < room) {
-      var lw = (t.textContent.length * 12 + 10) * upx, lh = 20 * upx;
+      var lw = (t.textContent.length * ((SZ ? SZ.jpadm : 12) + 1) + 14) * upx, lh = ((SZ ? SZ.jpadm : 12) * 2) * upx;
       var a0 = x - lw / 2, a1 = x + lw / 2, b0 = y - lh, b1 = y + lh * 0.4;
       var bad = false;
       for (var j = 0; j < slots.length; j++) {
@@ -245,8 +247,8 @@ RG.jpAdmLOD = function () {
     }
     t.style.display = ok ? "" : "none";
     if (ok) {
-      t.setAttribute("font-size", (14 * upx).toFixed(2));
-      t.setAttribute("stroke-width", (3.6 * upx).toFixed(2));
+      t.setAttribute("font-size", ((SZ ? SZ.jpadm : 12) * upx).toFixed(2));
+      t.setAttribute("stroke-width", (3 * upx).toFixed(2));
       t.setAttribute("letter-spacing", (1.8 * upx).toFixed(2));
     }
   }
