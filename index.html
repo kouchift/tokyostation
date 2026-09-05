@@ -5,16 +5,31 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
 <meta name="theme-color" content="#0071BC">
 <title>東京ステーションガイド｜路線図から、いちばん良い移動手段へ</title>
-<meta name="description" content="東京23区の全鉄道・全駅を路線図から1タップ。徒歩・自転車・バス・電車・タクシーを時間と費用で並べて比べられる移動ダッシュボード。終電を逃した深夜にも使えます。">
-<link rel="stylesheet" href="assets/app.css">
-<meta name="description" content="東京23区669駅とスポット18,000件を、地図・スコア・ルート比較・おでかけプランで調べられる自由研究サイト。オープンデータだけで作りました。">
-<meta name="theme-color" content="#00224A">
+<meta name="description" content="全国10,982駅・815路線を路線図から1タップ。徒歩・自転車・バス・電車・タクシーを時間と費用で並べて比べられる移動ダッシュボード。終電を逃した深夜にも使えます。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="東京ステーションガイド">
-<meta property="og:description" content="東京23区669駅とスポット18,000件。地図・スコア・ルート比較・おでかけプラン。オープンデータだけで作った自由研究サイト。">
+<meta property="og:description" content="全国10,982駅・815路線を路線図から1タップ。徒歩・自転車・バス・電車・タクシーを時間と費用で並べて比べられる移動ダッシュボード。オープンデータだけで作りました。">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
+<!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
+<link rel="preload" href="data/net.json" as="fetch" crossorigin="anonymous">
+<link rel="preload" href="assets/app.bundle.js" as="script">
+<link rel="preload" href="data/config.js" as="script">
+<link rel="preload" href="data/lines_meta.js" as="script">
+<link rel="preload" href="data/genres.js" as="script">
+<link rel="preload" href="data/score.js" as="script">
+<link rel="preload" href="data/areas.js" as="script">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+/* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
+.mapwrap{min-height:52vh;background:#F5F6F8}
+.skel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#5A6472;font-size:13px;pointer-events:none;transition:opacity .3s}
+.skel i{width:34px;height:34px;border-radius:50%;border:3px solid #C0E4FF;border-top-color:#0055AD;animation:sk 1s linear infinite}
+@keyframes sk{to{transform:rotate(360deg)}}
+.skel.off{opacity:0}
+@media (prefers-reduced-motion:reduce){.skel i{animation:none}}
+</style>
 </head>
 <body>
 
@@ -47,7 +62,8 @@
   </div>
   <div id="navbar" class="navbar" hidden></div>
   <div class="mapwrap">
-    <svg id="map" role="img" aria-label="東京23区とその周辺の鉄道路線図"></svg>
+    <svg id="map" role="img" aria-label="日本の鉄道路線図"></svg>
+    <div id="skel" class="skel" aria-hidden="true"><i></i><span>路線図を用意しています…</span></div>
     <div class="hint">駅をタップで詳細。ドラッグで移動、ピンチで拡大。<span id="zlevel">全体</span></div>
     <div class="zoombar">
       <button id="zin"  type="button" aria-label="拡大">＋</button>
@@ -73,71 +89,49 @@
   <div class="card__scroll"></div>
 </div>
 
-<!-- ▼ 本体 -->
-<script src="assets/app.js"></script>
-
-<!-- ▼ データ：路線を増やす＝ tools/build_network.py を再実行するだけ -->
-
-<!-- ▼ ルート推定エンジンとプランナーUI -->
-<script src="assets/score.js"></script>
-<script src="assets/planner.js"></script>
-<script src="assets/plannerui.js"></script>
-<script src="assets/lines_ui.js"></script>
-<script src="assets/basemap.js"></script>
-<script src="assets/three.js"></script>
-<script src="assets/wikicard.js"></script>
-<script src="assets/corp.js"></script>
-<script src="assets/smoking.js"></script>
-<script src="assets/adult.js"></script>
-<script src="assets/edu.js"></script>
-<script src="assets/hensachi.js"></script>
-<script src="assets/pins.js"></script>
-<script src="assets/groups.js"></script>
-<script src="assets/koyomi2.js"></script>
-<script src="assets/koyomi.js"></script>
-<script src="assets/search.js"></script>
-<script src="assets/nav.js"></script>
-<script src="assets/plan.js"></script>
-<script src="assets/logbook.js"></script>
-<script src="assets/geohelp.js"></script>
-<script src="assets/tiles.js"></script>
-<script src="assets/loader.js"></script>
-
+<!-- ▼ 本体：assets/*.js を tools/build_bundle.js で1本にまとめたもの（直すときは元ファイルを） -->
+<script src="assets/app.bundle.js" defer></script>
 <script>
-/* 部品のどれかが読めていないと、ここまで来ても RG.startApp がありません。
-   その «真っ白のまま動かない» 状態を、必ず気づけるようにします。 */
+/* 起動。
+   ・data/net.json（駅・路線）は bundle と並列で取りに行く
+   ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
+   ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
+  var netP = fetch("data/net.json", { credentials: "same-origin" })
+    .then(function (r) { if (!r.ok) throw new Error("net.json " + r.status); return r.json(); })
+    .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
-    // すでに地図が出ているなら、何も出さない（誤って怖がらせないため）
     if (document.querySelectorAll("#map .node").length) return;
     var m = document.getElementById("boot-error");
-    if (m) {
-      m.hidden = false;
-      var p = m.querySelector("p");
-      if (p) p.innerHTML = msg +
-        "";
+    if (m) { m.hidden = false; var p = m.querySelector("p"); if (p) p.textContent = msg; }
+    var sk = document.getElementById("skel"); if (sk) sk.remove();
+  }
+  function go() {
+    if (!window.RG || typeof window.RG.startApp !== "function") {
+      panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); return;
     }
-    var lb = document.getElementById("loadbar");
-    if (lb) lb.remove();
+    try { window.RG.startApp(netP); }
+    catch (e) { panic("起動でつまずきました：" + (e && e.message ? e.message : e)); }
+    setTimeout(function () {
+      if (document.querySelectorAll("#map .node").length) return;
+      panic("読み込みが終わりませんでした。通信状態をご確認のうえ、再読み込みしてください。");
+    }, 30000);
   }
-  if (!window.RG || typeof window.RG.startApp !== "function") {
-    panic("プログラムの部品を読み込めませんでした（assets フォルダの中身が足りない可能性があります）。");
-    return;
-  }
-  try { window.RG.startApp(); }
-  catch (e) { panic("起動でつまずきました：" + (e && e.message ? e.message : e)); }
-  // 25秒たっても地図が出ないときは、止まっていると判断して知らせる
-  setTimeout(function () {
-    if (document.querySelectorAll("#map .node").length) return;
-    panic("読み込みが終わりませんでした。ファイルが足りていない可能性があります。");
-  }, 25000);
+  var sc = document.querySelector('script[src="assets/app.bundle.js"]');
+  if (window.RG && window.RG.startApp) go();
+  else if (sc) { sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); }); }
+  // 地図の最初の駅が出たら骨組みを消す
+  var mo = new MutationObserver(function () {
+    if (document.querySelector("#map .node")) { var sk = document.getElementById("skel"); if (sk) { sk.classList.add("off"); setTimeout(function () { sk.remove(); }, 400); } mo.disconnect(); }
+  });
+  mo.observe(document.getElementById("map"), { childList: true, subtree: true });
 })();
 </script>
 <script>
-/* 2回目からの表示を速くするしくみ。使えないブラウザでは何も起きません。 */
+/* 2回目からの表示を速くするしくみ。地図が出て、端末が暇になってから登録する */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("sw.js").catch(function () { });
+    setTimeout(function () { navigator.serviceWorker.register("sw.js").catch(function () { }); }, 4000);
   });
 }
 </script>

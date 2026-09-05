@@ -186,13 +186,13 @@ RG.admLOD = function () {
     o.t.style.display = ok ? "" : "none";
     if (ok) {
       // 画面で 12.5px に見えるように、地図の単位へ直して与える
-      o.t.setAttribute("font-size", ((SZ ? SZ.adm : 11) * upx).toFixed(2));
-      o.t.setAttribute("stroke-width", ((SZ ? SZ.admSw : 3) * upx).toFixed(2));
-      o.t.setAttribute("letter-spacing", (1.6 * upx).toFixed(2));
+      o.t.style.setProperty("font-size", ((SZ ? SZ.adm : 11) * upx).toFixed(3) + "px", "important");
+      o.t.style.setProperty("stroke-width", ((SZ ? SZ.admSw : 3) * upx).toFixed(3) + "px", "important");
+      o.t.style.setProperty("letter-spacing", (1.6 * upx).toFixed(3) + "px", "important");
     }
   });
   // 字の大きさも、寄るほど控えめに
-  var z = 2000 / vb.w;
+  var z = (RG.LEGACY_W || 2000) / vb.w;
   svg.style.setProperty("--admscale", Math.min(1.25, Math.max(0.7, 1 / Math.pow(z, 0.42))).toFixed(3));
   RG.__admInfo = { room: room, shown: shown, of: texts.length };
 };
@@ -247,9 +247,9 @@ RG.jpAdmLOD = function () {
     }
     t.style.display = ok ? "" : "none";
     if (ok) {
-      t.setAttribute("font-size", ((SZ ? SZ.jpadm : 12) * upx).toFixed(2));
-      t.setAttribute("stroke-width", (3 * upx).toFixed(2));
-      t.setAttribute("letter-spacing", (1.8 * upx).toFixed(2));
+      t.style.setProperty("font-size", ((SZ ? SZ.jpadm : 12) * upx).toFixed(3) + "px", "important");
+      t.style.setProperty("stroke-width", (3 * upx).toFixed(3) + "px", "important");
+      t.style.setProperty("letter-spacing", (1.8 * upx).toFixed(3) + "px", "important");
     }
   }
   RG.__jpAdmInfo = { room: room, shown: shown, of: ts.length };

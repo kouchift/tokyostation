@@ -112,6 +112,43 @@ function cpage(f) {
   return "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(f);
 }
 RG.cimg = cimg; RG.cpage = cpage;
+
+/* 絵文字を «小さな画像» にして返す（SVG の中で使うため）。
+   SVG の <text> に絵文字を置くと、ズームした地図では 1フレームに数秒かかることがある
+   （カラー絵文字を拡大率ごとに描き直すため）。<image> なら画像の拡縮だけで済む。 */
+var emojiCache = {};
+function emojiImg(e) {
+  if (emojiCache[e] !== undefined) return emojiCache[e];
+  var url = null;
+  try {
+    var S = 64, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
+    var cx = cv.getContext("2d");
+    cx.font = Math.round(S * 0.78) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    cx.textAlign = "center"; cx.textBaseline = "middle";
+    cx.fillText(e, S / 2, S / 2 + S * 0.04);
+    url = cv.toDataURL("image/png");
+    if (url.length < 200) url = null;           // 何も描けていない
+  } catch (err) { url = null; }
+  emojiCache[e] = url;
+  return url;
+}
+RG.emojiImg = emojiImg;
+/* <image>（絵文字画像）を中心 (x,y)・一辺 size で置く。画像が作れない環境では <text> にする */
+function setEmoji(node, e, x, y, size) {
+  var url = emojiImg(e);
+  if (url) {
+    if (node.tagName !== "image") { var im = el("image", { class: node.getAttribute("class") }); node.parentNode.replaceChild(im, node); node = im; }
+    node.setAttribute("href", url); node.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url);
+    node.setAttribute("x", (x - size / 2).toFixed(2)); node.setAttribute("y", (y - size / 2).toFixed(2));
+    node.setAttribute("width", size.toFixed(2)); node.setAttribute("height", size.toFixed(2));
+  } else {
+    if (node.tagName !== "text") { var tx = el("text", { class: node.getAttribute("class"), "text-anchor": "middle" }); node.parentNode.replaceChild(tx, node); node = tx; }
+    node.textContent = e; node.setAttribute("x", x); node.setAttribute("y", y + size * 0.35);
+    node.setAttribute("font-size", size.toFixed(2));
+  }
+  return node;
+}
+RG.setEmoji = setEmoji;
 RG.$ = $; RG.el = el; RG.esc = esc; RG.num = num; RG.isTouch = isTouch;
 
 /* ================================================================ 索引構築 */
@@ -126,6 +163,22 @@ function hav(a, b) {
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 RG.hav = hav;
+
+/* data/net.json（コンパクト版）を、これまでどおりの RG.NET の形に戻す */
+RG.decodeNet = function (j) {
+  var lines = j.lines.map(function (l) { return { name: l[0], color: l[1], edges: l[2] }; });
+  var stations = j.stations.map(function (a) {
+    var o = { id: a[0] || a[1], n: a[1], la: a[2], lo: a[3],
+              ls: a[4].map(function (i) { return lines[i].name; }), k: a[5] };
+    if (a[6]) o.pf = a[6]; if (a[7]) o.op = a[7]; if (a[8]) o.px = a[8];
+    if (a[9]) o.py = a[9]; if (a[10]) o.pxOps = a[10]; if (a[11]) o.jp = 1;
+    return o;
+  });
+  var edges = j.edges.map(function (e) {
+    return [stations[e[0]].id, stations[e[1]].id, e[2] >= 0 ? lines[e[2]].name : ""];
+  });
+  return { source: j.source, area: j.area, lines: lines, stations: stations, edges: edges };
+};
 
 function buildIndex() {
   var N = RG.NET;
@@ -167,12 +220,20 @@ function buildIndex() {
     var la = (2 * Math.atan(Math.exp(t)) - Math.PI / 2) * 180 / Math.PI;
     return { la: la, lo: lo };
   };
+  /* «昔の単位» との換算。
+     v50 までは viewBox 2000 = 東京23区（約36km）で、各所の «幅 260» などはその前提で書かれている。
+     全国版では 2000 = 日本列島なので、同じ数字が 50倍広い意味になってしまう。
+     以後、幅やズーム段階は «23区版の単位» で書き、この K を掛けて実際の単位にする。 */
+  var p1 = RG.project(35.73, 139.60), p2 = RG.project(35.73, 139.60 + 1 / (111.32 * Math.cos(35.73 * Math.PI / 180)));
+  var unitsPerKm = Math.abs(p2.x - p1.x);
+  RG.K = unitsPerKm / 55.2;              // 55.2 = 23区版の 1km あたりの単位数
+  RG.LEGACY_W = 2000 * RG.K;             // 23区版の «viewBox 2000» に相当する幅
   RG.lineColor = {};
   N.lines.forEach(function (l) {
     var m = RG.LINEMETA && RG.LINEMETA[l.name];
     RG.lineColor[l.name] = (m && m.c) || l.color;
   });
-  buildSpecRanks(N);
+  RG.specRank = null;
   RG.paxRanked = N.stations.filter(function (s) { return s.px; });
   RG.lineRanked = N.stations.slice().sort(function (a, c) { return (c.ls || []).length - (a.ls || []).length; });
   RG.oldRanked = N.stations.filter(function (s) { return s.op; })
@@ -199,7 +260,10 @@ var SPEC = [
     hi: "迂回しやすい", lo: "この駅だけ" }
 ];
 RG.SPEC = SPEC;
+/* 順位表は «最初のカードを開いたとき» に作る（起動を軽くするため） */
+var specBuilt = false;
 function buildSpecRanks(N) {
+  if (specBuilt) return; specBuilt = true;
   RG.specRank = {};
   SPEC.forEach(function (m) {
     var arr = [];
@@ -274,7 +338,10 @@ RG.lineSequence = function (fromId, line, limit) {
 
 /* ================================================================ 路線図 */
 var Map = (function () {
-  var svg, gE, gN, node = {}, selected = null, vb, wrap, lodTimer = null;
+  var svg, gE, gN, selected = null, vb, wrap, lodTimer = null;
+  function U(w) { return w * (RG.K || 1); }                 // 23区版の幅 → 実際の単位
+  function zl() { return (RG.LEGACY_W || VB.w) / vb.w; }    // 23区版のズーム段階（1 = 23区が画面いっぱい）
+  RG.zoomLevel = function () { return vb ? zl() : 1; };
 
   /* ===== 現在地マーカー ===== */
   var gMe = null;
@@ -337,7 +404,8 @@ var Map = (function () {
     var map = {};
     Object.keys(byLine).forEach(function (k) {
       // 見えている線
-      var p = el("path", { class: "ln", d: byLine[k].join(""),
+      var shin = /新幹線/.test(k);
+      var p = el("path", { class: "ln" + (shin ? " ln--shin" : ""), d: byLine[k].join(""),
                            stroke: RG.lineColor[k] || "#9AA0A6", "stroke-width": 3.4,
                            fill: "none", "stroke-linecap": "round" });
       // 押すための «太い透明な線»（細い線は指では狙えないため）
@@ -374,25 +442,109 @@ var Map = (function () {
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); RG.showLine(t.dataset.line); }
     });
 
+    /* 駅の <g> は «画面に出す分だけ» をプールから使い回す（v64〜）。
+       以前は全駅（1万駅 × 3要素 ＋ リスナー4本）を最初に作っていたため、
+       起動時に DOM が4万個を超え、パンやズームのたびに全駅の class を触っていた。
+       いまは駅の状態（選択・注視・路線強調…）を JS 側に持ち、
+       lod() が «見せる駅» を決めるたびに、プールの <g> へ流し込む。 */
     RG.NET.stations.forEach(function (s) {
-      var big = s.rank < 40 || (s.ls || []).length >= 4;
-      var g = el("g", { class: "node" + (big ? " big" : ""), "data-id": s.id,
-                        tabindex: s.rank < 200 ? "0" : "-1", role: "button", "aria-label": s.n + "駅" });
-      g.appendChild(el("circle", { class: "st-dot", cx: s.x, cy: s.y, r: big ? 6 : 3.6 }));
-      g.appendChild(el("text", { class: "st-lbl", x: s.x, y: s.y - (big ? 9 : 6),
-                                 "text-anchor": "middle", text: s.n }));
-      g.appendChild(el("circle", { class: "st-hit", cx: s.x, cy: s.y, r: 11 }));
-      gN.appendChild(g); node[s.id] = g;
-      var open = function (ev) { ev.preventDefault(); Card.open(s.id, ev); };
-      g.addEventListener("click", open);
-      g.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") open(ev); });
-      if (!isTouch()) {
-        g.addEventListener("mouseenter", function (ev) { Card.hover(s.id, ev); });
-        g.addEventListener("mouseleave", Card.unhover);
-      }
+      s.big = s.rank < 40 || (s.ls || []).length >= 4;
     });
-    if (node[RG.HUB]) node[RG.HUB].classList.add("hub");
+    gN.addEventListener("click", function (ev) {
+      var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
+      ev.preventDefault(); Card.open(g.__id, ev);
+    });
+    gN.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
+      ev.preventDefault(); Card.open(g.__id, ev);
+    });
+    if (!isTouch()) {
+      gN.addEventListener("mouseover", function (ev) {
+        var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
+        if (g.__hover) return; g.__hover = 1; Card.hover(g.__id, ev);
+      });
+      gN.addEventListener("mouseout", function (ev) {
+        var g = ev.target.closest && ev.target.closest(".node"); if (!g) return;
+        var to = ev.relatedTarget; if (to && g.contains(to)) return;
+        g.__hover = 0; Card.unhover(ev);
+      });
+    }
   }
+
+  /* ---- 駅の状態（DOM ではなく JS に持つ） ---- */
+  var flags = {};                     // id → { sel, pick, watch, online, dim, hit, iso }
+  function flagOf(id) { return flags[id] || (flags[id] = {}); }
+  var forcedIds = {};                 // «必ず見せる» 駅（選択・注視・出発・強調路線）
+  function recomputeForced() {
+    forcedIds = {};
+    Object.keys(flags).forEach(function (id) {
+      var f = flags[id];
+      if (f.sel || f.pick || f.watch || f.hit || f.online) forcedIds[id] = 1;
+    });
+    if (RG.byId[RG.HUB]) forcedIds[RG.HUB] = 1;
+  }
+  var stPool = [], stUsed = {};       // プール／id → 使用中の <g>
+  function stNode() {
+    var g = el("g", { class: "node", role: "button", tabindex: "-1" });
+    g.appendChild(el("circle", { class: "st-dot" }));
+    g.appendChild(el("text", { class: "st-lbl", "text-anchor": "middle" }));
+    g.appendChild(el("circle", { class: "st-hit" }));
+    g.insertBefore(el("circle", { class: "st-halo" }), g.firstChild);   // 白いふち（filter の代わり）
+    gN.appendChild(g); stPool.push(g);
+    return g;
+  }
+  function classOf(s, f, v) {
+    var c = "node";
+    if (s.big) c += " big";
+    if (s.id === RG.HUB) c += " hub";
+    if (v !== 2) c += " noname";
+    if (f) {
+      if (f.sel) c += " sel"; if (f.pick) c += " pick"; if (f.watch) c += " watch";
+      if (f.online) c += " online"; if (f.dim) c += " dim"; if (f.hit) c += " hit";
+      if (f.iso) c += " " + f.iso;
+    }
+    return c;
+  }
+  /* 見せる駅の一覧（show: id→0/1/2）をプールに流し込む */
+  var lastShow = null, lastU = 1, lastPX = null;
+  function paintStations(showList, u, PX) {
+    lastShow = showList; lastU = u; lastPX = PX;
+    while (stPool.length < showList.length) stNode();
+    stUsed = {};
+    for (var j = 0; j < stPool.length; j++) {
+      var g = stPool[j];
+      if (j >= showList.length) { if (g.style.display !== "none") { g.style.display = "none"; g.__id = null; } continue; }
+      var it = showList[j], t = it.s, v = it.v, f = flags[t.id];
+      g.__id = t.id; stUsed[t.id] = g;
+      g.style.display = "";
+      g.setAttribute("class", classOf(t, f, v));
+      g.setAttribute("data-id", t.id);
+      g.setAttribute("aria-label", t.n + "駅");
+      g.setAttribute("tabindex", t.rank < 200 || (f && (f.sel || f.watch)) ? "0" : "-1");
+      var isBig = t.big, isSel = f && (f.sel || f.pick), isHub = t.id === RG.HUB;
+      var haloEl = g.childNodes[0], dotEl = g.childNodes[1], lblEl = g.childNodes[2], hitEl = g.childNodes[3];
+      var r0 = isSel ? PX.dotSel : isHub ? PX.dotHub : isBig ? PX.dotBig : PX.dot;
+      /* CSS に r / stroke-width の指定が残っているため、inline の !important で «画面px» を確定させる */
+      haloEl.setAttribute("cx", t.x); haloEl.setAttribute("cy", t.y);
+      haloEl.style.setProperty("r", ((r0 + PX.dotSw * 1.5 + 1.6) * u).toFixed(3) + "px", "important");
+      dotEl.setAttribute("cx", t.x); dotEl.setAttribute("cy", t.y);
+      dotEl.style.setProperty("r", (r0 * u).toFixed(3) + "px", "important");
+      dotEl.style.setProperty("stroke-width", (PX.dotSw * u * (isBig || isSel || isHub ? 1.5 : 1)).toFixed(3) + "px", "important");
+      hitEl.setAttribute("cx", t.x); hitEl.setAttribute("cy", t.y);
+      hitEl.style.setProperty("r", (15 * u).toFixed(3) + "px", "important");
+      if (v === 2) {
+        var f0 = isSel || isHub ? PX.lblSel : isBig ? PX.lblBig : PX.lbl;
+        lblEl.textContent = t.n;
+        lblEl.setAttribute("x", t.x);
+        lblEl.style.setProperty("font-size", (f0 * u).toFixed(2) + "px", "important");
+        lblEl.style.setProperty("stroke-width", (PX.stroke * u).toFixed(2) + "px", "important");
+        lblEl.setAttribute("y", (t.y + (f0 + 6) * u).toFixed(1));
+        lblEl.style.display = "";
+      } else { lblEl.textContent = ""; lblEl.style.display = "none"; }
+    }
+  }
+  function repaint() { if (lastShow) paintStations(lastShow, lastU, lastPX); }
 
   /* -----------------------------------------------------------------
      どこまで見せるかを決める（ズームに応じて）
@@ -422,7 +574,7 @@ var Map = (function () {
        寄れば画面に入る数が減るので、自然と細かいものが見えてきます。
      ----------------------------------------------------------------- */
   function lod() {
-    var z = VB.w / vb.w;
+    var z = zl();
     var rect = wrap.getBoundingClientRect();
     var W = Math.max(320, rect.width), H = Math.max(240, rect.height);
     var area = (W * H) / (1280 * 640);          // 画面の広さ（基準に対する倍率）
@@ -450,8 +602,9 @@ var Map = (function () {
     RG.__u = u;
 
     // 路線の線。遠目は細く淡く、寄るとしっかり。
-    var lw = Math.min(3.2, Math.max(1.5, 1.5 + 0.85 * Math.log(Math.max(1, z))));
-    svg.style.setProperty("--lnw", (lw * (vb.w / W)).toFixed(2));
+    var lw = Math.min(3.2, Math.max(1.2, 1.3 + 0.85 * Math.log(Math.max(1, z))));
+    svg.style.setProperty("--lnw", lw.toFixed(2));            // 画面px（vector-effect で描く）
+    svg.classList.toggle("far", z < 1.2);
     svg.style.setProperty("--lnop", Math.min(0.95, Math.max(0.30, 0.30 + 0.19 * Math.log(Math.max(1, z)))).toFixed(2));
 
     // 見えている範囲（すこしだけ外まで）
@@ -459,11 +612,17 @@ var Map = (function () {
     var x0 = vb.x - pad, x1 = vb.x + vb.w + pad;
     var y0 = vb.y - pad, y1 = vb.y + vb.h + pad;
 
-    // 画面に入っている駅を、大事な順にならべる
-    var inv = [];
+    // 画面に入っている駅を、大事な順にならべる（必ず見せる駅は先頭に）
+    var inv = [], seenF = {};
     var list = RG.NET.stations;
+    Object.keys(forcedIds).forEach(function (id) {
+      var sf = RG.byId[id]; if (!sf) return;
+      if (sf.x < x0 || sf.x > x1 || sf.y < y0 || sf.y > y1) return;
+      inv.push(sf); seenF[id] = 1;
+    });
     for (var i = 0; i < list.length; i++) {
       var s0 = list[i];
+      if (seenF[s0.id]) continue;
       if (s0.x < x0 || s0.x > x1 || s0.y < y0 || s0.y > y1) continue;
       inv.push(s0);
       if (inv.length >= 600) break;              // 数えすぎない
@@ -471,65 +630,40 @@ var Map = (function () {
     // stations は «大事な順» に並んでいるので、この順で使えばよい
 
     var upx = vb.w / W;
-    var dotGap = (SZ.dotBig * 8 + 10) * upx;   // 丸どうしの間かく                       // 丸どうしを離す（画面上で26px）
+    var dotGap = (SZ.dotBig * 8 + 10) * upx;   // 丸どうしの間かく（画面上で約34px）
     var lblH = (SZ.lblBig * 1.55) * upx;
-    // 名前の «場所とり» は、その駅名の «字数ぶん» だけ取る。
-    // 一律に広く取ると、置けるはずの名前まで弾かれてしまう。
     function lblWidth(name, big) {
       return (Math.min(7, (name || "").length) * (big ? SZ.lblBig : SZ.lbl) * 0.92 + 4) * upx;
     }
     var dotSlots = {}, nameSlots = [];
     var nDot = 0, nName = 0;
-    var show = {};
+    var showList = [];
 
     for (var k = 0; k < inv.length; k++) {
       var s = inv[k];
+      var forced = !!forcedIds[s.id];
       var dotOn = false, nameOn = false;
-      // ① 丸：近くにもう丸があるなら置かない（まばらに散らす）
-      if (nDot < maxDot) {
+      // ① 丸：近くにもう丸があるなら置かない（まばらに散らす）。必ず見せる駅は例外
+      if (forced || nDot < maxDot) {
         var key = Math.round(s.x / dotGap) + "," + Math.round(s.y / dotGap);
-        if (!dotSlots[key]) { dotSlots[key] = 1; dotOn = true; nDot++; }
+        if (forced || !dotSlots[key]) { dotSlots[key] = 1; dotOn = true; nDot++; }
       }
-      // ② 名前：丸を出したもののうち、重ならないものだけ
-      if (dotOn && nName < maxName) {
-        var nd0 = node[s.id];
-        var lw2 = lblWidth(s.n, nd0 && nd0.classList.contains("big"));
+      // ② 名前：丸を出したもののうち、重ならないものだけ（選択・注視は必ず）
+      if (dotOn && (forced || nName < maxName)) {
+        var lw2 = lblWidth(s.n, s.big);
         var a0 = s.x - lw2 / 2, a1 = s.x + lw2 / 2;
         var b0 = s.y - lblH, b1 = s.y + lblH * 0.45;
         var bad = false;
-        for (var j = 0; j < nameSlots.length; j++) {
+        if (!forced) for (var j = 0; j < nameSlots.length; j++) {
           var q = nameSlots[j];
           if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; }
         }
         if (!bad) { nameSlots.push([a0, b0, a1, b1]); nameOn = true; nName++; }
       }
-      show[s.id] = dotOn ? (nameOn ? 2 : 1) : 0;
+      if (dotOn) showList.push({ s: s, v: nameOn ? 2 : 1 });
     }
-    // 画面の外・あふれたものは消す。出すものには «画面での大きさ» を与える。
-    for (var m = 0; m < list.length; m++) {
-      var t = list[m], n = node[t.id];
-      if (!n) continue;
-      var v = show[t.id] || 0;
-      n.classList.toggle("lod", v === 0);
-      n.classList.toggle("noname", v !== 2);
-      if (!v) continue;
-      var isBig = n.classList.contains("big");
-      var isSel = n.classList.contains("sel") || n.classList.contains("pick");
-      var isHub = n.classList.contains("hub");
-      var dotEl = n.querySelector(".st-dot"), lblEl = n.querySelector(".st-lbl");
-      if (dotEl) {
-        var r0 = isSel ? PX.dotSel : isHub ? PX.dotHub : isBig ? PX.dotBig : PX.dot;
-        dotEl.setAttribute("r", (r0 * u).toFixed(2));
-        dotEl.setAttribute("stroke-width", (PX.dotSw * u * (isBig || isSel || isHub ? 1.5 : 1)).toFixed(2));
-      }
-      if (lblEl && v === 2) {
-        var f0 = isSel || isHub ? PX.lblSel : isBig ? PX.lblBig : PX.lbl;
-        lblEl.setAttribute("font-size", (f0 * u).toFixed(2));
-        lblEl.setAttribute("stroke-width", (PX.stroke * u).toFixed(2));
-        // 文字は丸のすぐ下に置く（大きさに合わせて位置も動かす）
-        lblEl.setAttribute("y", (t.y + (f0 + 6) * u).toFixed(1));
-      }
-    }
+    paintStations(showList, u, PX);
+    sizeLandmarks(u);
     RG.__lblInfo = { z: +z.toFixed(2), dots: nDot, names: nName, cap: maxDot };
 
     svg.style.setProperty("--hitr", (12 * upx).toFixed(2));
@@ -592,7 +726,7 @@ var Map = (function () {
       e.preventDefault();
       var k = pinch.d / dist(e.touches), r = wrap.getBoundingClientRect();
       var ar = pinch.vb.h / pinch.vb.w;
-      var nw = clamp(pinch.vb.w * k, 90, VB.w * 1.6), nh = nw * ar;
+      var nw = clamp(pinch.vb.w * k, U(60), VB.w * 1.6), nh = nw * ar;
       var fx = (pinch.c.x - r.left) / r.width, fy = (pinch.c.y - r.top) / r.height;
       vb.x = pinch.vb.x + (pinch.vb.w - nw) * fx;
       vb.y = pinch.vb.y + (pinch.vb.h - nh) * fy;
@@ -613,7 +747,7 @@ var Map = (function () {
   }
   function zoomAt(cx, cy, k) {
     var r = wrap.getBoundingClientRect();
-    var nw = clamp(vb.w * k, 90, VB.w * 1.6), nh = nw * (vb.h / vb.w);
+    var nw = clamp(vb.w * k, U(60), VB.w * 1.6), nh = nw * (vb.h / vb.w);
     var fx = (cx - r.left) / r.width, fy = (cy - r.top) / r.height;
     vb.x += (vb.w - nw) * fx; vb.y += (vb.h - nh) * fy; vb.w = nw; vb.h = nh; apply();
   }
@@ -622,7 +756,7 @@ var Map = (function () {
   function focus(id, w) {
     var s = RG.byId[id]; if (!s) return;
     var r = wrap.getBoundingClientRect();
-    vb.w = w || 260; vb.h = vb.w * (r.height / r.width);
+    vb.w = U(w || 260); vb.h = vb.w * (r.height / r.width);
     vb.x = s.x - vb.w / 2; vb.y = s.y - vb.h / 2 - (isTouch() ? vb.h * 0.16 : 0);
     apply();
   }
@@ -630,7 +764,7 @@ var Map = (function () {
   function flyTo(la, lo, w) {
     var q = project(la, lo);
     var r = wrap.getBoundingClientRect();
-    vb.w = w || 260; vb.h = vb.w * (r.height / r.width);
+    vb.w = U(w || 260); vb.h = vb.w * (r.height / r.width);
     vb.x = q.x - vb.w / 2; vb.y = q.y - vb.h / 2;
     apply();
   }
@@ -676,28 +810,30 @@ var Map = (function () {
     return { x: r.left + (s.x - vb.x) / vb.w * r.width, y: r.top + (s.y - vb.y) / vb.h * r.height };
   }
   function select(id) {
-    if (selected && node[selected]) node[selected].classList.remove("sel");
-    selected = id; if (id && node[id]) node[id].classList.add("sel");
+    if (selected) flagOf(selected).sel = false;
+    selected = id; if (id) flagOf(id).sel = true;
+    recomputeForced(); scheduleLod();
   }
   function paintIso(map) {
-    RG.NET.stations.forEach(function (s) {
-      var g = node[s.id];
-      g.classList.remove("iso1", "iso2", "iso3", "iso4", "iso5");
-      var m = map && map[s.id]; if (m == null) return;
-      g.classList.add(m <= 15 ? "iso1" : m <= 30 ? "iso2" : m <= 45 ? "iso3" : m <= 70 ? "iso4" : "iso5");
+    Object.keys(flags).forEach(function (id) { flags[id].iso = null; });
+    if (map) Object.keys(map).forEach(function (id) {
+      var m = map[id]; if (m == null) return;
+      flagOf(id).iso = m <= 15 ? "iso1" : m <= 30 ? "iso2" : m <= 45 ? "iso3" : m <= 70 ? "iso4" : "iso5";
     });
     svg.classList.toggle("isomode", !!map);
+    repaint();
   }
   function paintPick(ids) {
-    var set = {}; (ids || []).forEach(function (i) { set[i] = 1; });
-    RG.NET.stations.forEach(function (s) { node[s.id].classList.toggle("pick", !!set[s.id]); });
+    Object.keys(flags).forEach(function (id) { flags[id].pick = false; });
+    (ids || []).forEach(function (i) { flagOf(i).pick = true; });
     svg.classList.toggle("pickmode", !!(ids && ids.length));
+    recomputeForced(); scheduleLod();
   }
   var gLM = null, edgeByLine = {};
   function project(la, lo) { return RG.project(la, lo); }
   function gotoLatLng(la, lo, w) {
     var P = project(la, lo), r = wrap.getBoundingClientRect();
-    vb.w = w || 300; vb.h = vb.w * (r.height / r.width);
+    vb.w = U(w || 300); vb.h = vb.w * (r.height / r.width);
     vb.x = P.x - vb.w / 2; vb.y = P.y - vb.h / 2;
     apply();
   }
@@ -719,7 +855,7 @@ var Map = (function () {
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
     var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
     var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    var w = Math.max((x1 - x0) * 1.28, (y1 - y0) * 1.28 / ar, 140);
+    var w = Math.max((x1 - x0) * 1.28, (y1 - y0) * 1.28 / ar, U(140));
     vb.w = w; vb.h = w * ar; vb.x = cx - w / 2; vb.y = cy - vb.h / 2;
     apply();
   }
@@ -729,14 +865,17 @@ var Map = (function () {
     Object.keys(edgeByLine).forEach(function (k) {
       edgeByLine[k].forEach(function (p) { p.classList.toggle("on", k === name); });
     });
-    if (!name) { RG.NET.stations.forEach(function (s) { node[s.id].classList.remove("online"); }); return; }
-    var on = {};
-    RG.NET.edges.forEach(function (e) { if (e[2] === name) { on[e[0]] = 1; on[e[1]] = 1; } });
-    RG.NET.stations.forEach(function (s) { node[s.id].classList.toggle("online", !!on[s.id]); });
+    Object.keys(flags).forEach(function (id) { flags[id].online = false; });
+    if (name) {
+      RG.NET.edges.forEach(function (e) { if (e[2] === name) { flagOf(e[0]).online = true; flagOf(e[1]).online = true; } });
+      RG.NET.stations.forEach(function (s) { if ((s.ls || []).indexOf(name) >= 0) flagOf(s.id).online = true; });
+    }
+    recomputeForced(); scheduleLod();
   }
   function paintWatch(ids) {
-    var set = {}; (ids || []).forEach(function (i) { set[i] = 1; });
-    RG.NET.stations.forEach(function (s) { node[s.id].classList.toggle("watch", !!set[s.id]); });
+    Object.keys(flags).forEach(function (id) { flags[id].watch = false; });
+    (ids || []).forEach(function (i) { flagOf(i).watch = true; });
+    recomputeForced(); scheduleLod();
   }
   /* ===== スポットPOIレイヤー =====
      8,000件を超えるので、DOM は「いま画面に出す分」だけを作って使い回す（プール方式）。
@@ -763,6 +902,7 @@ var Map = (function () {
   function makeNode() {
     var n = el("g", { class: "poi", tabindex: "-1", role: "button" });
     n.appendChild(el("circle", { class: "poi__c", r: 5 }));
+    n.__halo = el("circle", { class: "poi__halo" }); n.insertBefore(n.__halo, n.firstChild);
     n.appendChild(el("text", { class: "poi__e", "text-anchor": "middle" }));
     n.appendChild(el("circle", { class: "poi__hit", r: 10 }));
     // 名前。寄ったときだけ出す（poiLOD が決める）
@@ -790,7 +930,7 @@ var Map = (function () {
   var tileT = null;
   function poiLOD() {
     if (!poiReady) return;
-    var z = VB.w / vb.w;
+    var z = zl();
     // ズームが浅いうちは注目度の高いものだけ、拡大するほど細かいスポットまで出す
     var maxTier = z < 2.6 ? 0 : z < 6 ? 1 : 2;
     var minStar = z < 2.6 ? 4.0 : z < 6 ? 3.0 : 0;
@@ -800,7 +940,7 @@ var Map = (function () {
     var list = RG.MAPPOI || [];
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
-      // ジャンルを選んでいるときは «そのジャンルは全部» 見せる（ズーム段階を無視）
+      if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }   // あとから足されたものは、ここで座標を出す
       // ピンで絞っているときは «自分が付けたもの» なので、ズームに関係なく必ず出す
       var pinned = RG.pinFilter != null;
       if (!picked && !pinned && (p.ti > maxTier || p.s < minStar)) continue;
@@ -868,19 +1008,20 @@ var Map = (function () {
         (RG.visitCount && RG.visitCount(t.n) > 0 ? " visited" : ""));
       n.setAttribute("aria-label", t.n);
       n.setAttribute("tabindex", t.ti === 0 ? "0" : "-1");
-      var c0 = n.childNodes[0], e0 = n.childNodes[1], h0 = n.childNodes[2];
+      var c0 = n.childNodes[1], e0 = n.childNodes[2], h0 = n.childNodes[3];
       var uu = vb.w / wpx;               // 画面の1px = 地図の何単位か
+      n.__halo.setAttribute("cx", t.x); n.__halo.setAttribute("cy", t.y);
+      n.__halo.style.setProperty("r", ((SZ2.poiC + 1.8) * uu).toFixed(3) + "px", "important");
       c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y);
-      c0.setAttribute("r", (SZ2.poiC * uu).toFixed(2));
-      c0.setAttribute("style", "--pc:" + g.c);
-      e0.setAttribute("x", t.x); e0.setAttribute("y", t.y + 4.6 * uu);
-      e0.setAttribute("font-size", ((t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * uu).toFixed(2));
-      e0.textContent = g.e;
+      c0.style.setProperty("r", (SZ2.poiC * uu).toFixed(3) + "px", "important");
+      c0.style.setProperty("stroke-width", (1.6 * uu).toFixed(3) + "px", "important");
+      c0.style.setProperty("--pc", g.c);
+      setEmoji(e0, g.e, t.x, t.y, (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * uu * 1.15);
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
-      h0.setAttribute("r", (14 * uu).toFixed(2));
+      h0.style.setProperty("r", (14 * uu).toFixed(3) + "px", "important");
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
          駅名と同じく、重なるものは出さない。 */
-      var t0 = n.childNodes[3];
+      var t0 = n.childNodes[4];
       if (t0) {
         // 名前を出すかどうかは «画面が混んでいないか» で決める。
         // アイコンが少ないほど、名前を出す余裕がある。
@@ -901,8 +1042,8 @@ var Map = (function () {
         }
         if (okT) {
           t0.setAttribute("x", t.x); t0.setAttribute("y", t.y + 19 * uu);
-          t0.setAttribute("font-size", (SZ2.poiT * uu).toFixed(2));
-          t0.setAttribute("stroke-width", (2.8 * uu).toFixed(2));
+          t0.style.setProperty("font-size", (SZ2.poiT * uu).toFixed(2) + "px", "important");
+          t0.style.setProperty("stroke-width", (2.8 * uu).toFixed(2) + "px", "important");
           t0.textContent = (t.n || "").slice(0, 9);
           t0.style.display = "";
         } else { t0.textContent = ""; t0.style.display = "none"; }
@@ -918,6 +1059,17 @@ var Map = (function () {
   function setPoiScale(v) { poiScale = v; poiLOD(); }
 
   var lmNode = {};
+  /* ランドマークの絵文字画像を «画面で約12px» に保つ */
+  function sizeLandmarks(u) {
+    var ids = Object.keys(lmNode);
+    for (var i = 0; i < ids.length; i++) {
+      var g = lmNode[ids[i]]; if (g.style.display === "none") continue;
+      var im = g.__e; if (!im) continue;
+      var P = g.__P, sz = 12 * u;
+      im.setAttribute("x", (P.x - sz / 2).toFixed(2)); im.setAttribute("y", (P.y - sz / 2).toFixed(2));
+      im.setAttribute("width", sz.toFixed(2)); im.setAttribute("height", sz.toFixed(2));
+    }
+  }
   function buildLandmarks() {
     if (gLM) return;
     gLM = el("g", { class: "lms" }); (gPOIHost || svg).appendChild(gLM);
@@ -926,7 +1078,8 @@ var Map = (function () {
       var g = el("g", { class: "lm lm--" + (L.c || "own"), tabindex: "-1",
                         role: "button", "aria-label": L.n, "data-lm": L.id });
       g.appendChild(el("circle", { class: "lm__c", cx: P.x, cy: P.y, r: 7 }));
-      g.appendChild(el("text", { class: "lm__e", x: P.x, y: P.y + 3.2, "text-anchor": "middle", text: L.e }));
+      var le = el("text", { class: "lm__e", "text-anchor": "middle" }); g.appendChild(le);
+      g.__e = setEmoji(le, L.e, P.x, P.y, 12 * (RG.__u || 1)); g.__P = P;
       g.appendChild(el("circle", { class: "lm__hit", cx: P.x, cy: P.y, r: 12 }));
       var open = function (ev) { ev && ev.stopPropagation(); RG.showLandmark(L); };
       g.addEventListener("click", open);
@@ -947,12 +1100,13 @@ var Map = (function () {
     svg.style.setProperty("--lmscale", scale == null ? 1 : scale);
   }
   function paintFilter(ids) {
-    if (!ids) { RG.NET.stations.forEach(function (s) { node[s.id].classList.remove("dim", "hit"); }); return; }
-    var set = {}; ids.forEach(function (i) { set[i] = 1; });
-    RG.NET.stations.forEach(function (s) {
-      node[s.id].classList.toggle("hit", !!set[s.id]);
-      node[s.id].classList.toggle("dim", !set[s.id]);
-    });
+    Object.keys(flags).forEach(function (id) { flags[id].hit = false; flags[id].dim = false; });
+    if (ids) {
+      var set = {}; ids.forEach(function (i) { set[i] = 1; flagOf(i).hit = true; });
+      RG.NET.stations.forEach(function (s) { if (!set[s.id]) flagOf(s.id).dim = true; });
+    }
+    svg.classList.toggle("filtermode", !!ids);
+    recomputeForced(); scheduleLod();
   }
   return { draw: draw, initViewport: initViewport, zoom: zoom, fitAll: fitAll, focus: focus,
            select: select, screenPos: screenPos, screenPosXY: screenPosXY, paintIso: paintIso, paintPick: paintPick,
@@ -969,16 +1123,37 @@ var Map = (function () {
 RG.Map = Map;
 
 /* ================================================== エグゼクティブサマリ */
-function nearbyStations(s, km) {
-  var out = [];
+/* 近くの駅さがし。
+   以前は «全駅を総なめ» だったため、起動時の順位計算が 1万駅×1万駅 = 1億回の距離計算になり、
+   スマホでは数十秒フリーズしていた。緯度経度の升目（約1.1km四方）に駅を入れておき、
+   まわり9マスだけ見る。 */
+var GRID = null, GRID_CELL = 0.01;   // 0.01度 ≒ 1.1km
+function gridKey(la, lo) { return Math.floor(la / GRID_CELL) + "," + Math.floor(lo / GRID_CELL); }
+function buildGrid() {
+  GRID = {};
   RG.NET.stations.forEach(function (t) {
-    if (t.id === s.id || t.n === s.n) return;
-    var d = hav([s.la, s.lo], [t.la, t.lo]);
-    if (d <= km) out.push({ s: t, km: d });
+    var k = gridKey(t.la, t.lo);
+    (GRID[k] = GRID[k] || []).push(t);
   });
+}
+function nearbyStations(s, km) {
+  if (!GRID) buildGrid();
+  var out = [], r = Math.ceil(km / (GRID_CELL * 111)) + 0;
+  var ia = Math.floor(s.la / GRID_CELL), io = Math.floor(s.lo / GRID_CELL);
+  for (var da = -r; da <= r; da++) for (var dO = -r - 1; dO <= r + 1; dO++) {
+    var cell = GRID[(ia + da) + "," + (io + dO)];
+    if (!cell) continue;
+    for (var i = 0; i < cell.length; i++) {
+      var t = cell[i];
+      if (t.id === s.id || t.n === s.n) continue;
+      var d = hav([s.la, s.lo], [t.la, t.lo]);
+      if (d <= km) out.push({ s: t, km: d });
+    }
+  }
   out.sort(function (a, b) { return a.km - b.km; });
   return out;
 }
+RG.buildGrid = buildGrid;
 function execSummary(s) {
   var out = [];
   if (s.px) {
@@ -1137,6 +1312,7 @@ var Card = (function () {
 
   function summary(s) {
     var rows = RG.SPEC.map(function (m) {
+      if (!RG.specRank) buildSpecRanks(RG.NET);
       var r = RG.specRank[m.id][s.id];
       if (!r) return '<div class="sp sp--na"><span class="sp__e">' + m.emoji + '</span>' +
         '<span class="sp__k">' + esc(m.label) + '</span>' +
@@ -1708,13 +1884,16 @@ RG.boot = function () {
      ひとつの部品でつまずいても «そこで全部止まる» ことがないように、
      段ごとに分けて、失敗したものを覚えておく。
      地図が出ることを何より優先する。 */
-  var failed = [];
+  var failed = [], timing = [];
+  RG.bootTiming = timing;
   function step(name, fn, vital) {
+    var t0 = performance.now();
     try { fn(); }
     catch (err) {
       failed.push({ n: name, e: (err && err.message) || String(err), vital: !!vital });
       if (window.console) console.error("[起動] " + name + " でつまずきました:", err);
     }
+    timing.push([name, Math.round(performance.now() - t0)]);
   }
   if (!RG.MAPPOI) RG.MAPPOI = [];
 
@@ -1743,13 +1922,7 @@ RG.boot = function () {
     var bh = $("#btn-hub");
     if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
   });
-  step("升目の目次", function () {
-    if (RG.initTiles) RG.initTiles(function (meta) {
-      if (!meta) return;
-      // いま見えている範囲のぶんだけ読む
-      if (RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
-    });
-  });
+  // 升目（data/tiles）の目次は、スポットのデータを読むときに一緒に確かめる（loader.js）
   step("別スレッドの検索索引", function () {
     if (!RG.askWorker || !RG.hasWorker || !RG.hasWorker()) return;
     var items = (RG.MAPPOI || []).slice(0, 30000).map(function (p) {
@@ -1775,7 +1948,7 @@ RG.boot = function () {
     var vb2 = $("#ver-btn");
     if (vb2) vb2.addEventListener("click", function () { if (RG.showState) RG.showState(); });
   }
-  step("最初の表示位置", function () { Map.focus(RG.HUB, 700); });
+  step("最初の表示位置", function () { Map.focus(RG.HUB, isTouch() && innerWidth < 560 ? 440 : 700); });
 
   RG.bootFailed = failed;
   if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);

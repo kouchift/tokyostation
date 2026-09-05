@@ -2318,7 +2318,7 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 
 /* v54：スポットの名前と、区の名前もズードに合わせる */
 #map{ --admscale:1 }
-.adm__t{font-size:calc(9px * var(--admscale,1)) !important}
+.adm__t{}
 .poi__t{
   font-size:calc(7.6px * var(--poiscale,1));
   font-weight:600;fill:#3A4552;pointer-events:none;
@@ -2370,7 +2370,6 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 
 /* ---- 区の名前 ---------------------------------------------------- */
 .adm__t{
-  font-size:11px !important;
   font-weight:700;
   fill:#9AA4B0 !important;             /* 背景になじませる。読めるが主張しない */
   letter-spacing:.14em;                /* 字間を空けて «地名» らしく */
@@ -2453,3 +2452,36 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
   paint-order:stroke;stroke:#FAFAFC !important;stroke-linejoin:round;
   -webkit-user-select:none;user-select:none
 }
+
+/* =========================================================================
+   v64: 描画性能のための上書き
+   ・路線の線は «画面上の太さ» で描く（vector-effect）。ズームのたびに地図単位へ換算しない
+   ・線の transition を止める。以前は 800本 × 2属性 = 1,600本のアニメーションが
+     パン／ズームのたびに走り、スマホでは描画が追いつかなかった
+   ========================================================================= */
+.ln,.ln__hit{vector-effect:non-scaling-stroke;transition:none !important}
+#map.linemode .ln{transition:none !important}
+.st-dot,.st-lbl,.poi__c,.poi__e,.adm__t{transition:none !important}
+.ln__hit{stroke-width:14px !important}
+/* 引いて見ているときは、線の当たり判定を外す（線が密集して押せないため） */
+#map.far .ln__hit{pointer-events:none}
+/* SVG の中の filter:drop-shadow は «地図の単位» でぼかすため、寄ると数百px のぼかしになり
+   1フレームに数秒かかっていた（v63 までの «ズームすると固まる» の主因）。すべて廃止し、白いふちの丸で代用する */
+.node .st-dot,#map.poipick .poi,.me__ring,.me__bg,.ln.hi{filter:none !important}
+.st-halo{fill:#fff;fill-opacity:.92;pointer-events:none}
+.poi__halo{fill:#fff;fill-opacity:.85;pointer-events:none}
+/* 地図の単位で書かれていた大きさを «画面px» に統一する（--u = 画面1px ぶんの地図単位。lod() が更新） */
+.adm__v{font-size:calc(9 * var(--u,1px)) !important;stroke-width:calc(2 * var(--u,1px)) !important}
+.lm__c{r:calc(6 * var(--u,1px) * var(--lmscale,1)) !important;stroke-width:calc(2 * var(--u,1px) * var(--lmscale,1)) !important}
+.lm--own .lm__c{stroke-width:calc(2.6 * var(--u,1px) * var(--lmscale,1)) !important}
+.lm__hit{r:calc(12 * var(--u,1px)) !important}
+.lm__l{font-size:calc(7 * var(--u,1px) * var(--lmscale,1)) !important;stroke-width:calc(2.6 * var(--u,1px)) !important}
+.poi__hit{r:calc(14 * var(--u,1px)) !important}
+/* 3D の文字・線も画面px基準に */
+.u3gl{font-size:calc(10 * var(--u,1px)) !important}
+.b3n{stroke-width:calc(2.2 * var(--u,1px)) !important}
+.b3n--t2{stroke-width:calc(2.2 * var(--u,1px)) !important}
+.u3n,.s3n{font-size:calc(10 * var(--u,1px)) !important;stroke-width:calc(2 * var(--u,1px)) !important}
+/* 新幹線は駅間が長く直線が目立つので、細い破線で控えめに */
+.ln--shin{stroke-dasharray:6 5;opacity:calc(var(--lnop,1) * .55) !important}
+#map.far .ln--shin{opacity:calc(var(--lnop,1) * .35) !important}

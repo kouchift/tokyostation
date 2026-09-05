@@ -36,8 +36,9 @@ var META = null, loaded = {}, pending = {}, CELL = 0.02;
 
 RG.initTiles = function (done) {
   fetch("data/tiles/index.json", { cache: "force-cache" })
-    .then(function (r) { return r.json(); })
+    .then(function (r) { if (!r.ok) throw new Error("no tiles"); return r.json(); })
     .then(function (j) {
+      if (!j || !j.tiles) throw new Error("no tiles");
       META = j; CELL = j.cell || 0.02;
       RG.TILE_META = j;
       if (done) done(j);

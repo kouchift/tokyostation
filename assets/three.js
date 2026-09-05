@@ -35,7 +35,8 @@ function params() {
   var cy = v.y + v.h / 2;
   return {
     k: k,
-    z: (B.exagg == null ? 1 : B.exagg) * 0.55,   // 標高1mあたりの画面上の高さ
+    /* 標高1mあたりの地図上の高さ。0.55 は 23区版の単位なので、全国版では K を掛ける */
+    z: (B.exagg == null ? 1 : B.exagg) * 0.55 * (RG.K || 1),
     oy: cy * (1 - k) + v.h * 0.10,               // 中心を保ち、少しだけ下げて空を作る
     vb: v
   };
@@ -95,7 +96,7 @@ function building(b, P) {
     out.top = pts.map(function (q) { return proj(q.x, q.y, ground + b.h, P); });
     out.poly = true;
   } else {
-    var w = (b.k === "tower" ? 2.2 : b.k === "arena" ? 5.0 : 3.4) * (b.h > 200 ? 1.15 : 1);
+    var w = (b.k === "tower" ? 2.2 : b.k === "arena" ? 5.0 : 3.4) * (b.h > 200 ? 1.15 : 1) * (RG.K || 1);
     var g0 = proj(p0.x, p0.y, ground, P), t0 = proj(p0.x, p0.y, ground + b.h, P);
     out.base = [{ x: p0.x - w, y: g0.y }, { x: p0.x, y: g0.y + w * 0.45 },
                 { x: p0.x + w, y: g0.y }, { x: p0.x, y: g0.y - w * 0.45 }];
@@ -283,7 +284,7 @@ function draw() {
   /* 字の大きさは、いま見えている広さに合わせる。
      広く見ているとき（＝込み合う）は小さく、寄っているときは大きく。 */
   var vw = (RG.Map && RG.Map.viewBox) ? RG.Map.viewBox().w : 700;
-  var fontK = Math.max(0.62, Math.min(1.5, Math.pow(vw / 420, 0.42)));
+  var fontK = Math.max(0.62, Math.min(1.5, Math.pow(vw / (420 * (RG.K || 1)), 0.42))) * (RG.K || 1);
 
   // 目立つ順（有名 → 高い）に名前を置く。手前・奥の描き順とは別に決める。
   var nameOrder = bs.slice().sort(function (a, b) {
@@ -306,7 +307,7 @@ function draw() {
     var n = o.base.length;
     var cx = o.cx, by = o.baseY, ty = o.topY, H = by - ty;
     var xs = o.base.map(function (q) { return q.x; });
-    var rw = Math.max(1.6, (Math.max.apply(null, xs) - Math.min.apply(null, xs)) / 2);
+    var rw = Math.max(1.6 * (RG.K || 1), (Math.max.apply(null, xs) - Math.min.apply(null, xs)) / 2);
 
     out.push('<ellipse class="b3sh" cx="' + cx.toFixed(1) + '" cy="' + by.toFixed(1) +
              '" rx="' + (rw * 1.35).toFixed(1) + '" ry="' + (rw * 0.48).toFixed(1) +
@@ -385,7 +386,7 @@ function draw() {
       gl.push('<line class="u3g" x1="' + vx.toFixed(0) + '" y1="' + yy.toFixed(1) +
               '" x2="' + (vx + vw).toFixed(0) + '" y2="' + yy.toFixed(1) + '"/>' +
               '<text class="u3gl" x="' + (vx + vw * 0.008).toFixed(0) + '" y="' +
-              (yy - 1.5).toFixed(1) + '">地下' + lay + "階</text>");
+              (yy - 1.5 * (RG.K || 1)).toFixed(1) + '">地下' + lay + "階</text>");
     }
     out.push('<g class="u3grid">' + gl.join("") + "</g>");
 
