@@ -8,6 +8,8 @@ RG.GENRES = [
     desc: "国宝・重要文化財・国指定史跡・名勝など、国が指定した建造物と史跡" },
   { id: "history",  e: "🏯", label: "歴史的建築物",     c: "#8A5A2B", enabled: true,
     desc: "登録有形文化財・東京都選定歴史的建造物・遺跡・古墳・城門・橋" },
+  { id: "ichinomiya", e: "🎌", label: "一之宮",         c: "#8B0000", enabled: true,
+    desc: "各国（旧国）でもっとも社格が高いとされた神社。全国102社。どの引きぐあいでも必ず表示" },
   { id: "worship",  e: "⛩️", label: "社寺仏閣",         c: "#C81432", enabled: true,
     desc: "神社・寺院・教会" },
   { id: "leisure",  e: "🎡", label: "レジャー系建築物", c: "#E5006E", enabled: true,

@@ -8,15 +8,15 @@
      このアプリは、すでに «あとから少しずつ読む» 作りになっています（段階読み込み）。
      さらに一歩進めて、ここでは «一度読んだら二度目は通信しない» を足しています。
    ========================================================================= */
-var CACHE = "tsg-v68";
-var V = "?v=68";     // index.html の data-build と合わせる
+var CACHE = "tsg-v69";
+var V = "?v=69";     // index.html の data-build と合わせる
 
 /* 入れておくと効果の大きいもの（最初の1回で必ず要るもの） */
 var CORE = [
   "./", "./index.html", "./assets/app.css" + V,
   "./assets/app.bundle.js" + V,
   "./data/version.js" + V, "./data/net.json" + V, "./data/config.js" + V,
-  "./assets/worker.js", "./data/lines_meta.js" + V, "./data/genres.js" + V, "./data/score.js" + V, "./data/areas.js" + V
+  "./assets/worker.js", "./data/lines_meta.js" + V, "./data/genres.js" + V, "./data/score.js" + V, "./data/areas.js" + V, "./data/focus.js" + V
 ];
 
 self.addEventListener("install", function (e) {

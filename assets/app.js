@@ -1017,10 +1017,12 @@ var Map = (function () {
     var cap = Math.round(SZ2.maxPoi * Math.min(1.5, Math.max(0.6, area2)));
     var poiSlots = [];
     var used = {}, show = [];
-    for (var k = 0; k < cand.length && show.length < cap; k++) {
+    for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
+      var special = q.g === "ichinomiya";           // 一之宮は数の上限・間引きの対象外（必ず出す）
+      if (!special && show.length >= cap) continue;
       var key = Math.round(q.x / cell) + "," + Math.round(q.y / cell);
-      if (used[key]) continue;
+      if (used[key] && !special) continue;
       used[key] = 1; show.push(q);
     }
     while (pool.length < show.length) makeNode();
@@ -1560,6 +1562,7 @@ var Card = (function () {
   function render(id, d) {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
+           (RG.focusHtml ? RG.focusHtml(s.n) : "") +
            hero(s) +
            (RG.enrichSlot ? RG.enrichSlot() : "") +
            scoreBlock(s) +
@@ -1609,6 +1612,7 @@ var Card = (function () {
 
   function bind(root, id, d) {
     var st0 = RG.byId[id];
+    if (RG.focusBind) RG.focusBind(root);
     if (st0 && RG.enrichIn) RG.enrichIn(root, { name: st0.n, la: st0.la, lo: st0.lo, kind: "station",
       hasHero: !!(RG.POI && RG.POI[id] && RG.POI[id].img), hasIntro: !!(RG.DESCS && RG.DESCS[st0.n]) });
     var host = root.querySelector(".launcher");
@@ -1889,6 +1893,13 @@ function mergeExtraPois(key) {
       RG.MAPPOI.push({ i: "kl" + i, n: r.n, la: r.la, lo: r.lo, g: "klm",
                        s: 3.0 + Math.min(2, (r.sl || 0) / 20), ti: (r.sl || 0) >= 12 ? 0 : 1,
                        t: r.t, be: r.e, bc: r.c, sl: r.sl, klm: r });
+    });
+  });
+  if (RG.ICHINOMIYA) once("ichinomiya", function () {
+    RG.ICHINOMIYA.forEach(function (r, i) {
+      RG.MAPPOI.push({ i: "ich" + i, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya", s: 4.8, ti: 0,
+                       t: "一之宮", be: "🎌", bc: "#8B0000", sl: 20, url: r.wp || null,
+                       srcNote: "一之宮: Wikidata（CC0）の「一宮」に結びつく神社。参拝時間・行事は各社の公式で確認。" });
     });
   });
   if (RG.mergeEdu) RG.mergeEdu();

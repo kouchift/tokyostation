@@ -59,6 +59,7 @@ RG.showWard = function (name) {
         '" alt="' + esc(name) + 'の紋章">' : '<span class="wardcard__ph">🏙️</span>') +
       "<div><h3>" + esc(name) + "</h3>" +
       '<p class="wardcard__k">' + esc(info.d || "東京都の特別区") + "</p></div></div>" +
+    (RG.focusHtml ? RG.focusHtml(name) : "") +
     wikiBlock(info, name) +
     outLinks({ site: info.site,
                wiki: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(info.t || name),
@@ -67,6 +68,7 @@ RG.showWard = function (name) {
       "<em>押すと地図が色分けされます</em></div>" + rows + "</div>" : "") +
     '<p class="src">紋章: Wikimedia Commons。数字の出典は色分けを選ぶと凡例に出ます。</p></div>';
   var m = RG.openModal("🏙️ " + name, html);
+  if (RG.focusBind) RG.focusBind(m);
   $$("[data-heat2]", m).forEach(function (b) {
     b.addEventListener("click", function () {
       if (RG.setHeat) RG.setHeat(b.dataset.heat2);
@@ -118,6 +120,7 @@ RG.showLine = function (name) {
       "<div><h3>" + esc(name) + "</h3>" +
       '<p class="linecard__k">' + esc(info.op || meta.o || "") +
         (info.d ? " ・ " + esc(info.d) : "") + "</p></div></div>" +
+    (RG.focusHtml ? RG.focusHtml(name) : "") +
     wikiBlock(info, name) +
     outLinks({ site: info.site,
                wiki: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(info.t || name),
@@ -149,6 +152,7 @@ RG.showLine = function (name) {
     '<p class="src">路線の情報: Wikidata (CC0) / Wikipedia (CC BY-SA 4.0)。' +
     "ラインカラーは各社の公表色です。</p></div>";
   var m = RG.openModal((RG.lineBadge ? "" : "") + name, html);
+  if (RG.focusBind) RG.focusBind(m);
   var hl = $("#lc-hl", m);
   if (hl) hl.addEventListener("click", function () {
     RG.closeModal(); if (RG.Map.highlightLine) RG.Map.highlightLine(name);

@@ -12,7 +12,7 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 /* 目的でまとめる。ここに載っていないジャンルは «そのほか» に入る */
 var GROUPS = [
   { id: "see",   e: "👀", label: "見る・行く",   c: "#7B3FE4",
-    ids: ["klm", "bunkazai", "history", "worship", "leisure", "museum", "park", "view", "landmark"] },
+    ids: ["klm", "ichinomiya", "bunkazai", "history", "worship", "leisure", "museum", "park", "view", "landmark"] },
   { id: "help",  e: "🆘", label: "こまったとき", c: "#E53935",
     ids: ["toilet", "baby", "water", "hosp", "pharm", "police", "aed", "shelter", "wifi", "civic", "library"] },
   { id: "eat",   e: "🍜", label: "食べる・買う", c: "#F0851E",
