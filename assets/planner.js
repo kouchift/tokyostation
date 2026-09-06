@@ -33,6 +33,15 @@ P.minutesToFirstTrain = function (d) {
 function speedOf(mo, kind) { return (mo.speedByHour && mo.speedByHour[kind]) || mo.speed; }
 
 /* ------------------------------------------------------------ 運賃 */
+/* 路線ごとの実効速度（停車・加減速込み、km/h）。新幹線を使った経路が候補に出るようにする（v75） */
+function speedFor(line, T) {
+  if (/秋田新幹線|山形新幹線/.test(line)) return 85;            // ミニ新幹線（在来線区間）
+  if (/新幹線/.test(line)) return 175;                           // フル規格（ひかり・やまびこ相当。のぞみはもう少し速い）
+  if (/博多南線/.test(line)) return 60;
+  if (/特急|ライナー|スカイライナー|快速/.test(line)) return T.speedKmh * (T.expressBonus || 1.2);
+  return T.speedKmh;
+}
+P.speedFor = speedFor;
 function fareKeyOf(line) {
   var F = RG.CONFIG.fares;
   for (var i = 0; i < F.operatorRule.length; i++) {
@@ -103,11 +112,13 @@ function railField(from, date) {
     RG.adj[u].forEach(function (e) {
       var line = e.line || "(不明)";
       var xfer = (iu.line && iu.line !== line) ? T.transferMin : 0;
-      var nd = dist[u] + e.km / T.speedKmh * 60 + xfer;
+      var shin = /新幹線|博多南線/.test(line);
+      var nd = dist[u] + e.km / speedFor(line, T) * 60 + xfer + (shin && iu.line !== line ? 6 : 0);   // 新幹線は乗換に少し余分（改札・ホーム移動）
       if (dist[e.to] == null || nd < dist[e.to]) {
         dist[e.to] = nd;
         var km = {}; for (var k in iu.km) km[k] = iu.km[k];
         var fk = fareKeyOf(line); km[fk] = (km[fk] || 0) + e.km;
+        if (shin) km.SHIN = (km.SHIN || 0) + e.km;                 // 運賃とは別に «特急料金» の距離も積む
         info[e.to] = { access: iu.access, km: km, transfers: iu.transfers + (xfer ? 1 : 0),
                        board: iu.board, line: line, prev: u };
         push(e.to, nd);
@@ -118,7 +129,8 @@ function railField(from, date) {
   Object.keys(dist).forEach(function (id) {
     var i = info[id], yen = 0, note = [];
     Object.keys(i.km).forEach(function (fk) {
-      var f = C.fares.rail[fk], v = tableFare(f.table, i.km[fk]);
+      var f = C.fares.rail[fk]; if (!f) return;
+      var v = tableFare(f.table, i.km[fk]);
       yen += v; note.push(f.operator + " " + i.km[fk].toFixed(1) + "km → " + v + "円");
     });
     out[id] = { min: dist[id], yen: yen, transfers: i.transfers, board: i.board,

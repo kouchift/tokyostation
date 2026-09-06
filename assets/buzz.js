@@ -70,8 +70,9 @@ RG.mergeBuzz = function () {
 /* 1件の行 */
 function row(b, showArea) {
   var p = PL[b.pl] || PL.x, age = ageDays(b.d);
-  return '<li class="bz__it" data-id="' + esc(b.id) + '">' +
-    '<div class="bz__top"><span class="bz__pl bz__pl--' + esc(b.pl) + '">' + p.e + ' ' + p.n + '</span>' +
+  return '<li class="bz__it' + (b.img ? " bz__it--img" : "") + '" data-id="' + esc(b.id) + '">' +
+    (b.img ? '<img class="bz__img" src="' + esc(b.img) + '" alt="" loading="lazy" title="' + esc("場所の写真: " + (b.imgSrc || "") + "（Wikipedia）") + '">' : "") +
+    '<div class="bz__body"><div class="bz__top"><span class="bz__pl bz__pl--' + esc(b.pl) + '">' + p.e + ' ' + p.n + '</span>' +
     '<span class="bz__d">' + esc(b.d) + (age <= 3 ? ' <b class="bz__new">NEW</b>' : "") + "</span>" +
     (showArea ? '<span class="bz__a">' + esc(areaOf(b)) + "</span>" : "") +
     '<span class="bz__imp" title="インパクト">' + "🔥".repeat(Math.max(1, Math.min(5, b.imp || 1))) + "</span></div>" +
@@ -81,7 +82,7 @@ function row(b, showArea) {
     '<div class="bz__act"><button class="bz__b" type="button" data-go="' + esc(b.id) + '">📍 地図で見る</button>' +
     '<button class="bz__b" type="button" data-emb="' + esc(b.id) + '">👀 投稿を見る</button>' +
     '<a class="bz__b bz__b--l" href="' + esc(b.url) + '" target="_blank" rel="noopener">↗ ' + p.n + ' で開く</a></div>' +
-    '<div class="bz__emb" hidden></div></li>';
+    '<div class="bz__emb" hidden></div></div></li>';
 }
 
 /* 一覧（土地の絞り込みつき） */
@@ -107,7 +108,8 @@ RG.showBuzz = function (area, tab) {
     (list.length ? '<ul class="bz__list">' + list.map(function (b) { return row(b, !area); }).join("") + "</ul>"
                  : '<p class="bz__none">この枠にはいま投稿がありません。「すべて」を見るか、日を置いてまたどうぞ。</p>') +
     '<p class="src">投稿は各SNSの公式埋め込みで表示します（押すまで読み込みません）。見出しは当サイトの要約で、本文の転載ではありません。' +
-    "投稿者が削除すると見られなくなります。<b>「話題になった」の根拠</b>は各行に示した記事・まとめです。いいね数は公式APIが公開していないため載せていません。</p></div>";
+    "投稿者が削除すると見られなくなります。<b>「話題になった」の根拠</b>は各行に示した記事・まとめです。いいね数は公式APIが公開していないため載せていません。" +
+    "左の写真は<b>その場所</b>の Wikipedia の画像で、投稿の画像ではありません。</p></div>";
   var m = RG.openModal("🔥 SNSで話題の場所" + (area ? " ― " + area : ""), html);
   m.querySelectorAll("[data-tab]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzz(area, b.dataset.tab); }); });
   m.querySelectorAll("[data-area]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzz(b.dataset.area || null, tab); }); });
@@ -172,7 +174,8 @@ RG.buzzRailRefresh = function (force) {
     var list = inv.concat(near.slice(0, 8)), shown = list.slice(0, 20);
     function rowMini(b, far) {
       var p = PL[b.pl] || PL.x, hot = live.indexOf(b) >= 0;
-      return '<button class="bzr__i' + (far ? " far" : "") + '" type="button" data-bzid="' + esc(b.id) + '" title="' + esc(b.n) + '">' +
+      return '<button class="bzr__i' + (far ? " far" : "") + (b.img ? " bzr__i--img" : "") + '" type="button" data-bzid="' + esc(b.id) + '" title="' + esc(b.n) + '">' +
+        (b.img ? '<img class="bzr__im" src="' + esc(b.img) + '" alt="" loading="lazy">' : '<span class="bzr__im bzr__im--ph">' + p.e + "</span>") +
         '<span class="bzr__d">' + esc(b.d.slice(5).replace("-", "/")) + "</span>" +
         '<span class="bzr__a">' + esc(areaOf(b)) + "</span>" +
         '<span class="bzr__n">' + (hot ? "🔥" : "🕰️") + " " + esc(b.n) + "</span>" +

@@ -383,6 +383,8 @@ RG.showSpot = function (p) {
       '<span class="spotcard__why">行く価値のめやす</span>' +
       (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
     (RG.pinRow ? RG.pinRow(p) : "") +
+    (RG.focusHtml ? RG.focusHtml(p.n) : "") +
+    (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") +
     (RG.enrichSlot && !p.chain && !p.od ? RG.enrichSlot() : "") +
     cameraBlock(p) +
     fromHtml +
@@ -423,11 +425,15 @@ RG.showSpot = function (p) {
        "東京都オープンデータカタログサイト</a>（" + esc(p.org || "") + "）／ライセンス CC BY 4.0<br>" +
        "更新のタイミングは団体ごとに異なります。最新情報は各自治体の公開データでご確認ください。</p>" : "") +
     (p.srcNote ? '<p class="src">' + esc(p.srcNote) + "</p>" : "") +
+    (RG.reqHtml ? RG.reqHtml("spot", p.n) : "") +
     '<p class="src">☆は「行く価値のめやす」です。文化財は指定の格（国宝5.0／重要文化財4.5／史跡4.5／登録有形3.5…）、' +
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
     "<b>レビューサイトの評価点ではありません。</b><br>出典: Wikidata (CC0 1.0) / 画像: Wikimedia Commons</p></div>";
   var m = modal(g.e + " " + p.n, html);
   if (RG.enrichIn && !p.chain && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]) });
+  if (RG.reqBind) RG.reqBind(m);
+  if (RG.focusBind) RG.focusBind(m);
+  if (RG.natureBind) RG.natureBind(m, p);
   if (RG.bindPinRow) RG.bindPinRow(m, p);
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });
@@ -543,45 +549,66 @@ RG.showEvents = function () {
 };
 
 /* ---------------------------------------------- 駅ランキング（全件） */
-RG.showRanking = function (focusId) {
+RG.showRanking = function (focusId, scope) {
+  var f = focusId ? RG.byId[focusId] : null;
+  scope = scope || { kind: "all" };
   var all = RG.NET.stations.map(function (s) {
     var d = RG.Score.of(s.id);
-    return { s: s, total: d.total, rank: d.rank, axes: d.axes };
-  }).sort(function (a, b) { return a.rank - b.rank; });
+    return { s: s, total: d.total, rankAll: d.rank, axes: d.axes };
+  });
+  // しぼりこみ：全国／都道府県／路線
+  var prefOf = function (s) { if (s.__pf === undefined) { var p = RG.prefAt ? RG.prefAt(s.la, s.lo) : null; s.__pf = p ? p.n : ""; } return s.__pf; };
+  var list = all;
+  if (scope.kind === "pref" && scope.pref) list = all.filter(function (x) { return prefOf(x.s) === scope.pref; });
+  if (scope.kind === "line" && scope.line) list = all.filter(function (x) { return (x.s.ls || []).indexOf(scope.line) >= 0; });
+  list = list.slice().sort(function (a, b) { return b.total - a.total || a.rankAll - b.rankAll; });
+  list.forEach(function (x, i) { x.rank = i + 1; });
+  var prefs = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+  var myPref = f ? prefOf(f) : "", myLines = f ? (f.ls || []).filter(function (L) { return L !== "乗り換え"; }) : [];
+  var lineOpts = (RG.NET.lines || []).map(function (l) { return l.name; }).filter(function (n) { return n !== "乗り換え"; }).sort(function (a, b) { return a.localeCompare(b, "ja"); });
   var html =
+    '<div class="rk__scope">' +
+      '<button class="rk__sc' + (scope.kind === "all" ? " on" : "") + '" type="button" data-scope="all">🗾 全国</button>' +
+      '<select id="rk-pref" class="rk__sel"><option value="">🏯 都道府県で…</option>' + prefs.map(function (p) { return '<option value="' + p + '"' + (scope.kind === "pref" && scope.pref === p ? " selected" : "") + ">" + p + (p === myPref ? "（この駅）" : "") + "</option>"; }).join("") + "</select>" +
+      '<select id="rk-line" class="rk__sel"><option value="">🚃 路線で…</option>' +
+        (myLines.length ? '<optgroup label="この駅の路線">' + myLines.map(function (L) { return '<option value="' + esc(L) + '"' + (scope.kind === "line" && scope.line === L ? " selected" : "") + ">" + esc(L) + "</option>"; }).join("") + "</optgroup>" : "") +
+        '<optgroup label="すべての路線">' + lineOpts.map(function (L) { return '<option value="' + esc(L) + '"' + (scope.kind === "line" && scope.line === L && myLines.indexOf(L) < 0 ? " selected" : "") + ">" + esc(L) + "</option>"; }).join("") + "</optgroup></select>" +
+    "</div>" +
     '<div class="rk__ctl"><input id="rk-q" type="search" placeholder="駅名でしぼりこむ" autocomplete="off">' +
-      '<span class="rk__n">' + all.length + " 駅</span>" +
+      '<span class="rk__n">' + list.length + " 駅</span>" +
       '<button id="rk-rev" class="set__b2" type="button">下位から見る ⇅</button></div>' +
     '<div class="rk__head"><span>順位</span><span>駅</span><span>路線</span><span>総合</span></div>' +
     '<div id="rk-list" class="rk__list"></div>' +
-    '<p class="src">総合スコアは6つの軸（交通力・歴史文化・社寺・くらし公共・地価のやさしさ・終電後の帰りやすさ）を' +
-    "23区内のパーセンタイル順位にして加重平均したものです。定義は data/score.js にあります。</p>";
-  var m = modal("駅ランキング 全" + all.length + "駅", html);
+    '<p class="src">総合スコアは6つの軸（交通力・歴史文化・社寺・くらし公共・地価のやさしさ・終電後の帰りやすさ）のパーセンタイル順位を加重平均したもの。' +
+    "順位を押すとその駅へ地図が飛びます。都道府県は駅の座標から判定（県境ぎわは隣県になることがあります）。定義は data/score.js。</p>";
+  var title = scope.kind === "pref" ? scope.pref + " の駅ランキング" : scope.kind === "line" ? scope.line + " の駅ランキング" : "全国 駅ランキング";
+  var m = modal("🏆 " + title + "（" + list.length + "駅）", html);
   var rev = false;
   function render() {
     var q = ($("#rk-q", m).value || "").trim();
-    var list = all.filter(function (x) {
-      return !q || x.s.n.indexOf(q) >= 0 || (x.s.k && x.s.k.indexOf(q) >= 0); });
-    if (rev) list = list.slice().reverse();
-    $("#rk-list", m).innerHTML = list.map(function (x) {
-      var lines = (x.s.ls || []).slice(0, 6).map(function (L) {
-        return RG.lineBadge ? RG.lineBadge(L) : ""; }).join("");
+    var L2 = list.filter(function (x) { return !q || x.s.n.indexOf(q) >= 0 || (x.s.k && x.s.k.indexOf(q) >= 0); });
+    if (rev) L2 = L2.slice().reverse();
+    L2 = L2.slice(0, 400);
+    $("#rk-list", m).innerHTML = L2.map(function (x) {
+      var lines = (x.s.ls || []).filter(function (L) { return L !== "乗り換え"; }).slice(0, 6).map(function (L) { return RG.lineBadge ? RG.lineBadge(L) : ""; }).join("");
       var more = (x.s.ls || []).length > 6 ? '<span class="rk__more">+' + ((x.s.ls || []).length - 6) + "</span>" : "";
       return '<button class="rk__r' + (x.s.id === focusId ? " on" : "") + '" type="button" data-st="' + esc(x.s.id) + '">' +
-        '<span class="rk__i">' + x.rank + "</span>" +
-        '<span class="rk__nm">' + esc(x.s.n) + '<i>' + ((x.s.ls || []).length) + "路線</i></span>" +
+        '<span class="rk__i">' + x.rank + (x.rank <= 3 ? ["🥇", "🥈", "🥉"][x.rank - 1] : "") + "</span>" +
+        '<span class="rk__nm">' + esc(x.s.n) + '<i>' + (scope.kind === "all" ? esc(prefOf(x.s) || "") + " ・ " : "") + ((x.s.ls || []).length) + "路線 ・ 全国" + x.rankAll + "位</i></span>" +
         '<span class="rk__lb">' + lines + more + "</span>" +
         '<span class="rk__sc"><i style="width:' + x.total + '%"></i><b>' + x.total + "</b></span></button>";
-    }).join("");
+    }).join("") + (list.length > 400 && !q ? '<p class="mini">上位400駅まで表示。駅名で絞り込めます。</p>' : "");
     $$(".rk__r", m).forEach(function (b) {
-      b.addEventListener("click", function () { RG.closeModal(); RG.openStation(b.dataset.st); });
+      b.addEventListener("click", function () { RG.closeModal(); RG.openStation(b.dataset.st); if (RG.Map && RG.Map.focus) RG.Map.focus(b.dataset.st, 300); });
     });
     var cur = m.querySelector(".rk__r.on");
     if (cur) cur.scrollIntoView({ block: "center" });
   }
   $("#rk-q", m).addEventListener("input", render);
-  $("#rk-rev", m).addEventListener("click", function () {
-    rev = !rev; this.textContent = rev ? "上位から見る ⇅" : "下位から見る ⇅"; render(); });
+  $("#rk-rev", m).addEventListener("click", function () { rev = !rev; this.textContent = rev ? "上位から見る ⇅" : "下位から見る ⇅"; render(); });
+  var sa = m.querySelector('[data-scope="all"]'); if (sa) sa.addEventListener("click", function () { RG.showRanking(focusId, { kind: "all" }); });
+  var sp = $("#rk-pref", m); if (sp) sp.addEventListener("change", function () { if (sp.value) RG.showRanking(focusId, { kind: "pref", pref: sp.value }); });
+  var sl = $("#rk-line", m); if (sl) sl.addEventListener("change", function () { if (sl.value) RG.showRanking(focusId, { kind: "line", line: sl.value }); });
   render();
 };
 

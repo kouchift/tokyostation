@@ -9,13 +9,17 @@ var esc = RG.esc;
 function get(key) { return (RG.FOCUS || {})[key] || null; }
 RG.focusHtml = function (key) {
   var f = get(key); if (!f) return "";
-  var h = '<section class="focus"><div class="focus__h">🔎 深掘り <em>このサイトが特に大事にしている場所</em></div>' +
+  var h = '<section class="focus' + (f.special ? " focus--special" : "") + '">' +
+    (f.special ? '<div class="focus__ribbon">★ SPECIAL ★ このサイトが特別扱いしている場所</div>' : "") +
+    '<div class="focus__h">🔎 深掘り <em>' + (f.special ? "ほかの場所とは、あきらかに扱いが違います" : "このサイトが特に大事にしている場所") + "</em></div>" +
     '<p class="focus__lead">' + esc(f.lead) + "</p>";
   if (f.facts && f.facts.length) h += '<div class="focus__facts">' + f.facts.map(function (x) {
     return '<div class="focus__f"><span class="focus__k">' + esc(x.k) + '</span><b>' + esc(x.v) + "</b>" + (x.s ? "<i>" + esc(x.s) + "</i>" : "") + "</div>"; }).join("") + "</div>";
   if (f.go && f.go.length) h += '<div class="focus__go"><div class="focus__gh">行くなら</div><ul>' + f.go.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>";
   if (f.links && f.links.length) h += '<div class="focus__lnks">' + f.links.map(function (l) {
     return '<a class="focus__lnk" href="' + esc(l.u) + '" target="_blank" rel="noopener"><span>' + (l.e || "🔗") + "</span>" + esc(l.t) + "</a>"; }).join("") + "</div>";
+  if (f.cheer) h += '<div class="focus__cheer"><button class="focus__cheerb" type="button" data-cheer="' + esc(key) + '">' + esc(f.cheer.t) + "</button>" + (f.cheer.s ? '<p class="mini">' + esc(f.cheer.s) + "</p>" : "") + "</div>";
+  if (f.special && !f.cheer) h += '<div class="focus__cheer"><button class="focus__cheerb" type="button" data-cheer="' + esc(key) + '">📣 ' + esc(key) + " を応援する（投げ銭）</button></div>";
   if (f.up) h += '<button class="focus__up" type="button" data-focus-up="' + esc(f.up.key) + '">⬆ ' + esc(f.up.label) + "</button>";
   if (f.conf) h += '<p class="focus__conf">' + esc(f.conf) + "</p>";
   return h + "</section>";
@@ -25,6 +29,10 @@ RG.focusBind = function (root) {
   Array.prototype.forEach.call(root.querySelectorAll("[data-focus-up]"), function (b) {
     if (b.__bound) return; b.__bound = 1;
     b.addEventListener("click", function () { RG.showFocus(b.dataset.focusUp); });
+  });
+  Array.prototype.forEach.call(root.querySelectorAll("[data-cheer]"), function (b) {
+    if (b.__bound) return; b.__bound = 1;
+    b.addEventListener("click", function (e) { e.stopPropagation(); if (RG.openTip) RG.openTip(function () { RG.tipQuick(); }); });
   });
 };
 /* 独立したカード（東京都のように既存カードが無いもの） */

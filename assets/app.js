@@ -1002,6 +1002,7 @@ var Map = (function () {
       }
       if (p.chain && RG.chainFilter != null && p.brand !== RG.chainFilter) continue;
       if (p.smoke && RG.smokeFilter && p.sk !== RG.smokeFilter) continue;
+      if (p.onsen && RG.onsenFilter) { var okO = true; for (var fk2 in RG.onsenFilter) if (RG.onsenFilter[fk2] && !p.onsen[fk2]) { okO = false; break; } if (!okO) continue; }
       if (p.corp && RG.corpFilter) {
         if (RG.corpFilter.i33 && p.i33 !== RG.corpFilter.i33) continue;
         if (RG.corpFilter.i17 && p.i17 !== RG.corpFilter.i17) continue;
@@ -1497,8 +1498,8 @@ var Card = (function () {
                '<br><span class="why">' + esc(a.reason || "") + "</span></li>"; }).join("") +
       "</ul></details>" : "";
     return '<div class="sec sec--score"><div class="sec__h"><b>この駅の戦闘力</b>' +
-      '<em><button class="rankbtn" type="button" data-rank="' + esc(st.id) + '">23区' + d.n +
-      "駅中 <b>" + d.rank + "</b> 位 ▸ 全順位</button></em></div>" +
+      '<em><button class="rankbtn" type="button" data-rank="' + esc(st.id) + '">全国 ' + d.n +
+      "駅中 <b>" + d.rank + "</b> 位 ▸ ランキング（全国・都道府県・路線）</button></em></div>" +
       '<div class="scorewrap">' + RG.Score.radar(st.id) + '<div class="axes">' + bars + "</div></div>" +
       '<p class="mini">各軸は' + esc(RG.SCORE.radiusLabel) + "の実データを、23区全駅の中でのパーセンタイル順位（0〜100）に直したものです。" +
       "絶対値ではなく<b>相対評価</b>なので「東京の中でどのくらいか」を表します。</p>" + offHtml + "</div>";
@@ -1577,6 +1578,7 @@ var Card = (function () {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
+           (RG.shinkansenHtml ? RG.shinkansenHtml(s.n) : "") +
            hero(s) +
            (RG.enrichSlot ? RG.enrichSlot() : "") +
            scoreBlock(s) +
@@ -1588,7 +1590,8 @@ var Card = (function () {
            heritageBlock(s) +
            videoBlock(s, d) +
            linksBlock(s) +
-           sources(s, d);
+           sources(s, d) +
+           (RG.reqHtml ? RG.reqHtml("station", s.n) : "");
   }
 
   function launcherHtml(id, line) {
@@ -1627,6 +1630,8 @@ var Card = (function () {
   function bind(root, id, d) {
     var st0 = RG.byId[id];
     if (RG.focusBind) RG.focusBind(root);
+    if (RG.shinkansenBind && st0) RG.shinkansenBind(root, st0.n);
+    if (RG.reqBind) RG.reqBind(root);
     if (st0 && RG.enrichIn) RG.enrichIn(root, { name: st0.n, la: st0.la, lo: st0.lo, kind: "station",
       hasHero: !!(RG.POI && RG.POI[id] && RG.POI[id].img), hasIntro: !!(RG.DESCS && RG.DESCS[st0.n]) });
     var host = root.querySelector(".launcher");
@@ -1939,6 +1944,8 @@ function mergeExtraPois(key) {
     });
   });
   if (RG.mergeBuzz) RG.mergeBuzz();
+  if (RG.mergeViews) RG.mergeViews();
+  if (RG.mergeOnsen) RG.mergeOnsen();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();
@@ -2027,7 +2034,7 @@ RG.boot = function () {
   });
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
   step("郵便番号", function () { if (RG.initZip) RG.initZip(); });
-  step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); if (RG.corpBubbleInit) RG.corpBubbleInit(); });
+  step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); if (RG.corpBubbleInit) RG.corpBubbleInit(); if (RG.shareInit) RG.shareInit(); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });

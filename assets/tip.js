@@ -95,6 +95,20 @@ RG.tipInit = function () {
   } catch (e) {}
 };
 
+/* ---- カードの «制作者へ更新を依頼する» アイコン（全駅・全スポット） → 窓口へ ---- */
+RG.reqHtml = function (kind, name) {
+  return '<div class="req"><button class="req__b" type="button" data-req="' + esc(name || "") + '" data-reqkind="' + esc(kind || "") + '">' +
+    '<span class="req__i">📮</span><span class="req__t">' + (kind === "station" ? "駅詳細情報の更新を制作者へ依頼する" : "スポット情報の更新を制作者へ依頼する") + "</span>" +
+    '<span class="req__s">（依頼は投げ銭窓口から。実装見込みは極端に低い前提で）</span></button></div>';
+};
+RG.reqBind = function (root) {
+  root.querySelectorAll("[data-req]").forEach(function (b) { b.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var S = st(); S.reqFor = (b.dataset.reqkind === "station" ? "駅「" : "スポット「") + b.dataset.req + "」の情報更新の依頼: "; save(S);
+    RG.openTip(function () { RG.showTip("msg"); });
+  }); });
+};
+
 /* ---- 設定パネルに差し込む入口 ---- */
 RG.tipEntryHTML = function () {
   var S = st();
@@ -378,7 +392,8 @@ function msgHTML(C, S) {
   var left = S.lastMsgAt ? Math.ceil((S.lastMsgAt + 600000 - Date.now()) / 60000) : 0;
   return '<p class="tj__lead">🙏 貧乏でも大丈夫。お名前とひとことを入れて「制作者へ届け！」を押すと、制作者のもとへ届きます。改善のご要望もここから（実装見込みは極端に低い前提で）。</p>' +
     '<div class="tj__form"><label>お名前（ニックネーム可）<input id="tip-name" maxlength="40" value="' + esc(S.name || "") + '"></label>' +
-    '<label>ひとこと・ご要望（400字まで）<textarea id="tip-text" maxlength="400" rows="4"></textarea></label>' +
+    '<label>ひとこと・ご要望（400字まで）<textarea id="tip-text" maxlength="400" rows="4">' + esc(S.reqFor || "") + '</textarea></label>' +
+    (S.reqFor ? '<p class="tj__hint">📮 更新依頼として下書きを入れました。要望の前に <b>☕ 投げ銭</b> を一つ添えると、制作者の多忙のフリが 3% ほど揺らぎます。</p>' : "") +
     '<div class="tj__row"><button id="tip-send" class="set__b2" type="button"' + (left > 0 ? " disabled" : "") + ">📨 制作者へ届け！</button>" +
     (left > 0 ? '<span class="tj__hint">連投よけのため、あと約 ' + left + " 分お待ちください。</span>" : "") + "</div>" +
     '<div id="tip-msgres" class="tj__res"></div></div>' +
@@ -391,6 +406,7 @@ function bindMsg(m, C) {
     var name = ($("#tip-name", m).value || "").trim(), text = ($("#tip-text", m).value || "").trim();
     if (!name || !text) { res.textContent = "お名前とひとことの両方を入れてください。"; return; }
     var S = st(); if (S.lastMsgAt && Date.now() - S.lastMsgAt < 600000) { res.textContent = "連投よけのため、少し時間をおいてください。"; return; }
+    delete S.reqFor;
     var body = "【東京ステーションガイド】" + name + " さんより\n" + text + "\n---\nvid:" + vid() + "  " + new Date().toLocaleString("ja-JP") +
                (S.total ? "  投げ銭累計 " + yen(S.total) : "");
     S.name = name;

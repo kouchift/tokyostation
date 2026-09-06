@@ -165,6 +165,7 @@ var Rail = (function () {
       "❓ アイコンの意味を見る</button> " +
       '<button class="lr__c" type="button" id="lr-chain">🏪 お店をえらぶ</button> ' +
       '<button class="lr__c" type="button" id="lr-corp">🏢 業種でえらぶ</button> ' +
+      '<button class="lr__c" type="button" id="lr-onsen">♨️ 温泉のこだわり</button> ' +
       '<button class="lr__c lr__c--y" type="button" id="lr-smoke">🚬 吸える場所</button> ' +
       '<button class="lr__c" type="button" id="lr-hs">📊 偏差値を入れる</button> ' +
       '<button class="lr__c lr__c--p" type="button" id="lr-pins">📌 自分のピン</button> ' +
@@ -350,6 +351,8 @@ var Rail = (function () {
       if (RG.hasSmokeTicket && RG.hasSmokeTicket()) RG.openSmokeFilter();
       else if (RG.showTicket) RG.showTicket();
     });
+    var ob = $("#lr-onsen", box);
+    if (ob) ob.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("spots", function () { RG.openOnsenFilter(); }); });
     var cb3 = $("#lr-corp", box);
     if (cb3) cb3.addEventListener("click", function () {
       if (RG.openCorpFilter) RG.openCorpFilter();
