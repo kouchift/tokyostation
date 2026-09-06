@@ -70,6 +70,8 @@ RG.addRouteToPlan = function (o, r, fromLabel, toLabel, toId) {
                  transfers: o.rail ? o.rail.transfers : null,
                  toId: toId || null,
                  la: dest ? dest.la : null, lo: dest ? dest.lo : null,
+                 fla: RG.Trip && RG.Trip.origin ? RG.Trip.origin[0] : null, flo: RG.Trip && RG.Trip.origin ? RG.Trip.origin[1] : null,
+                 air: o.air ? { a: o.air.a, b: o.air.b, km: Math.round(o.air.km), al: o.air.al } : null,
                  destLines: dest ? (dest.ls || []).filter(function (L) {
                    return L.indexOf("ネットワーク") < 0 && L.indexOf("路線網") < 0; }).slice(0, 4) : null,
                  at: r.at ? +r.at : Date.now() });
@@ -283,6 +285,8 @@ RG.openPlan = function () {
         esc(P.memo) + "</textarea>" +
       '<div class="pl__share">' +
         '<button id="pl-share" class="pl__b1" type="button">📤 このプランを共有する</button>' +
+        '<button id="pl-pv" class="set__b2" type="button">🎬 20秒のルートPVを作る</button>' +
+        '<button id="pl-pvl" class="set__b2" type="button">🎞️ 作ったPV</button>' +
         '<button id="pl-copy" class="set__b2" type="button">📋 テキストをコピー</button>' +
         '<button id="pl-prev" class="set__b2" type="button">👀 送る内容を見る</button>' +
         '<button id="pl-done" class="set__b2 pl__done" type="button">✅ 行ってきた（訪問メモにする）</button>' +
@@ -329,10 +333,21 @@ RG.openPlan = function () {
         .then(function () { RG.tripStatus("📋 コピーしました", "ok", 2000); })
         .catch(function () { RG.tripStatus("コピーできませんでした。テキストを選んでコピーしてください。", "warn"); });
     });
+    var pvb = $("#pl-pv", m); if (pvb) pvb.addEventListener("click", function () { if (RG.pvFlow) RG.pvFlow(null, null); });
+    var pvl = $("#pl-pvl", m); if (pvl) pvl.addEventListener("click", function () { if (RG.pvList) RG.pvList(); });
     $("#pl-share", m).addEventListener("click", function () {
       var payload = { title: title, text: txt };
       var gr = gmapRoute();
       if (gr) payload.url = gr;   // url を渡すと LINE などがリンクカードにしてくれる
+      function doShare(pv) {
+        if (pv && navigator.canShare && navigator.canShare({ files: [new File([pv.blob], pv.name, { type: pv.mime })] })) {
+          navigator.share({ files: [new File([pv.blob], pv.name, { type: pv.mime })], title: title, text: txt }).catch(function () { navigator.share(payload).catch(function () {}); });
+          return;
+        }
+        if (navigator.share) navigator.share(payload).catch(function () { navigator.share({ title: title, text: txt }).catch(function () {}); });
+      }
+      // v78: 経路があれば先に 20 秒のルート PV を作る（作れない環境ではそのまま共有）
+      if (RG.pvFlow && P.items.some(function (x) { return x.k === "route"; })) { RG.pvFlow("share", function (pv) { RG.closeModal(); doShare(pv); }); return; }
       if (navigator.share) {
         navigator.share(payload).catch(function () {
           // url 付きを拒否する実装があるので、その場合は text だけで再挑戦

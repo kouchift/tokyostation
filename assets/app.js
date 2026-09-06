@@ -321,15 +321,15 @@ RG.lineSequence = function (fromId, line, limit) {
   var starts = RG.adj[fromId].filter(function (e) { return e.line === line; });
   var dirs = [];
   starts.forEach(function (st) {
-    var seen = {}, cur = st.to, prev = fromId, list = [], km = 0, lastKm = st.km;
+    var seen = {}, cur = st.to, prev = fromId, list = [], km = 0, lastKm = st.km, mins = 0;
     var head = bearing(from, RG.byId[st.to]);
     seen[fromId] = 1;
     while (cur && !seen[cur] && list.length < limit) {
       seen[cur] = 1;
       var e0 = RG.adj[prev].filter(function (e) { return e.to === cur && e.line === line; })[0];
       km += e0 ? e0.km : 0;
-      list.push({ id: cur, km: km,
-                  min: Math.round(km / RG.CONFIG.modes.train.speedKmh * 60 + list.length * 0.4) });
+      mins += e0 ? (RG.Planner && RG.Planner.hopMin ? RG.Planner.hopMin(line, e0.km) : e0.km / RG.CONFIG.modes.train.speedKmh * 60 + 0.4) : 0;
+      list.push({ id: cur, km: km, min: Math.round(mins) });
       // 次の駅は「いまの進行方向にいちばん近い隣接」を選ぶ。
       // Wikidata の隣接データには誤りが混ざるため、急な折返しや飛びは切り捨てる。
       var here = RG.byId[cur];
@@ -359,7 +359,7 @@ RG.lineSequence = function (fromId, line, limit) {
   if (!near.length) return [];
   near.sort(function (a, b) { return a.km - b.km; });
   near = near.slice(0, 120).map(function (x, i) {
-    return { id: x.id, km: x.km, min: Math.round(x.km / RG.CONFIG.modes.train.speedKmh * 60 + 2) };
+    return { id: x.id, km: x.km, min: Math.round(x.km / RG.CONFIG.modes.train.speedKmh * 60 + 2) };   // 隣接不明の路線: 直線距離の粗い目安
   });
   return [{ list: near, endId: near[near.length - 1].id, kind: "near" }];
 };
@@ -528,6 +528,7 @@ var Map = (function () {
     var c = "node";
     if (s.big) c += " big";
     if (s.id === RG.HUB) c += " hub";
+    if (RG.memoSurveyed && RG.__memoAny && RG.memoSurveyed(s)) c += " memo";   // 調査ずみ（現場メモ 3 件以上）は小さな印
     if (v !== 2) c += " noname";
     if (f) {
       if (f.sel) c += " sel"; if (f.pick) c += " pick"; if (f.watch) c += " watch";
@@ -707,6 +708,9 @@ var Map = (function () {
     if (RG.corpBubbleLOD) RG.corpBubbleLOD();
     if (RG.terraLOD) RG.terraLOD();
     if (RG.kuniLOD) RG.kuniLOD();
+    if (RG.airLOD) RG.airLOD();
+    if (RG.roadsLOD) RG.roadsLOD();
+    if (RG.quakeLOD) RG.quakeLOD();
     if (RG.buzzRailRefresh) RG.buzzRailRefresh();
     if (RG.map3DMoved) RG.map3DMoved();
     if ((RG.loadTilesFor || RG.zipOnMove) && vb) {
@@ -1299,6 +1303,7 @@ var Card = (function () {
       '<button class="plate__close" aria-label="閉じる" data-close>×</button></div>' +
       '<div class="plate__name">' + esc(s.n) + "</div>" +
       (s.k ? '<div class="plate__kana">' + esc(s.k) + "</div>" : "") +
+      (RG.memoHeadline ? RG.memoHeadline(s.n) : "") +
       '<div class="lchips">' + ls + '</div><div class="launcher" hidden></div>' +
       wikiIntro(s.n) +
       '<p class="plate__hl">' + esc(headline(s)) + "</p>" +
@@ -1306,7 +1311,10 @@ var Card = (function () {
       '<div class="acts">' +
         '<button class="act act--from" type="button" data-from="' + esc(s.id) + '">📍 ここから出発</button>' +
         '<button class="act act--to" type="button" data-to="' + esc(s.id) + '">🧭 ここへ行く</button>' +
-      "</div></div>";
+        '<button class="act act--card" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
+      "</div></div>" +
+      (RG.memoHtml ? RG.memoHtml(s.n) : "") +
+      (RG.kidsHtml ? RG.kidsHtml(s.n) : "");
   }
 
   function lv(p) { return p >= 80 ? 5 : p >= 60 ? 4 : p >= 40 ? 3 : p >= 20 ? 2 : 1; }
@@ -1588,6 +1596,7 @@ var Card = (function () {
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
            (RG.shinkansenHtml ? RG.shinkansenHtml(s.n) : "") +
            (RG.ytForStation ? RG.ytForStation(s.n) : "") +
+
            hero(s) +
            (RG.enrichSlot ? RG.enrichSlot() : "") +
            scoreBlock(s) +
@@ -1641,6 +1650,7 @@ var Card = (function () {
     if (RG.focusBind) RG.focusBind(root);
     if (RG.shinkansenBind && st0) RG.shinkansenBind(root, st0.n);
     if (RG.ytBind) RG.ytBind(root);
+    if (RG.memoBind && st0) { RG.memoBind(root, st0.n); if (RG.memoHeadlineBind) RG.memoHeadlineBind(root); }
     if (RG.reqBind) RG.reqBind(root);
     if (st0 && RG.enrichIn) RG.enrichIn(root, { name: st0.n, la: st0.la, lo: st0.lo, kind: "station",
       hasHero: !!(RG.POI && RG.POI[id] && RG.POI[id].img), hasIntro: !!(RG.DESCS && RG.DESCS[st0.n]) });
@@ -1683,6 +1693,8 @@ var Card = (function () {
     });
     var t2 = root.querySelector("[data-to]");
     if (t2) t2.addEventListener("click", function (e) { e.stopPropagation(); RG.showRoutes(t2.dataset.to); });
+    var t3 = root.querySelector("[data-card]");
+    if (t3) t3.addEventListener("click", function (e) { e.stopPropagation(); if (RG.showRouteCard) RG.showRouteCard(null, t3.dataset.card); });
     $$(".tab", root).forEach(function (b) {
       b.addEventListener("click", function () {
         tab = b.dataset.tab;
@@ -1822,8 +1834,8 @@ var CHIPS = [
   { id: "big", label: "大きい駅", emoji: "🏙️", f: function (s) { return s.rank < 60; } },
   { id: "quiet", label: "静かな駅", emoji: "🌿", f: function (s) { return !s.px || s.rank > RG.NET.stations.length * 0.6; } },
   { id: "old", label: "古い駅", emoji: "🏛️", f: function (s) { return s.op && +s.op < 1910; } },
-  { id: "surveyed", label: "調査ずみ", emoji: "📓", f: function (s) { return RG.details[s.n] && RG.details[s.n] !== "none"; } },
-  { id: "new", label: "未調査", emoji: "🧭", f: function (s) { return !RG.details[s.n] || RG.details[s.n] === "none"; } }
+  { id: "surveyed", label: "調査ずみ", emoji: "📓", f: function (s) { return RG.memoSurveyed ? RG.memoSurveyed(s) : (RG.details[s.n] && RG.details[s.n] !== "none"); } },
+  { id: "new", label: "未調査", emoji: "🧭", f: function (s) { return RG.memoSurveyed ? !RG.memoSurveyed(s) : (!RG.details[s.n] || RG.details[s.n] === "none"); } }
 ];
 function initChips() {
   var bar = $("#chips"), state = {};
@@ -1961,8 +1973,11 @@ function mergeExtraPois(key) {
   if (RG.mergeRivers) RG.mergeRivers();
   if (RG.mergeCastles) RG.mergeCastles();
   if (RG.mergeOsmExtra) RG.mergeOsmExtra();
+  if (RG.mergeAirports) RG.mergeAirports();
+  if (RG.mergeKaido) RG.mergeKaido();
   if (RG.mergeYt) RG.mergeYt();
-  if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS)) RG.terraBuild();
+  if (RG.roadsBuild && (RG.HWY || RG.KOKUDO || RG.KAIDO)) RG.roadsBuild();
+  if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS || RG.RIVER_GEO)) RG.terraBuild();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();
@@ -2052,6 +2067,7 @@ RG.boot = function () {
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
   step("郵便番号", function () { if (RG.initZip) RG.initZip(); });
   step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); if (RG.corpBubbleInit) RG.corpBubbleInit(); if (RG.shareInit) RG.shareInit(); });
+  step("地理レイヤ・地震", function () { if (RG.geoRestore) RG.geoRestore(); if (RG.quakeInit) setTimeout(RG.quakeInit, 6000); if (RG.memoInit) setTimeout(RG.memoInit, 3000); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });

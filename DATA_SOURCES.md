@@ -91,3 +91,16 @@ tools/build_standalone.py  単一ファイル版の生成
 - `data/water.js` — Wikipedia 日本語版「一級水系」「二級水系」「日本の川一覧」、各河川・海域・海流の記事（CC BY-SA 4.0）／ Wikidata（P625 河口・水源、P885、P974/P403）CC0 ／ Natural Earth 10m rivers（パブリックドメイン）／ Wikimedia Commons の Data: 地図（CC0）。海流の流路は概略を手描き。
 - `data/chains2.js`（v77 で全面更新）・`data/osm_extra.js` — © OpenStreetMap contributors（ODbL 1.0）。Overpass API から 2026-09-06 に取得。ブランド色は目安、ロゴは Wikidata P154 の Commons ファイル（商標は各社に帰属、店舗位置の識別目的で極小表示）、公式サイトは Wikidata P856。
 - `tools/build_youtube_spots.py` — YouTube Data API v3（利用規約に従い、動画 ID・タイトル・再生数・公開日と当サイト独自の要約のみ保存。定期的に再取得）。種チャンネルの登録者数は Wikidata P8687（CC0）。
+
+## v78
+- `data/air.js` — Wikidata（空港 Q62447 系、航空会社、IATA/ICAO P238/P239/P229/P230、旅客数 P3872、公式サイト P856、写真 P18）CC0 ／ Wikipedia 日本語版 各空港記事「就航路線」節・Infobox・概要（CC BY-SA 4.0）。運賃係数は当サイトの概算モデル（公表運賃ではない）。
+- `data/net.json`（修復） — 追加した区間は既存の駅位置からの機械的推定（tools/fix_gaps_net.py）。新宿の座標は Wikidata の値に基づき手で修正。
+
+## v79
+- `data/roads.js` — 国土数値情報（高速道路時系列データ N06-23、道路 N01-07L）（国土交通省）を加工して作成。
+- `data/river_geo.js` — 国土数値情報（河川データ W05、都道府県別 平成18〜21年度）（国土交通省）を加工して作成。W05 の利用条件（非商用）に注意。
+- `data/tokaido.js` — Wikidata（CC0）・Wikipedia 日本語版（CC BY-SA 4.0）「東海道五十三次」「中山道六十九次」ほか一覧記事と各宿場の記事。
+- 地震情報 — P2P地震情報 API v2（https://www.p2pquake.net/develop/json_api_v2/）。気象庁発表の中継。利用規約に従いキャッシュせず、出典を表示。
+- ルートカードの画像生成 — html2canvas 1.4.1（MIT、cdnjs）。
+- `data/net.json`（v80 で掃除）— Wikidata（CC0）由来の全国路線網から、廃線・廃駅（Wikidata P576 廃止日／P3999 閉鎖日）、貨物線・計画線、信号場・貨物駅、同名別駅の混同による長すぎる辺、途中駅を飛ばす辺を除いたもの。手順は tools/fix_skip_edges.py → tools/fix_net_hygiene.py → tools/fix_net_snap.py（冪等）。
+

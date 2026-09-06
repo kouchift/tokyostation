@@ -2924,3 +2924,96 @@ html.kuni-on .geo__pn{display:none!important}
 .ytlist__tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}.ytlist__tab{border:1px solid #ccc;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}.ytlist__tab[aria-pressed=true]{background:var(--lc,#f00);color:#fff;border-color:var(--lc,#f00)}.ytlist__tab i{font-style:normal;opacity:.7;font-size:10px}
 .ytlist__rows{max-height:min(60vh,520px);overflow:auto}.ytl{display:grid;grid-template-columns:96px 1fr;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid #eee;background:#fff;padding:6px 4px;cursor:pointer}.ytl:hover{background:#fff5f5}.ytl img{width:96px;height:54px;object-fit:cover;border-radius:6px}.ytl__b b{display:block;font-size:12px;line-height:1.3}.ytl__b i{font-style:normal;font-size:10.5px;color:#777}
 @media (max-width:520px){.ytv{grid-template-columns:110px 1fr}}
+/* v78 空港・飛行機・PV */
+.alc{display:inline-block;background:var(--lc,#607D8B);color:#fff;font-weight:900;font-size:11.5px;letter-spacing:.5px;border-radius:6px;padding:2px 7px;margin:2px 3px 2px 0;font-family:var(--mono)}.alc--s{font-size:10px;padding:1px 5px}
+.airb{background:#f3f5fb;border-color:#c5cae9}.airb__hd{display:flex;gap:10px;align-items:center;margin-bottom:6px}.airb__code{font-family:var(--mono);font-weight:900;font-size:22px;background:#1A237E;color:#fff;border-radius:8px;padding:2px 8px;letter-spacing:1px}
+.airb__m{font-size:11.5px;color:#555}.airb__als,.airb__dest{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:5px 0}.airb__l{font-size:11px;color:#666;margin-right:4px}.airb__dest .chip i{font-style:normal;color:#888;font-size:10px;margin-left:3px}.airb__more{font-size:11px;color:#777}
+.airshops__g{margin:6px 0}.airshops__h{font-size:12px;font-weight:800;margin-bottom:4px}.airshops__h i{font-style:normal;color:#888;font-weight:400;margin-left:4px}
+.airshops__row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.airshops__i{flex:0 0 auto;width:84px;border:1px solid #e0e0e0;border-top:3px solid var(--lc,#888);border-radius:10px;background:#fff;padding:5px 3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.airshops__i img{width:40px;height:26px;object-fit:contain}.airshops__i span{font-size:22px;line-height:26px}.airshops__i b{font-size:10px;line-height:1.2;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.airl{pointer-events:auto}.airl__glow{fill:none;stroke:#fff;stroke-opacity:.7;stroke-linecap:round}.airl__p{fill:none;stroke-linecap:round;stroke-dasharray:calc(9 * var(--u,1px)) calc(6 * var(--u,1px));animation:tcurflow 1.2s linear infinite;--dash:calc(15 * var(--u,1px))}.airl__hit{fill:none;stroke:transparent;cursor:pointer}
+.airrt__hd{display:flex;align-items:center;gap:8px;font-size:18px;margin-bottom:4px}.airrt__arrow{color:#1A237E;font-size:22px;margin:0 4px}.airrt__m{font-size:12px;color:#555;margin-bottom:8px}
+.airrt__t,.airtt{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0 8px}.airrt__t th,.airtt th{font-size:10.5px;color:#666;text-align:left;padding:4px 6px;background:#f3f3f3}.airrt__t td,.airtt td{padding:6px;border-top:1px solid #eee;vertical-align:middle}
+.airrt__n{font-size:10.5px;color:#666}.airrt__y{font-family:var(--mono);font-weight:800;white-space:nowrap}.airrt__k{font-size:10px;color:#888;font-weight:400}.airrt__dim{color:#999}.airrt__sh{margin-top:8px}.airrt__sh>b{display:block;font-size:12.5px;margin-bottom:4px}.airrt__sh u{text-decoration:underline dotted}
+.airtt{max-height:260px;display:block;overflow:auto}.airtt thead,.airtt tbody,.airtt tr{display:table;width:100%;table-layout:fixed}
+.lnk--s{font-size:11px;padding:3px 8px}.opt__lnks{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px}
+.tsx{margin-left:6px;border:1px solid #fff;background:transparent;color:#fff;border-radius:6px;padding:1px 6px;font-size:11px;cursor:pointer}
+.pv__bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin:6px 0}.pv__bar i{display:block;height:100%;background:#1A237E;width:0;transition:width .2s}
+.pv__cv,.pv__v{width:100%;max-height:52vh;border-radius:10px;background:#000;display:block}.pv__exp{background:#fff3e0;border:1px solid #ffcc80;border-radius:10px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+/* v79 ルートカード */
+.act--card{background:#fff;border:1px solid #c9d3df;color:#0B5394}
+.rt__card{margin-left:8px;border:1px solid #0B5394;background:#fff;color:#0B5394;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;vertical-align:middle}
+.rc__cond{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.rc__c{border:1px solid #ddd;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer}.rc__c[aria-pressed=true]{background:var(--bg,#eee);color:var(--fg,#222);border-color:var(--fg,#999)}
+.rc__l{display:block;font-size:12px;color:#555;margin-bottom:8px}.rc__ta{display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px solid #ccc;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit}
+.rc__pv{width:100%;aspect-ratio:1/1;overflow:hidden;border:1px solid #e3e3e3;border-radius:12px;background:#fff;position:relative;max-width:540px;margin:0 auto 8px}
+.rc__scale{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(calc(var(--rcw,540) / 1080));width:1080px;height:1080px}
+.rc__img{width:100%;max-width:540px;display:block;margin:8px auto;border:1px solid #e3e3e3;border-radius:12px}
+.rc__txt{white-space:pre-wrap;background:#f6f6f6;border-radius:10px;padding:8px 10px;font-size:12px;font-family:inherit}
+/* v79 道路・街道・地震 */
+.roads{pointer-events:none}.roads .hw__hit,.roads .kok__hit,.roads .kai__hit,.roads .ic{pointer-events:stroke;cursor:pointer}.roads .ic{pointer-events:auto}
+.hw{fill:none;stroke:#2E7D32;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:.85}.hw--u{stroke:#00695C}.hw--j{stroke:#558B2F;stroke-opacity:.7}.hw__glow{fill:none;stroke:#fff;stroke-opacity:.75;stroke-linecap:round;stroke-linejoin:round}
+.hw__hit,.kok__hit,.kai__hit{fill:none;stroke:transparent}
+.hw__t{fill:#1B5E20;font-weight:800;paint-order:stroke;stroke:#fff;stroke-width:calc(3 * var(--u,1px));pointer-events:none}
+.kok{fill:none;stroke:#7E57C2;stroke-opacity:.55;stroke-linecap:round;stroke-linejoin:round}.kok--main{stroke:#5E35B1;stroke-opacity:.7}.kok__t{fill:#4527A0;font-weight:800;paint-order:stroke;stroke:#fff;stroke-width:calc(2.5 * var(--u,1px));pointer-events:none}
+.ic__c{fill:#fff;stroke:#2E7D32}.ic--jct .ic__c{fill:#2E7D32;stroke:#fff}.ic__t{fill:#1B5E20;font-weight:700;paint-order:stroke;stroke:#fff;pointer-events:none}.ic--jct .ic__t{font-weight:900}
+.kai{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:.8}.kai__t{font-weight:900;paint-order:stroke;stroke:#fff;stroke-width:calc(3 * var(--u,1px));pointer-events:none;opacity:.9}
+.kai__nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.kai__list{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;max-height:40vh;overflow:auto}
+.kai__s{border:1px solid #ddd;background:#fff;border-radius:8px;padding:3px 8px;font-size:12px;cursor:pointer;display:inline-flex;gap:5px;align-items:center}.kai__s i{font-style:normal;font-family:var(--mono);font-size:10px;color:#fff;background:#8D6E63;border-radius:4px;padding:0 4px}.kai__s--ic i{background:#2E7D32}.kai__s small{color:#999;font-size:10px}
+.quake{pointer-events:auto}.qk__wave{fill:none;stroke:#E53935;stroke-opacity:.8;animation:qkwave 1.6s ease-out infinite}.qk__wave--2{animation-delay:.8s}.qk--alarm .qk__wave{stroke:#B71C1C}
+@keyframes qkwave{0%{r:var(--r0,6px);stroke-opacity:.9}100%{r:var(--r1,60px);stroke-opacity:0}}
+.qk__x{fill:none;stroke:#E53935;stroke-linecap:round;cursor:pointer}.qk__t{fill:#B71C1C;font-weight:900;paint-order:stroke;stroke:#fff;pointer-events:none}
+.qkbar{position:fixed;left:50%;top:8px;transform:translate(-50%,-140%);background:#B71C1C;color:#fff;border-radius:12px;padding:8px 12px;font-size:13px;z-index:60;display:flex;gap:8px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .3s;max-width:min(96vw,760px);flex-wrap:wrap}
+.qkbar.show{transform:translate(-50%,0)}.qkbar--alarm{background:#7f0000;animation:qkblink 1s steps(2) infinite}@keyframes qkblink{50%{box-shadow:0 0 0 6px rgba(255,0,0,.35)}}
+.qkbar__i{font-weight:900}.qkbar__t{opacity:.85;font-size:11.5px}.qkbar__ts{background:#fff;color:#0d47a1;border-radius:6px;padding:1px 6px;font-weight:800}
+.qkbar__b{border:1px solid #fff;background:transparent;color:#fff;border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer}.qkbar__x{border:0;background:transparent;color:#fff;font-size:18px;cursor:pointer;line-height:1}
+.qkm__hd{display:flex;gap:10px;align-items:center;margin-bottom:6px}.qkm__mag{font-family:var(--mono);font-weight:900;font-size:22px;background:#E53935;color:#fff;border-radius:8px;padding:2px 8px}.qkm__m{font-size:11.5px;color:#555}
+.qkm__pts{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.qkm__p{font-size:11px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;padding:1px 6px}.qkl__mag{font-family:var(--mono);font-weight:900;color:#E53935;font-size:15px;align-self:center}
+/* v79 現場メモ */
+.sec--memo h3 small{font-weight:400;color:#666;font-size:11px}.mm__ok{color:#2E7D32}
+.mm__sum{display:grid;gap:4px;margin:6px 0}.mm__row{display:grid;grid-template-columns:minmax(150px,1.2fr) 1fr auto auto;gap:8px;align-items:center;font-size:12px}
+.mm__k{color:#333}.mm__bar{height:8px;background:#eee;border-radius:4px;overflow:hidden}.mm__bar i{display:block;height:100%;background:#0071BC;border-radius:4px}.mm__v{font-size:11.5px;color:#0B5394}.mm__n{font-style:normal;font-size:10px;color:#999}.mm__none{grid-column:2/-1;font-size:11px;color:#aaa}
+.mm__ts{margin:6px 0;padding-left:18px;font-size:12.5px}.mm__t small{color:#888;margin-left:4px;font-size:10.5px}
+.mm__d summary{cursor:pointer;font-weight:700;font-size:13px;color:#0B5394;padding:4px 0}
+.mm__f{display:grid;gap:8px;margin-top:6px}.mm__ql{font-size:12px;font-weight:700;margin-bottom:3px}.mm__seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.mm__b{border:1px solid #cfd8dc;background:#fff;border-radius:8px;padding:8px 2px;font-size:11.5px;cursor:pointer;min-height:40px;line-height:1.2}.mm__b[aria-pressed=true]{background:#0071BC;color:#fff;border-color:#0071BC}
+.mm__l{font-size:12px;color:#555;display:block;position:relative}.mm__ta,.mm__in{display:block;width:100%;box-sizing:border-box;margin-top:3px;border:1px solid #ccc;border-radius:8px;padding:8px;font-size:14px;font-family:inherit}
+.mm__cnt{position:absolute;right:8px;bottom:6px;font-size:10px;color:#999}.mm__go{border:0;background:#0071BC;color:#fff;border-radius:12px;padding:12px;font-size:15px;font-weight:800;cursor:pointer}
+@media (max-width:520px){.mm__row{grid-template-columns:1fr;gap:2px}.mm__seg{grid-template-columns:repeat(2,1fr)}}
+/* v79 みんなで更新中・子連れ */
+.mm__hl{font-size:11.5px;color:#555;margin:2px 0 6px;line-height:1.5}.mm__hl-b{color:#2E7D32;font-weight:700}.mm__hl b{color:#222}
+.mm__hl--zero{color:#777}.mm__hl-go{border:0;background:transparent;color:#0B5394;text-decoration:underline;cursor:pointer;font-size:11.5px;padding:0}
+.mm__vh{font-size:12px;font-weight:700;color:#333;margin:8px 0 2px}
+.mm__thanks{background:#f6fbfa;border:1px solid #cfe7e3;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:12.5px;line-height:1.6;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:opacity .6s}.mm__thanks.fade{opacity:0}.mm__thanks p{margin:0}
+.mm__cheer{border:1px solid #0B5394;background:#fff;color:#0B5394;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.sec--kids h3 small{font-weight:400;color:#888;font-size:11px}
+
+/* v79 ルートカード（仕上げ） */
+.rc__hd{font-size:15px;font-weight:800;margin-bottom:8px}.rc__hd span{color:#aaa;margin:0 4px}
+.rc__c{border-radius:999px;padding:7px 14px;font-size:13px;min-height:36px}
+.rc__mk{display:flex;align-items:center;gap:10px;margin:8px 0}.rc__make{border:0;background:#1a1a1a;color:#fff;border-radius:12px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;min-width:160px}.rc__make:disabled{opacity:.6}.rc__ld{font-size:12px;color:#777}
+.rc__acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 6px}
+.rc__a{display:block;text-align:center;border:1px solid #d9d9d9;background:#fff;color:#1a1a1a;border-radius:12px;padding:12px 8px;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit}
+.rc__a--x{background:#1a1a1a;color:#fff;border-color:#1a1a1a}.rc__a--ghost{color:#666}
+.rc__sub{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin:4px 0}.rc__sub a,.rc__sub button{border:0;background:transparent;color:#0B5394;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:inherit}
+.rc__img{max-width:100%;width:100%;border:1px solid #eee;border-radius:12px;display:block;margin:4px auto}
+/* 調査ずみの印（現場メモ 3 件以上）: 駅の丸に小さな緑の輪 */
+.node.memo .st-dot{stroke:#2E7D32!important}
+.mm__open{display:block;width:100%;border:1px solid #1a1a1a;background:#fff;color:#1a1a1a;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;margin:8px 0 4px}
+.mm__empty{font-size:12.5px;color:#777;margin:6px 0}.mm__note{display:block;font-size:10.5px;color:#999;margin-top:2px}.mm__more summary{font-size:12px;color:#555;cursor:pointer;margin:4px 0}
+.mm__cheerline{font-size:11.5px;color:#777;line-height:1.6;margin:10px 0 0}.mm__cheer--s{padding:3px 10px;font-size:11.5px;margin-left:4px}
+.mm__thanks{display:block}.mm__thanks-t{font-weight:700;color:#1a1a1a}.mm__thanks-s{color:#777;font-size:12px}
+.sec--memo h3{font-size:14px}
+/* v79 ルートカード（体感速度） */
+.rc__spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;margin-right:8px;vertical-align:-2px;animation:rcspin .8s linear infinite}@keyframes rcspin{to{transform:rotate(360deg)}}
+.rc__sk{width:100%;max-width:540px;aspect-ratio:1/1;margin:0 auto 8px;border:1px solid #eee;border-radius:12px;background:#fff;overflow:hidden}
+.rc__sk-in{padding:7% 7%;display:flex;flex-direction:column;gap:3%;height:100%;box-sizing:border-box}
+.rc__sk i,.rc__sk b{display:block;opacity:0;transition:opacity .25s}.rc__sk .on{opacity:1}
+.rc__sk .s1{height:5%;width:38%;background:#f0f0f0;border-radius:6px}.rc__sk .s2{font-size:clamp(20px,6vw,34px);font-weight:800;color:#1a1a1a;margin:2% 0}
+.rc__sk .s3{height:6%;width:22%;background:#e3f2fd;border-radius:999px}.rc__sk .s4{height:6%;width:60%;background:#f0f0f0;border-radius:6px;margin-top:3%}.rc__sk .s5{height:12%;width:90%;background:#f5f5f5;border-radius:6px;margin-top:6%}.rc__sk .s6{height:8%;width:70%;background:#f7f7f7;border-radius:6px;margin-top:auto}
+/* v79 カード（Canvas 直描き）・リカバリ */
+.rc__cvwrap{width:100%;max-width:540px;margin:0 auto 8px;border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff}.rc__cv{width:100%;height:auto;display:block}
+.rc__textv{white-space:pre-wrap;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px;font-size:13px;line-height:1.6;font-family:inherit;margin:6px 0}
+.rc__fail{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;color:#333;margin:6px 0}
+.rc__a.is-off{opacity:.4;pointer-events:none}
+.mm__err{font-size:12.5px;color:#8a4b00;background:#fff8e1;border:1px solid #ffe0a3;border-radius:8px;padding:8px 10px;margin:0 0 6px;line-height:1.5}
+.rc__a--main{background:#0B5394;color:#fff;border-color:#0B5394}.rc__hint{font-size:12px;color:#333;line-height:1.6;margin:6px 0}

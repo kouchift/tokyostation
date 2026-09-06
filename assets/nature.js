@@ -235,19 +235,38 @@ RG.terraBuild = function () {
       gRange.appendChild(p); gRange.appendChild(hit); gRange.appendChild(t);
     });
   }
-  if (RG.RIVERS && !terraBuilt.river) {
-    terraBuilt.river = 1; gRiver.innerHTML = "";
+  if (RG.RIVERS && (!terraBuilt.river || (RG.RIVER_GEO && !terraBuilt.riverGeo))) {
+    // 実測の線形（国土数値情報 W05）があればそれを使い、無ければ近似。線形があとから届いたら描き直す
+    var GEO = RG.RIVER_GEO || {}, byQ = {};
+    Object.keys(GEO).forEach(function (k) { if (GEO[k].q) byQ[GEO[k].q] = GEO[k]; });
+    terraBuilt.river = 1; terraBuilt.riverGeo = !!RG.RIVER_GEO; gRiver.innerHTML = "";
+    var drawn = {};
     RG.RIVERS.forEach(function (r, i) {
-      if (!r.pts || r.pts.length < 2) return;
-      var apx = r.ps === "wd";
-      var d = apx ? smoothPath(r.pts) : pathOf(r.pts), id = "rg-rv-" + i;
-      var p = RG.el("path", { class: "trv" + (r.grade === 1 ? " trv--1" : "") + (apx ? " trv--apx" : ""), id: id, d: d }); p.__r = r; p.__bb = bboxOf(r.pts); p.__apx = apx;
+      var ge = byQ[r.q] || GEO[r.n];
+      var polylines = ge ? ge.pts : (r.pts && r.pts.length >= 2 ? [r.pts] : null);
+      if (!polylines) return;
+      drawn[ge ? (byQ[r.q] ? r.q : r.n) : "-"] = 1;
+      var apx = !ge && r.ps === "wd";
+      var d = ge ? polylines.map(function (pts) { return pathOf(pts); }).join("") : apx ? smoothPath(r.pts) : pathOf(r.pts), id = "rg-rv-" + i;
+      var allpts = []; polylines.forEach(function (pts) { allpts = allpts.concat(pts); });
+      var p = RG.el("path", { class: "trv" + (r.grade === 1 ? " trv--1" : "") + (apx ? " trv--apx" : "") + (ge ? " trv--geo" : ""), id: id, d: d }); p.__r = r; p.__bb = bboxOf(allpts); p.__apx = apx;
       var t = RG.el("text", { class: "trv__t" });
       var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
       tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id);
       tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = r.n;
       t.appendChild(tp); t.__p = p;
       var hit = RG.el("path", { class: "trv__hit", d: d }); hit.__r = r;
+      gRiver.appendChild(p); gRiver.appendChild(hit); gRiver.appendChild(t);
+    });
+    // 支流（RIVERS に無い一級河川）: 細い線＋寄ったときだけ名前
+    Object.keys(GEO).forEach(function (k, j) {
+      var ge = GEO[k]; if (ge.q && byQ[ge.q] === ge && drawn[ge.q]) return; if (drawn[k]) return; if (ge.m) return;
+      var d = ge.pts.map(function (pts) { return pathOf(pts); }).join(""), id = "rg-rvt-" + j, allpts = []; ge.pts.forEach(function (pts) { allpts = allpts.concat(pts); });
+      var r2 = { n: k.split("|")[0], sys: ge.sys, grade: ge.g, len: ge.km, pf: ge.pf, trib: true };
+      var p = RG.el("path", { class: "trv trv--trib", id: id, d: d }); p.__r = r2; p.__bb = bboxOf(allpts); p.__trib = true;
+      var t = RG.el("text", { class: "trv__t trv__t--trib" }); var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
+      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = r2.n; t.appendChild(tp); t.__p = p;
+      var hit = RG.el("path", { class: "trv__hit", d: d }); hit.__r = r2;
       gRiver.appendChild(p); gRiver.appendChild(hit); gRiver.appendChild(t);
     });
   }
@@ -322,11 +341,11 @@ RG.terraLOD = function () {
   gRiver.style.display = showRiver ? "" : "none";
   if (showRiver) Array.prototype.forEach.call(gRiver.childNodes, function (n) {
     if (n.classList.contains("trv")) {
-      var vis = inView(n.__bb, pad) && (z >= 0.3 || n.__r.grade === 1) && !(n.__apx && z >= 1.3);   // 近似の線は街まで寄ったら消す
+      var vis = inView(n.__bb, pad) && (z >= 0.3 || n.__r.grade === 1) && !(n.__apx && z >= 1.3) && !(n.__trib && z < 0.45);   // 近似の線は街まで寄ったら消す。支流は少し寄ってから
       n.style.display = vis ? "" : "none"; n.__vis = vis;
       n.style.setProperty("stroke-width", (Math.min(3.2, 1.2 + z * 1.2) * u).toFixed(2) + "px", "important");
     } else if (n.classList.contains("trv__hit")) { n.style.setProperty("stroke-width", (12 * u).toFixed(2) + "px", "important"); }
-    else if (n.__p) { n.style.display = (n.__p.__vis && z >= 0.22) ? "" : "none"; n.style.setProperty("font-size", (10.5 * u).toFixed(2) + "px", "important"); }
+    else if (n.__p) { n.style.display = (n.__p.__vis && z >= (n.__p.__trib ? 1.2 : 0.22)) ? "" : "none"; n.style.setProperty("font-size", ((n.__p.__trib ? 9.5 : 10.5) * u).toFixed(2) + "px", "important"); }
   });
   var showCur = terraOn.cur && z < 0.7;
   gCur.style.display = showCur ? "" : "none";

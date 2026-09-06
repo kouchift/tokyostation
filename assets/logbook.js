@@ -80,6 +80,7 @@ RG.logToMarkdown = function (g) {
          (hasA ? " → **実際 " + yen(sumA) + "**" : ""));
   if (g.rating) L.push("> 満足度 " + "★".repeat(g.rating) + "☆".repeat(5 - g.rating));
   L.push("");
+  if (g.pv) { var ex = new Date(g.pv.expires); L.push("🎬 ルート PV: `" + g.pv.name + "`（端末に保存した20秒動画。保有期限 " + ex.getFullYear() + "/" + (ex.getMonth() + 1) + "/" + ex.getDate() + "、投げ銭の有無にかかわらず期限後は消える可能性があります）"); L.push(""); }
   L.push("## 行程");
   L.push("");
   g.items.forEach(function (it) {
@@ -242,13 +243,18 @@ RG.bindLogs = function (m, redraw) {
   $$("[data-obs]", m).forEach(function (b) {
     b.addEventListener("click", function () {
       var g0 = P.logs[+b.dataset.obs];
-      var e = RG.exportMd(g0);
-      RG.markVisited(g0);
-      if (e.obsidian.length > 7000) {
-        RG.tripStatus("本文が長すぎてObsidianに直接渡せません。「.md を保存」を使ってください。", "warn", 5000);
-        return;
+      function go(pv) {
+        if (pv) g0.pv = { name: pv.name, expires: pv.expires };
+        var e = RG.exportMd(g0);
+        RG.markVisited(g0);
+        if (e.obsidian.length > 7000) {
+          RG.tripStatus("本文が長すぎてObsidianに直接渡せません。「.md を保存」を使ってください。", "warn", 5000);
+          return;
+        }
+        location.href = e.obsidian;
       }
-      location.href = e.obsidian;
+      // v78: 先に 20 秒のルート PV を作ってから送る（作れない環境ではそのまま）
+      if (RG.pvFlow && (g0.items || []).some(function (it) { return it.k === "route"; })) RG.pvFlow("obsidian", go, g0.items); else go(null);
     });
   });
   $$("[data-mdc]", m).forEach(function (b) {

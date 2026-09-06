@@ -24,6 +24,11 @@ RG.TIP = {
   paypayLink: "", kyashLink: "",
   discordWebhook: "",
   googleForm: { action: "", name: "", text: "" },
+  /* 現場メモ（v79）: 受け皿を用意すると «みんなのメモ» になる（無くても端末内で動く）
+     memoForm: Google フォームの action URL と、各項目の entry.xxxx（st,name,nick,text,vid,t,quiet,step,xfer,night,toilet,elev）
+     memoCsv : そのフォームの回答スプレッドシートを「ウェブに公開 → CSV」した URL（列名を st,name,nick,text,vid,t,quiet,step,xfer,night,toilet にする） */
+  memoForm: { action: "", fields: { st: "", name: "", nick: "", text: "", vid: "", t: "", quiet: "", step: "", xfer: "", night: "", toilet: "", elev: "" } },
+  memoCsv: "",
   mailto: "tonbo7@gmail.com",
   siteUrl: "https://kouchift.github.io/tokyostation/",
   /* 銀行振込（ゆうちょ）。空のままだと「準備待ち」表示。記号・番号 or 店名・店番・口座番号、受取人名（カナは FB データ用） */

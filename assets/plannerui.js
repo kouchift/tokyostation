@@ -387,7 +387,7 @@ RG.showSpot = function (p) {
     (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") +
     (RG.mountainBlock ? RG.mountainBlock(p) : "") + (RG.riverBlock ? RG.riverBlock(p) : "") + (RG.castleBlock ? RG.castleBlock(p) : "") +
     (RG.chainBlock ? RG.chainBlock(p) : "") + (RG.fuelBlock ? RG.fuelBlock(p) : "") + (RG.koshinBlock ? RG.koshinBlock(p) : "") + (RG.zooBlock ? RG.zooBlock(p) : "") +
-    (RG.ytBlock ? RG.ytBlock(p) : "") +
+    (RG.ytBlock ? RG.ytBlock(p) : "") + (RG.airportBlock ? RG.airportBlock(p) : "") + (RG.shukubaBlock ? RG.shukubaBlock(p) : "") +
     (RG.enrichSlot && (!p.chain || p.zoo || p.airport) && !p.od ? RG.enrichSlot() : "") +
     cameraBlock(p) +
     fromHtml +
@@ -441,6 +441,8 @@ RG.showSpot = function (p) {
   if (RG.terraBind) RG.terraBind(m, p);
   if (RG.historyBind) RG.historyBind(m, p);
   if (RG.ytBind) RG.ytBind(m, p);
+  if (RG.airBind && p.air) RG.airBind(m, p);
+  if (RG.roadsBind) RG.roadsBind(m, p);
   if (RG.bindPinRow) RG.bindPinRow(m, p);
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });
@@ -692,6 +694,7 @@ function optCard(o, i, ctx) {
     '<div class="opt__bar"><i style="width:' + Math.min(100, o.minutes / 120 * 100) + '%"></i></div>' +
     '<div class="opt__badges">' + b.join("") + "</div>" +
     '<ul class="opt__d">' + (o.detail || []).map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul>" +
+    (o.links && o.links.length ? '<div class="opt__lnks">' + o.links.map(function (l) { return l.u ? '<a class="lnk lnk--s" href="' + esc(l.u) + '" target="_blank" rel="noopener">' + esc(l.t) + " ↗</a>" : '<button class="lnk lnk--s" type="button" data-act="' + esc(l.act) + '">' + esc(l.t) + "</button>"; }).join("") + "</div>" : "") +
     (o.stopped ? "" :
       '<div class="opt__acts">' +
         '<button class="opt__b" type="button" data-add="' + i + '">🧳 リストに追加</button>' +
@@ -704,9 +707,14 @@ function optCard(o, i, ctx) {
 function showRoutes(destId) {
   if (!Trip.origin) { status("先に出発地を決めてください（📍現在地、または駅カードの「ここから出発」）", "warn"); return; }
   var s = RG.byId[destId]; if (!s) return;
+  // v78: 遠い行き先は空港・航空路線のデータを先に読む（読めたら描き直す）
+  if (!RG.AIRPORTS && RG.ensureData && RG.hav(Trip.origin, [s.la, s.lo]) >= 250 && !RG.__airWait) {
+    RG.__airWait = 1; RG.ensureData("spots", function () { RG.__airWait = 0; if (document.querySelector(".modal.show .rt__hd")) showRoutes(destId); });
+  }
   var r = RG.Planner.estimate(Trip.origin, [s.la, s.lo], Trip.when, Trip.aggr);
   var kl = { day: "日中", peak: "ラッシュ", night: "深夜・早朝" }[r.hourKind];
-  var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(s.n) + "駅</b></div>" +
+  var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(s.n) + "駅</b>" +
+    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '">🪪 ルートカードを作る</button></div>' +
     '<div class="rt__meta">' + (r.at.getMonth() + 1) + "/" + r.at.getDate() + " " + hhmm(r.at) +
     " 発（" + kl + "）／直線 " + r.straightKm.toFixed(1) + "km／" +
     RG.CONFIG.aggr[r.aggr].emoji + RG.CONFIG.aggr[r.aggr].label + "</div></div>";
@@ -754,6 +762,11 @@ function showRoutes(destId) {
   });
   $$("[data-sort]", m).forEach(function (b) {
     b.addEventListener("click", function () { RG.routeSort = b.dataset.sort; showRoutes(destId); });
+  });
+  var cb = $("[data-card]", m);
+  if (cb) cb.addEventListener("click", function () { if (RG.showRouteCard) RG.showRouteCard(Trip.id, s.id, Trip.aggr); });
+  $$("[data-act]", m).forEach(function (b) {
+    b.addEventListener("click", function () { var a = b.dataset.act.split(":"); if (a[0] === "airroute" && RG.airRouteModal) RG.airRouteModal(a[1], a[2]); });
   });
   $$("[data-add]", m).forEach(function (b) {
     b.addEventListener("click", function () {

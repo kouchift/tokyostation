@@ -81,10 +81,10 @@ RG.tipInit = function () {
   }
   // 地図右のズーム列に ☕（電車の中でも親指ひとつで届く入口）
   var zb = document.querySelector(".zoombar");
-  if (zb && !document.getElementById("tipfab")) {
+  if (zb && !document.getElementById("tipfab") && RG.settings && RG.settings.tipFab === true) {   // v79: 既定では出さない（応援の導線はカード・投稿後・現場メモの下だけ）
     var fb = document.createElement("button");
     fb.id = "tipfab"; fb.className = "sm tipfab"; fb.type = "button"; fb.textContent = "☕";
-    fb.setAttribute("aria-label", "制作者に投げ銭"); fb.title = "制作者に投げ銭（ワンタップ）";
+    fb.setAttribute("aria-label", "応援する"); fb.title = "応援する（この地図を現場の声で育て続けたい）";
     fb.addEventListener("click", function () { RG.tipQuick(); });
     zb.appendChild(fb);
   }
@@ -117,11 +117,10 @@ RG.reqBind = function (root) {
 /* ---- 設定パネルに差し込む入口 ---- */
 RG.tipEntryHTML = function () {
   var S = st();
-  return '<div class="set__sec tjin"><h4>☕ 制作者へ（投げ銭・改善要望）</h4>' +
-    '<p class="set__d">このサイトは<b>従業員1名の宗教法人</b>のような世界（非課税・端数なし）で、たった一人の制作者が細々と維持しています。' +
-    "維持管理は<b>ここからの投げ銭だけ</b>が頼りです。改善のご要望もここから。</p>" +
-    '<div class="tj__row"><button id="tip-open" class="set__b2" type="button">☕ 窓口をひらく</button>' +
-    '<button id="tip-hist" class="set__b" type="button">📜 投げ銭の履歴' + (S.count ? "（" + S.count + "回・" + yen(S.total) + "）" : "") + "</button></div></div>";
+  return '<div class="set__sec tjin"><h4>☕ 制作者へ（応援・改善要望）</h4>' +
+    '<p class="set__d">この地図を、現場の声で育て続けたいと思っています。<br>もし少しでも役に立ったら、応援してもらえると嬉しいです。改善のご要望もここから。</p>' +
+    '<div class="tj__row"><button id="tip-open" class="set__b2" type="button">☕ 応援する</button>' +
+    '<button id="tip-hist" class="set__b" type="button">📜 応援の履歴' + (S.count ? "（" + S.count + "回・" + yen(S.total) + "）" : "") + "</button></div></div>";
 };
 RG.tipBind = function (root) {
   var b = $("#tip-open", root); if (b) b.addEventListener("click", function () { RG.openTip(); });

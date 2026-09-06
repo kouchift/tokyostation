@@ -220,6 +220,11 @@ RG.geoSwitchHTML = function () {
     '<label class="set__sw"><input id="gs-river" type="checkbox"' + on("terraRiver") + "> 🏞️ 一級河川の線と名前</label>" +
     '<label class="set__sw"><input id="gs-sea" type="checkbox"' + on("terraSea") + "> 🌊 海・湾・海峡の名前</label>" +
     '<label class="set__sw"><input id="gs-cur" type="checkbox"' + on("terraCur") + "> 🌡️ 海流（動く矢印。暖流は赤・寒流は青）</label>" +
+    '<label class="set__sw"><input id="gs-hwy" type="checkbox"' + on("roadHwy") + "> 🛣️ 高速道路（線・名前・IC/JCT は寄ると）</label>" +
+    '<label class="set__sw"><input id="gs-kok" type="checkbox"' + (RG.settings && RG.settings.roadKok ? " checked" : "") + "> 🛣️ 一般国道（1995年の線形。既定はオフ）</label>" +
+    '<label class="set__sw"><input id="gs-kai" type="checkbox"' + on("roadKaido") + "> 🏮 五街道（東海道・中山道…）の道筋</label>" +
+    '<label class="set__sw"><input id="gs-quake" type="checkbox"' + on("quake") + "> 🌏 地震情報を受信（P2P地震情報・緊急地震速報を地図に）</label>" +
+    '<p class="deep__d"><button class="set__b" type="button" id="gs-quakel">🌏 最近の地震</button></p>' +
     '<p class="deep__d">山・城・川・動物園などはスポットのジャンル（画面下のアイコン）から出せます。' +
     '<button class="set__b" type="button" id="gs-mtrank">🗻 山の標高 TOP100</button> <button class="set__b" type="button" id="gs-hanrank">🏯 藩の石高ランキング</button></p></div>';
 };
@@ -230,11 +235,17 @@ RG.geoSwitchBind = function (root) {
   sw("#gs-river", "terraRiver", function (v) { RG.terraSet("river", v); });
   sw("#gs-sea", "terraSea", function (v) { RG.terraSet("sea", v); });
   sw("#gs-cur", "terraCur", function (v) { RG.terraSet("cur", v); });
+  sw("#gs-hwy", "roadHwy", function (v) { RG.roadsSet && RG.roadsSet("hwy", v); if (v) RG.ensureData("spots", function () { RG.roadsBuild && RG.roadsBuild(); }); });
+  sw("#gs-kok", "roadKok", function (v) { RG.roadsSet && RG.roadsSet("kok", v); if (v) RG.ensureData("spots", function () { RG.roadsBuild && RG.roadsBuild(); }); });
+  sw("#gs-kai", "roadKaido", function (v) { RG.roadsSet && RG.roadsSet("kaido", v); });
+  sw("#gs-quake", "quake", function (v) { if (v && RG.quakeInit) RG.quakeInit(); });
+  var qb = $("#gs-quakel", root); if (qb) qb.addEventListener("click", function () { RG.showQuakeList && RG.showQuakeList(); });
   var b = $("#gs-mtrank", root); if (b) b.addEventListener("click", function () { RG.ensureData("spots", function () { RG.showMountainRank(); }); });
   var b2 = $("#gs-hanrank", root); if (b2) b2.addEventListener("click", function () { RG.ensureData("spots", function () { RG.showHanRank(); }); });
 };
 RG.geoRestore = function () {
   var S = RG.settings || {};
+  if (RG.roadsSet) { if (S.roadHwy === false) RG.roadsSet("hwy", false); if (S.roadKok) RG.roadsSet("kok", true); if (S.roadKaido === false) RG.roadsSet("kaido", false); }
   ["Range", "River", "Sea", "Cur"].forEach(function (k) { if (S["terra" + k] === false && RG.terraSet) RG.terraSet(k.toLowerCase(), false); });
   if (S.kuni) RG.kuniSet(true);
 };

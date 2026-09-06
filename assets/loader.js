@@ -79,6 +79,10 @@ var ONDEMAND = [
   { f: "data/castles.js",   key: "castles",  label: "城と藩",             group: "spots" },
   { f: "data/kuni.js",      key: "kuni",     label: "旧国名",             group: "spots" },
   { f: "data/osm_extra.js", key: "osmx",     label: "GS・ポスト・庚申塔・動物園", group: "spots" },
+  { f: "data/air.js",       key: "air",      label: "空港と航空路線",     group: "spots" },
+  { f: "data/river_geo.js", key: "rivergeo", label: "川の線形",           group: "spots" },
+  { f: "data/roads.js",     key: "roads",    label: "高速道路・国道",     group: "spots" },
+  { f: "data/tokaido.js",   key: "kaido",    label: "五街道と宿場",       group: "spots" },
   { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots" }
 ];
 
@@ -127,7 +131,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1, mountains: 1, water: 1, castles: 1, osmx: 1, yt: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;

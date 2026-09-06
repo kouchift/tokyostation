@@ -41,7 +41,7 @@ RG.mergeOsmExtra = function () {
                        url: r.web || null, zoo: r, q: r.q || null, srcNote: "動物園・水族館・植物園: © OpenStreetMap contributors (ODbL 1.0)。特徴・写真はカードを開いたときに Wikipedia から取得します。" });
     });
   }
-  if (RG.AIR_OSM) {
+  if (RG.AIR_OSM && !RG.AIRPORTS) {
     did = 1;
     RG.AIR_OSM.forEach(function (r, i) {
       RG.MAPPOI.push({ i: "ap" + i, n: r.n, la: r.la, lo: r.lo, g: "airport", s: r.iata ? 4.4 : 3.2, ti: r.iata ? 0 : 2, t: r.k + (r.iata ? "・" + r.iata : "") + (r.icao ? "/" + r.icao : ""), be: "✈️", bc: "#1A237E",
