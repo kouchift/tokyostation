@@ -365,9 +365,9 @@ RG.showSpot = function (p) {
       ? '<img class="spotcard__i" src="' + esc(RG.cimg(p.img, 640)) + '" alt="" loading="lazy">'
       : p.chain
       ? '<div class="spotcard__ph spotcard__ph--s" style="--lc:' + (p.bc || "#888") + '">' +
-        '<span class="spotcard__phe">' + (p.be || "🏪") + "</span>" +
+        (RG.chainLogoOf && RG.chainLogoOf(p) ? '<img class="spotcard__phl" src="' + esc(RG.chainLogoOf(p).replace(/width=\d+/, "width=320")) + '" alt="">' : '<span class="spotcard__phe">' + (p.be || "🏪") + "</span>") +
         '<span class="spotcard__phn">' + esc(p.t || p.n) + "</span>" +
-        '<span class="spotcard__pht">お店のロゴは商標のため出せません。ブランドカラーで表しています</span></div>'
+        '<span class="spotcard__pht">' + (RG.chainLogoOf && RG.chainLogoOf(p) ? "ロゴ・商標は各社に帰属します" : "ブランドカラーと絵文字で表しています") + "</span></div>"
       : '<div class="spotcard__ph" style="--lc:' + (g.c || "#888") + '">' +
         '<span class="spotcard__phe">' + (p.be || p.e || g.e || "📍") + "</span>" +
         '<span class="spotcard__phn">' + esc(p.n) + "</span>" +
@@ -385,7 +385,10 @@ RG.showSpot = function (p) {
     (RG.pinRow ? RG.pinRow(p) : "") +
     (RG.focusHtml ? RG.focusHtml(p.n) : "") +
     (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") +
-    (RG.enrichSlot && !p.chain && !p.od ? RG.enrichSlot() : "") +
+    (RG.mountainBlock ? RG.mountainBlock(p) : "") + (RG.riverBlock ? RG.riverBlock(p) : "") + (RG.castleBlock ? RG.castleBlock(p) : "") +
+    (RG.chainBlock ? RG.chainBlock(p) : "") + (RG.fuelBlock ? RG.fuelBlock(p) : "") + (RG.koshinBlock ? RG.koshinBlock(p) : "") + (RG.zooBlock ? RG.zooBlock(p) : "") +
+    (RG.ytBlock ? RG.ytBlock(p) : "") +
+    (RG.enrichSlot && (!p.chain || p.zoo || p.airport) && !p.od ? RG.enrichSlot() : "") +
     cameraBlock(p) +
     fromHtml +
     (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
@@ -430,10 +433,14 @@ RG.showSpot = function (p) {
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
     "<b>レビューサイトの評価点ではありません。</b><br>出典: Wikidata (CC0 1.0) / 画像: Wikimedia Commons</p></div>";
   var m = modal(g.e + " " + p.n, html);
-  if (RG.enrichIn && !p.chain && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]) });
+  if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), q: p.q || null,
+                                                                        wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
   if (RG.reqBind) RG.reqBind(m);
   if (RG.focusBind) RG.focusBind(m);
   if (RG.natureBind) RG.natureBind(m, p);
+  if (RG.terraBind) RG.terraBind(m, p);
+  if (RG.historyBind) RG.historyBind(m, p);
+  if (RG.ytBind) RG.ytBind(m, p);
   if (RG.bindPinRow) RG.bindPinRow(m, p);
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });
@@ -452,6 +459,10 @@ RG.showSpot = function (p) {
     return '<div class="ex"><span class="ex__k">' + esc(k) + '</span><span class="ex__v">' + esc(v) + "</span>" +
       (sub ? '<span class="ex__s">' + esc(sub) + "</span>" : "") + "</div>";
   }
+};
+RG.exrow = function (k, v, sub) {
+  return '<div class="ex"><span class="ex__k">' + esc(k) + '</span><span class="ex__v">' + esc(v) + "</span>" +
+    (sub ? '<span class="ex__s">' + esc(sub) + "</span>" : "") + "</div>";
 };
 
 /* ---------------------------------------------- 住所・地点のカード */

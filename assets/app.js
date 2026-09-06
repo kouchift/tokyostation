@@ -85,7 +85,7 @@ RG.registerDetail = function (key, d) { RG.details[key] = d; };
 function $(s, r) { return (r || document).querySelector(s); }
 function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
 function el(tag, attrs, kids) {
-  var ns = /^(svg|g|path|circle|text|rect|line|use|tspan|polyline)$/.test(tag);
+  var ns = /^(svg|g|path|circle|text|rect|line|use|tspan|polyline|polygon|marker|defs|image|textPath|clipPath|pattern|ellipse)$/.test(tag);
   var n = ns ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
   for (var k in (attrs || {})) {
     if (k === "text") n.textContent = attrs[k];
@@ -136,11 +136,13 @@ function emojiImg(e) {
 }
 RG.emojiImg = emojiImg;
 /* <image>（絵文字画像）を中心 (x,y)・一辺 size で置く。画像が作れない環境では <text> にする */
-function setEmoji(node, e, x, y, size) {
-  var url = emojiImg(e);
+function setEmoji(node, e, x, y, size, urlOverride) {
+  var url = urlOverride || emojiImg(e);
   if (url) {
     if (node.tagName !== "image") { var im = el("image", { class: node.getAttribute("class") }); node.parentNode.replaceChild(im, node); node = im; }
     node.setAttribute("href", url); node.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url);
+    if (urlOverride && !node.__errBound) { node.__errBound = 1; node.addEventListener("error", function () { var u2 = node.getAttribute("href"); if (RG.logoFail && u2 && !/^data:/.test(u2)) { RG.logoFail(u2); setEmoji(node, node.__e || "📍", +node.getAttribute("x") + +node.getAttribute("width") / 2, +node.getAttribute("y") + +node.getAttribute("height") / 2, +node.getAttribute("width")); } }); }
+    node.__e = e;
     node.setAttribute("x", (x - size / 2).toFixed(2)); node.setAttribute("y", (y - size / 2).toFixed(2));
     node.setAttribute("width", size.toFixed(2)); node.setAttribute("height", size.toFixed(2));
   } else {
@@ -703,6 +705,8 @@ var Map = (function () {
     if (RG.jpAdmLOD) RG.jpAdmLOD();
     if (RG.geoLOD) RG.geoLOD();
     if (RG.corpBubbleLOD) RG.corpBubbleLOD();
+    if (RG.terraLOD) RG.terraLOD();
+    if (RG.kuniLOD) RG.kuniLOD();
     if (RG.buzzRailRefresh) RG.buzzRailRefresh();
     if (RG.map3DMoved) RG.map3DMoved();
     if ((RG.loadTilesFor || RG.zipOnMove) && vb) {
@@ -1064,7 +1068,11 @@ var Map = (function () {
       c0.style.setProperty("--pc", g.c);
       var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15;
       if (t.g === "buzz" || t.g === "ichinomiya") esz = Math.max(esz, 13);   // 都道府県単位の目印は、引いていても読める大きさに
-      setEmoji(e0, g.e, t.x, t.y, esz * uu);
+      // v77: 寄ったとき（街〜詳細）だけ、企業・チェーンのロゴを極小で（識別目的。商標は各社に帰属）
+      var logo = (z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
+      if (logo) { esz = Math.max(esz * 1.35, 11); }
+      setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
+      n.classList.toggle("poi--logo", !!logo);
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
       h0.style.setProperty("r", (14 * uu).toFixed(3) + "px", "important");
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
@@ -1579,6 +1587,7 @@ var Card = (function () {
     return plate(s) +
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
            (RG.shinkansenHtml ? RG.shinkansenHtml(s.n) : "") +
+           (RG.ytForStation ? RG.ytForStation(s.n) : "") +
            hero(s) +
            (RG.enrichSlot ? RG.enrichSlot() : "") +
            scoreBlock(s) +
@@ -1631,6 +1640,7 @@ var Card = (function () {
     var st0 = RG.byId[id];
     if (RG.focusBind) RG.focusBind(root);
     if (RG.shinkansenBind && st0) RG.shinkansenBind(root, st0.n);
+    if (RG.ytBind) RG.ytBind(root);
     if (RG.reqBind) RG.reqBind(root);
     if (st0 && RG.enrichIn) RG.enrichIn(root, { name: st0.n, la: st0.la, lo: st0.lo, kind: "station",
       hasHero: !!(RG.POI && RG.POI[id] && RG.POI[id].img), hasIntro: !!(RG.DESCS && RG.DESCS[st0.n]) });
@@ -1891,9 +1901,9 @@ function mergeExtraPois(key) {
       var b = BR[r[0]];
       if (!b) return;
       var c = CT[b.cat] || {};
-      RG.MAPPOI.push({ i: "ch" + i, n: r[3] || b.n, la: r[1], lo: r[2], g: b.cat,
+      RG.MAPPOI.push({ i: "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
                        s: 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
-                       brand: b.i, chain: 1, cat: b.cat });
+                       brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null });
     });
   });
 
@@ -1947,6 +1957,12 @@ function mergeExtraPois(key) {
   if (RG.mergeViews) RG.mergeViews();
   if (RG.mergeOnsen) RG.mergeOnsen();
   if (RG.mergeNearSpecial) RG.mergeNearSpecial();
+  if (RG.mergeMountains) RG.mergeMountains();
+  if (RG.mergeRivers) RG.mergeRivers();
+  if (RG.mergeCastles) RG.mergeCastles();
+  if (RG.mergeOsmExtra) RG.mergeOsmExtra();
+  if (RG.mergeYt) RG.mergeYt();
+  if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS)) RG.terraBuild();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();

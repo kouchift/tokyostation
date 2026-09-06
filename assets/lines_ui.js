@@ -166,6 +166,9 @@ var Rail = (function () {
       '<button class="lr__c" type="button" id="lr-chain">🏪 お店をえらぶ</button> ' +
       '<button class="lr__c" type="button" id="lr-corp">🏢 業種でえらぶ</button> ' +
       '<button class="lr__c" type="button" id="lr-onsen">♨️ 温泉のこだわり</button> ' +
+      '<button class="lr__c" type="button" id="lr-mtrank">🗻 山の標高TOP100</button> ' +
+      '<button class="lr__c" type="button" id="lr-hanrank">🏯 藩の石高</button> ' +
+      '<button class="lr__c" type="button" id="lr-yt">▶️ 動画で見る</button> ' +
       '<button class="lr__c lr__c--y" type="button" id="lr-smoke">🚬 吸える場所</button> ' +
       '<button class="lr__c" type="button" id="lr-hs">📊 偏差値を入れる</button> ' +
       '<button class="lr__c lr__c--p" type="button" id="lr-pins">📌 自分のピン</button> ' +
@@ -351,6 +354,12 @@ var Rail = (function () {
       if (RG.hasSmokeTicket && RG.hasSmokeTicket()) RG.openSmokeFilter();
       else if (RG.showTicket) RG.showTicket();
     });
+    var mb = $("#lr-mtrank", box);
+    if (mb) mb.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showMountainRank) RG.showMountainRank(); }); });
+    var hb4 = $("#lr-hanrank", box);
+    if (hb4) hb4.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showHanRank) RG.showHanRank(); }); });
+    var yb = $("#lr-yt", box);
+    if (yb) yb.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showYtList) RG.showYtList(); }); });
     var ob = $("#lr-onsen", box);
     if (ob) ob.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("spots", function () { RG.openOnsenFilter(); }); });
     var cb3 = $("#lr-corp", box);
@@ -682,6 +691,7 @@ function openSettings() {
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
+    (RG.geoSwitchHTML ? RG.geoSwitchHTML() : "") +
     (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "") +
     '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
       '<p class="set__d">いま動いている版: <b>' + esc(RG.VERSION || "不明") + "</b>（" + esc(RG.BUILT || "?") + " 作成）" +
@@ -690,6 +700,7 @@ function openSettings() {
   var m = RG.openModal("設定", html);
   var sst = $("#set-state", m); if (sst) sst.addEventListener("click", function () { if (RG.showState) RG.showState(); });
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
+  if (RG.geoSwitchBind) RG.geoSwitchBind(m);
   if (RG.tipBind) RG.tipBind(m);
   renderWatch();
 

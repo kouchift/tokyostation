@@ -73,7 +73,13 @@ var ONDEMAND = [
   { f: "data/cams_jp.js",   key: "cams_jp",  label: "全国ライブカメラ",   group: "spots" },
   { f: "data/views_jp.js",  key: "views_jp", label: "全国の絶景",         group: "spots" },
   { f: "data/onsen_jp.js",  key: "onsen_jp", label: "全国の温泉",         group: "spots" },
-  { f: "data/near_special.js", key: "nearsp", label: "SPECIAL圏内",     group: "spots" }
+  { f: "data/near_special.js", key: "nearsp", label: "SPECIAL圏内",     group: "spots" },
+  { f: "data/mountains.js", key: "mountains", label: "山と山脈",         group: "spots" },
+  { f: "data/water.js",     key: "water",    label: "川・海・海流",       group: "spots" },
+  { f: "data/castles.js",   key: "castles",  label: "城と藩",             group: "spots" },
+  { f: "data/kuni.js",      key: "kuni",     label: "旧国名",             group: "spots" },
+  { f: "data/osm_extra.js", key: "osmx",     label: "GS・ポスト・庚申塔・動物園", group: "spots" },
+  { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots" }
 ];
 
 var loaded = {}, inflight = {};
@@ -121,7 +127,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1, mountains: 1, water: 1, castles: 1, osmx: 1, yt: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;
@@ -151,6 +157,7 @@ function flush() {
       if (RG.buildGroupBar) RG.buildGroupBar();
     }
     if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) RG.buildWeekBar();
+    if (keys.indexOf("kuni") >= 0 && RG.kuniOn && RG.kuniOn()) RG.kuniSet(true);
     if (keys.indexOf("support") >= 0 && RG.tipInit) RG.tipInit();
     if (card && RG.Card && RG.Card.refresh) RG.Card.refresh();
     if (keys.indexOf("landmarks") >= 0 && RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks();

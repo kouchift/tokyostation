@@ -1,0 +1,1363 @@
+{
+ "generated": "2026-09-06",
+ "source": "Wikidata (CC0 1.0) via WDQS: P2397 YouTube channel ID / P8687 social media followers (qualifier P2397, latest P585) / P3744 subscribers; top = 日本の YouTuber（人・グループで音楽・VTuber・企業・番組を除く）を登録者数順に 120。travel/food/history/remote は tools/build_youtube_spots.py の CURATED（手書き）",
+ "fields": "id=チャンネルID n=名前 subs=登録者数(Wikidata の最新値。API で上書きされる) q=Wikidata の項目 cat=分類 t=Wikidata に登録のチャンネル名 handle/query=id が分からないときの解決手段 unsure=自信のないもの note=メモ top=top の順位にも入るもの src=wikidata|manual",
+ "channels": [
+  {
+   "id": "UC6QZ_ss3i_8qLV_RczPZBkw",
+   "n": "いっせい",
+   "subs": 68500000,
+   "q": "Q135689324",
+   "cat": "top",
+   "t": "ISSEI / いっせい"
+  },
+  {
+   "id": "UCjp_3PEaOau_nT_3vnqKIvg",
+   "n": "じゅんや",
+   "subs": 38500000,
+   "q": "Q104012727",
+   "cat": "top",
+   "t": null
+  },
+  {
+   "id": "UCbCJmNKAL85O1VFeD6Wj60g",
+   "n": "バヤシ",
+   "subs": 32600000,
+   "q": "Q118143139",
+   "cat": "top",
+   "t": "Bayashi TV"
+  },
+  {
+   "id": "UCZf__ehlCEBPop-_sldpBUQ",
+   "n": "HIKAKIN",
+   "subs": 19300000,
+   "q": "Q11222605",
+   "cat": "top",
+   "t": "HikakinTV"
+  },
+  {
+   "id": "UCP1vrClG-6iGuFq7ls_NBsw",
+   "n": "ヴァンビ",
+   "subs": 18800000,
+   "q": "Q134507738",
+   "cat": "top",
+   "t": "Spider-VAMBI"
+  },
+  {
+   "id": "UCsXVk37bltHxD1rDPwtNM8Q",
+   "n": "世界をわかりやすく – Kurzgesagt",
+   "subs": 18500000,
+   "q": "Q110690949",
+   "cat": "top",
+   "t": "Kurzgesagt – In a Nutshell"
+  },
+  {
+   "id": "UCgMPP6RRjktV7krOfyUewqw",
+   "n": "はじめしゃちょー",
+   "subs": 15500000,
+   "q": "Q24230271",
+   "cat": "top",
+   "t": "はじめしゃちょー（hajime）"
+  },
+  {
+   "id": "UCQs-tWGqacJ7vuuJDtXq28w",
+   "n": "キッズライン",
+   "subs": 14100000,
+   "q": "Q85870816",
+   "cat": "top",
+   "t": "キッズライン♡Kids Line"
+  },
+  {
+   "id": "UCljYHFazflmGaDr5Lo90KmA",
+   "n": "すしらーめん《りく》",
+   "subs": 10000000,
+   "q": "Q30924899",
+   "cat": "top",
+   "t": "SUSHI RAMEN【Riku】"
+  },
+  {
+   "id": "UCibEhpu5HP45-w7Bq1ZIulw",
+   "n": "フィッシャーズ",
+   "subs": 8800000,
+   "q": "Q38278747",
+   "cat": "top",
+   "t": "Fischer's-フィッシャーズ-"
+  },
+  {
+   "id": "UCkitABalXafr-NqceQdDXtg",
+   "n": "Joji",
+   "subs": 7810000,
+   "q": "Q23826617",
+   "cat": "top",
+   "t": "TVFilthyFrank"
+  },
+  {
+   "id": "UCutJqz56653xV2wwSvut_hQ",
+   "n": "東海オンエア",
+   "subs": 7150000,
+   "q": "Q43426350",
+   "cat": "top",
+   "t": "東海オンエア"
+  },
+  {
+   "id": "UCMJiPpN_09F0aWpQrgbc_qg",
+   "n": "キヨ",
+   "subs": 5700000,
+   "q": "Q62601568",
+   "cat": "top",
+   "t": "キヨ。"
+  },
+  {
+   "id": "UCFo4kqllbcQ4nV83WCyraiw",
+   "n": "中田敦彦",
+   "subs": 5460000,
+   "q": "Q11366701",
+   "cat": "top",
+   "t": "中田敦彦のYouTube大学 - NAKATA UNIVERSITY"
+  },
+  {
+   "id": "UCW01sMEVYQdhcvkrhbxdBpw",
+   "n": "リュウジ",
+   "subs": 5400000,
+   "q": "Q62085019",
+   "cat": "top",
+   "t": "料理研究家リュウジのバズレシピ"
+  },
+  {
+   "id": "UC2alHD2WkakOiTxCxF-uMAg",
+   "n": "よにのちゃんねる",
+   "subs": 4700000,
+   "q": "Q109603165",
+   "cat": "top",
+   "t": "よにのちゃんねる"
+  },
+  {
+   "id": "UCaminwG9MTO4sLYeC3s6udA",
+   "n": "ヒカル",
+   "subs": 4530000,
+   "q": "Q30925733",
+   "cat": "top",
+   "t": "ヒカル（Hikaru）"
+  },
+  {
+   "id": "UCJ98lzh2QJGp37QgWPUcwrQ",
+   "n": "HIMAWARIちゃんねる",
+   "subs": 3920000,
+   "q": "Q109603914",
+   "cat": "top",
+   "t": "HIMAWARIちゃんねる"
+  },
+  {
+   "id": "UCg_m2ahbG9grCTh05T9kRog",
+   "n": "デカキン",
+   "subs": 3630000,
+   "q": "Q107727491",
+   "cat": "top",
+   "t": "デカキン Dekakin"
+  },
+  {
+   "id": "UCJZVj2iBrdvbNc416i0V-UA",
+   "n": "朝倉未来",
+   "subs": 3450000,
+   "q": "Q53764960",
+   "cat": "top",
+   "t": "朝倉未来 Mikuru Asakura"
+  },
+  {
+   "id": "UC3ETCazlHenpXEsrEJH-k5A",
+   "n": "The Anime Man",
+   "subs": 3360000,
+   "q": "Q77276444",
+   "cat": "top",
+   "t": "The Anime Man"
+  },
+  {
+   "id": "UC2GuoutVyegg6PUK88lLpjw",
+   "n": "兄者弟者",
+   "subs": 3160000,
+   "q": "Q52717349",
+   "cat": "top",
+   "t": "兄者弟者"
+  },
+  {
+   "id": "UCLqCmbd6bgcLaBVz3aA-68A",
+   "n": "P丸様。",
+   "subs": 3010000,
+   "q": "Q90599557",
+   "cat": "top",
+   "t": "P丸様。"
+  },
+  {
+   "id": "UCZC45sBWNdkqSQ9Bwtt5lfA",
+   "n": "アンナ・アカナ",
+   "subs": 2840000,
+   "q": "Q17305622",
+   "cat": "top",
+   "t": "Anna Akana"
+  },
+  {
+   "id": "UCq3Wpi10SyZkzVeS7vzB5Lw",
+   "n": "Ichika Nito",
+   "subs": 2760000,
+   "q": "Q108109314",
+   "cat": "top",
+   "t": "Ichika Nito"
+  },
+  {
+   "id": "UCaPJaMy0_OZlNjq7BVyTnkA",
+   "n": "佐久間宣行",
+   "subs": 2760000,
+   "q": "Q11382705",
+   "cat": "top",
+   "t": "佐久間宣行のNOBROCK TV"
+  },
+  {
+   "id": "UCdsEpuIqP0LiebVi9E2cVFw",
+   "n": "内田伸哉",
+   "subs": 2650000,
+   "q": "Q11394201",
+   "cat": "top",
+   "t": "Magician Shin!"
+  },
+  {
+   "id": "UC9UAxVR4Tym2PIICVfLTZUw",
+   "n": "混血のカレコレ",
+   "subs": 2580000,
+   "q": "Q105883639",
+   "cat": "top",
+   "t": "混血のカレコレ"
+  },
+  {
+   "id": "UCDn8Lqf-x0zD8hmFUg08f6w",
+   "n": "狩野英孝",
+   "subs": 2570000,
+   "q": "Q8977475",
+   "cat": "top",
+   "t": "狩野英孝【公式チャンネル】EIKO!GO!!"
+  },
+  {
+   "id": "UCZFO75r8iYNI2XPmoFEG6ig",
+   "n": "日常組",
+   "subs": 2550000,
+   "q": "Q107524931",
+   "cat": "top",
+   "t": "日常組"
+  },
+  {
+   "id": "UCpGk56cJDZcVqIxZatX7nbQ",
+   "n": "からめる",
+   "subs": 2510000,
+   "q": "Q98735311",
+   "cat": "top",
+   "t": "からめる"
+  },
+  {
+   "id": "UCFbp2XdRpKfk7mYt_uT8dxw",
+   "n": "Kevin's English Room",
+   "subs": 2490000,
+   "q": "Q109361289",
+   "cat": "top",
+   "t": "Kevin's English Room / 掛山ケビ志郎"
+  },
+  {
+   "id": "UCIR2mQ77wHrLMreV45nYhgw",
+   "n": "かまいたち",
+   "subs": 2450000,
+   "q": "Q11264143",
+   "cat": "top",
+   "t": "かまいたちチャンネル"
+  },
+  {
+   "id": "UC642pLj4GXSj-0Ybdx3ytmA",
+   "n": "梶原雄太",
+   "subs": 2430000,
+   "q": "Q11538848",
+   "cat": "top",
+   "t": "カジサック KAJISAC"
+  },
+  {
+   "id": "UCpCesuCH4UxIcy65gSrC0Pw",
+   "n": "チョコレートプラネット",
+   "subs": 2350000,
+   "q": "Q11318448",
+   "cat": "top",
+   "t": "チョコレートプラネット チャンネル"
+  },
+  {
+   "id": "UCL6JY2DXJNDOIqCP1CRADng",
+   "n": "江頭2:50",
+   "subs": 2340000,
+   "q": "Q2900360",
+   "cat": "top",
+   "t": "エガちゃんねる EGA-CHANNEL"
+  },
+  {
+   "id": "UCo_nZN5yB0rmfoPBVjYRMmw",
+   "n": "全力回避フラグちゃん!",
+   "subs": 2320000,
+   "q": "Q105883662",
+   "cat": "top",
+   "t": "全力回避フラグちゃん!"
+  },
+  {
+   "id": "UCgOfjIl0I_oG7VxIoaKaRsw",
+   "n": "コレコレ",
+   "subs": 2310000,
+   "q": "Q97456323",
+   "cat": "top",
+   "t": "コレコレチャンネル KoreTube"
+  },
+  {
+   "id": "UCrMST-VTtx4SYr8CNJHsbnQ",
+   "n": "東宮たくみ",
+   "subs": 2290000,
+   "q": "Q11526622",
+   "cat": "top",
+   "t": "書道家 東宮たくみ"
+  },
+  {
+   "id": "UCFdBehO71GQaIom4WfVeGSw",
+   "n": "DaiGo",
+   "subs": 2250000,
+   "q": "Q11196499",
+   "cat": "top",
+   "t": "メンタリスト DaiGo"
+  },
+  {
+   "id": "UC8pMBOI9vXf6fIM670vdIPw",
+   "n": "本田翼",
+   "subs": 2170000,
+   "q": "Q3616120",
+   "cat": "top",
+   "t": "ほんだのばいく"
+  },
+  {
+   "id": "UCpGpA7mSYmNJjLiJxKso5QA",
+   "n": "霜降り明星",
+   "subs": 2160000,
+   "q": "Q24874734",
+   "cat": "top",
+   "t": "しもふりチューブ"
+  },
+  {
+   "id": "UCh6eUVqErIE0B38vbIRzUqQ",
+   "n": "カノックスター",
+   "subs": 2150000,
+   "q": "Q105669082",
+   "cat": "top",
+   "t": "かの/カノックスター"
+  },
+  {
+   "id": "UC6YD-hqIJ1UIOcVyQ07HGAw",
+   "n": "トミック",
+   "subs": 2150000,
+   "q": "Q92923848",
+   "cat": "top",
+   "t": "TOMIKKU NET"
+  },
+  {
+   "id": "UCd0hscDvJvzRbo8Rk7JPQMA",
+   "n": "ホモサピ",
+   "subs": 2130000,
+   "q": "Q112239171",
+   "cat": "top",
+   "t": "ホモサピ"
+  },
+  {
+   "id": "UCZ3h7IyAMbrVgvmxTdj-rpA",
+   "n": "よみぃ",
+   "subs": 2120000,
+   "q": "Q95163010",
+   "cat": "top",
+   "t": "よみぃ"
+  },
+  {
+   "id": "UC3-1iYGHfR43q_b974vUNYg",
+   "n": "フェルミ研究所 FermiLab",
+   "subs": 2120000,
+   "q": "Q92923554",
+   "cat": "top",
+   "t": "フェルミ研究所 FermiLab"
+  },
+  {
+   "id": "UCPiQ_mEXdEbB-3Yhiq7gq5w",
+   "n": "柴崎春通",
+   "subs": 2110000,
+   "q": "Q112238543",
+   "cat": "top",
+   "t": "Watercolor by Shibasaki"
+  },
+  {
+   "id": "UCl4e200EZm7NXq_iaYSXfeg",
+   "n": "ぷろたん",
+   "subs": 2100000,
+   "q": "Q123405360",
+   "cat": "top",
+   "t": "ぷろたん日記"
+  },
+  {
+   "id": "UCXjTiSGclQLVVU83GVrRM4w",
+   "n": "堀江貴文",
+   "subs": 2090000,
+   "q": "Q1193093",
+   "cat": "top",
+   "t": "堀江貴文 ホリエモン"
+  },
+  {
+   "id": "UCEIMvzf3R9d3_2A3IAajvHg",
+   "n": "赤髪のとも",
+   "subs": 2080000,
+   "q": "Q124212449",
+   "cat": "top",
+   "t": "赤髪のとものゲーム実況チャンネル!!"
+  },
+  {
+   "id": "UCdadbG0I2JSkocL3sWsq2rQ",
+   "n": "篠原枝令菜",
+   "subs": 2030000,
+   "q": "Q107343578",
+   "cat": "top",
+   "t": "Elena Shinohara"
+  },
+  {
+   "id": "UC7umTzIrIJq8Xh428lj0M5A",
+   "n": "ヒューマンバグ大学 闇の漫画",
+   "subs": 2010000,
+   "q": "Q102280048",
+   "cat": "top",
+   "t": "ヒューマンバグ大学_闇の漫画"
+  },
+  {
+   "id": "UCdqmGeaJIczU3-ZTdBv7JaQ",
+   "n": "けみお",
+   "subs": 2000000,
+   "q": "Q24862468",
+   "cat": "top",
+   "t": "kemio"
+  },
+  {
+   "id": "UC4Au2QrbfaSjHPSdk5tUBeg",
+   "n": "ワタナベマホト",
+   "subs": 1920000,
+   "q": "Q84581458",
+   "cat": "top",
+   "t": "ワタナベマホト"
+  },
+  {
+   "id": "UCCO_bQ5U1jPsqGma1AoEpjg",
+   "n": "シェフヒロ",
+   "subs": 1780000,
+   "q": "Q123224417",
+   "cat": "top",
+   "t": "Chef Hiro (シェフヒロ)"
+  },
+  {
+   "id": "UCB4nWNauim-qxiaDOcH0dLA",
+   "n": "三谷三四郎",
+   "subs": 1770000,
+   "q": "Q109601939",
+   "cat": "top",
+   "t": "街録ch〜あなたの人生、教えて下さい〜"
+  },
+  {
+   "id": "UClLCxUaVtnR4AL2UPMeW-SQ",
+   "n": "住吉珠貴",
+   "subs": 1770000,
+   "q": "Q35174504",
+   "cat": "top",
+   "t": "たまちゅーーーぶ/住吉珠貴"
+  },
+  {
+   "id": "UCl8E6NsjN979gbMBdztF48g",
+   "n": "岡野武志",
+   "subs": 1750000,
+   "q": "Q96716264",
+   "cat": "top",
+   "t": "岡野タケシ弁護士【アトム法律事務所】"
+  },
+  {
+   "id": "UChuwE7hMjONeLU54uC8Vigw",
+   "n": "雨穴",
+   "subs": 1710000,
+   "q": "Q108558640",
+   "cat": "top",
+   "t": null
+  },
+  {
+   "id": "UCUnLtMTXZfrSeTJfO-N5NfA",
+   "n": "カルマ",
+   "subs": 1710000,
+   "q": "Q131225943",
+   "cat": "top",
+   "t": "カルマ【KARUMA】"
+  },
+  {
+   "id": "UCySNyY7ZlIyIeQ0T_8ah4Vg",
+   "n": "河野玄斗",
+   "subs": 1680000,
+   "q": "Q84825178",
+   "cat": "top",
+   "t": "Stardy -河野玄斗の神授業"
+  },
+  {
+   "id": "UC7LT6gRahCIBd5AO5MUl8dQ",
+   "n": "友加里",
+   "subs": 1670000,
+   "q": "Q109322010",
+   "cat": "top",
+   "t": "料理研究家ゆかりのおうちで簡単レシピ / Yukari's Kitchen"
+  },
+  {
+   "id": "UCXzU-b8I0Y_fhMkLQMYt3vA",
+   "n": "橋本甜歌",
+   "subs": 1660000,
+   "q": "Q11121896",
+   "cat": "top",
+   "t": "てんちむCH/ tenchim"
+  },
+  {
+   "id": "UCQcP1QPlKiwH0gX-XNFETNg",
+   "n": "おもしろ雑貨コレクター",
+   "subs": 1660000,
+   "q": "Q96402196",
+   "cat": "top",
+   "t": "おもしろ雑貨コレクター"
+  },
+  {
+   "id": "UC-a9wiNTKiLIRLTyIRdNbMg",
+   "n": "オガトレ",
+   "subs": 1650000,
+   "q": "Q109287899",
+   "cat": "top",
+   "t": "オガトレ"
+  },
+  {
+   "id": "UCt3cjuHrJRLAkmePjfvurmg",
+   "n": "ほーみーず",
+   "subs": 1630000,
+   "q": "Q110725784",
+   "cat": "top",
+   "t": "ほーみーず"
+  },
+  {
+   "id": "UCxkjgt_ePhbOoCRPr0szT8Q",
+   "n": "たすくこま",
+   "subs": 1630000,
+   "q": "Q98082669",
+   "cat": "top",
+   "t": "たすくこま"
+  },
+  {
+   "id": "UCTx3-1Fka35VriJSmqzpaIw",
+   "n": "カンタ",
+   "subs": 1620000,
+   "q": "Q109558057",
+   "cat": "top",
+   "t": "カンタの大冒険【人間】"
+  },
+  {
+   "id": "UCPyNsNSTUtywkekbDdCA_8Q",
+   "n": "はなおでんがん",
+   "subs": 1620000,
+   "q": "Q94243574",
+   "cat": "top",
+   "t": null
+  },
+  {
+   "id": "UCFHl-NvbOY_EBCrz9iy984w",
+   "n": "Daichi",
+   "subs": 1610000,
+   "q": "Q3700878",
+   "cat": "top",
+   "t": "Daichi Beatboxer"
+  },
+  {
+   "id": "UCPlreGCqby4Qg9Vuem5scpw",
+   "n": "吉田ちか",
+   "subs": 1600000,
+   "q": "Q18818325",
+   "cat": "top",
+   "t": "バイリンガール英会話 | Bilingirl Chika"
+  },
+  {
+   "id": "UC8oF7jmQsKbMVrCv5LrP32w",
+   "n": "小田切ヒロ",
+   "subs": 1590000,
+   "q": "Q118152909",
+   "cat": "top",
+   "t": "HIRO BEAUTY CHANNEL"
+  },
+  {
+   "id": "UCENoC6MLc4pL-vehJyzSWmg",
+   "n": "もこう",
+   "subs": 1590000,
+   "q": "Q51914611",
+   "cat": "top",
+   "t": "もこうの実況"
+  },
+  {
+   "id": "UC0yQ2h4gQXmVUFWZSqlMVOA",
+   "n": "西村博之",
+   "subs": 1590000,
+   "q": "Q842977",
+   "cat": "top",
+   "t": "ひろゆき, hiroyuki"
+  },
+  {
+   "id": "UCWsAvz-plMpc8dgiaoMb0XQ",
+   "n": "けんた食堂",
+   "subs": 1580000,
+   "q": "Q131010498",
+   "cat": "top",
+   "t": "けんた食堂"
+  },
+  {
+   "id": "UC1H5dv45x2aFKk-6JZLSWIQ",
+   "n": "粗品",
+   "subs": 1570000,
+   "q": "Q11604519",
+   "cat": "top",
+   "t": "粗品 Official Channel"
+  },
+  {
+   "id": "UC5l8bnxxl26Q5PDG_jawcuw",
+   "n": "おんりー",
+   "subs": 1560000,
+   "q": "Q116312004",
+   "cat": "top",
+   "t": "おんりー / ドズル社"
+  },
+  {
+   "id": "UCJFWdjpYDIPe8Pdhmusnlgg",
+   "n": "中町綾",
+   "subs": 1530000,
+   "q": "Q108776503",
+   "cat": "top",
+   "t": "中町綾チャンネル"
+  },
+  {
+   "id": "UCaxKWSwF_egyenDrW4h4y2A",
+   "n": "丸山ゴンザレス",
+   "subs": 1500000,
+   "q": "Q11368147",
+   "cat": "top",
+   "t": "丸山ゴンザレスの裏社会ジャーニー"
+  },
+  {
+   "id": "UCxjdy5n9BxX_6RTL8Dt_7pg",
+   "n": "Kyedae",
+   "subs": 1450000,
+   "q": "Q116968378",
+   "cat": "top",
+   "t": "Kyedae"
+  },
+  {
+   "id": "UC9UI_fNxTbfEJImAg5Y7pOw",
+   "n": "レインボー",
+   "subs": 1440000,
+   "q": "Q48747449",
+   "cat": "top",
+   "t": "レインボーコントチャンネル"
+  },
+  {
+   "id": "UCNvcNd31bA-XERO6LGy4blw",
+   "n": "さらば青春の光",
+   "subs": 1430000,
+   "q": "Q11268454",
+   "cat": "top",
+   "t": "さらば青春の光Official Youtube Channel"
+  },
+  {
+   "id": "UC1fYrot9lgMstv7vX0BnjnQ",
+   "n": "かす",
+   "subs": 1430000,
+   "q": "Q131881570",
+   "cat": "top",
+   "t": "かす"
+  },
+  {
+   "id": "UC_QG8miwKHFNuWY9VpkrI8w",
+   "n": "角野隼斗",
+   "subs": 1430000,
+   "q": "Q95340089",
+   "cat": "top",
+   "t": "Cateen かてぃん"
+  },
+  {
+   "id": "UChwgNUWPM-ksOP3BbfQHS5Q",
+   "n": "ジャルジャル",
+   "subs": 1420000,
+   "q": "Q11310105",
+   "cat": "top",
+   "t": "ジャルジャルタワー JARUJARU TOWER"
+  },
+  {
+   "id": "UCqD72KlQed6DB-cPEaEYdEg",
+   "n": "あさぎーにょ",
+   "subs": 1420000,
+   "q": "Q60987505",
+   "cat": "top",
+   "t": null
+  },
+  {
+   "id": "UCGjV4bsC43On-YuiLZcfL0w",
+   "n": "KUN",
+   "subs": 1400000,
+   "q": "Q56354401",
+   "cat": "top",
+   "t": null
+  },
+  {
+   "id": "UCbqtn4vldMg5HjKims7MWfw",
+   "n": "朝倉海",
+   "subs": 1380000,
+   "q": "Q53764876",
+   "cat": "top",
+   "t": "KAI Channel / 朝倉海"
+  },
+  {
+   "id": "UClNdVSK1uy2xFHTaXZYXopw",
+   "n": "らっだぁ",
+   "subs": 1370000,
+   "q": "Q107905638",
+   "cat": "top",
+   "t": "らっだぁ"
+  },
+  {
+   "id": "UCqfANd8RDXTcQddXMwwgUmA",
+   "n": "Louis-San",
+   "subs": 1360000,
+   "q": "Q122759400",
+   "cat": "top",
+   "t": "Louis-San"
+  },
+  {
+   "id": "UCwKupwJ1EpdNH8Z98SKjY2Q",
+   "n": "菅原由一",
+   "subs": 1360000,
+   "q": "Q124497686",
+   "cat": "top",
+   "t": "脱・税理士スガワラくん"
+  },
+  {
+   "id": "UCOg6P-Ne5Hdd5tDtcOHDd-Q",
+   "n": "中川家",
+   "subs": 1350000,
+   "q": "Q11364800",
+   "cat": "top",
+   "t": "中川家チャンネル"
+  },
+  {
+   "id": "UCUApURCve0BEqv6Sa9x_OJg",
+   "n": "白石麻衣",
+   "subs": 1350000,
+   "q": "Q74275",
+   "cat": "top",
+   "t": "my channel【白石麻衣 公式】"
+  },
+  {
+   "id": "UC9Wl5AzCQzp2esQ7uVoQz0g",
+   "n": "とうあ",
+   "subs": 1330000,
+   "q": "Q131881133",
+   "cat": "top",
+   "t": "とうあ"
+  },
+  {
+   "id": "UCCp9Q2JCLjOenDa63FJi_Ag",
+   "n": "陣内智則",
+   "subs": 1330000,
+   "q": "Q5358817",
+   "cat": "top",
+   "t": "陣内智則のネタジン"
+  },
+  {
+   "id": "UCe4fPeOTzh6ZXUOthA_YL-A",
+   "n": "可哀想に❗️",
+   "subs": 1310000,
+   "q": "Q135972946",
+   "cat": "top",
+   "t": "可哀想に!"
+  },
+  {
+   "id": "UC1xd0cAOryAMTTG34joEgdg",
+   "n": "てつや",
+   "subs": 1300000,
+   "q": "Q79017609",
+   "cat": "top",
+   "t": "おまんじゅう"
+  },
+  {
+   "id": "UCVrJcoR8hUN9Rn7uPI4z6NQ",
+   "n": "神楽ひなこ",
+   "subs": 1290000,
+   "q": "Q108845825",
+   "cat": "top",
+   "t": "神楽ひなこ"
+  },
+  {
+   "id": "UCORW3zZTUVdVwlY5Mnk8q9Q",
+   "n": "ブレイクスルー佐々木",
+   "subs": 1290000,
+   "q": "Q126005956",
+   "cat": "top",
+   "t": "ブレイクスルー佐々木"
+  },
+  {
+   "id": "UCtFb9IIr1gX_J--jR-I6ZRg",
+   "n": "ちょんまげ小僧",
+   "subs": 1290000,
+   "q": "Q124497560",
+   "cat": "top",
+   "t": null
+  },
+  {
+   "id": "UCx1nAvtVDIsaGmCMSe8ofsQ",
+   "n": "加藤純一",
+   "subs": 1260000,
+   "q": "Q51915371",
+   "cat": "top",
+   "t": "jun channel"
+  },
+  {
+   "id": "UCCHrEGB5l-3uq63F2li4C0w",
+   "n": "東谷義和",
+   "subs": 1250000,
+   "q": "Q111593161",
+   "cat": "top",
+   "t": "東谷義和のガーシーch【芸能界の裏側】"
+  },
+  {
+   "id": "UCtubooLn_qgqoWsWS-UWuHw",
+   "n": "宮迫博之",
+   "subs": 1240000,
+   "q": "Q1154140",
+   "cat": "top",
+   "t": "宮迫ですッ!【宮迫博之】"
+  },
+  {
+   "id": "UCfnSEB4atVWATf6vzepHzqw",
+   "n": "指原莉乃",
+   "subs": 1240000,
+   "q": "Q181881",
+   "cat": "top",
+   "t": "さしはらちゃんねる"
+  },
+  {
+   "id": "UCRUdyowhXEQhoNT7uNEvGJA",
+   "n": "深田えいみ",
+   "subs": 1240000,
+   "q": "Q61758560",
+   "cat": "top",
+   "t": "深田えいみ"
+  },
+  {
+   "id": "UCMsuwHzQPFMDtHaoR7_HDxg",
+   "n": "ゆきりぬ",
+   "subs": 1240000,
+   "q": "Q65236375",
+   "cat": "top",
+   "t": "ゆきりぬ"
+  },
+  {
+   "id": "UCdVnOfmhI0sNGdaH5yldztg",
+   "n": "LiaqN",
+   "subs": 1230000,
+   "q": "Q126006133",
+   "cat": "top",
+   "t": "LiaqN【りあん】"
+  },
+  {
+   "id": "UCBD4RO82lle5CyB_M9dtwzw",
+   "n": "シバター",
+   "subs": 1230000,
+   "q": "Q18817645",
+   "cat": "top",
+   "t": "PROWRESTLING SHIBATAR ZZ"
+  },
+  {
+   "id": "UCT5BVYrrhS7gD5xzloZ8FhA",
+   "n": "バンカラジオ",
+   "subs": 1220000,
+   "q": "Q115466561",
+   "cat": "top",
+   "t": "バンカラジオ"
+  },
+  {
+   "id": "UC0FFHRF1mytLDhs6nxqGIQg",
+   "n": "岡田斗司夫",
+   "subs": 1210000,
+   "q": "Q6137564",
+   "cat": "top",
+   "t": "岡田斗司夫"
+  },
+  {
+   "id": "UC6uo7Swuhid4KcK97n2l7_Q",
+   "n": "PDRさん",
+   "subs": 1210000,
+   "q": "Q92923841",
+   "cat": "top",
+   "t": "PDRさん"
+  },
+  {
+   "id": "UClX3YSREJp3ELuv2wFAYOzA",
+   "n": "恭一郎",
+   "subs": 1210000,
+   "q": "Q136039840",
+   "cat": "top",
+   "t": "恭チャンネル"
+  },
+  {
+   "id": "UCglQWY_cZKJI4m3CxjNrUxg",
+   "n": "ぴくと",
+   "subs": 1200000,
+   "q": "Q124022066",
+   "cat": "top",
+   "t": "ぴくとはうす"
+  },
+  {
+   "id": "UCwu15I0KWOI6Xbe2Uziee4A",
+   "n": "96猫",
+   "subs": 1180000,
+   "q": "Q20058780",
+   "cat": "top",
+   "t": "【MAIN】96NEKO-CHANNEL"
+  },
+  {
+   "id": "UCILZFnKZJksR7zwhZbAB4vw",
+   "n": "れじぇくん",
+   "subs": 1170000,
+   "q": "Q117005883",
+   "cat": "top",
+   "t": "れじぇくん"
+  },
+  {
+   "id": "UC8embhEdS-QrY3K6XcoyyNg",
+   "n": "春とヒコーキ",
+   "subs": 1170000,
+   "q": "Q74148424",
+   "cat": "top",
+   "t": "バキ童チャンネル【ぐんぴぃ】"
+  },
+  {
+   "n": "水溜りボンド",
+   "id": "UCpOjLndjOqMoffA-fr8cbKA",
+   "q": "Q30932214",
+   "cat": "top",
+   "subs": 4080000,
+   "src": "wikidata",
+   "t": "水溜りボンド"
+  },
+  {
+   "n": "コムドット",
+   "id": "UCRxPrFmRHsXGWfAyE6oqrPQ",
+   "q": "Q116204982",
+   "cat": "top",
+   "subs": 3810000,
+   "src": "wikidata",
+   "t": "コムドット"
+  },
+  {
+   "n": "スカイピース",
+   "id": "UC8_wmm5DX9mb4jrLiw8ZYzw",
+   "q": "Q48757213",
+   "cat": "top",
+   "subs": 4380000,
+   "src": "wikidata",
+   "t": "スカイピース"
+  },
+  {
+   "n": "スーツ 旅行",
+   "id": "UCuDdJRJ6qR-wGILbpq-FXCw",
+   "q": "Q103739728",
+   "cat": "travel",
+   "subs": 340000,
+   "src": "wikidata",
+   "t": "スーツ 旅行 / Suit Travel"
+  },
+  {
+   "n": "スーツ 交通",
+   "id": "UCxBR2bnAFAavDHpHtQrTA9Q",
+   "q": "Q103739728",
+   "cat": "travel",
+   "subs": 603000,
+   "src": "wikidata",
+   "t": "スーツ 交通 / Suit Train"
+  },
+  {
+   "n": "はじめまして松尾です",
+   "id": "UCWtLzcASRAjlVhKibLUCuEw",
+   "q": "Q106097416",
+   "cat": "travel",
+   "subs": 1260000,
+   "src": "wikidata",
+   "t": "はじめまして松尾です",
+   "top": true
+  },
+  {
+   "n": "ジョーブログ",
+   "id": "UC1zsShDyJp8AafQu9BPo1PQ",
+   "q": "Q85871776",
+   "cat": "travel",
+   "subs": 1620000,
+   "src": "wikidata",
+   "t": "ジョーブログ【CRAZY CHALLENGER】",
+   "top": true
+  },
+  {
+   "n": "西園寺トラベル",
+   "id": "UCkV8IOmz7pyh39QbkrADPlA",
+   "q": "Q116937223",
+   "cat": "travel",
+   "subs": 58300,
+   "src": "wikidata",
+   "t": "西園寺トラベル"
+  },
+  {
+   "n": "Abroad in Japan",
+   "id": "UCHL9bfHTxCMi-7vfxQ-AYtg",
+   "q": "Q59812140",
+   "note": "英語。日本在住の英国人による日本旅",
+   "cat": "travel",
+   "subs": 3280000,
+   "src": "wikidata",
+   "t": "Abroad in Japan"
+  },
+  {
+   "n": "Paolo fromTOKYO",
+   "handle": "@PaolofromTOKYO",
+   "query": "Paolo fromTOKYO",
+   "note": "英語。東京在住",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "TabiEats",
+   "handle": "@TabiEats",
+   "query": "TabiEats",
+   "note": "英語。旅とグルメ",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "おのだ/Onoda",
+   "query": "おのだ Onoda 旅行",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "無職旅",
+   "query": "無職旅",
+   "note": "海外の旅が多い",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "旅する鈴木",
+   "query": "旅する鈴木",
+   "note": "海外の旅が多い",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "しげ旅",
+   "query": "しげ旅",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "綿貫渉",
+   "query": "綿貫渉 交通系YouTuber",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "たくみっく",
+   "query": "たくみっく 鉄道",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "けんたさん",
+   "query": "けんたさん 自転車",
+   "unsure": true,
+   "note": "自転車旅",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "らんたいむ",
+   "query": "らんたいむ 車中泊",
+   "unsure": true,
+   "note": "車中泊の旅",
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "ズボラ旅",
+   "query": "ズボラ旅",
+   "unsure": true,
+   "cat": "travel",
+   "src": "manual"
+  },
+  {
+   "n": "木下ゆうか",
+   "id": "UCFTVNLC7ysej-sD5lkLqNGA",
+   "q": "Q24073678",
+   "cat": "food",
+   "subs": 5510000,
+   "src": "wikidata",
+   "t": "Yuka Kinoshita木下ゆうか",
+   "top": true
+  },
+  {
+   "n": "はらぺこツインズ",
+   "id": "UCD-1TFnqeSem13xk52_wPBw",
+   "q": "Q112237963",
+   "cat": "food",
+   "subs": 570000,
+   "src": "wikidata",
+   "t": "はらぺこツインズ"
+  },
+  {
+   "n": "MAX鈴木",
+   "id": "UCSoEDFXaMcHbAlWlduce2eg",
+   "q": "Q28689108",
+   "cat": "food",
+   "subs": 729000,
+   "src": "wikidata",
+   "t": "MaxSuzuki TV"
+  },
+  {
+   "n": "もえのあずき",
+   "id": "UCepkcGa3-DVdNHcHGwEkXTg",
+   "q": "Q17218832",
+   "cat": "food",
+   "subs": 892000,
+   "src": "wikidata",
+   "t": "もえのあずき"
+  },
+  {
+   "n": "海老原まよい",
+   "id": "UCto5XPKvNYZOf3uRAFoP38g",
+   "q": "Q113567310",
+   "cat": "food",
+   "subs": 1020000,
+   "src": "wikidata",
+   "t": "えびまよ【海老原まよい】"
+  },
+  {
+   "n": "ますぶちさちよ",
+   "id": "UCXCHYBLLDmpJXGennICoIFw",
+   "q": "Q28688837",
+   "cat": "food",
+   "subs": 391000,
+   "src": "wikidata",
+   "t": "爆食ますぶちさちよ"
+  },
+  {
+   "n": "谷やん",
+   "query": "谷やん谷崎鷹人",
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "三年食太郎",
+   "query": "三年食太郎",
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "ロシアン佐藤",
+   "query": "ロシアン佐藤",
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "SUSURU TV.",
+   "handle": "@SUSURUTV",
+   "query": "SUSURU TV ラーメン",
+   "note": "毎日ラーメン。店名がタイトルに入る",
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "きまぐれクック",
+   "handle": "@kimagurecook",
+   "query": "きまぐれクック Kimagure Cook",
+   "note": "魚さばき中心で場所は少なめ",
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "はいじぃ迷作劇場",
+   "query": "はいじぃ迷作劇場",
+   "unsure": true,
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "アンジェラ佐藤",
+   "query": "アンジェラ佐藤 大食い",
+   "unsure": true,
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "ジャイアント白田",
+   "query": "ジャイアント白田 大食い",
+   "unsure": true,
+   "cat": "food",
+   "src": "manual"
+  },
+  {
+   "n": "YouTube高校 / 日本史",
+   "id": "UCGdGyJ6N07dvumQSTOCEOQg",
+   "q": "Q118893730",
+   "cat": "history",
+   "subs": 588000,
+   "src": "wikidata",
+   "t": "YouTube高校 / 日本史"
+  },
+  {
+   "n": "歴史じっくり紀行",
+   "query": "歴史じっくり紀行",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "非株式会社いつかやる",
+   "query": "非株式会社いつかやる",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "戦国BANASHI（ミスター武士道）",
+   "query": "戦国BANASHI ミスター武士道",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "YUKIMURA CHANNEL",
+   "query": "YUKIMURA CHANNEL 歴史",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "俺の世界史ch",
+   "query": "俺の世界史ch",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "かいのすけ 歴史",
+   "query": "かいのすけ 歴史",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "れきしクン",
+   "query": "れきしクン",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "歴史のじかん",
+   "query": "歴史のじかん",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "TOLAND VLOG",
+   "query": "TOLAND VLOG",
+   "note": "古代史・神話寄り",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "山城ガールむつみ",
+   "query": "山城ガールむつみ",
+   "unsure": true,
+   "note": "城郭めぐり",
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "日本史サロン",
+   "query": "日本史サロン",
+   "unsure": true,
+   "cat": "history",
+   "src": "manual"
+  },
+  {
+   "n": "西園寺",
+   "id": "UCYTximhpSat0HHFPAI0UpUA",
+   "q": "Q116937223",
+   "note": "鉄道・秘境駅",
+   "cat": "remote",
+   "subs": 507000,
+   "src": "wikidata",
+   "t": "西園寺"
+  },
+  {
+   "n": "ゾゾゾ",
+   "id": "UCL4NX3B5v_gYc5XXWSTcpMA",
+   "q": "Q109598130",
+   "note": "心霊スポット・廃墟",
+   "cat": "remote",
+   "subs": 1080000,
+   "src": "wikidata",
+   "t": "ゾゾゾ"
+  },
+  {
+   "n": "平坂寛",
+   "id": "UCs5AFbnn9X4Y_dzLEeI_6OA",
+   "q": "Q116936728",
+   "note": "離島・生き物",
+   "cat": "remote",
+   "subs": 945000,
+   "src": "wikidata",
+   "t": "平坂寛"
+  },
+  {
+   "n": "ヒロシちゃんねる",
+   "id": "UC_ak3ZurSDtT3Kv1RFdrgiA",
+   "q": "Q5770762",
+   "note": "ソロキャンプ。場所名は出ないことが多い",
+   "cat": "remote",
+   "subs": 0,
+   "src": "wikidata",
+   "t": "ヒロシちゃんねる"
+  },
+  {
+   "n": "がみ",
+   "query": "がみ 鉄道",
+   "unsure": true,
+   "note": "鉄道・秘境駅",
+   "cat": "remote",
+   "src": "manual"
+  },
+  {
+   "n": "ひろき",
+   "query": "ひろき 鉄道 旅",
+   "unsure": true,
+   "note": "鉄道・秘境駅",
+   "cat": "remote",
+   "src": "manual"
+  },
+  {
+   "n": "オウマガトキFILM",
+   "query": "オウマガトキFILM",
+   "note": "心霊スポット・廃墟",
+   "cat": "remote",
+   "src": "manual"
+  },
+  {
+   "n": "かほの登山日記",
+   "query": "かほの登山日記",
+   "note": "登山",
+   "cat": "remote",
+   "src": "manual"
+  }
+ ]
+}

@@ -83,3 +83,11 @@ tools/build_standalone.py  単一ファイル版の生成
 ## v71
 - `data/cams_jp.js` — 各配信元の YouTube チャンネル。一覧の入手元: 国土交通省 九州地方整備局「河川カメラ YouTube 一覧」、近畿地方整備局「ライブカメラ」、水管理・国土保全局「河川ライブ配信一覧」、各放送局・新聞社・自治体の公式チャンネル。動画IDは YouTube oEmbed で 2026-09-06 に有効確認。
 - `data/buzz.js` — 投稿の存在は X 公式 oEmbed（publish.twitter.com/oembed）で確認。「話題になった」根拠は各件の `src`（Togetter まとめ・報道）。見出しは当サイトの要約。
+
+## v77
+- `data/mountains.js` — Wikidata（山 Q8502 の下位分類、標高 P2044、写真 P18、山脈 P4552）CC0 ／ Wikipedia 日本語版「日本百名山」「Template:日本二百名山」「Template:日本三百名山」、山脈記事の冒頭（CC BY-SA 4.0）。都道府県は data/geo/pref.json で判定。
+- `data/castles.js` — Wikidata（城・日本の城・城跡・陣屋、P625/P18/P571/P1435）CC0 ／ Wikipedia 日本語版「日本100名城」「続日本100名城」「現存天守」「石高」（幕末の表高一覧）、各藩の記事、{{日本の城郭概要表}} の座標（CC BY-SA 4.0）。
+- `data/kuni.js` — Wikidata（令制国 P36 国府 ほか）CC0 ／ Wikipedia 日本語版 各令制国・郡の記事「領域」節（CC BY-SA 4.0）／ 境界: OpenHistoricalMap（CC0 1.0, https://www.openhistoricalmap.org/copyright）の admin_level=4（1871 年ごろ）53 国、残り 27 国は data/geo/muni.json（国土数値情報 N03 加工）を旧国ごとに結合。NII Geoshape の旧国データは CC BY-NC のため未使用。
+- `data/water.js` — Wikipedia 日本語版「一級水系」「二級水系」「日本の川一覧」、各河川・海域・海流の記事（CC BY-SA 4.0）／ Wikidata（P625 河口・水源、P885、P974/P403）CC0 ／ Natural Earth 10m rivers（パブリックドメイン）／ Wikimedia Commons の Data: 地図（CC0）。海流の流路は概略を手描き。
+- `data/chains2.js`（v77 で全面更新）・`data/osm_extra.js` — © OpenStreetMap contributors（ODbL 1.0）。Overpass API から 2026-09-06 に取得。ブランド色は目安、ロゴは Wikidata P154 の Commons ファイル（商標は各社に帰属、店舗位置の識別目的で極小表示）、公式サイトは Wikidata P856。
+- `tools/build_youtube_spots.py` — YouTube Data API v3（利用規約に従い、動画 ID・タイトル・再生数・公開日と当サイト独自の要約のみ保存。定期的に再取得）。種チャンネルの登録者数は Wikidata P8687（CC0）。

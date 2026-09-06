@@ -41,7 +41,7 @@ function cacheSet(k, v) {
 function findPage(o) {
   var base = { action: "query", prop: "pageimages|pageprops|extracts|coordinates|description", piprop: "original|thumbnail",
                pithumbsize: 900, ppprop: "wikibase_item", exintro: 1, explaintext: 1, exsentences: 8, redirects: 1 };
-  var titles = o.kind === "station" ? [o.name + "駅", o.name] : [o.name];
+  var titles = o.wp ? [o.wp] : o.kind === "station" ? [o.name + "駅", o.name] : [o.name];
   function pick(j) {
     var pages = (j && j.query && j.query.pages) || {}, best = null;
     Object.keys(pages).forEach(function (k) {
@@ -152,7 +152,7 @@ function strip(html) { var d = document.createElement("div"); d.innerHTML = html
 
 /* ---- まとめて取る ---- */
 function collect(o) {
-  var key = (o.kind || "spot") + ":" + o.name + ":" + (o.la != null ? o.la.toFixed(3) + "," + o.lo.toFixed(3) : "");
+  var key = (o.kind || "spot") + ":" + (o.wp || o.name) + ":" + (o.la != null ? o.la.toFixed(3) + "," + o.lo.toFixed(3) : "");
   var hit = cacheGet(key); if (hit) return Promise.resolve(hit);
   var res = { title: null, url: null, extract: "", desc: "", thumb: null, facts: [], photos: [], qid: null };
   return findPage(o).then(function (p) {
