@@ -2719,3 +2719,48 @@ html,body{max-width:100vw;overflow-x:hidden}
 .patron__b{display:inline-block;margin-left:6px;font-size:10px;font-style:normal;color:#7a5a00;background:linear-gradient(90deg,#fff2b3,#ffd54a);border:1px solid #d9b13b;border-radius:999px;padding:0 6px;vertical-align:middle}
 html.patron .mapwrap{box-shadow:inset 0 0 0 3px rgba(214,177,59,.55)}
 html.patron .hdr__mark i{background:linear-gradient(180deg,#ffd54a,#b8860b)}
+/* v73 使い勝手：選択の見える化・凡例の閉じる・スマホ即投げ・履歴・リセット */
+.lr__i--g[aria-pressed=true]{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 18%,#fff);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--lc);position:relative}
+.lr__i--g[aria-pressed=true]::after{content:"✓";position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--lc);color:#fff;font-size:11px;line-height:18px;text-align:center;font-weight:900}
+.gb__i[aria-pressed=true],.legend__r[aria-pressed=true]{box-shadow:0 0 0 2px var(--lc,#333) inset}
+.lr__selrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:2px 10px 4px;min-height:0}
+.lr__selh{font-size:11px;color:#555}
+.lr__selrow .sel__c{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--lc,#888);background:color-mix(in srgb,var(--lc,#888) 12%,#fff);border-radius:999px;padding:2px 8px 2px 6px;font-size:11.5px;cursor:pointer}
+.lr__selrow .sel__x{color:#900;font-weight:700;margin-left:2px}
+.bublegend{position:relative}
+.bublegend__x{position:absolute;top:6px;right:6px;border:1px solid #ccc;background:#fff;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;line-height:1}
+button,.lr__i,.tq__amt,.tj__amt{touch-action:manipulation}
+.tipfab{font-size:16px}
+.modal--sheet .modal__box{width:min(520px,100%)}
+.tq__lead{font-size:14px;line-height:1.6;margin:0 0 8px}
+.tq__apps{display:flex;gap:8px;margin-bottom:8px}
+.tq__app{flex:1;border:2px solid #ddd;background:#fff;border-radius:12px;padding:10px;font-weight:800;font-size:15px}
+.tq__app.on{border-color:#E60012;background:#fff5f5}
+.tq__amts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tq__amt{border:2px solid #d6c7a8;background:linear-gradient(180deg,#fffdf7,#f7efdc);border-radius:18px;padding:16px 6px;font-size:22px;font-weight:900;min-height:84px;cursor:pointer}
+.tq__amt span{display:block;font-size:30px;margin-bottom:2px}
+.tq__amt:active{transform:scale(.97)}
+.tq__res{margin-top:10px;font-size:13.5px;line-height:1.7}
+.tq__res .set__b2{display:inline-block;margin:6px 0;text-decoration:none}
+.tq__thx{margin-top:6px;background:#f6f6f6;border-radius:10px;padding:8px 10px;font-size:13px}
+.tq__hint{font-size:12px;color:#666;margin-top:10px}
+.th__sum{display:flex;gap:8px;margin:4px 0 8px}
+.th__sum div{flex:1;background:#fbf6ee;border:1px solid #e8dcc3;border-radius:12px;padding:8px;text-align:center}
+.th__sum b{display:block;font-size:18px}.th__sum small{font-size:11px;color:#666}
+.th__m{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.th__m span{font-size:11.5px;background:#f2f2f2;border-radius:999px;padding:2px 8px}
+.th__t{width:100%;border-collapse:collapse;font-size:12.5px}
+.th__t th,.th__t td{border-bottom:1px solid #eee;padding:5px 6px;text-align:left}
+.th__a{text-align:right !important;font-weight:700}
+.th__clr{margin-top:12px;border-top:1px dashed #ddd;padding-top:10px}
+.tj__clr{border:2px solid #6D4C1E;background:#fff;color:#6D4C1E;border-radius:12px;padding:10px 14px;font-weight:800;font-size:14px;cursor:pointer}
+.rebirth{position:fixed;inset:0;z-index:9999;background:#0b0e14;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;transition:opacity .6s,background 1.5s}
+.rebirth.on{opacity:1}
+.rebirth.light{background:#eaf4ff}
+.rebirth img{width:min(70vw,360px);height:auto;border-radius:50%;box-shadow:0 0 80px rgba(255,240,200,.35)}
+.rebirth__t{margin-top:18px;text-align:center;color:#fff;transition:color 1.5s}
+.rebirth.light .rebirth__t{color:#234}
+.rebirth__t b{display:block;font-size:20px;letter-spacing:.1em}
+.rebirth__t span{font-size:13px;opacity:.85}
+.gi.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--lc);position:relative}
+.gi.on::after{content:"✓";position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;background:#111;color:#fff;font-size:11px;line-height:18px;text-align:center;font-weight:900}

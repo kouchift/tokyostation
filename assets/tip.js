@@ -1,15 +1,17 @@
 /* =========================================================================
-   制作者への窓口：投げ銭と、改善要望  v71〜   （設定パネルの奥の入口から）
+   制作者への窓口：投げ銭と、改善要望  v71〜（v73 で履歴・リセット・スマホ即投げを追加）
 
    ■ 流れ
-     入口 → 【確認POP】「要望は出せますが、実装される見込みは極端に低いです。それでも良いですか？」
-          → 窓口（PayPay / Kyash、金額ボタン、救いの言葉、要望フォーム）
-     確認POPは «次回からスキップ» を入れると出なくなる（連続して投げ銭するかたのため）。
-     スキップ中は «くり返し» 画面が使える：前回の金額を何回くり返すかを決めて、1回ずつ送金リンクを開く。
+     入口（設定パネル／地図右のズーム列の ☕）→ 【確認POP】→ 窓口（投げ銭・くり返し・履歴・救いの言葉）
+     確認POPは «次回からスキップ» を入れると出なくなる。
    ■ 送金
      PayPay / Kyash とも、アカウント名だけで開ける公開URLは用意されていないので、
      data/support.js の paypayLink / kyashLink（アプリで作る送金リンク）が空のときは
-     「IDをコピー → アプリで送る」の手順を出す。当サイトは金額もお金も一切あずからない。
+     「IDをコピー → アプリで送る」の手順。スマホでは ID を自動コピーしてアプリを開く（URLスキーム）。
+     当サイトは金額もお金も一切あずからない。
+   ■ 履歴
+     この端末の localStorage にだけ残る（tsg.tip.v1 の hist）。「履歴をぜんぶ消す」は懺悔のリセット：
+     暗いトンネルから光へ抜ける GIF（assets/img/rebirth.gif）を流しながら消す。支援者の印も消える。
    ■ 要望・救いの言葉
      data/support.js の discordWebhook があれば Discord へ、無ければメール（mailto）で送る。
      連投よけ：同じ端末からは 10 分に 1 通。メッセージには来訪者ID（この端末だけの乱数）が付く。
@@ -29,17 +31,38 @@ function vid() {
     return v;
   } catch (e) { return "nosave"; }
 }
-function yen(n) { return "¥" + n.toLocaleString("ja-JP"); }
+function yen(n) { return "¥" + (n || 0).toLocaleString("ja-JP"); }
+function appName(a) { return a === "kyash" ? "Kyash" : "PayPay"; }
+function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (RG.isTouch && RG.isTouch() && innerWidth < 900); }
 
-/* 起動時：入口の準備と、拒否リストの照合 */
+/* ---- 記録（すべての「送りました」はここを通る） ---- */
+function record(amt, app) {
+  var S = st();
+  S.hist = S.hist || [];
+  S.hist.push({ t: Date.now(), a: amt, p: app || "paypay" });
+  if (S.hist.length > 500) S.hist = S.hist.slice(-500);
+  S.lastAmount = amt; S.app = app || "paypay"; S.count = (S.count || 0) + 1; S.total = (S.total || 0) + amt;
+  save(S);
+  RG.tripStatus && RG.tripStatus("🙏 " + yen(amt) + " の投げ銭、ありがとうございます（累計 " + S.count + " 回）", "ok", 5000);
+  return S;
+}
+function undoLast() {
+  var S = st(); if (!S.hist || !S.hist.length) return;
+  var h = S.hist.pop(); S.count = Math.max(0, (S.count || 1) - 1); S.total = Math.max(0, (S.total || 0) - h.a);
+  if (!S.count) { delete S.lastAmount; }
+  save(S); applyPatron();
+  RG.tripStatus && RG.tripStatus("取り消しました（" + yen(h.a) + "）", "info", 2500);
+}
+
+/* ---- 起動時：支援者の印と、拒否リストの照合 ---- */
 function applyPatron() {
-  var S = st(); if (!(S.count >= 1)) return;
-  document.documentElement.classList.add("patron");
-  var mark = document.querySelector(".hdr__mark span");
-  if (mark && !mark.querySelector(".patron__b")) {
-    var b = document.createElement("i"); b.className = "patron__b"; b.title = "投げ銭ありがとうございます（この端末での記録）"; b.textContent = "🪙 支援者";
+  var S = st(), on = (S.count || 0) >= 1;
+  document.documentElement.classList.toggle("patron", on);
+  var mark = document.querySelector(".hdr__mark span"), b = mark && mark.querySelector(".patron__b");
+  if (on && mark && !b) {
+    b = document.createElement("i"); b.className = "patron__b"; b.title = "投げ銭ありがとうございます（この端末での記録）"; b.textContent = "🪙 支援者";
     mark.appendChild(b);
-  }
+  } else if (!on && b) b.remove();
 }
 RG.tipInit = function () {
   applyPatron();
@@ -51,52 +74,63 @@ RG.tipInit = function () {
       "<p>心当たりがないときは、制作者までご連絡ください。</p></div>";
     throw new Error("banned");
   }
+  // 地図右のズーム列に ☕（電車の中でも親指ひとつで届く入口）
+  var zb = document.querySelector(".zoombar");
+  if (zb && !document.getElementById("tipfab")) {
+    var fb = document.createElement("button");
+    fb.id = "tipfab"; fb.className = "sm tipfab"; fb.type = "button"; fb.textContent = "☕";
+    fb.setAttribute("aria-label", "制作者に投げ銭"); fb.title = "制作者に投げ銭（ワンタップ）";
+    fb.addEventListener("click", function () { RG.tipQuick(); });
+    zb.appendChild(fb);
+  }
 };
 
-/* 設定パネルに差し込む入口 */
+/* ---- 設定パネルに差し込む入口 ---- */
 RG.tipEntryHTML = function () {
+  var S = st();
   return '<div class="set__sec tjin"><h4>☕ 制作者へ（投げ銭・改善要望）</h4>' +
     '<p class="set__d">このサイトは<b>従業員1名の宗教法人</b>のような世界（非課税・端数なし）で、たった一人の制作者が細々と維持しています。' +
     "維持管理は<b>ここからの投げ銭だけ</b>が頼りです。改善のご要望もここから。</p>" +
-    '<button id="tip-open" class="set__b2" type="button">☕ 窓口をひらく</button></div>';
+    '<div class="tj__row"><button id="tip-open" class="set__b2" type="button">☕ 窓口をひらく</button>' +
+    '<button id="tip-hist" class="set__b" type="button">📜 投げ銭の履歴' + (S.count ? "（" + S.count + "回・" + yen(S.total) + "）" : "") + "</button></div></div>";
 };
 RG.tipBind = function (root) {
-  var b = $("#tip-open", root);
-  if (b) b.addEventListener("click", function () { RG.openTip(); });
+  var b = $("#tip-open", root); if (b) b.addEventListener("click", function () { RG.openTip(); });
+  var h = $("#tip-hist", root); if (h) h.addEventListener("click", function () { RG.showTip("hist"); });
 };
 
-/* 確認POP（スキップ設定があれば飛ばす） */
-RG.openTip = function () {
+/* ---- 確認POP（スキップ設定があれば飛ばす） ---- */
+RG.openTip = function (next) {
   var S = st();
-  if (S.skipConfirm) { RG.showTip(); return; }
+  if (S.skipConfirm) { (next || RG.showTip)(); return; }
   var m = RG.openModal("⚠️ さきに、ひとつだけ確認", '<div class="tj tj--c">' +
     '<p class="tj__big">改善のご要望は出せます。ただし――</p>' +
     '<p>制作者は<b>「日本でいちばん多忙であるフリ」</b>が非常に上手いため、ご要望が実装される見込みは<b>極端に低い</b>です。' +
     "投げ銭をいただいても、この見込みは<b>上がりません</b>（心は温まります）。</p>" +
     '<p class="tj__q">それでも良いですか？</p>' +
-    '<label class="set__sw"><input id="tip-skip" type="checkbox"> 次回からこの確認を出さない（連続して投げ銭するかた向け）</label>' +
+    '<label class="set__sw"><input id="tip-skip" type="checkbox" checked> 次回からこの確認を出さない（連続して投げ銭するかた向け）</label>' +
     '<div class="tj__row"><button id="tip-yes" class="set__b2" type="button">はい、それでも</button>' +
     '<button id="tip-no" class="set__b" type="button">やめておく</button></div></div>');
   $("#tip-yes", m).addEventListener("click", function () {
-    var S2 = st(); S2.skipConfirm = !!$("#tip-skip", m).checked; save(S2); RG.showTip();
+    var S2 = st(); S2.skipConfirm = !!$("#tip-skip", m).checked; save(S2); (next || RG.showTip)();
   });
   $("#tip-no", m).addEventListener("click", function () { RG.closeModal(); });
 };
 
-/* 窓口本体 */
+/* ---- 窓口本体 ---- */
 RG.showTip = function (tab) {
   var C = cfg(), S = st(); tab = tab || S.lastTab || "pay";
   var head = '<div class="tj">' +
-    '<div class="tj__tabs">' + [["pay", "☕ 投げ銭"], ["loop", "🔁 くり返し"], ["msg", "✉️ 救いの言葉・要望"]].map(function (t) {
+    '<div class="tj__tabs">' + [["pay", "☕ 投げ銭"], ["loop", "🔁 くり返し"], ["hist", "📜 履歴"], ["msg", "✉️ 救いの言葉"]].map(function (t) {
       return '<button class="tj__tab' + (t[0] === tab ? " on" : "") + '" type="button" data-tab="' + t[0] + '">' + t[1] + "</button>"; }).join("") + "</div>";
-  var body = tab === "pay" ? payHTML(C, S) : tab === "loop" ? loopHTML(C, S) : msgHTML(C, S);
+  var body = tab === "pay" ? payHTML(C, S) : tab === "loop" ? loopHTML(C, S) : tab === "hist" ? histHTML(C, S) : msgHTML(C, S);
   var foot = '<p class="src">当サイトはお金も個人情報も<b>一切あずかりません</b>。送金は各アプリの中で完結し、金額・回数はご自身の判断です。' +
-    "確認POPをスキップにした設定は、この端末だけに保存されます。" +
+    "確認POPをスキップにした設定・履歴は、この端末だけに保存されます。" +
     '<button id="tip-reset" class="tj__lnk" type="button">確認POPを元に戻す</button></p></div>';
   var m = RG.openModal("☕ 制作者への窓口", head + body + foot);
   m.querySelectorAll("[data-tab]").forEach(function (b) { b.addEventListener("click", function () { var S2 = st(); S2.lastTab = b.dataset.tab; save(S2); RG.showTip(b.dataset.tab); }); });
   $("#tip-reset", m).addEventListener("click", function () { var S2 = st(); S2.skipConfirm = false; save(S2); RG.tripStatus && RG.tripStatus("次回から確認POPが出ます。", "info", 3000); });
-  if (tab === "pay") bindPay(m, C); else if (tab === "loop") bindLoop(m, C); else bindMsg(m, C);
+  if (tab === "pay") bindPay(m, C); else if (tab === "loop") bindLoop(m, C); else if (tab === "hist") bindHist(m, C); else bindMsg(m, C);
 };
 
 /* ---- 投げ銭 ---- */
@@ -113,21 +147,21 @@ function payHTML(C, S) {
       return '<button class="tj__amt' + (S.lastAmount === a ? " on" : "") + '" type="button" data-amt="' + a + '"><span>' + e + "</span>" + yen(a) + "</button>"; }).join("") +
     '<button class="tj__amt tj__amt--poor" type="button" data-poor="1"><span>🙏</span>貧乏なので<br>救いの言葉を</button></div>' +
     '<div id="tip-how" class="tj__how"></div>' +
-    (S.lastAmount ? '<p class="tj__last">前回: ' + yen(S.lastAmount) + "（" + (S.app === "kyash" ? "Kyash" : "PayPay") + "）。同じ額をくり返すなら「🔁 くり返し」へ。</p>" : "");
+    (S.lastAmount ? '<p class="tj__last">前回: ' + yen(S.lastAmount) + "（" + appName(S.app) + "）。同じ額をくり返すなら「🔁 くり返し」へ。</p>" : "") +
+    (isMobile() ? '<p class="tj__hint">📱 スマホなら、地図の右の <b>☕</b> ボタンから「押すだけ」で送れます（IDを自動コピーしてアプリを開きます）。</p>' : "");
 }
-function link(C, app, amt) {
-  var l = app === "kyash" ? C.kyashLink : C.paypayLink;
-  return l ? l : null;
-}
+function link(C, app) { var l = app === "kyash" ? C.kyashLink : C.paypayLink; return l ? l : null; }
+function scheme(app) { return app === "kyash" ? "kyash://" : "paypay://"; }
 function howHTML(C, app, amt) {
-  var id = app === "kyash" ? C.kyashId : C.paypayId, name = app === "kyash" ? "Kyash" : "PayPay", l = link(C, app, amt);
+  var id = app === "kyash" ? C.kyashId : C.paypayId, name = appName(app), l = link(C, app);
   if (l) {
     return '<p><b>' + yen(amt) + "</b> を " + name + " で送ります。下のボタンでアプリ（またはリンク先）が開きます。金額はアプリ側で <b>" + yen(amt) + "</b> と入力してください。</p>" +
       '<a class="set__b2 tj__go" href="' + esc(l) + '" target="_blank" rel="noopener" data-done="1">' + name + " をひらく ↗</a>";
   }
   return '<p><b>' + yen(amt) + "</b> を " + name + " で送る手順（" + name + " は<b>アカウント名だけで開ける送金URL</b>を用意していないため、コピーしてアプリで送ります）：</p>" +
     '<ol class="tj__ol"><li>送り先のID <code>' + esc(id) + '</code> を <button class="tj__cp" type="button" data-cp="' + esc(id) + '">コピー</button></li>' +
-    "<li>" + name + " アプリを開き、「送る」→ ID（" + (app === "kyash" ? "Kyash ID" : "PayPay ID") + "）で検索 → 貼り付け</li>" +
+    "<li>" + name + " アプリを開き、「送る」→ ID（" + (app === "kyash" ? "Kyash ID" : "PayPay ID") + "）で検索 → 貼り付け" +
+    (isMobile() ? ' <a class="tj__cp" href="' + scheme(app) + '">アプリを開く</a>' : "") + "</li>" +
     "<li>金額 <b>" + yen(amt) + "</b> を入れて送る（メッセージ欄に「東京ステーションガイド」と書くと制作者が泣いて喜びます）</li></ol>" +
     '<button class="set__b2 tj__go" type="button" data-done="1">送りました（記録する）</button>';
 }
@@ -155,7 +189,9 @@ function afterTip(S2, amt) {
       "これが世の中の世知辛さであり、この事実は本サイトの更新に限らず、輪廻転生した地球のあらゆる場所に存在しています。</p>" +
       "<p>それでも投げ銭が積み上がれば、制作者はサイトのビジュアルを<b>よりリアルに、より高解像に、より充実したコンテンツに</b>していく努力をするつもりです。" +
       "その日が訪れる<b>保証はまるでありません</b>が、楽しみにお待ちください。</p>" +
-      '<div class="tj__row"><button class="set__b2" type="button" onclick="RG.closeModal()">わかった上で、また投げる</button></div></div>');
+      '<div class="tj__row"><button class="set__b2" type="button" onclick="RG.closeModal()">わかった上で、また投げる</button>' +
+      '<button class="set__b" type="button" id="tip-undo">まちがえた（取り消す）</button></div></div>');
+    var u = document.getElementById("tip-undo"); if (u) u.addEventListener("click", function () { undoLast(); RG.closeModal(); });
     return;
   }
   msg = WIT[Math.min(WIT.length - 1, n - 2)];
@@ -164,19 +200,17 @@ function afterTip(S2, amt) {
     "<p>" + esc(msg) + "</p>" +
     '<p class="tj__hint">画面の変化: なし（仕様）。ビジュアルが高解像になる日: 未定（保証なし）。制作者の感謝: 上限なし。</p>' +
     '<div class="tj__row"><button class="set__b2" type="button" id="tip-again">もう一回</button>' +
-    '<button class="set__b" type="button" onclick="RG.closeModal()">今日はここまで</button></div></div>');
+    '<button class="set__b" type="button" onclick="RG.closeModal()">今日はここまで</button>' +
+    '<button class="tj__lnk" type="button" id="tip-undo">取り消す</button></div></div>');
   var ag = document.getElementById("tip-again"); if (ag) ag.addEventListener("click", function () { RG.showTip("loop"); });
+  var u2 = document.getElementById("tip-undo"); if (u2) u2.addEventListener("click", function () { undoLast(); RG.closeModal(); });
 }
 function bindPay(m, C) {
   var S = st(), app = S.app || "paypay", amt = S.lastAmount || 0, how = $("#tip-how", m);
   function paint() { how.innerHTML = amt ? howHTML(C, app, amt) : '<p class="tj__hint">金額を選ぶと手順が出ます。</p>'; bindHow(); }
   function bindHow() {
     how.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
-    how.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () {
-      var S2 = st(); S2.lastAmount = amt; S2.app = app; S2.count = (S2.count || 0) + 1; S2.total = (S2.total || 0) + amt; save(S2);
-      RG.tripStatus && RG.tripStatus("🙏 " + yen(amt) + " の投げ銭、ありがとうございます（累計 " + S2.count + " 回）", "ok", 5000);
-      afterTip(S2, amt);
-    }); });
+    how.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () { var S2 = record(amt, app); afterTip(S2, amt); }); });
   }
   m.querySelectorAll("[data-app]").forEach(function (b) { b.addEventListener("click", function () {
     app = b.dataset.app; m.querySelectorAll("[data-app]").forEach(function (x) { x.classList.toggle("on", x === b); });
@@ -188,17 +222,52 @@ function bindPay(m, C) {
   var poor = m.querySelector("[data-poor]"); if (poor) poor.addEventListener("click", function () { RG.showTip("msg"); });
   paint();
 }
-function copy(text, btn) {
-  function done(ok) { if (btn) { var t = btn.textContent; btn.textContent = ok ? "コピーしました" : "コピーできません"; setTimeout(function () { btn.textContent = t; }, 1500); } }
+function copy(text, btn, cb) {
+  function done(ok) { if (btn) { var t = btn.textContent; btn.textContent = ok ? "コピーしました" : "コピーできません"; setTimeout(function () { btn.textContent = t; }, 1500); } cb && cb(ok); }
   try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); }); return; } } catch (e) {}
   try { var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); var ok = document.execCommand("copy"); document.body.removeChild(ta); done(ok); } catch (e2) { done(false); }
 }
 
+/* ---- スマホの «押すだけ» 投げ銭（電車の中で、うっかり押せる） ---- */
+RG.tipQuick = function () {
+  var S = st();
+  if (!S.skipConfirm && !S.quickSeen) { S.quickSeen = 1; save(S); RG.openTip(RG.tipQuick); return; }
+  var C = cfg(), app = S.app || "paypay";
+  var html = '<div class="tq">' +
+    '<p class="tq__lead">押すと <b>ID「' + esc(app === "kyash" ? C.kyashId : C.paypayId) + '」をコピー</b>して ' + appName(app) + ' を開きます。アプリで貼り付けて送るだけ。</p>' +
+    '<div class="tq__apps"><button class="tq__app' + (app === "paypay" ? " on" : "") + '" type="button" data-qapp="paypay">PayPay</button>' +
+    '<button class="tq__app' + (app === "kyash" ? " on" : "") + '" type="button" data-qapp="kyash">Kyash</button></div>' +
+    '<div class="tq__amts">' + (C.amounts || [100, 500, 1000, 3000]).map(function (a) {
+      var e = a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬";
+      return '<button class="tq__amt" type="button" data-qamt="' + a + '"><span>' + e + "</span>" + yen(a) + "</button>"; }).join("") + "</div>" +
+    '<div id="tq-res" class="tq__res"></div>' +
+    '<p class="tq__hint">押した時点で «送った» として履歴に残ります（まちがえたら「取り消す」）。' + (S.count ? "これまで " + S.count + " 回・" + yen(S.total) + "。" : "") +
+    ' <button class="tj__lnk" type="button" id="tq-full">くわしい窓口へ</button></p></div>';
+  var m = RG.openModal("☕ 押すだけ投げ銭", html);
+  m.classList.add("modal--sheet");
+  m.querySelectorAll("[data-qapp]").forEach(function (b) { b.addEventListener("click", function () { var S2 = st(); S2.app = b.dataset.qapp; save(S2); RG.tipQuick(); }); });
+  m.querySelectorAll("[data-qamt]").forEach(function (b) { b.addEventListener("click", function () {
+    var amt = +b.dataset.qamt, id = app === "kyash" ? C.kyashId : C.paypayId, res = $("#tq-res", m);
+    copy(id, null, function (ok) {
+      var S2 = record(amt, app);
+      res.innerHTML = (ok ? "📋 ID をコピーしました。" : "⚠️ コピーできませんでした。ID: <code>" + esc(id) + "</code>") +
+        (link(C, app) ? ' <a class="set__b2" href="' + esc(link(C, app)) + '" target="_blank" rel="noopener">' + appName(app) + ' をひらく ↗</a>'
+                      : ' <a class="set__b2" href="' + scheme(app) + '">' + appName(app) + ' をひらく</a>') +
+        ' <button class="tj__lnk" type="button" id="tq-undo">取り消す</button>' +
+        '<div class="tq__thx">🙏 ' + yen(amt) + "、確かに。累計 " + S2.count + " 回・" + yen(S2.total) + "。" + (S2.count === 1 ? " 初回なので画面が変わりました。" : " 画面は変わりません（世知辛さ）。") + "</div>";
+      var u = $("#tq-undo", m); if (u) u.addEventListener("click", function () { undoLast(); RG.tipQuick(); });
+      if (S2.count === 1) applyPatron();
+      // アプリ側へ移る（スキームが無効なら何も起きない＝安全）
+      if (isMobile()) setTimeout(function () { try { location.href = link(C, app) || scheme(app); } catch (e) {} }, 350);
+    });
+  }); });
+  var f = $("#tq-full", m); if (f) f.addEventListener("click", function () { RG.showTip("pay"); });
+};
+
 /* ---- くり返し（前回の金額 × 回数） ---- */
 function loopHTML(C, S) {
   if (!S.lastAmount) return '<p class="tj__lead">まだ投げ銭の記録がありません。まず「☕ 投げ銭」で1回送ると、ここで同じ額のくり返しができます。</p>';
-  var name = S.app === "kyash" ? "Kyash" : "PayPay";
-  return '<p class="tj__lead">前回の <b>' + yen(S.lastAmount) + "</b>（" + name + "）を、何回くり返しますか？ 1回ごとに手順（またはアプリ）を開き、「送りました」で次へ進みます。</p>" +
+  return '<p class="tj__lead">前回の <b>' + yen(S.lastAmount) + "</b>（" + appName(S.app) + "）を、何回くり返しますか？ 1回ごとに手順（またはアプリ）を開き、「送りました」で次へ進みます。</p>" +
     '<div class="tj__loopset"><label>回数 <input id="tip-n" type="number" min="1" max="99" value="' + (S.loopN || 3) + '"></label>' +
     '<span id="tip-sum" class="tj__sum"></span>' +
     '<button id="tip-start" class="set__b2" type="button">▶ はじめる</button></div>' +
@@ -210,19 +279,64 @@ function bindLoop(m, C) {
   var n = $("#tip-n", m), sum = $("#tip-sum", m), box = $("#tip-loop", m), i = 0, total = 0;
   function paintSum() { total = Math.max(1, Math.min(99, +n.value || 1)); sum.textContent = "合計 " + yen(S.lastAmount * total); }
   n.addEventListener("input", paintSum); paintSum();
-  $("#tip-start", m).addEventListener("click", function () {
-    var S2 = st(); S2.loopN = total; save(S2); i = 0; step();
-  });
+  $("#tip-start", m).addEventListener("click", function () { var S2 = st(); S2.loopN = total; save(S2); i = 0; step(); });
   function step() {
     if (i >= total) { box.innerHTML = '<p class="tj__big">🎉 ' + total + " 回、完了。累計 " + yen(st().total || 0) + "。制作者は確実に笑顔です。</p>"; return; }
     box.innerHTML = '<p class="tj__big">' + (i + 1) + " / " + total + " 回目 ― " + yen(S.lastAmount) + "</p>" + howHTML(C, S.app || "paypay", S.lastAmount);
     box.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
     box.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () {
-      var S3 = st(); S3.count = (S3.count || 0) + 1; S3.total = (S3.total || 0) + S.lastAmount; save(S3); i++;
+      var S3 = record(S.lastAmount, S.app || "paypay"); i++;
       if (S3.count === 1) afterTip(S3, S.lastAmount);
       step();
     }); });
   }
+}
+
+/* ---- 履歴 ---- */
+function histHTML(C, S) {
+  var H = (S.hist || []).slice().reverse();
+  if (!H.length && S.count) H = [{ t: 0, a: S.total || 0, p: S.app || "paypay", legacy: S.count }];   // 履歴機能より前の記録
+  if (!H.length) return '<p class="tj__lead">まだ投げ銭の記録がありません。ここには、この端末で送った投げ銭が1件ずつ残ります。</p>';
+  var byMonth = {};
+  (S.hist || []).forEach(function (h) { var k = new Date(h.t).toLocaleDateString("ja-JP", { year: "numeric", month: "short" }); byMonth[k] = (byMonth[k] || 0) + h.a; });
+  return '<div class="th__sum"><div><b>' + yen(S.total) + "</b><small>累計</small></div><div><b>" + (S.count || 0) + "</b><small>回</small></div>" +
+    "<div><b>" + (S.count ? yen(Math.round((S.total || 0) / S.count)) : "—") + "</b><small>1回あたり</small></div></div>" +
+    (Object.keys(byMonth).length ? '<div class="th__m">' + Object.keys(byMonth).map(function (k) { return "<span>" + esc(k) + " " + yen(byMonth[k]) + "</span>"; }).join("") + "</div>" : "") +
+    '<table class="th__t"><thead><tr><th>#</th><th>日時</th><th>手段</th><th>金額</th></tr></thead><tbody>' +
+    H.map(function (h, i) {
+      return "<tr><td>" + (H.length - i) + "</td><td>" + (h.t ? esc(new Date(h.t).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })) : "（履歴機能より前・" + h.legacy + "回分の合計）") +
+        "</td><td>" + appName(h.p) + "</td><td class=\"th__a\">" + yen(h.a) + "</td></tr>"; }).join("") + "</tbody></table>" +
+    '<p class="tj__hint">記録はこの端末のブラウザにだけあります（当サイトのサーバーには何も送られていません）。</p>' +
+    '<div class="th__clr"><button id="tip-clear" class="tj__clr" type="button">🧹 履歴をぜんぶ消す（懺悔のリセット）</button>' +
+    '<p class="tj__hint">消すと、支援者の印と累計も消えて «まっさら» に戻ります。次の投げ銭がまた «初回» になります。</p></div>';
+}
+function bindHist(m, C) {
+  var b = $("#tip-clear", m); if (!b) return;
+  b.addEventListener("click", function () {
+    var mm = RG.openModal("🧹 懺悔のリセット", '<div class="tj tj--c">' +
+      '<p class="tj__big">これまでの投げ銭の記録を、すべて消します。</p>' +
+      "<p>日々の懺悔を水に流すように。暗いトンネルを抜けて、まっさらな明るい世界へ。出家するかのような、すがすがしい気持ちで押してください。</p>" +
+      '<p class="tj__hint">※ 消えるのはこの端末の記録だけです。送ったお金は（当然ながら）戻りません。</p>' +
+      '<div class="tj__row"><button class="set__b2" type="button" id="tip-clear-go">🕊️ 出家する（履歴を消す）</button>' +
+      '<button class="set__b" type="button" onclick="RG.closeModal()">まだ俗世にいる</button></div></div>');
+    $("#tip-clear-go", mm).addEventListener("click", function () { RG.closeModal(); rebirth(); });
+  });
+}
+/* トンネルの向こうの光へ（GIF を流しながら履歴を消す） */
+function rebirth() {
+  var ov = document.createElement("div"); ov.className = "rebirth";
+  ov.innerHTML = '<img src="' + (RG.withV ? RG.withV("assets/img/rebirth.gif") : "assets/img/rebirth.gif") + '?t=' + Date.now() + '" alt="">' +
+    '<div class="rebirth__t"><b>……</b><span>暗いトンネルを、抜けていきます</span></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function () { ov.classList.add("on"); });
+  var t = ov.querySelector(".rebirth__t");
+  setTimeout(function () {
+    var S = st(); var keep = { skipConfirm: S.skipConfirm, name: S.name, lastTab: "hist", quickSeen: S.quickSeen }; save(keep); applyPatron();
+    t.innerHTML = "<b>すべて、消えました</b><span>懺悔も、累計も、支援者の印も</span>";
+  }, 1600);
+  setTimeout(function () { t.innerHTML = "<b>🌅 新しい世界へ</b><span>おかえりなさい。次の投げ銭は、また «初回» です</span>"; ov.classList.add("light"); }, 3200);
+  setTimeout(function () { ov.classList.remove("on"); setTimeout(function () { ov.remove(); RG.showTip("hist"); }, 600); }, 5200);
+  ov.addEventListener("click", function () { ov.classList.remove("on"); setTimeout(function () { ov.remove(); RG.showTip("hist"); }, 300); });
 }
 
 /* ---- 救いの言葉・要望 ---- */

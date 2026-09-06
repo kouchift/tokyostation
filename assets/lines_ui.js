@@ -150,6 +150,7 @@ var Rail = (function () {
           (!!ST.hideVisited) + '">✅ 訪問済みを隠す</button>' +
         '<span class="lr__cnt" id="lr-gcnt"></span>' +
       "</div>" +
+      '<div class="lr__selrow" id="lr-sel"></div>' +
       '<div class="lr__row lr__row--g">' +
       genres.map(function (g) {
         var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
@@ -456,7 +457,7 @@ var Rail = (function () {
       toggle(null); build(); ST.railOpen = true; save(); if (RG.paintRailToggle) RG.paintRailToggle();
       if (RG.tripStatus) RG.tripStatus("🚉 " + ps.value + " の路線に切り替えました。", "info", 2500);
     });
-    $$(".lr__i", box).forEach(function (b) {
+    $$(".lr__i[data-line]", box).forEach(function (b) {      // ジャンルのボタン（.lr__i--g）はここでは扱わない（v73: 全部が押された表示になる不具合の修正）
       b.addEventListener("click", function () { toggle(b.dataset.line); });
       b.addEventListener("mouseenter", function (e) { show(b.dataset.line, b); });
       b.addEventListener("mouseleave", hide);
@@ -552,6 +553,19 @@ var Rail = (function () {
     if (c) c.textContent = !cur.length ? "全ジャンル表示中"
       : cur[0] === "__none__" ? "スポット非表示"
       : cur.length + " ジャンルを表示中";
+    // いま選んでいるものを、名前つきの札で並べる（アイコンだけでは何を選んだか分かりにくいため）
+    var sr = $("#lr-sel", box);
+    if (sr) {
+      var picked = cur.filter(function (x) { return x !== "__none__"; });
+      sr.innerHTML = picked.length ? '<span class="lr__selh">選択中:</span>' + picked.map(function (id) {
+        var g = (RG.GENRES || []).filter(function (x) { return x.id === id; })[0] || { e: "📍", label: id, c: "#888" };
+        return '<button class="sel__c" type="button" data-unsel="' + esc(id) + '" style="--lc:' + g.c + '">' +
+          '<span class="sel__e">' + g.e + '</span><span class="sel__n">' + esc(g.label) + '</span><span class="sel__x">✕</span></button>'; }).join("") +
+        '<button class="lr__c" type="button" data-gnone2="1">ぜんぶ解除</button>' : "";
+      $$("[data-unsel]", sr).forEach(function (b) { b.addEventListener("click", function () {
+        ST.genres = (ST.genres || []).filter(function (x) { return x !== b.dataset.unsel; }); save(); syncGenreButtons(); }); });
+      var gn2 = $("[data-gnone2]", sr); if (gn2) gn2.addEventListener("click", function () { ST.genres = []; save(); syncGenreButtons(); });
+    }
     var hb2 = $("[data-hv]", box);
     if (hb2) {
       hb2.setAttribute("aria-pressed", String(!!ST.hideVisited));
@@ -563,7 +577,7 @@ var Rail = (function () {
   RG.syncRailGenres = syncGenreButtons;
   function toggle(name) {
     active = (name && active === name) ? null : name;
-    $$(".lr__i", box).forEach(function (b) {
+    $$(".lr__i[data-line]", box).forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.line === active));
     });
     RG.Map.highlightLine(active);

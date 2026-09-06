@@ -123,11 +123,12 @@ RG.initZip = function () {
   var dwellT = 0, lastX = 0, lastY = 0;
   wrap.addEventListener("pointermove", function (e) {
     if (e.pointerType !== "mouse" || touchMode) return;
+    if (RG.settings && RG.settings.zipHover === false) return;      // 設定で «カーソルで出さない» にしたとき
     var moved = Math.abs(e.clientX - lastX) + Math.abs(e.clientY - lastY);
     lastX = e.clientX; lastY = e.clientY;
     clearTimeout(dwellT);
     if (chip && chip.classList.contains("sticky")) return;
-    if (moved > 6 && chip && chip.classList.contains("on")) hide();
+    if (moved > 4 && chip && chip.classList.contains("on")) hide();
     if (!zoomOk() || wrap.classList.contains("dragging")) return;
     if (e.target.closest && e.target.closest("button,a,input,.quickbar,.zoombar,.poipop,.navbar,.heatlegend,.hint,.poicount,.node,.poi,.lm")) return;
     var cx = e.clientX, cy = e.clientY;
@@ -137,7 +138,7 @@ RG.initZip = function () {
       if (!hit) { hide(); return; }
       show(hit, cx, cy, false);
       lastKey = hit.zip + hit.town;
-    }, 700);
+    }, 1000);
   });
   wrap.addEventListener("pointerleave", function () { if (chip && !chip.classList.contains("sticky")) hide(); });
   // クリック／タップで «固定»（コピーしやすいように）。スマホは 〒 モードのときだけ

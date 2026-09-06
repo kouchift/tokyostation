@@ -85,6 +85,10 @@ RG.adultSwitchHTML = function () {
       ((RG.settings && RG.settings.bigtext) ? " checked" : "") +
       "> 🔠 文字を大きくする（画面ぜんぶ）</label>" +
       '<p class="deep__d">小さい字が読みづらいときに。地図の文字は変わりません。</p>' +
+      '<label class="set__sw"><input id="zip-sw" type="checkbox"' +
+      ((RG.settings && RG.settings.zipHover === false) ? "" : " checked") +
+      "> 〒 郵便番号をカーソルで表示する（PC・止めて1秒後）</label>" +
+      '<p class="deep__d">うるさいときは外してください。外しても 〒 ボタン→クリックでは出ます。</p>' +
       '<details class="deep deep--in"><summary>表示するものを増やす</summary>' +
         '<div class="deep__b">' +
           '<label class="set__sw"><input id="ad-sw" type="checkbox"' + (on() ? " checked" : "") +
@@ -126,6 +130,12 @@ RG.bindAdultSwitch = function (root) {
     RG.tripStatus(this.checked
       ? "🔞 おとな向けの施設を地図に出しました。"
       : "おとな向けの施設を地図から消しました。", "info", 3000);
+  });
+  var zs = $("#zip-sw", root);
+  if (zs) zs.addEventListener("change", function () {
+    if (RG.settings) RG.settings.zipHover = this.checked;
+    if (RG.saveSettings) RG.saveSettings();
+    if (!this.checked && RG.zipHide) RG.zipHide();
   });
   var bg = $("#big-sw", root);
   if (bg) bg.addEventListener("change", function () {

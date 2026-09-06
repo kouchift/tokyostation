@@ -726,7 +726,7 @@ var Map = (function () {
        ここで setPointerCapture すると、以後のイベントが地図に吸い寄せられ、
        地図の上に重ねたボタン（色分け・3D・地形…）を押しても
        click が届かなくなる。UI の上で始まった操作は、地図では扱わない。 */
-    var UI_SEL = ".quickbar,.heatlegend,.navbar,.chips,.poipop,.zoombox,.lms__ui," +
+    var UI_SEL = ".quickbar,.heatlegend,.navbar,.chips,.poipop,.zoombox,.lms__ui,.bublegend,.zipchip,.hint,.poicount,.attrib,.zoombar," +
                  "button,a,input,select,textarea,label,[role=button]";
     wrap.addEventListener("pointerdown", function (e) {
       if (e.target.closest(".node")) return;
@@ -1839,7 +1839,8 @@ function initSheetDrag() {
     if (e.key === "Escape") { Card.close(); if (RG.closeModal) RG.closeModal(); } });
   document.addEventListener("pointerdown", function (e) {
     if (e.target.closest("#hovercard") || e.target.closest(".node") || e.target.closest(".hdr") ||
-        e.target.closest(".chips") || e.target.closest(".modal") || e.target.closest("#tripbar")) return;
+        e.target.closest(".chips") || e.target.closest(".modal") || e.target.closest("#tripbar") ||
+        e.target.closest(".bublegend") || e.target.closest(".zipchip") || e.target.closest(".poipop") || e.target.closest(".rebirth")) return;
     Card.close();
   });
 }

@@ -276,6 +276,7 @@ RG.setCorpBubble = function (opt) {
   try { localStorage.setItem("tsg.bub", BUB ? JSON.stringify(BUB) : ""); } catch (e) {}
   if (BUB && RG.ensureData) RG.ensureData("spots", function () { RG.corpBubbleLOD(true); });
   RG.corpBubbleLOD(true);
+  if (!BUB) RG.paintBubbleLegend(0, 0);      // ← v73: 「やめる」で凡例も必ず消す
   if (RG.tripStatus) RG.tripStatus(BUB ? "🫧 " + ({ cap: "資本金", emp: "従業員数", rev: "売上高" })[BUB.metric] + " の大きさで会社を円にしています" + (BUB.i17 ? "（" + BUB.i17 + "）" : "") + "。円を押すと会社のカード。" : "バブル表示をやめました。", "info", 3500);
 };
 RG.corpBubble = function () { return BUB; };
@@ -321,9 +322,14 @@ function cnt(f) { var n = 0; (RG.CORP || []).forEach(function (c) { if (f(c) != 
 RG.paintBubbleLegend = function (n, maxV) {
   var el = document.getElementById("bublegend");
   if (!BUB) { if (el) el.remove(); return; }
-  if (!el) { el = document.createElement("div"); el.id = "bublegend"; el.className = "bublegend"; document.querySelector(".mapwrap").appendChild(el); }
+  if (!el) {
+    el = document.createElement("div"); el.id = "bublegend"; el.className = "bublegend"; document.querySelector(".mapwrap").appendChild(el);
+    // 凡例の上で始まった操作は地図に渡さない（背面の地図が動く・駅が選ばれるのを防ぐ）
+    ["pointerdown", "touchstart", "wheel", "click"].forEach(function (t) { el.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: t !== "wheel" }); });
+  }
   var keys = BUB.i17 ? [BUB.i17] : Object.keys(RG.CORP_TREE || {});
-  el.innerHTML = '<b>🫧 ' + ({ cap: "資本金", emp: "従業員数", rev: "売上高" })[BUB.metric] + " の大きさ</b>" +
+  el.innerHTML = '<button type="button" class="bublegend__x" data-m="off" aria-label="バブル表示をやめる">✕</button>' +
+    '<b>🫧 ' + ({ cap: "資本金", emp: "従業員数", rev: "売上高" })[BUB.metric] + " の大きさ</b>" +
     '<span class="bublegend__n">画面内 ' + n + " 社／最大 " + esc(BUB.metric === "cap" ? capStr(maxV) : BUB.metric === "emp" ? maxV.toLocaleString("ja-JP") + "人" : yen(maxV)) + "</span>" +
     '<div class="bublegend__k">' + keys.map(function (k) { return '<button type="button" data-i17="' + esc(k) + '" class="' + (BUB.i17 === k ? "on" : "") + '"><i style="background:' + i17Color(k) + '"></i>' + esc(k) + "</button>"; }).join("") + "</div>" +
     '<div class="bublegend__m"><button type="button" data-m="cap" class="' + (BUB.metric === "cap" ? "on" : "") + '">資本金（全社）</button>' +
