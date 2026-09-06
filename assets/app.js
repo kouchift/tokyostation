@@ -1019,7 +1019,7 @@ var Map = (function () {
     var used = {}, show = [];
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
-      var special = q.g === "ichinomiya";           // 一之宮は数の上限・間引きの対象外（必ず出す）
+      var special = q.g === "ichinomiya" || q.g === "buzz";           // 一之宮は数の上限・間引きの対象外（必ず出す）
       if (!special && show.length >= cap) continue;
       var key = Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key] && !special) continue;
@@ -1914,6 +1914,15 @@ function mergeExtraPois(key) {
                        srcNote: "名刹: Wikidata（CC0）。Wikipedia の言語版数を知名度の目安にしています。拝観時間・料金は公式で確認。" });
     });
   });
+  if (RG.CAMS_JP) once("cams_jp", function () {
+    RG.CAMS_JP.forEach(function (r, i) {
+      RG.MAPPOI.push({ i: "cj" + i, n: r.n, la: r.la, lo: r.lo, g: "camera", s: 3.8, ti: 1,
+                       t: (r.k || "ライブ") + "カメラ", be: "📹", bc: "#5A6472", url: r.url || null,
+                       yt: r.yt || null, ch: r.ch || null, by: r.by || null, kind: r.k || null,
+                       srcNote: "全国のライブカメラ: 配信元 " + (r.by || "不明") + "（YouTube）。位置はおおよそ。配信は止まる/変わることがあります。" });
+    });
+  });
+  if (RG.mergeBuzz) RG.mergeBuzz();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();
@@ -1992,6 +2001,7 @@ RG.boot = function () {
   });
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
   step("郵便番号", function () { if (RG.initZip) RG.initZip(); });
+  step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });

@@ -34,6 +34,8 @@ var IDLE = [
   { f: "data/landmarks.js", key: "landmarks", label: "ランドマーク" },
   { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮" },
   { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
+  { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
+  { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
   { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ" },
   { f: "data/wikiinfo.js",  key: "wiki",      label: "区と路線の説明" },
   { f: "data/heat.js",      key: "heat",      label: "区の統計" },
@@ -64,7 +66,8 @@ var ONDEMAND = [
   { f: "data/edu.js",       key: "edu",      label: "学校",               group: "spots" },
   { f: "data/corp.js",      key: "corp",     label: "上場企業",           group: "spots" },
   { f: "data/smoking.js",   key: "smoke",    label: "喫煙できる場所",     group: "spots" },
-  { f: "data/camadult.js",  key: "camadult", label: "カメラほか",         group: "spots" }
+  { f: "data/camadult.js",  key: "camadult", label: "カメラほか",         group: "spots" },
+  { f: "data/cams_jp.js",   key: "cams_jp",  label: "全国ライブカメラ",   group: "spots" }
 ];
 
 var loaded = {}, inflight = {};
@@ -112,7 +115,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;
@@ -142,6 +145,7 @@ function flush() {
       if (RG.buildGroupBar) RG.buildGroupBar();
     }
     if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) RG.buildWeekBar();
+    if (keys.indexOf("support") >= 0 && RG.tipInit) RG.tipInit();
     if (card && RG.Card && RG.Card.refresh) RG.Card.refresh();
     if (keys.indexOf("landmarks") >= 0 && RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks();
   } catch (e) {

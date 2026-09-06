@@ -2612,3 +2612,60 @@ html,body{max-width:100vw;overflow-x:hidden}
 /* v69: 一之宮は特別な印（濃い赤の丸・二重のふち） */
 .poi--ichinomiya .poi__c{stroke:#8B0000 !important;fill:#FFF3F3 !important}
 .poi--ichinomiya .poi__halo{fill:#F6D3D3;fill-opacity:.95}
+/* v71 全国ライブカメラ：チャンネル埋め込み（サムネ無し）の置き場 */
+.cam__th--ph{display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,#2b3540,#5A6472);color:#fff;opacity:1}
+/* v71 SNSで話題（buzz） */
+.bz__lead{font-size:13px;color:#444;margin:0 0 8px}
+.bz__tabs,.bz__areas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.bz__tab,.bz__ar{border:1px solid #ddd;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+.bz__tab.on{background:#FF4500;color:#fff;border-color:#FF4500}
+.bz__ar.on{background:#333;color:#fff;border-color:#333}
+.bz__ar.top{border-color:#C9A227;font-weight:700}
+.bz__ar small{opacity:.7;margin-left:2px}
+.bz__list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.bz__it{border:1px solid #eee;border-radius:12px;padding:10px 12px;background:#fff}
+.bz__top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:11.5px;color:#666}
+.bz__pl{font-weight:700;color:#000}.bz__pl--tiktok{color:#111}.bz__pl--ig{color:#C13584}
+.bz__new{color:#fff;background:#E5006E;border-radius:4px;padding:0 4px;font-size:10px}
+.bz__a{background:#f2f2f2;border-radius:4px;padding:0 6px}
+.bz__imp{margin-left:auto;letter-spacing:-2px}
+.bz__n{font-size:15px;font-weight:700;margin:4px 0 2px;line-height:1.4}
+.bz__by,.bz__ev{font-size:11.5px;color:#666}
+.bz__act{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bz__b{border:1px solid #ccc;background:#fafafa;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#222}
+.bz__b:disabled{opacity:.5}
+.bz__emb{margin-top:8px;min-height:20px}
+.bz__f{width:100%;height:560px;border:0;border-radius:8px}.bz__f--ig{height:640px}
+.bz__ld{font-size:12px;color:#888}
+.bz__none{font-size:13px;color:#666;padding:12px}
+/* v71 制作者への窓口（tip） */
+.tjin{border-top:1px dashed #ddd}
+.tj__tabs{display:flex;gap:6px;margin-bottom:10px}
+.tj__tab{flex:1;border:1px solid #ddd;background:#fff;border-radius:10px;padding:8px 4px;font-size:12.5px;cursor:pointer}
+.tj__tab.on{background:#6D4C1E;color:#fff;border-color:#6D4C1E}
+.tj__lead{font-size:13.5px;line-height:1.7;margin:0 0 10px}
+.tj__big{font-size:16px;font-weight:700;margin:6px 0}
+.tj__q{font-size:18px;font-weight:800;margin:10px 0;text-align:center}
+.tj__row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.tj__apps{display:flex;gap:8px;margin:8px 0}
+.tj__app{flex:1;border:2px solid #ddd;background:#fff;border-radius:12px;padding:10px;font-weight:800;font-size:15px;cursor:pointer}
+.tj__app small{display:block;font-weight:400;font-size:11px;color:#666}
+.tj__app.on{border-color:#E60012;background:#fff5f5}
+.tj__amts{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin:8px 0}
+.tj__amt{border:2px solid #ddd;background:#fff;border-radius:14px;padding:10px 4px;font-size:15px;font-weight:800;cursor:pointer;line-height:1.3}
+.tj__amt span{display:block;font-size:26px;margin-bottom:2px}
+.tj__amt.on{border-color:#6D4C1E;background:#fbf6ee}
+.tj__amt--poor{font-size:12px;border-style:dashed}
+.tj__how{background:#f7f7f7;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.7;margin-top:6px}
+.tj__ol{margin:6px 0;padding-left:20px}
+.tj__cp,.tj__lnk{border:1px solid #bbb;background:#fff;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;margin-left:6px}
+.tj__go{display:inline-block;margin-top:6px;text-decoration:none}
+.tj__hint,.tj__last{font-size:12px;color:#666}
+.tj__loopset{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.tj__loopset input{width:64px;font-size:16px;padding:4px}
+.tj__sum{font-weight:700}
+.tj__loop{margin-top:8px}
+.tj__form label{display:block;font-size:12.5px;margin:8px 0 2px}
+.tj__form input,.tj__form textarea{width:100%;box-sizing:border-box;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px}
+.tj__res{font-size:13px;margin-top:8px;color:#1a6b2a}
+.tj--c p{font-size:14px;line-height:1.7}

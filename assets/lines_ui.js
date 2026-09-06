@@ -604,9 +604,11 @@ function openSettings() {
       "× 鉄道会社のロゴ・シンボルマーク・キャラクター画像は<b>同梱していません</b>。" +
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
+    (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
     (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "");
   var m = RG.openModal("設定", html);
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
+  if (RG.tipBind) RG.tipBind(m);
   renderWatch();
 
   $("#set-lm", m).addEventListener("change", function () { ST.lmOn = this.checked; save(); applyLandmarks(); });

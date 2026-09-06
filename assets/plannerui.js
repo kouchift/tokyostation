@@ -251,36 +251,38 @@ function ytId(u) {
 RG.ytId = ytId;
 
 function cameraBlock(p) {
-  if (p.g !== "camera" || !p.url) return "";
-  var id = ytId(p.url);
+  if (p.g !== "camera" || !(p.url || p.yt || p.ch)) return "";
+  var id = p.yt || ytId(p.url);
+  var src = p.by ? esc(p.by) + "（YouTube）" : "東京都（建設局・港湾局）のライブカメラ";
   var head = '<div class="cam"><div class="cam__h">📹 いまの映像' +
     (p.kind ? '<span class="cam__k">' + esc(p.kind) + "</span>" : "") +
     (p.river ? '<span class="cam__k">' + esc(p.river) + "</span>" : "") + "</div>";
-  if (!id) {
+  if (!id && !p.ch) {
     return head + '<a class="lnk cam__l" href="' + esc(p.url) + '" target="_blank" rel="noopener">' +
       "<span>▶️</span>カメラの映像を見る</a>" +
-      '<p class="cam__s">出典: 東京都（建設局・港湾局）のライブカメラ</p></div>';
+      '<p class="cam__s">出典: ' + src + "</p></div>";
   }
   // 押すまで読み込まない «軽い» 置きかた。押すとその場で再生が始まる。
+  // チャンネルIDがあれば «いま配信中のもの» を指す埋め込みを優先（24h配信は再起動でIDが変わるため）
+  var thumb = id ? '<img class="cam__th" src="https://i.ytimg.com/vi/' + esc(id) + '/hqdefault.jpg" alt="' + esc(p.n) + ' のライブ映像" loading="lazy">'
+                 : '<div class="cam__th cam__th--ph">📹</div>';
   return head +
-    '<div class="cam__w" data-yt="' + esc(id) + '">' +
-      '<img class="cam__th" src="https://i.ytimg.com/vi/' + esc(id) +
-        '/hqdefault.jpg" alt="' + esc(p.n) + ' のライブ映像" loading="lazy">' +
+    '<div class="cam__w" data-yt="' + esc(id || "") + '" data-ch="' + esc(p.ch || "") + '">' + thumb +
       '<button class="cam__play" type="button" aria-label="映像を再生">▶</button>' +
       '<span class="cam__live">● LIVE</span>' +
     "</div>" +
-    '<p class="cam__s">押すと<b>このページのまま</b>再生します。' +
-    "東京都（建設局・港湾局）が YouTube で公開しているライブ映像です。<br>" +
+    '<p class="cam__s">押すと<b>このページのまま</b>再生します。' + src + " が YouTube で公開しているライブ映像です。<br>" +
     "映像が出ないときは配信が止まっているか、配信元が埋め込みを許可していない可能性があります。" +
-    'そのときは <a href="' + esc(p.url) + '" target="_blank" rel="noopener">YouTube で開く</a> をお試しください。</p></div>';
+    'そのときは <a href="' + esc(p.url || ("https://www.youtube.com/watch?v=" + id)) + '" target="_blank" rel="noopener">YouTube で開く</a> をお試しください。</p></div>';
 }
 /* 再生ボタンが押されたら、その場で iframe に差し替える */
 document.addEventListener("click", function (ev) {
   var w = ev.target.closest && ev.target.closest("[data-yt]");
   if (!w || w.querySelector("iframe")) return;
-  var id = w.dataset.yt;
-  w.innerHTML = '<iframe class="cam__f" src="https://www.youtube.com/embed/' + id +
-    "?autoplay=1&rel=0&modestbranding=1&playsinline=1" +
+  var id = w.dataset.yt, ch = w.dataset.ch;
+  var base = ch ? "https://www.youtube.com/embed/live_stream?channel=" + ch + "&" : "https://www.youtube.com/embed/" + id + "?";
+  w.innerHTML = '<iframe class="cam__f" src="' + base +
+    "autoplay=1&rel=0&modestbranding=1&playsinline=1" +
     '" title="ライブ映像" frameborder="0" ' +
     'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" ' +
     'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
@@ -314,6 +316,7 @@ RG.showSpot = function (p) {
   if (p.smoke && RG.showSmoke) { RG.showSmoke(p.smoke); return; }
   if (p.adult && RG.showAdult) { RG.showAdult(p.adult); return; }
   if (p.camspot && RG.showCamSpot) { RG.showCamSpot(p.camspot); return; }
+  if (p.buzz && RG.showBuzz) { RG.showBuzz(p.buzz, "fresh"); return; }
   if (p.osm10 && RG.showOsm10) { RG.showOsm10(p); return; }
   if (p.klm && RG.showKantoLM) { RG.showKantoLM(p); return; }
   if (p.univ != null && RG.showUniv) { RG.showUniv(p.univ); return; }

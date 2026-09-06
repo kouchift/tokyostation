@@ -79,3 +79,7 @@ tools/build_standalone.py  単一ファイル版の生成
 | 都道府県・市区町村の境界（`data/geo/`） | スマートニュース メディア研究所「市区町村・選挙区 地形データ」（https://github.com/smartnews-smri/japan-topography）。元データは国土交通省 国土数値情報（行政区域データ）N03 | 国土数値情報の利用規約に従い「国土数値情報（行政区域データ）（国土交通省）を加工して作成」と表示 | 下敷きの地図。県は起動直後、市区町村は暇なとき、県ごとの詳しい境界は寄ったときだけ |
 | 郵便番号（`data/zip/`） | 日本郵便「郵便番号データ」（https://www.post.japanpost.jp/zipcode/download.html）と Geolonia 住所データ（https://github.com/geolonia/japanese-addresses、元は国土交通省 位置参照情報） | 日本郵便: 自由に配布可 ／ Geolonia: CC BY 4.0 | 町丁目の代表点に郵便番号を付け、0.2度の升目に分割。見えている升目だけ読む |
 | カードの写真・数字・説明（その場で取得） | Wikipedia 日本語版 API ／ Wikidata API ／ Wikimedia Commons API | Wikipedia: CC BY-SA 4.0 ／ Wikidata: CC0 ／ Commons: 写真ごとに異なる（カードに撮影者・ライセンスを表示） | カードを開いたときだけ問い合わせ、端末に7日間キャッシュ。地図の描画には関与しない |
+
+## v71
+- `data/cams_jp.js` — 各配信元の YouTube チャンネル。一覧の入手元: 国土交通省 九州地方整備局「河川カメラ YouTube 一覧」、近畿地方整備局「ライブカメラ」、水管理・国土保全局「河川ライブ配信一覧」、各放送局・新聞社・自治体の公式チャンネル。動画IDは YouTube oEmbed で 2026-09-06 に有効確認。
+- `data/buzz.js` — 投稿の存在は X 公式 oEmbed（publish.twitter.com/oembed）で確認。「話題になった」根拠は各件の `src`（Togetter まとめ・報道）。見出しは当サイトの要約。
