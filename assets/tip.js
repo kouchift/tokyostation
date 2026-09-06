@@ -83,6 +83,16 @@ RG.tipInit = function () {
     fb.addEventListener("click", function () { RG.tipQuick(); });
     zb.appendChild(fb);
   }
+  // QR から来た（?tip=1&app=paypay&amt=500）：確認なしで、その金額の «押すだけ» 画面をすぐ開く
+  try {
+    var q = new URLSearchParams(location.search);
+    if (q.get("tip")) {
+      var S = st(); S.skipConfirm = true; S.quickSeen = 1; if (q.get("app")) S.app = q.get("app") === "kyash" ? "kyash" : "paypay"; save(S);
+      var amt = +q.get("amt") || 0;
+      setTimeout(function () { RG.tipQuick(amt || null); }, 600);
+      if (history.replaceState) history.replaceState(null, "", location.pathname);
+    }
+  } catch (e) {}
 };
 
 /* ---- 設定パネルに差し込む入口 ---- */
@@ -228,26 +238,50 @@ function copy(text, btn, cb) {
   try { var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); var ok = document.execCommand("copy"); document.body.removeChild(ta); done(ok); } catch (e2) { done(false); }
 }
 
-/* ---- スマホの «押すだけ» 投げ銭（電車の中で、うっかり押せる） ---- */
-RG.tipQuick = function () {
+/* ---- «押すだけ» 投げ銭（スマホ：押す→IDコピー→アプリ／PC：QR をスマホで読む） ---- */
+function qrTarget(C, app, amt) {
+  var l = link(C, app);
+  if (l) return l;                                                    // 送金リンクがあれば、それを直接 QR に
+  var base = C.siteUrl || (location.origin + location.pathname);
+  return base + "?tip=1&app=" + app + (amt ? "&amt=" + amt : "");     // 無ければ、このサイトの «押すだけ» 画面を開く QR
+}
+RG.tipQuick = function (preAmt) {
   var S = st();
-  if (!S.skipConfirm && !S.quickSeen) { S.quickSeen = 1; save(S); RG.openTip(RG.tipQuick); return; }
-  var C = cfg(), app = S.app || "paypay";
-  var html = '<div class="tq">' +
-    '<p class="tq__lead">押すと <b>ID「' + esc(app === "kyash" ? C.kyashId : C.paypayId) + '」をコピー</b>して ' + appName(app) + ' を開きます。アプリで貼り付けて送るだけ。</p>' +
+  if (!S.skipConfirm && !S.quickSeen) { S.quickSeen = 1; save(S); RG.openTip(function () { RG.tipQuick(preAmt); }); return; }
+  var C = cfg(), app = S.app || "paypay", id = app === "kyash" ? C.kyashId : C.paypayId, mob = isMobile();
+  var amts = C.amounts || [100, 500, 1000, 3000];
+  var html = '<div class="tq' + (mob ? " tq--m" : " tq--pc") + '">' +
     '<div class="tq__apps"><button class="tq__app' + (app === "paypay" ? " on" : "") + '" type="button" data-qapp="paypay">PayPay</button>' +
     '<button class="tq__app' + (app === "kyash" ? " on" : "") + '" type="button" data-qapp="kyash">Kyash</button></div>' +
-    '<div class="tq__amts">' + (C.amounts || [100, 500, 1000, 3000]).map(function (a) {
+    '<div class="tq__id">送り先 ID <b>' + esc(id) + '</b> <button class="tj__cp" type="button" data-cp="' + esc(id) + '">コピー</button></div>' +
+    (preAmt ? '<button class="tq__one" type="button" data-qamt="' + preAmt + '">☕ ' + yen(preAmt) + ' を送る <small>' + (mob ? "押すとIDをコピーして " + appName(app) + " が開きます" : "押すとIDをコピーします（PC は " + appName(app) + " のアプリ／ウェブで送ってください）") + '</small></button>' +
+              '<p class="tq__hint">ほかの金額:</p>' : '') +
+    '<div class="tq__amts">' + amts.map(function (a) {
       var e = a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬";
       return '<button class="tq__amt" type="button" data-qamt="' + a + '"><span>' + e + "</span>" + yen(a) + "</button>"; }).join("") + "</div>" +
+    (mob ? '<p class="tq__lead">金額を押すと <b>ID をコピー</b>して ' + appName(app) + ' が開きます。アプリで「送る」→ 貼り付け → 金額を入れるだけ。</p>'
+         : '<div class="tq__pc"><div class="tq__qr" id="tq-qr"></div>' +
+           '<div class="tq__pct"><b>スマホで読むと、そのまま「押すだけ」画面が開きます。</b>' +
+           "金額を選ぶと QR にも金額が入り、スマホ側は<b>ボタン1回</b>で送れます。" +
+           (link(C, app) ? "（この QR は " + appName(app) + " の送金リンクを直接開きます）" : "") + "</div></div>") +
     '<div id="tq-res" class="tq__res"></div>' +
     '<p class="tq__hint">押した時点で «送った» として履歴に残ります（まちがえたら「取り消す」）。' + (S.count ? "これまで " + S.count + " 回・" + yen(S.total) + "。" : "") +
-    ' <button class="tj__lnk" type="button" id="tq-full">くわしい窓口へ</button></p></div>';
+    ' <button class="tj__lnk" type="button" id="tq-full">くわしい窓口</button> <button class="tj__lnk" type="button" id="tq-msg">🙏 救いの言葉・要望</button></p></div>';
   var m = RG.openModal("☕ 押すだけ投げ銭", html);
   m.classList.add("modal--sheet");
-  m.querySelectorAll("[data-qapp]").forEach(function (b) { b.addEventListener("click", function () { var S2 = st(); S2.app = b.dataset.qapp; save(S2); RG.tipQuick(); }); });
+  var qrBox = $("#tq-qr", m), curAmt = preAmt || S.lastAmount || 0;
+  function paintQR() { if (qrBox && RG.qrSvg) qrBox.innerHTML = RG.qrSvg(qrTarget(C, app, curAmt), 180, { label: "投げ銭のQR" }) + '<small>' + (curAmt ? yen(curAmt) + " の" : "") + "QR</small>"; }
+  paintQR();
+  m.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
+  m.querySelectorAll("[data-qapp]").forEach(function (b) { b.addEventListener("click", function () { var S2 = st(); S2.app = b.dataset.qapp; save(S2); RG.tipQuick(preAmt); }); });
   m.querySelectorAll("[data-qamt]").forEach(function (b) { b.addEventListener("click", function () {
-    var amt = +b.dataset.qamt, id = app === "kyash" ? C.kyashId : C.paypayId, res = $("#tq-res", m);
+    var amt = +b.dataset.qamt, res = $("#tq-res", m);
+    curAmt = amt; m.querySelectorAll(".tq__amt").forEach(function (x) { x.classList.toggle("on", +x.dataset.qamt === amt); });
+    if (!mob) { paintQR(); copy(id, null);
+      res.innerHTML = "📋 ID をコピーしました。📱 左の QR をスマホで読むと、" + yen(amt) + " の「押すだけ」画面が開きます。PC から送るなら " + appName(app) + " のアプリ／ウェブで ID を貼り付けて送ってください。" +
+      ' <button class="tj__lnk" type="button" id="tq-pcdone">PC から送りました（記録する）</button>';
+      var pd = $("#tq-pcdone", m); if (pd) pd.addEventListener("click", function () { var S3 = record(amt, app); afterTip(S3, amt); });
+      return; }
     copy(id, null, function (ok) {
       var S2 = record(amt, app);
       res.innerHTML = (ok ? "📋 ID をコピーしました。" : "⚠️ コピーできませんでした。ID: <code>" + esc(id) + "</code>") +
@@ -257,11 +291,11 @@ RG.tipQuick = function () {
         '<div class="tq__thx">🙏 ' + yen(amt) + "、確かに。累計 " + S2.count + " 回・" + yen(S2.total) + "。" + (S2.count === 1 ? " 初回なので画面が変わりました。" : " 画面は変わりません（世知辛さ）。") + "</div>";
       var u = $("#tq-undo", m); if (u) u.addEventListener("click", function () { undoLast(); RG.tipQuick(); });
       if (S2.count === 1) applyPatron();
-      // アプリ側へ移る（スキームが無効なら何も起きない＝安全）
-      if (isMobile()) setTimeout(function () { try { location.href = link(C, app) || scheme(app); } catch (e) {} }, 350);
+      setTimeout(function () { try { location.href = link(C, app) || scheme(app); } catch (e) {} }, 350);   // アプリへ（スキームが無効なら何も起きない＝安全）
     });
   }); });
   var f = $("#tq-full", m); if (f) f.addEventListener("click", function () { RG.showTip("pay"); });
+  var mg = $("#tq-msg", m); if (mg) mg.addEventListener("click", function () { RG.showTip("msg"); });
 };
 
 /* ---- くり返し（前回の金額 × 回数） ---- */
@@ -348,7 +382,7 @@ function msgHTML(C, S) {
     '<div class="tj__row"><button id="tip-send" class="set__b2" type="button"' + (left > 0 ? " disabled" : "") + ">📨 制作者へ届け！</button>" +
     (left > 0 ? '<span class="tj__hint">連投よけのため、あと約 ' + left + " 分お待ちください。</span>" : "") + "</div>" +
     '<div id="tip-msgres" class="tj__res"></div></div>' +
-    '<p class="tj__hint">送り先: ' + (C.discordWebhook ? "制作者の Discord" : "制作者のメール（" + esc(C.mailto || "") + "）") +
+    '<p class="tj__hint">送り先: ' + (C.discordWebhook ? "制作者の Discord" : (C.googleForm && C.googleForm.action) ? "制作者の受信箱（フォーム）" : "制作者（メールアプリが開きます）") +
     "。メッセージには、この端末の来訪者ID <code>" + esc(vid()) + "</code> が付きます。連投や制作者の気分を害する内容には、制作者がこのIDのアクセスを断つことがあります。</p>";
 }
 function bindMsg(m, C) {
@@ -366,10 +400,16 @@ function bindMsg(m, C) {
         body: JSON.stringify({ content: body.slice(0, 1900), username: "東京ステーションガイド 窓口", allowed_mentions: { parse: [] } }) })
         .then(function (r) { if (!r.ok) throw 0; S.lastMsgAt = Date.now(); save(S); res.innerHTML = "📨 届きました。ありがとうございます。制作者は多忙のフリをしながら、必ず読みます。"; })
         .catch(function () { b.disabled = false; res.innerHTML = "送れませんでした。<a href=\"" + mailtoHref(C, body) + "\">メールで送る</a> をお試しください。"; });
+    } else if (C.googleForm && C.googleForm.action) {
+      b.disabled = true; res.textContent = "送っています…";
+      var fd = new FormData(); fd.append(C.googleForm.name, name); fd.append(C.googleForm.text, text + "\n---\nvid:" + vid() + (S.total ? " 投げ銭累計 " + yen(S.total) : ""));
+      fetch(C.googleForm.action, { method: "POST", mode: "no-cors", body: fd })
+        .then(function () { S.lastMsgAt = Date.now(); save(S); res.innerHTML = "📨 届きました。ありがとうございます。制作者は多忙のフリをしながら、必ず読みます。"; })
+        .catch(function () { b.disabled = false; res.innerHTML = "送れませんでした。しばらくしてからもう一度お試しください。"; });
     } else {
       S.lastMsgAt = Date.now(); save(S);
       location.href = mailtoHref(C, body);
-      res.innerHTML = "メールソフトが開きます（開かないときは <code>" + esc(C.mailto || "") + "</code> 宛に本文をお送りください）。";
+      res.innerHTML = "メールアプリが開きます。そのまま送信してください。";
     }
   });
 }

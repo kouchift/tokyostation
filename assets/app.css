@@ -2764,3 +2764,19 @@ button,.lr__i,.tq__amt,.tj__amt{touch-action:manipulation}
 .rebirth__t span{font-size:13px;opacity:.85}
 .gi.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--lc);position:relative}
 .gi.on::after{content:"✓";position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;background:#111;color:#fff;font-size:11px;line-height:18px;text-align:center;font-weight:900}
+/* v74 押すだけ投げ銭：QR（PC）・1発ボタン・目立つ ☕ */
+.tipfab{font-size:17px;background:linear-gradient(180deg,#fff7dd,#ffe6a3) !important;border-color:#d9b13b !important}
+.tq__id{font-size:13px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tq__id b{font-size:18px;letter-spacing:.04em;font-family:var(--mono,ui-monospace,monospace)}
+.tq__one{width:100%;border:0;border-radius:18px;padding:16px 10px;font-size:22px;font-weight:900;color:#fff;background:linear-gradient(180deg,#e66a00,#c24d00);box-shadow:0 4px 0 #8a3600;margin:4px 0 8px;cursor:pointer}
+.tq__one small{display:block;font-size:12px;font-weight:400;opacity:.9;margin-top:4px}
+.tq__one:active{transform:translateY(2px);box-shadow:0 2px 0 #8a3600}
+.tq__amt.on{border-color:#c24d00;background:#fff1e3}
+.tq--pc .tq__amts{grid-template-columns:repeat(4,1fr)}
+.tq--pc .tq__amt{min-height:64px;font-size:16px;padding:8px 4px}
+.tq--pc .tq__amt span{font-size:22px}
+.tq__pc{display:flex;gap:14px;align-items:center;margin-top:10px;background:#fbf6ee;border:1px solid #e8dcc3;border-radius:14px;padding:10px}
+.tq__qr{flex:0 0 auto;text-align:center}
+.tq__qr svg{display:block;border:1px solid #ddd;border-radius:8px}
+.tq__qr small{font-size:11px;color:#666}
+.tq__pct{font-size:13px;line-height:1.7}

@@ -32,9 +32,9 @@ RG.MAPSIZE = {
   --------------------------------------------------------------------- */
   steps: [
     /* 引きぐあい  駅名   丸の半径  丸   名前  区名  地名  スポット */
-    { z:  1,      lbl: 5.0,  dot: 1.4,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  4 },
-    { z:  4,      lbl: 9.0,  dot: 2.3,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
-    { z: 22,      lbl: 9.0,  dot: 3.3,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
+    { z:  1,      lbl: 5.0,  dot: 1.7,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  4 },
+    { z:  4,      lbl: 9.0,  dot: 3.2,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
+    { z: 22,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
   ],
   /* 上の «駅名» と «丸» は «大きい駅» のときの大きさです。
      ふつうの駅・選んだ駅は、それに対する «割合» で決めます。 */
@@ -47,10 +47,10 @@ RG.MAPSIZE = {
   strokeR:  0.30,   // 文字の白いふち（文字の大きさに対する割合）
   admR:     1.25,   // 区の名前は、駅名（大きい駅）の 125%
   jpadmR:   1.40,   // 全国の市区町村の地名は 140%
-  poiER:    1.30,   // スポットの絵文字（v72: 駅名との釣り合いをそろえた）
-  poiEBigR: 1.55,   // 目立つスポットの絵文字
-  poiCR:    0.62,   // スポットの丸（半径）＝絵文字に対する割合
-  poiTR:    0.95    // スポットの名前（駅名よりわずかに小さく）
+  poiER:    1.15,   // スポットの絵文字（v74: 駅の丸を大きく・スポットを小さくして釣り合わせた）
+  poiEBigR: 1.35,   // 目立つスポットの絵文字
+  poiCR:    0.58,   // スポットの丸（半径）＝絵文字に対する割合
+  poiTR:    0.90    // スポットの名前（駅名よりわずかに小さく）
 };
 
 /* いまの引きぐあいでの «大きさと数» を、表から取り出す。
@@ -949,8 +949,10 @@ var Map = (function () {
     // 名前。寄ったときだけ出す（poiLOD が決める）
     n.appendChild(el("text", { class: "poi__t", "text-anchor": "middle" }));
     n.addEventListener("click", function (ev) { ev.stopPropagation(); if (n.__p) RG.showSpot(n.__p); });
-    n.addEventListener("mouseenter", function () { if (n.__p) RG.spotTip(n.__p, { x: n.__p.x, y: n.__p.y }); });
-    n.addEventListener("mouseleave", function () { RG.spotTip(null); });
+    // ホバーのふきだしはマウス／ペンだけ。指のタップでは出さない（タップは click → カードを開く。
+    // v74: Android で指の下にふきだしが出て click を横取りし、0.5秒で消える不具合の修正）
+    n.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch" && n.__p) RG.spotTip(n.__p, { x: n.__p.x, y: n.__p.y }); });
+    n.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") RG.spotTip(null); });
     n.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && n.__p) RG.showSpot(n.__p); });
     gPOI.appendChild(n); pool.push(n);
     return n;
@@ -1128,8 +1130,8 @@ var Map = (function () {
       g.appendChild(el("circle", { class: "lm__hit", cx: P.x, cy: P.y, r: 12 }));
       var open = function (ev) { ev && ev.stopPropagation(); RG.showLandmark(L); };
       g.addEventListener("click", open);
-      g.addEventListener("mouseenter", function () { RG.spotTip(L, project(L.la, L.lo), true); });
-      g.addEventListener("mouseleave", function () { RG.spotTip(null); });
+      g.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch") RG.spotTip(L, project(L.la, L.lo), true); });
+      g.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") RG.spotTip(null); });
       g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") open(e); });
       gLM.appendChild(g); lmNode[L.id] = g;
     });
@@ -1838,7 +1840,8 @@ function initSheetDrag() {
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { Card.close(); if (RG.closeModal) RG.closeModal(); } });
   document.addEventListener("pointerdown", function (e) {
-    if (e.target.closest("#hovercard") || e.target.closest(".node") || e.target.closest(".hdr") ||
+    // v74: スマホの駅カードは #sheet。ここに #sheet が無かったため、シートの中を触った（スクロールした）瞬間に閉じていた
+    if (e.target.closest("#hovercard") || e.target.closest("#sheet") || e.target.closest(".node") || e.target.closest(".hdr") ||
         e.target.closest(".chips") || e.target.closest(".modal") || e.target.closest("#tripbar") ||
         e.target.closest(".bublegend") || e.target.closest(".zipchip") || e.target.closest(".poipop") || e.target.closest(".rebirth")) return;
     Card.close();
