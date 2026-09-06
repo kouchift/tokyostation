@@ -2586,3 +2586,6 @@ html,body{max-width:100vw;overflow-x:hidden}
 .enr__lbn--p{left:8px}.enr__lbn--n{right:8px}
 .attrib{position:absolute;right:6px;bottom:4px;font-size:9px;color:#6E7A88;background:rgba(255,255,255,.72);padding:1px 6px;border-radius:6px;pointer-events:none;z-index:5;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:560px){.attrib{font-size:8px;right:4px;bottom:2px;max-width:50vw}}
+/* v68: 西武池袋線・山手線は引いていても見失わない */
+.ln--fav{opacity:min(1,calc(var(--lnop,1) * 1.6)) !important;stroke-width:calc(var(--lnw,3.4) * 1.45px) !important}
+#map.far .ln--fav{stroke-width:calc(var(--lnw,3.4) * 1.3px) !important}

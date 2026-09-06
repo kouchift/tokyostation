@@ -431,7 +431,9 @@ var Map = (function () {
     Object.keys(byLine).forEach(function (k) {
       // 見えている線
       var shin = /新幹線/.test(k);
-      var p = el("path", { class: "ln" + (shin ? " ln--shin" : ""), d: byLine[k].join(""),
+      // 思い入れの強い路線（西武池袋線・山手線）は、引いていても少しだけ濃く・太く
+      var fav = (RG.FAV_LINES || ["西武池袋線", "山手線"]).indexOf(k) >= 0;
+      var p = el("path", { class: "ln" + (shin ? " ln--shin" : "") + (fav ? " ln--fav" : ""), d: byLine[k].join(""),
                            stroke: RG.lineColor[k] || "#9AA0A6", "stroke-width": 3.4,
                            fill: "none", "stroke-linecap": "round" });
       // 押すための «太い透明な線»（細い線は指では狙えないため）
