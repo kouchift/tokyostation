@@ -33,6 +33,7 @@ var IDLE = [
   { f: "data/geo/pref.json", key: "geopref", label: "都道府県の境界", json: "GEO_PREF" },
   { f: "data/landmarks.js", key: "landmarks", label: "ランドマーク" },
   { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮" },
+  { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
   { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ" },
   { f: "data/wikiinfo.js",  key: "wiki",      label: "区と路線の説明" },
   { f: "data/heat.js",      key: "heat",      label: "区の統計" },
@@ -111,7 +112,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;

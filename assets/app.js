@@ -1902,6 +1902,18 @@ function mergeExtraPois(key) {
                        srcNote: "一之宮: Wikidata（CC0）の「一宮」に結びつく神社。参拝時間・行事は各社の公式で確認。" });
     });
   });
+  if (RG.SHRINE_MAJOR) once("shrines_jp", function () {
+    RG.SHRINE_MAJOR.forEach(function (r, i) {
+      RG.MAPPOI.push({ i: "shm" + i, n: r.n, la: r.la, lo: r.lo, g: "shrine_major", s: 4.2, ti: 1,
+                       t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null,
+                       srcNote: "主な神社: Wikidata（CC0）の別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" });
+    });
+    (RG.TEMPLE_MAJOR || []).forEach(function (r, i) {
+      RG.MAPPOI.push({ i: "tmp" + i, n: r.n, la: r.la, lo: r.lo, g: "temple_major", s: Math.min(5, 3.5 + (r.sl || 0) / 30), ti: (r.sl || 0) >= 20 ? 0 : 1,
+                       t: "寺院", be: "🛕", bc: "#6D4C1E", sl: r.sl || 0, url: r.wp || null,
+                       srcNote: "名刹: Wikidata（CC0）。Wikipedia の言語版数を知名度の目安にしています。拝観時間・料金は公式で確認。" });
+    });
+  });
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();
