@@ -112,7 +112,7 @@ RG.initSearchUI = function () {
 
   function row(r) {
     var ico = r.t === "station" ? "🚉" : r.t === "area" ? "🗺️" : r.t === "geo" ? "🌏"
-            : r.t === "addr" ? "📮" : r.t === "own" ? "🏫" : "📍";
+            : r.t === "addr" || r.t === "zip" ? "📮" : r.t === "own" ? "🏫" : "📍";
     var st = (r.t === "spot" && r.star) ? '<span class="sg__st">' + RG.stars(r.star) + "</span>" : "";
     var b = el("button", { type: "button", class: "sg__r sg__r--" + r.t, html:
       '<span class="sg__i">' + ico + "</span>" +
@@ -126,6 +126,8 @@ RG.initSearchUI = function () {
     if (r.t === "station") { RG.openStation(r.id); return; }
     if (r.t === "spot") { RG.Map.gotoLatLng(r.la, r.lo, 180); RG.showSpot(r.poi); return; }
     if (r.t === "own") { RG.Map.gotoLatLng(r.la, r.lo, 180); RG.showLandmark(r.own); return; }
+    if (r.t === "zip") { RG.Map.gotoLatLng(r.la, r.lo, 160);
+      RG.tripStatus(r.n + " " + (r.k || "") + " のあたりを表示しています", "info", 3000); return; }
     if (r.t === "area") { RG.Map.gotoLatLng(r.la, r.lo, r.z || 900);
       RG.tripStatus("🗺️ " + r.n + " のあたりを表示しています", "info", 2600); return; }
     // 住所・建物名（Nominatim / 温泉の住所）
@@ -161,6 +163,22 @@ RG.initSearchUI = function () {
     if (!v) { clear(); return; }
     var loc = RG.searchLocal(v, 12);
     render(loc, [], true);                    // ローカルは同期・即時
+    // 郵便番号：手元の索引（上3桁ごとのファイル）で即座に場所へ。外部サービスに頼らない
+    var zm = /^(\d{3})-?(\d{4})$/.exec(v.replace(/[\s\u3000〒]/g, "").replace(/[‐－ー―−]/g, "-"));
+    if (zm && RG.zipLookup) {
+      RG.zipLookup(zm[1] + zm[2], function (hit, all) {
+        if (input.value.trim() !== v) return;
+        var rows = [];
+        if (hit) rows.push({ t: "zip", n: "〒" + zm[1] + "-" + zm[2], k: hit.town, sub: "この郵便番号の場所へ地図を寄せます", la: hit.la, lo: hit.lo });
+        else if (all) {
+          // 下4桁が部分一致するものを候補に
+          Object.keys(all).filter(function (z) { return z.indexOf(zm[1] + zm[2].slice(0, 2)) === 0; }).slice(0, 6)
+            .forEach(function (z) { rows.push({ t: "zip", n: "〒" + z.slice(0, 3) + "-" + z.slice(3), k: all[z][2], sub: "近い番号の候補", la: all[z][0], lo: all[z][1] }); });
+        }
+        if (rows.length) render(rows.concat(loc), remoteRows, false);
+      });
+      return;
+    }
     // 郵便番号や「〜丁目/番地」など住所らしい入力で、ローカルに当たらないときは自動で地図検索
     if (loc.length < 2 && /(^\d{3}-?\d{4}$)|丁目|番地|[0-9]-[0-9]/.test(v)) {
       RG.searchRemote(v, function (rows) {

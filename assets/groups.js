@@ -269,11 +269,12 @@ RG.showOsm10 = function (p) {
 /* ------------------------------------------------ 関東の見どころのカード */
 RG.showKantoLM = function (p) {
   var r = p.klm, near = RG.nearestStation ? RG.nearestStation(p.la, p.lo) : null;
-  RG.openModal(r.e + " " + r.n, '<div class="smk">' +
+  var m = RG.openModal(r.e + " " + r.n, '<div class="smk">' +
     '<div class="smk__hd" style="--lc:' + r.c + '">' +
       '<span class="smk__e">' + r.e + "</span>" +
       "<div><h3>" + esc(r.n) + '</h3><p class="smk__k">' + esc(r.t || "見どころ") +
       (r.sl ? " ・ " + r.sl + " 言語版で紹介" : "") + "</p></div></div>" +
+    (RG.enrichSlot ? RG.enrichSlot() : "") +
     '<div class="smkg">' +
       (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
@@ -284,6 +285,7 @@ RG.showKantoLM = function (p) {
                   yt: r.n, map: p.la + "," + p.lo, news: r.n }) +
     (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "行きかたを見る") : "") +
     '<p class="src">出典: Wikidata (CC0)。営業時間や休みは公式でご確認ください。</p></div>');
+  if (RG.enrichIn) RG.enrichIn(m, { name: r.n, la: p.la, lo: p.lo, kind: "spot", hasHero: false, hasIntro: false });
 };
 
 })(window.RG);

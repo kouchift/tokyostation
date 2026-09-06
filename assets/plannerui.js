@@ -379,6 +379,7 @@ RG.showSpot = function (p) {
       '<span class="spotcard__why">行く価値のめやす</span>' +
       (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
     (RG.pinRow ? RG.pinRow(p) : "") +
+    (RG.enrichSlot && !p.chain && !p.od ? RG.enrichSlot() : "") +
     cameraBlock(p) +
     fromHtml +
     (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
@@ -422,6 +423,7 @@ RG.showSpot = function (p) {
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
     "<b>レビューサイトの評価点ではありません。</b><br>出典: Wikidata (CC0 1.0) / 画像: Wikimedia Commons</p></div>";
   var m = modal(g.e + " " + p.n, html);
+  if (RG.enrichIn && !p.chain && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]) });
   if (RG.bindPinRow) RG.bindPinRow(m, p);
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });

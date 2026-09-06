@@ -2508,3 +2508,81 @@ html,body{max-width:100vw;overflow-x:hidden}
    地図の中ではフォーカスを丸の色で示す */
 #map *:focus,#map *:focus-visible{outline:none !important}
 #map .node:focus-visible .st-dot,#map .poi:focus-visible .poi__c,#map .lm:focus-visible .lm__c{stroke:#FFB300 !important}
+
+/* =========================================================================
+   v67: 下敷きの地図（海・陸・県境・市区町村境）と沖縄の別枠
+   ========================================================================= */
+.mapwrap{background:#E6EEF5}                                   /* 海 */
+.geo__pref{fill:#FAFAF6;stroke:#8593A3;stroke-width:1.2px;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#map.geo-far .geo__pref{stroke-width:.8px}
+.geo__muni{fill:none;stroke:#C3CCD6;stroke-width:.6px;vector-effect:non-scaling-stroke;stroke-linejoin:round;pointer-events:none}
+#map.geo-far .geo__muni{display:none}
+#map.geo-near .geo__muni{stroke:#AEB9C6;stroke-width:.8px}
+.geo__muni--fine{stroke:#B4BFCB}
+.geo__pn{font-weight:800;fill:#98A4B3;paint-order:stroke;stroke:#FAFAF6;stroke-linejoin:round;pointer-events:none;
+  -webkit-user-select:none;user-select:none}
+.geo__okif{fill:#E6EEF5;stroke:#7F8C9B;stroke-width:1px;vector-effect:non-scaling-stroke;stroke-dasharray:4 3}
+.geo__okit{fill:#5A6472;font-weight:700;pointer-events:none;paint-order:stroke;stroke:#E6EEF5;stroke-width:0}
+#map.blank .geo__pref{fill:#fff;stroke:#333}
+#map.d3on .geo{display:none}
+
+/* v67: 郵便番号の札 */
+.zipchip{position:fixed;z-index:70;display:none;align-items:center;gap:8px;padding:6px 8px 6px 10px;
+  background:#fff;border:1px solid #B9C2CC;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.14);
+  font-size:12.5px;color:#26313D;max-width:min(92vw,360px);pointer-events:none}
+.zipchip.on{display:flex}
+.zipchip.sticky{pointer-events:auto;border-color:#0055AD;box-shadow:0 6px 18px rgba(0,85,173,.22)}
+.zipchip__z{font-family:var(--mono);font-weight:800;font-size:14px;color:#0A3D6E;white-space:nowrap}
+.zipchip__t{color:#5A6472;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zipchip__c{display:none;border:1px solid #0055AD;color:#0055AD;background:#EEF5FF;border-radius:7px;padding:3px 8px;font-size:11.5px;font-weight:700;white-space:nowrap;font-family:inherit;cursor:pointer}
+.zipchip__x{display:none;border:0;background:none;color:#78828F;font-size:13px;padding:0 2px;cursor:pointer}
+.zipchip.sticky .zipchip__c,.zipchip.sticky .zipchip__x{display:inline-block}
+.zipchip.sticky .zipchip__c:hover{background:#0055AD;color:#fff}
+#zipbtn.on{background:#0055AD;color:#fff;border-color:#0055AD}
+
+/* =========================================================================
+   v67: カードの «ひと目でわかる»（写真・数字・説明を、その場で取ってくる）
+   ========================================================================= */
+.enr-slot{margin:8px 0}
+.enr{border:1px solid var(--grid,#E6E6E6);border-radius:12px;padding:10px 10px 8px;background:#fff}
+.enr__h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px;font-size:12.5px;font-weight:800;color:#0A3D6E}
+.enr__h em{font-style:normal;font-weight:500;color:#5A6472;font-size:11.5px}
+.enr__hero{margin:0 0 8px}
+.enr__heroBox{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#EEF1F4}
+.enr__heroBox img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.enr__hero figcaption{font-size:10.5px;color:#78828F;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.enr__gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:5px;margin:0 0 8px}
+.enr__th{border:0;padding:0;background:#EEF1F4;border-radius:8px;overflow:hidden;aspect-ratio:1/1;cursor:zoom-in}
+.enr__th img{width:100%;height:100%;object-fit:cover;display:block}
+.enr__facts{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.enr__f{display:flex;flex-direction:column;min-width:82px;padding:6px 9px;border-radius:9px;background:#F3F7FC;border:1px solid #DCE7F3}
+.enr__f b{font-size:14px;color:#0A2A4A;line-height:1.2;word-break:break-all}
+.enr__f i{font-style:normal;font-size:10px;color:#5A6472;margin-top:2px}
+.enr__ex{font-size:12.5px;line-height:1.65;color:#26313D}
+.enr__p{margin:0 0 4px}
+.enr__more{border:0;background:none;color:#0055AD;font-weight:700;font-size:12px;padding:0;cursor:pointer;font-family:inherit}
+.enr__src{display:block;font-size:10px;color:#78828F;margin-top:2px}
+.enr__lnks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.enr__lnk{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1px solid var(--border,#949494);background:#fff;
+  font-size:12px;color:#0A3D6E;text-decoration:none;font-weight:600}
+.enr__lnk:hover{background:#EEF5FF;border-color:#0055AD}
+.enr__credit{font-size:10px;color:#8A94A0;margin:8px 0 0;line-height:1.5}
+/* 骨組み（読み込み中） */
+.enr--wait{min-height:120px}
+.enr__sk{background:linear-gradient(90deg,#EEF1F4 25%,#F7F8FA 50%,#EEF1F4 75%);background-size:200% 100%;animation:enrsk 1.2s linear infinite;border-radius:8px}
+.enr__sk--img{aspect-ratio:16/9;margin-bottom:8px}
+.enr__sk--l{height:11px;margin:6px 0}.enr__sk--l.short{width:60%}
+.enr__row{display:flex;gap:6px;margin-top:8px}.enr__sk--c{display:block;width:84px;height:40px}
+@keyframes enrsk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.enr__sk{animation:none}}
+/* 写真を大きく */
+.enr__lb{position:fixed;inset:0;z-index:120;background:rgba(10,20,30,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px}
+.enr__lbi{max-width:min(96vw,1200px);max-height:78vh;display:flex;align-items:center;justify-content:center}
+.enr__lbi img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.enr__lbc{color:#DDE4EC;font-size:12px;margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;max-width:90vw}
+.enr__lbc b{color:#fff;font-size:13px}.enr__lbc a{color:#9CD1FF}
+.enr__lbx{position:fixed;top:10px;right:12px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer}
+.enr__lbn{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:30px;cursor:pointer}
+.enr__lbn--p{left:8px}.enr__lbn--n{right:8px}
+.attrib{position:absolute;right:6px;bottom:4px;font-size:9px;color:#6E7A88;background:rgba(255,255,255,.72);padding:1px 6px;border-radius:6px;pointer-events:none;z-index:5;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){.attrib{font-size:8px;right:4px;bottom:2px;max-width:50vw}}

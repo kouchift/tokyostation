@@ -198,8 +198,15 @@ function buildIndex() {
     RG.adj[a.id].push({ to: b.id, km: km, line: e[2] || "" });
     RG.adj[b.id].push({ to: a.id, km: km, line: e[2] || "" });
   });
-  var lats = N.stations.map(function (s) { return s.la; });
-  var lngs = N.stations.map(function (s) { return s.lo; });
+  /* 沖縄は地理的に大きく離れた飛び地なので、紙の地図と同じように
+     «別枠» に寄せて描く（地図の左上・日本海の空いた場所）。
+     ここで決めた RG.isOkinawa / RG.OKI は、駅・スポット・境界線のすべてに効く。 */
+  function isOki(la, lo) { return la < 28.0 && lo < 130.0; }
+  RG.isOkinawa = isOki;
+  var main = N.stations.filter(function (s) { return !isOki(s.la, s.lo); });
+  if (main.length < 10) main = N.stations;
+  var lats = main.map(function (s) { return s.la; });
+  var lngs = main.map(function (s) { return s.lo; });
   var b = { s: Math.min.apply(null, lats), n: Math.max.apply(null, lats),
             w: Math.min.apply(null, lngs), e: Math.max.apply(null, lngs) };
   // Web メルカトル投影（経度・緯度ともラジアン系に揃える）
@@ -208,15 +215,32 @@ function buildIndex() {
   var x0 = mx(b.w), x1 = mx(b.e), y0 = my(b.n), y1 = my(b.s);
   var pad = 60, W = VB.w - pad * 2, sc = W / (x1 - x0);
   VB.h = Math.round((y0 - y1) * sc + pad * 2);   // 北が上（y0 = 最北）
+  function rawProject(la, lo) { return { x: pad + (mx(lo) - x0) * sc, y: pad + (y0 - my(la)) * sc }; }
+  // 沖縄の別枠：本島がすっぽり入る範囲（北緯26.0〜27.0・東経127.5〜128.5）を左上へ
+  var OKI = null;
+  if (main.length !== N.stations.length) {
+    var a1 = rawProject(27.0, 127.5), a2 = rawProject(26.0, 128.5);
+    var fw = a2.x - a1.x, fh = a2.y - a1.y;
+    var tx = pad * 0.4, ty = pad * 0.4;
+    OKI = { dx: tx - a1.x, dy: ty - a1.y, frame: { x: tx, y: ty, w: fw, h: fh } };
+  }
+  RG.OKI = OKI;
   N.stations.forEach(function (s) {
-    s.x = pad + (mx(s.lo) - x0) * sc;
-    s.y = pad + (y0 - my(s.la)) * sc;
+    var q = rawProject(s.la, s.lo);
+    if (OKI && isOki(s.la, s.lo)) { q.x += OKI.dx; q.y += OKI.dy; }
+    s.x = q.x; s.y = q.y;
   });
   RG.project = function (la, lo) {
-    return { x: pad + (mx(lo) - x0) * sc, y: pad + (y0 - my(la)) * sc };
+    var q = rawProject(la, lo);
+    if (OKI && isOki(la, lo)) { q.x += OKI.dx; q.y += OKI.dy; }
+    return q;
   };
   /* 地図の座標から緯度経度へ戻す（見えている範囲の升目を知るために使う） */
   RG.unproject = function (x, y) {
+    if (OKI) {
+      var f = OKI.frame;
+      if (x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h) { x -= OKI.dx; y -= OKI.dy; }
+    }
     var lo = ((x - pad) / sc + x0) * 180 / Math.PI;
     var t = y0 - (y - pad) / sc;
     var la = (2 * Math.atan(Math.exp(t)) - Math.PI / 2) * 180 / Math.PI;
@@ -675,13 +699,16 @@ var Map = (function () {
     poiLOD();
     if (RG.admLOD) RG.admLOD();
     if (RG.jpAdmLOD) RG.jpAdmLOD();
+    if (RG.geoLOD) RG.geoLOD();
     if (RG.map3DMoved) RG.map3DMoved();
-    if (RG.loadTilesFor && vb) {
+    if ((RG.loadTilesFor || RG.zipOnMove) && vb) {
       clearTimeout(tileT);
       tileT = setTimeout(function () {
         var a = RG.unproject(vb.x, vb.y + vb.h), b = RG.unproject(vb.x + vb.w, vb.y);
-        RG.loadTilesFor({ s: Math.min(a.la, b.la), n: Math.max(a.la, b.la),
-                          w: Math.min(a.lo, b.lo), e: Math.max(a.lo, b.lo) });
+        var bbox = { s: Math.min(a.la, b.la), n: Math.max(a.la, b.la),
+                     w: Math.min(a.lo, b.lo), e: Math.max(a.lo, b.lo) };
+        if (RG.loadTilesFor) RG.loadTilesFor(bbox);
+        if (RG.zipOnMove) RG.zipOnMove(bbox);
       }, 300);
     }
   }
@@ -1532,6 +1559,7 @@ var Card = (function () {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
            hero(s) +
+           (RG.enrichSlot ? RG.enrichSlot() : "") +
            scoreBlock(s) +
            congestion(s, d) +
            boarding(s, d) +
@@ -1578,6 +1606,9 @@ var Card = (function () {
   }
 
   function bind(root, id, d) {
+    var st0 = RG.byId[id];
+    if (st0 && RG.enrichIn) RG.enrichIn(root, { name: st0.n, la: st0.la, lo: st0.lo, kind: "station",
+      hasHero: !!(RG.POI && RG.POI[id] && RG.POI[id].img), hasIntro: !!(RG.DESCS && RG.DESCS[st0.n]) });
     var host = root.querySelector(".launcher");
     $$("[data-launch]", root).forEach(function (b) {
       b.addEventListener("click", function (e) {
@@ -1935,6 +1966,7 @@ RG.boot = function () {
     });
   });
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
+  step("郵便番号", function () { if (RG.initZip) RG.initZip(); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });

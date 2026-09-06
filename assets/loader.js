@@ -30,11 +30,13 @@ var CORE = ["data/version.js", "data/config.js", "data/lines_meta.js",
 
 /* 第2段：地図が出たあと、端末が暇なときに順に足す（合計 約2MB・gzip後 約600KB） */
 var IDLE = [
+  { f: "data/geo/pref.json", key: "geopref", label: "都道府県の境界", json: "GEO_PREF" },
   { f: "data/landmarks.js", key: "landmarks", label: "ランドマーク" },
   { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ" },
   { f: "data/wikiinfo.js",  key: "wiki",      label: "区と路線の説明" },
   { f: "data/heat.js",      key: "heat",      label: "区の統計" },
   { f: "data/admin.js",     key: "admin",     label: "行政区の地図" },
+  { f: "data/geo/muni.json", key: "geomuni",  label: "市区町村の境界", json: "GEO_MUNI" },
   { f: "data/depth.js",     key: "depth",     label: "地下の深さ" },
   { f: "data/crime.js",     key: "crime",     label: "安全のデータ" },
   { f: "data/bigevents.js", key: "bigev",     label: "大きな行事" },
@@ -72,7 +74,16 @@ var BUILD = document.documentElement.getAttribute("data-build") || "";
 RG.BUILD = BUILD;
 function withV(src) { return BUILD ? src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=" + BUILD : src; }
 RG.withV = withV;
-function load(src) {
+function loadJson(src, target) {
+  if (loaded[src]) return Promise.resolve(src);
+  if (inflight[src]) return inflight[src];
+  inflight[src] = fetch(withV(src), { credentials: "same-origin" })
+    .then(function (r) { if (!r.ok) throw new Error(src); return r.json(); })
+    .then(function (j) { RG[target] = j; loaded[src] = true; return src; });
+  return inflight[src];
+}
+function load(src, target) {
+  if (target) return loadJson(src, target);
   if (loaded[src]) return Promise.resolve(src);
   if (inflight[src]) return inflight[src];
   inflight[src] = new Promise(function (res, rej) {
@@ -112,8 +123,11 @@ function flush() {
   keys.forEach(function (k) { if (BASE_KEYS[k]) base = true; if (POI_KEYS[k]) poi = true;
                               if (k === "poi" || k === "descs" || k === "depth") card = true; });
   try {
+    if (keys.indexOf("geopref") >= 0 && RG.buildGeoPref) RG.buildGeoPref();
+    if (keys.indexOf("geomuni") >= 0 && RG.buildGeoMuni) RG.buildGeoMuni();
     if (base) {
       if (RG.Map && RG.Map.drawBase) RG.Map.drawBase();
+      if (RG.geoEnsureBottom) RG.geoEnsureBottom();
       if (RG.applyBasemap) RG.applyBasemap();
       if (keys.indexOf("jpadm") >= 0 && RG.buildJPAdmin) RG.buildJPAdmin();
       if (RG.Map && RG.Map.lod) RG.Map.lod();      // 作り直した文字に «画面px» の大きさを与える
@@ -141,7 +155,7 @@ function runQueue(items, onEach, done) {
     if (i >= items.length) { done && done(); return; }
     var item = items[i++];
     onEach && onEach(item, i, items.length);
-    load(item.f).then(function () { refresh(item.key); })
+    load(item.f, item.json).then(function () { refresh(item.key); })
                 .catch(function () { /* 無くても動く */ })
                 .then(function () {
                   if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 700 });
