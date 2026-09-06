@@ -114,28 +114,30 @@ function pointToLatLng(cx, cy) {
   var x = vb.x + (cx - r.left) / r.width * vb.w, y = vb.y + (cy - r.top) / r.height * vb.h;
   return RG.unproject(x, y);
 }
-function zoomOk() { return RG.zoomLevel && RG.zoomLevel() >= 3; }
+function zoomOk() { return RG.zoomLevel && RG.zoomLevel() >= 5; }   // v72: 12km幅 → 約7km幅より寄ったときだけ
 
 RG.initZip = function () {
   var wrap = document.querySelector(".mapwrap"); if (!wrap) return;
-  // PC：カーソルに追従（0.1秒に1回）
-  var raf = 0, lastEv = null;
+  // PC：カーソルが «止まってから» 0.7秒たったら出す（追従表示は目ざわりだったので v72 で変更）
+  //     動かしたら消える。固定（クリック）したものはそのまま。
+  var dwellT = 0, lastX = 0, lastY = 0;
   wrap.addEventListener("pointermove", function (e) {
     if (e.pointerType !== "mouse" || touchMode) return;
-    lastEv = e;
-    if (raf) return;
-    raf = requestAnimationFrame(function () {
-      raf = 0;
-      var ev = lastEv; if (!ev) return;
-      if (!zoomOk() || wrap.classList.contains("dragging")) { if (chip && !chip.classList.contains("sticky")) hide(); return; }
-      if (ev.target.closest && ev.target.closest("button,a,input,.quickbar,.zoombar,.poipop,.navbar,.heatlegend,.hint,.poicount")) { if (chip && !chip.classList.contains("sticky")) hide(); return; }
+    var moved = Math.abs(e.clientX - lastX) + Math.abs(e.clientY - lastY);
+    lastX = e.clientX; lastY = e.clientY;
+    clearTimeout(dwellT);
+    if (chip && chip.classList.contains("sticky")) return;
+    if (moved > 6 && chip && chip.classList.contains("on")) hide();
+    if (!zoomOk() || wrap.classList.contains("dragging")) return;
+    if (e.target.closest && e.target.closest("button,a,input,.quickbar,.zoombar,.poipop,.navbar,.heatlegend,.hint,.poicount,.node,.poi,.lm")) return;
+    var cx = e.clientX, cy = e.clientY;
+    dwellT = setTimeout(function () {
       if (chip && chip.classList.contains("sticky")) return;
-      var q = pointToLatLng(ev.clientX, ev.clientY), hit = RG.zipAt(q.la, q.lo);
+      var q = pointToLatLng(cx, cy), hit = RG.zipAt(q.la, q.lo);
       if (!hit) { hide(); return; }
-      var key = hit.zip + hit.town;
-      show(hit, ev.clientX, ev.clientY, false);
-      lastKey = key;
-    });
+      show(hit, cx, cy, false);
+      lastKey = hit.zip + hit.town;
+    }, 700);
   });
   wrap.addEventListener("pointerleave", function () { if (chip && !chip.classList.contains("sticky")) hide(); });
   // クリック／タップで «固定»（コピーしやすいように）。スマホは 〒 モードのときだけ
@@ -155,7 +157,7 @@ RG.initZip = function () {
     b.addEventListener("click", function () {
       touchMode = !touchMode; b.classList.toggle("on", touchMode);
       if (touchMode) {
-        if (!zoomOk()) { RG.tripStatus && RG.tripStatus("〒 郵便番号は、地図をもう少し寄せると出せます（12km幅より狭く）", "info", 3200); }
+        if (!zoomOk()) { RG.tripStatus && RG.tripStatus("〒 郵便番号は、地図をもう少し寄せると出せます（7km幅より狭く）", "info", 3200); }
         else RG.tripStatus && RG.tripStatus("〒 地図をタップすると、その場所の郵便番号が出ます", "info", 2600);
         RG.Map.lod && RG.Map.lod();
       } else hide();

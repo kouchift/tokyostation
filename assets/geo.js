@@ -102,7 +102,11 @@ RG.buildGeoPref = function () {
     var t = el("text", { class: "geo__pn", x: cx.toFixed(1), y: cy.toFixed(1), "text-anchor": "middle", text: g.properties.n });
     t.dataset.w = String(bigArea);
     gLbl.appendChild(t);
-    prefInfo.push({ c: g.properties.c, n: g.properties.n, bbox: r.bb, cx: cx, cy: cy });
+    // «どの県か» 判定用に、地図座標の輪を持っておく（数千点なので軽い）
+    var rings = geomRings(g).map(function (ring) {
+      return ringCoords(ring, arcs).map(function (q) { var P = RG.project(q[1], q[0]); return [P.x, P.y]; });
+    });
+    prefInfo.push({ c: g.properties.c, n: g.properties.n, bbox: r.bb, cx: cx, cy: cy, rings: rings });
   });
   // 沖縄の別枠
   gFrame.innerHTML = "";
@@ -193,15 +197,26 @@ RG.geoLOD = function () {
 };
 
 /* いま見ている場所の都道府県（緯度経度から）。他の機能でも使えるように公開 */
+function inRing(x, y, r) {
+  var c = false;
+  for (var i = 0, j = r.length - 1; i < r.length; j = i++) {
+    var xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-12) + xi)) c = !c;
+  }
+  return c;
+}
 RG.prefAt = function (la, lo) {
   if (!PREF) return null;
-  var P = RG.project(la, lo), best = null;
+  var P = RG.project(la, lo), best = null, inside = null;
   prefInfo.forEach(function (p) {
     var b = p.bbox; if (P.x < b[0] || P.x > b[2] || P.y < b[1] || P.y > b[3]) return;
+    if (!inside && p.rings) { for (var i = 0; i < p.rings.length; i++) if (inRing(P.x, P.y, p.rings[i])) { inside = p; break; } }
     var d = Math.hypot(P.x - p.cx, P.y - p.cy);
     if (!best || d < best.d) best = { d: d, p: p };
   });
-  return best ? best.p : null;
+  return inside || (best ? best.p : null);   // 輪の中に入っていればそれ、海上などは近い県
 };
+/* 都道府県の一覧（コード・名前・地図座標の外接矩形・中心）。路線の県別一覧などに使う */
+RG.prefList = function () { return prefInfo; };
 
 })(window.RG);

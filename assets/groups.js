@@ -21,7 +21,7 @@ var GROUPS = [
   { id: "move",  e: "🚶", label: "移動する",     c: "#0079C2",
     ids: ["cycle", "locker", "bike", "camspot"] },
   { id: "money", e: "💰", label: "お金・手続き", c: "#00897B",
-    ids: ["atm", "post", "corp"] },
+    ids: ["atm", "post", "corp", "corp_gone"] },
   { id: "study", e: "🎓", label: "学ぶ",         c: "#5E35B1",
     ids: ["univ", "high", "library", "museum"] },
   { id: "fun",   e: "🎈", label: "楽しむ・休む", c: "#C2185B",

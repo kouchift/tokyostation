@@ -2669,3 +2669,53 @@ html,body{max-width:100vw;overflow-x:hidden}
 .tj__form input,.tj__form textarea{width:100%;box-sizing:border-box;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px}
 .tj__res{font-size:13px;margin-top:8px;color:#1a6b2a}
 .tj--c p{font-size:14px;line-height:1.7}
+/* v72 企業カード・バブル・消えた会社 */
+.corpcard__logo{width:72px;height:72px;object-fit:contain;background:#fff;border:1px solid #eee;border-radius:10px;padding:4px;flex:0 0 auto}
+.corpcard__mk{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;color:#fff;background:#1B4F9C;vertical-align:middle}
+.corpcard__mk--S{background:#3F7CC4}.corpcard__mk--G{background:#2E8B57}.corpcard__mk--N{background:#6B7A8F}.corpcard__mk--gone{background:#9AA0A6}
+.corpcard__d{font-size:12.5px;color:#555;margin:2px 0 0}
+.corpcard__web{display:flex;gap:8px;align-items:center;margin:8px 0;padding:10px 12px;border-radius:12px;background:#E8F1FF;color:#0B3D91;font-weight:800;text-decoration:none;font-size:14px}
+.corpcard__web span{font-weight:400;font-size:12px;color:#335;word-break:break-all}
+.corpcard__noweb{font-size:12.5px;color:#666;margin:6px 0}
+.corpdg{margin:10px 0;border:1px solid #e3e3e3;border-radius:12px;padding:6px 10px;background:#fafafa}
+.corpdg summary{cursor:pointer;font-weight:700;font-size:13.5px}
+.corpdg__l{margin:6px 0 4px;padding-left:22px;font-size:12.5px;line-height:1.75}
+.corpdg__l li{margin:0}
+.rvb{display:flex;align-items:flex-end;gap:6px;padding:6px 8px 2px;background:#fff;border:1px dashed #ddd;border-radius:10px;margin:4px 0 6px;overflow-x:auto}
+.rvb__c{display:flex;flex-direction:column;align-items:center;font-size:10px;color:#666}
+.rvb__b{width:18px;background:#F5A623;border-radius:3px 3px 0 0}
+.rvb__l{margin-left:auto;font-size:12px;font-weight:700;align-self:center}
+.rvb__l small{font-weight:400;color:#777}
+.corpcard--gone .corpcard__hd h3{color:#666}
+.corpcard__gone{font-size:13px;color:#555;background:#f3f3f3;border-radius:10px;padding:8px 10px}
+.poi--corp_gone{opacity:.6;filter:none}
+.bub circle{cursor:pointer;vector-effect:non-scaling-stroke}
+.bub__t{pointer-events:none;fill:#222;paint-order:stroke;stroke:#fff;stroke-width:3px;font-weight:700}
+.bublegend{position:absolute;left:8px;bottom:56px;z-index:30;background:rgba(255,255,255,.95);border:1px solid #ddd;border-radius:12px;padding:8px 10px;font-size:12px;max-width:min(420px,calc(100% - 16px));box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.bublegend b{display:block;font-size:13px}
+.bublegend__n{color:#666;font-size:11px}
+.bublegend__k{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.bublegend__k button,.bublegend__m button{border:1px solid #ddd;background:#fff;border-radius:999px;padding:2px 8px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.bublegend__k button i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.bublegend__k button.on,.bublegend__m button.on{background:#333;color:#fff;border-color:#333}
+.bublegend__m{display:flex;flex-wrap:wrap;gap:4px}
+/* v72 レール：都道府県セレクト・文字バッジ・話題タブ */
+.lr__sel{font-size:13px;padding:4px 8px;border-radius:8px;border:1px solid #ccc;background:#fff;max-width:200px}
+.lr__hint{font-size:11px;color:#666;margin-left:8px}
+.lr__empty{font-size:12px;color:#666}
+.lr__i--txt{width:auto;min-width:40px;padding:0 3px}
+.lbadge--t{font-size:10.5px;letter-spacing:-.3px;padding:0 5px;min-width:30px;height:30px;line-height:1.1;white-space:nowrap}
+.lr__rows--bz{padding:6px 10px}
+.bzr__h{font-size:12.5px;margin:2px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bzr__l{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px;max-height:180px;overflow:auto}
+.bzr__i{display:grid;grid-template-columns:44px 64px 1fr 18px;gap:6px;align-items:center;text-align:left;border:1px solid #eee;background:#fff;border-radius:8px;padding:5px 8px;font-size:12px;cursor:pointer}
+.bzr__i.far{opacity:.7}
+.bzr__d{color:#888;font-size:11px}.bzr__a{color:#444;font-size:11px;background:#f2f2f2;border-radius:4px;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bzr__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bzr__none{font-size:12px;color:#666;margin:4px 0}
+.set__ver{border-top:1px dashed #ddd;margin-top:10px}
+.set__log{margin:6px 0 0;padding-left:18px;font-size:12px;line-height:1.6;color:#444}
+/* v72 支援者の印（初回投げ銭のあと、この端末だけ） */
+.patron__b{display:inline-block;margin-left:6px;font-size:10px;font-style:normal;color:#7a5a00;background:linear-gradient(90deg,#fff2b3,#ffd54a);border:1px solid #d9b13b;border-radius:999px;padding:0 6px;vertical-align:middle}
+html.patron .mapwrap{box-shadow:inset 0 0 0 3px rgba(214,177,59,.55)}
+html.patron .hdr__mark i{background:linear-gradient(180deg,#ffd54a,#b8860b)}

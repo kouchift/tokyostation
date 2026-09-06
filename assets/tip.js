@@ -32,7 +32,17 @@ function vid() {
 function yen(n) { return "¥" + n.toLocaleString("ja-JP"); }
 
 /* 起動時：入口の準備と、拒否リストの照合 */
+function applyPatron() {
+  var S = st(); if (!(S.count >= 1)) return;
+  document.documentElement.classList.add("patron");
+  var mark = document.querySelector(".hdr__mark span");
+  if (mark && !mark.querySelector(".patron__b")) {
+    var b = document.createElement("i"); b.className = "patron__b"; b.title = "投げ銭ありがとうございます（この端末での記録）"; b.textContent = "🪙 支援者";
+    mark.appendChild(b);
+  }
+}
 RG.tipInit = function () {
+  applyPatron();
   var v = vid();
   if ((RG.BANLIST || []).indexOf(v) >= 0) {
     document.body.innerHTML = '<div style="max-width:560px;margin:15vh auto;padding:24px;font:15px/1.8 system-ui;text-align:center">' +
@@ -94,6 +104,8 @@ function payHTML(C, S) {
   var app = S.app || "paypay";
   return '<p class="tj__lead">たった一人の制作者（<b>従業員1名の宗教法人</b>のような、非課税で端数の概念が無い世界の住人）を、確実に笑顔にできます。' +
     "このサイトの維持管理は<b>この投げ銭だけ</b>で成り立っています。</p>" +
+    '<p class="tj__hint">いま見えているのは «投げ銭前» の姿です。投げ銭が積み上がるほど、制作者はビジュアルをよりリアルに・より高解像に・コンテンツをより充実させる努力をするつもりです（実現の日は未定、保証はまるでありません）。' +
+    "初回の投げ銭では画面が確かに変わります。2回目以降は何も変わりません――それが世知辛さというものです。</p>" +
     '<div class="tj__apps"><button class="tj__app' + (app === "paypay" ? " on" : "") + '" type="button" data-app="paypay">PayPay <small>' + esc(C.paypayId) + "</small></button>" +
     '<button class="tj__app' + (app === "kyash" ? " on" : "") + '" type="button" data-app="kyash">Kyash <small>' + esc(C.kyashId) + "</small></button></div>" +
     '<div class="tj__amts">' + (C.amounts || [100, 500, 1000, 3000]).map(function (a) {
@@ -119,6 +131,42 @@ function howHTML(C, app, amt) {
     "<li>金額 <b>" + yen(amt) + "</b> を入れて送る（メッセージ欄に「東京ステーションガイド」と書くと制作者が泣いて喜びます）</li></ol>" +
     '<button class="set__b2 tj__go" type="button" data-done="1">送りました（記録する）</button>';
 }
+/* 回数に応じたひとこと（くり返すほど、ウィットで追い打ち） */
+var WIT = [
+  "2回目。1回目で画面は変わりました。2回目で変わるのは、制作者の表情だけです。",
+  "3回目。三度目の正直、と言いますが、画面は正直に何も変わりません。心は変わります。",
+  "4回目。ここまで来ると、もはや «常連»。常連に特典が無いのが、この世の世知辛さです。",
+  "5回目。五円玉なら «ご縁»。五回目は «業» と書いて «カルマ» と読みます。",
+  "6回目。制作者は今、多忙のフリをやめて、あなたの投げ銭画面を見つめています。",
+  "7回目。ラッキーセブン。抽選はありません。当たりも外れも、はじめから無いのです。",
+  "8回目。末広がり。広がるのは制作者の笑顔だけで、機能は広がりません（現時点では）。",
+  "9回目。苦しいときの神頼み、と言いますが、神は宗教法人（従業員1名）の側にいます。",
+  "10回目。ついに二桁。ここから先は、あなたと制作者だけの秘密の修行です。",
+  "11回目以降。もう何も言うことはありません。輪廻転生した地球のどこかで、この徳は必ず……返ってこないかもしれません。"
+];
+function afterTip(S2, amt) {
+  var n = S2.count || 1, msg;
+  if (n === 1) {
+    applyPatron();
+    RG.openModal("🎉 初回の投げ銭、確かに", '<div class="tj tj--c">' +
+      '<p class="tj__big">ありがとうございます。<b>画面が変わりました</b>。</p>' +
+      "<p>ヘッダーに <b>🪙 支援者</b> の印がつき、地図の縁がほんのり金色になりました（この端末だけの記録です）。</p>" +
+      '<p>そして、ここからが大事なお知らせです。<b>2回目以降は、何度投げても画面は変わりません。</b>' +
+      "これが世の中の世知辛さであり、この事実は本サイトの更新に限らず、輪廻転生した地球のあらゆる場所に存在しています。</p>" +
+      "<p>それでも投げ銭が積み上がれば、制作者はサイトのビジュアルを<b>よりリアルに、より高解像に、より充実したコンテンツに</b>していく努力をするつもりです。" +
+      "その日が訪れる<b>保証はまるでありません</b>が、楽しみにお待ちください。</p>" +
+      '<div class="tj__row"><button class="set__b2" type="button" onclick="RG.closeModal()">わかった上で、また投げる</button></div></div>');
+    return;
+  }
+  msg = WIT[Math.min(WIT.length - 1, n - 2)];
+  RG.openModal("🙏 " + n + " 回目の投げ銭", '<div class="tj tj--c">' +
+    '<p class="tj__big">' + esc(yen(amt)) + "、確かに（累計 " + esc(yen(S2.total || 0)) + "・" + n + " 回）。</p>" +
+    "<p>" + esc(msg) + "</p>" +
+    '<p class="tj__hint">画面の変化: なし（仕様）。ビジュアルが高解像になる日: 未定（保証なし）。制作者の感謝: 上限なし。</p>' +
+    '<div class="tj__row"><button class="set__b2" type="button" id="tip-again">もう一回</button>' +
+    '<button class="set__b" type="button" onclick="RG.closeModal()">今日はここまで</button></div></div>');
+  var ag = document.getElementById("tip-again"); if (ag) ag.addEventListener("click", function () { RG.showTip("loop"); });
+}
 function bindPay(m, C) {
   var S = st(), app = S.app || "paypay", amt = S.lastAmount || 0, how = $("#tip-how", m);
   function paint() { how.innerHTML = amt ? howHTML(C, app, amt) : '<p class="tj__hint">金額を選ぶと手順が出ます。</p>'; bindHow(); }
@@ -127,6 +175,7 @@ function bindPay(m, C) {
     how.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () {
       var S2 = st(); S2.lastAmount = amt; S2.app = app; S2.count = (S2.count || 0) + 1; S2.total = (S2.total || 0) + amt; save(S2);
       RG.tripStatus && RG.tripStatus("🙏 " + yen(amt) + " の投げ銭、ありがとうございます（累計 " + S2.count + " 回）", "ok", 5000);
+      afterTip(S2, amt);
     }); });
   }
   m.querySelectorAll("[data-app]").forEach(function (b) { b.addEventListener("click", function () {
@@ -169,7 +218,9 @@ function bindLoop(m, C) {
     box.innerHTML = '<p class="tj__big">' + (i + 1) + " / " + total + " 回目 ― " + yen(S.lastAmount) + "</p>" + howHTML(C, S.app || "paypay", S.lastAmount);
     box.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
     box.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () {
-      var S3 = st(); S3.count = (S3.count || 0) + 1; S3.total = (S3.total || 0) + S.lastAmount; save(S3); i++; step();
+      var S3 = st(); S3.count = (S3.count || 0) + 1; S3.total = (S3.total || 0) + S.lastAmount; save(S3); i++;
+      if (S3.count === 1) afterTip(S3, S.lastAmount);
+      step();
     }); });
   }
 }

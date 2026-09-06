@@ -75,22 +75,71 @@ var Rail = (function () {
     for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].match.test(o) || GROUPS[i].match.test(n)) return GROUPS[i];
     return GROUPS[GROUPS.length - 1];
   }
+  /* 路線 → 通っている都道府県（駅の座標から。県境の判定は下敷き地図の輪で行う） */
+  var linePrefs = null;
+  function prefsOfLines() {
+    if (linePrefs || !RG.prefAt || !RG.prefList || !RG.prefList().length) return linePrefs;
+    // 同じ名前の駅（例: 東京と大阪の「京橋」）が路線を共有してしまう癖があるので、
+    // その県に «2駅以上»（または全駅の1/3以上）あるときだけ、その県の路線とみなす
+    var cnt = {}, tot = {};
+    RG.NET.stations.forEach(function (t) {
+      var p = RG.prefAt(t.la, t.lo); if (!p) return;
+      (t.ls || []).forEach(function (n) {
+        var c = (cnt[n] = cnt[n] || {}); c[p.n] = (c[p.n] || 0) + 1; tot[n] = (tot[n] || 0) + 1;
+      });
+    });
+    linePrefs = {};
+    Object.keys(cnt).forEach(function (n) {
+      Object.keys(cnt[n]).forEach(function (pf) {
+        if (cnt[n][pf] >= 2 || cnt[n][pf] / tot[n] >= 0.34) (linePrefs[n] = linePrefs[n] || {})[pf] = 1;
+      });
+    });
+    return linePrefs;
+  }
+  RG.linePrefs = prefsOfLines;
+  var PREF_NAMES = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+  function shortLine(n) {
+    return n.replace(/^(JR|ＪＲ)?(東日本|西日本|東海|北海道|四国|九州|旅客鉄道)?/, "").replace(/^(東京メトロ|東京都交通局|都営|大阪メトロ|Osaka Metro|名古屋市営|札幌市営|横浜市営|京都市営|神戸市営|福岡市営|仙台市営)/, "")
+            .replace(/(鉄道|電鉄|交通|電気鉄道)/, "").replace(/線$/, "") || n;
+  }
+  function groupOfAny(n) {
+    var o = meta(n).o || "";
+    if (/JR|ＪＲ|旅客鉄道/.test(o + n)) return { id: "jr", label: "JR" };
+    if (/メトロ|地下鉄|市営|市交通局|都営|Metro/.test(o + n)) return { id: "metro", label: "地下鉄" };
+    if (/新幹線/.test(n)) return { id: "jr", label: "JR" };
+    return { id: "priv", label: "私鉄・その他" };
+  }
   function build() {
     box = $("#linerail");
     pop = $("#linepop");
-    var names = RG.NET.lines.map(function (l) { return l.name; })
-      .filter(function (n) { return meta(n).e >= 2; });
+    var pref = ST.pref || "東京都", LP = pref === "東京都" ? null : prefsOfLines();
+    var names;
+    if (pref === "東京都" || !LP) {
+      names = RG.NET.lines.map(function (l) { return l.name; }).filter(function (n) { return meta(n).e >= 2; });
+    } else {
+      names = RG.NET.lines.map(function (l) { return l.name; }).filter(function (n) { return n !== "乗り換え" && LP[n] && LP[n][pref]; });
+    }
+    var lineColor = {}; RG.NET.lines.forEach(function (l) { lineColor[l.name] = l.color; });
     var byG = {};
-    names.forEach(function (n) { (byG[groupOf(n).id] = byG[groupOf(n).id] || []).push(n); });
-    var rows = GROUPS.filter(function (g) { return byG[g.id] && byG[g.id].length; }).map(function (g) {
-      byG[g.id].sort(function (a, b) { return meta(b).e - meta(a).e; });
+    names.forEach(function (n) { var g = (pref === "東京都") ? groupOf(n) : groupOfAny(n); (byG[g.id] = byG[g.id] || { g: g, a: [] }).a.push(n); });
+    var order = ["jr", "metro", "priv", "other"];
+    var rows = order.filter(function (id) { return byG[id] && byG[id].a.length; }).map(function (id) {
+      var g = byG[id].g, arr = byG[id].a;
+      arr.sort(function (a, b) { return meta(b).e - meta(a).e || a.localeCompare(b, "ja"); });
       return '<div class="lr__row"><span class="lr__g">' + esc(g.label) + "</span>" +
-        byG[g.id].map(function (n) {
-          var m = meta(n);
-          return '<button class="lr__i" type="button" data-line="' + esc(n) + '" ' +
-            'style="--lc:' + m.c + '" aria-pressed="false" aria-label="' + esc(n) + '">' +
-            badge(m, false, n) + "</button>"; }).join("") + "</div>";
+        arr.map(function (n) {
+          var m = meta(n), hasBadge = !!(m.k) || meta(n).e >= 2;
+          var col = (m.conf !== "なし" ? m.c : (lineColor[n] || m.c));
+          return '<button class="lr__i' + (hasBadge ? "" : " lr__i--txt") + '" type="button" data-line="' + esc(n) + '" ' +
+            'style="--lc:' + col + '" aria-pressed="false" aria-label="' + esc(n) + '" title="' + esc(n + (m.o ? "（" + m.o + "）" : "")) + '">' +
+            (hasBadge ? badge(m, false, n) : '<span class="lbadge lbadge--t" style="--lc:' + col + '">' + esc(shortLine(n).slice(0, 5)) + "</span>") + "</button>"; }).join("") + "</div>";
     }).join("");
+    if (!rows) rows = '<div class="lr__row"><span class="lr__g">' + esc(pref) + '</span><span class="lr__empty">' + (LP ? "この都道府県を通る路線が見つかりません" : "都道府県の境界を読み込み中です。少し待ってからもう一度えらんでください") + "</span></div>";
+    var prefSel = '<div class="lr__row lr__row--pref"><span class="lr__g">地域</span>' +
+      '<select id="lr-pref" class="lr__sel" aria-label="都道府県をえらぶ">' +
+        PREF_NAMES.map(function (p) { return '<option value="' + p + '"' + (p === pref ? " selected" : "") + ">" + p + (p === "東京都" ? "（主要路線）" : "") + "</option>"; }).join("") +
+      '</select><span class="lr__hint">都道府県をえらぶと、その県の路線に切り替わり、地図もそこへ寄ります。アイコンにカーソルを当てると路線名が出ます。</span></div>';
+    rows = prefSel + rows;
     var genres = (RG.GENRES || []);
     var grow =
       '<div class="lr__ctl">' +
@@ -126,17 +175,20 @@ var Rail = (function () {
         '<span class="lr__tabs">' +
           '<button class="lr__tab" data-tab="line" type="button" aria-pressed="true">🚉 路線</button>' +
           '<button class="lr__tab" data-tab="poi" type="button" aria-pressed="false">📍 スポット</button>' +
+          '<button class="lr__tab" data-tab="buzz" type="button" aria-pressed="false">🔥 話題の場所</button>' +
         "</span>" +
         '<button class="lr__all" type="button">✕ 解除</button>' +
         '<button id="lr-toggle" class="lr__t" type="button" aria-expanded="' + (ST.railOpen ? "true" : "false") +
         '">えらぶ ' + (ST.railOpen ? "▴" : "▾") + "</button></div>" +
       '<div class="lr__rows" data-pane="line">' + rows + "</div>" +
-      '<div class="lr__rows" data-pane="poi" hidden>' + grow + "</div>";
+      '<div class="lr__rows" data-pane="poi" hidden>' + grow + "</div>" +
+      '<div class="lr__rows lr__rows--bz" data-pane="buzz" hidden><div id="lr-buzz"></div></div>';
     box.classList.toggle("open", !!ST.railOpen);
     function showTab(t) {
       ST.railTab = t; save();
       $$(".lr__tab", box).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.tab === t)); });
       $$("[data-pane]", box).forEach(function (p) { p.hidden = p.dataset.pane !== t; });
+      if (t === "buzz" && RG.buzzRailRefresh) RG.buzzRailRefresh(true);
     }
     $$(".lr__tab", box).forEach(function (b) {
       b.addEventListener("click", function () {
@@ -396,6 +448,14 @@ var Rail = (function () {
       ST.railOpen = !ST.railOpen; save(); paintToggle();
     });
     paintToggle();
+    var ps = $("#lr-pref", box);
+    if (ps) ps.addEventListener("change", function () {
+      ST.pref = ps.value; save();
+      var info = (RG.prefList ? RG.prefList() : []).filter(function (p) { return p.n === ps.value; })[0];
+      if (info && RG.Map.fitBox) { var b = info.bbox; RG.Map.fitBox(b[0], b[1], b[2], b[3], 1.1); }
+      toggle(null); build(); ST.railOpen = true; save(); if (RG.paintRailToggle) RG.paintRailToggle();
+      if (RG.tripStatus) RG.tripStatus("🚉 " + ps.value + " の路線に切り替えました。", "info", 2500);
+    });
     $$(".lr__i", box).forEach(function (b) {
       b.addEventListener("click", function () { toggle(b.dataset.line); });
       b.addEventListener("mouseenter", function (e) { show(b.dataset.line, b); });
@@ -605,8 +665,13 @@ function openSettings() {
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
-    (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "");
+    (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "") +
+    '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
+      '<p class="set__d">いま動いている版: <b>' + esc(RG.VERSION || "不明") + "</b>（" + esc(RG.BUILT || "?") + " 作成）" +
+      ' <button id="set-state" class="set__b" type="button">くわしい状態</button></p>' +
+      ((RG.CHANGELOG || []).length ? '<ul class="set__log">' + RG.CHANGELOG.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : "") + "</div>";
   var m = RG.openModal("設定", html);
+  var sst = $("#set-state", m); if (sst) sst.addEventListener("click", function () { if (RG.showState) RG.showState(); });
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
   if (RG.tipBind) RG.tipBind(m);
   renderWatch();

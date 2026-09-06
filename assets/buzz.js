@@ -148,6 +148,49 @@ function embed(b, box) {
   }
 }
 
+/* 画面下のレール「話題の場所」：いま見ている範囲（と、そのまわり）の話題を一覧に */
+var railT = 0, lastKey = "";
+RG.buzzRailRefresh = function (force) {
+  var box = document.getElementById("lr-buzz"); if (!box) return;
+  var pane = box.closest("[data-pane]"); if (pane && pane.hidden && !force) return;
+  clearTimeout(railT);
+  railT = setTimeout(function () {
+    if (!RG.BUZZ || !RG.Map || !RG.Map.viewBox) { box.innerHTML = '<p class="bzr__none">話題のデータを読み込み中です…</p>'; return; }
+    var vb = RG.Map.viewBox(), pad = vb.w * 0.5;
+    var L = RG.buzzLists(), live = L.fresh.concat(L.borrow, L.ever), inv = [], near = [];
+    var cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    L.all.forEach(function (b) {
+      if (b.x == null) { var P = RG.project(b.la, b.lo); b.x = P.x; b.y = P.y; }
+      var inside = b.x > vb.x && b.x < vb.x + vb.w && b.y > vb.y && b.y < vb.y + vb.h;
+      var around = b.x > vb.x - pad && b.x < vb.x + vb.w + pad && b.y > vb.y - pad && b.y < vb.y + vb.h + pad;
+      if (inside) inv.push(b); else if (around) near.push(b);
+    });
+    var key = inv.map(function (b) { return b.id; }).join(",") + "|" + near.length;
+    if (key === lastKey && !force) return; lastKey = key;
+    inv.sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+    near.sort(function (a, b) { return Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy); });
+    var list = inv.concat(near.slice(0, 8)), shown = list.slice(0, 20);
+    function rowMini(b, far) {
+      var p = PL[b.pl] || PL.x, hot = live.indexOf(b) >= 0;
+      return '<button class="bzr__i' + (far ? " far" : "") + '" type="button" data-bzid="' + esc(b.id) + '" title="' + esc(b.n) + '">' +
+        '<span class="bzr__d">' + esc(b.d.slice(5).replace("-", "/")) + "</span>" +
+        '<span class="bzr__a">' + esc(areaOf(b)) + "</span>" +
+        '<span class="bzr__n">' + (hot ? "🔥" : "🕰️") + " " + esc(b.n) + "</span>" +
+        '<span class="bzr__p">' + p.e + "</span></button>";
+    }
+    box.innerHTML = '<div class="bzr__h">いま見ている範囲の話題 <b>' + inv.length + "</b>件" + (near.length ? "（近くにさらに " + near.length + "件）" : "") +
+      ' <button class="lr__c" type="button" id="bzr-all">📚 一覧をひらく</button></div>' +
+      (shown.length ? '<div class="bzr__l">' + shown.map(function (b) { return rowMini(b, inv.indexOf(b) < 0); }).join("") + "</div>"
+                    : '<p class="bzr__none">この範囲にはまだ話題がありません。地図を引くと近くの話題が出ます。</p>');
+    var all = document.getElementById("bzr-all"); if (all) all.addEventListener("click", function () { RG.showBuzz(null, "fresh"); });
+    box.querySelectorAll("[data-bzid]").forEach(function (el) { el.addEventListener("click", function () {
+      var it = byId(el.dataset.bzid); if (!it) return;
+      RG.Map.gotoLatLng(it.la, it.lo, 220);
+      RG.showBuzz(areaOf(it), "all");
+    }); });
+  }, force ? 0 : 400);
+};
+
 /* ヘッダーのボタン */
 RG.buzzBind = function () {
   var b = document.getElementById("btn-buzz");

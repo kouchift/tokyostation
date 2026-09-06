@@ -65,6 +65,7 @@ var ONDEMAND = [
   { f: "data/chains2.js",   key: "chain2",   label: "チェーン店",         group: "spots" },
   { f: "data/edu.js",       key: "edu",      label: "学校",               group: "spots" },
   { f: "data/corp.js",      key: "corp",     label: "上場企業",           group: "spots" },
+  { f: "data/corp_gone.js", key: "corpgone", label: "消えた会社",         group: "spots" },
   { f: "data/smoking.js",   key: "smoke",    label: "喫煙できる場所",     group: "spots" },
   { f: "data/camadult.js",  key: "camadult", label: "カメラほか",         group: "spots" },
   { f: "data/cams_jp.js",   key: "cams_jp",  label: "全国ライブカメラ",   group: "spots" }
@@ -115,7 +116,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;

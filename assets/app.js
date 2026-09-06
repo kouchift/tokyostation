@@ -32,9 +32,9 @@ RG.MAPSIZE = {
   --------------------------------------------------------------------- */
   steps: [
     /* 引きぐあい  駅名   丸の半径  丸   名前  区名  地名  スポット */
-    { z:  1,      lbl: 3.5,  dot: 1.2,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  3 },
-    { z:  4,      lbl: 8.5,  dot: 2.2,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
-    { z: 22,      lbl: 8.5,  dot: 3.3,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
+    { z:  1,      lbl: 5.0,  dot: 1.4,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  4 },
+    { z:  4,      lbl: 9.0,  dot: 2.3,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
+    { z: 22,      lbl: 9.0,  dot: 3.3,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
   ],
   /* 上の «駅名» と «丸» は «大きい駅» のときの大きさです。
      ふつうの駅・選んだ駅は、それに対する «割合» で決めます。 */
@@ -47,10 +47,10 @@ RG.MAPSIZE = {
   strokeR:  0.30,   // 文字の白いふち（文字の大きさに対する割合）
   admR:     1.25,   // 区の名前は、駅名（大きい駅）の 125%
   jpadmR:   1.40,   // 全国の市区町村の地名は 140%
-  poiER:    1.25,   // スポットの絵文字
-  poiEBigR: 1.45,   // 目立つスポットの絵文字
+  poiER:    1.30,   // スポットの絵文字（v72: 駅名との釣り合いをそろえた）
+  poiEBigR: 1.55,   // 目立つスポットの絵文字
   poiCR:    0.62,   // スポットの丸（半径）＝絵文字に対する割合
-  poiTR:    1.00    // スポットの名前
+  poiTR:    0.95    // スポットの名前（駅名よりわずかに小さく）
 };
 
 /* いまの引きぐあいでの «大きさと数» を、表から取り出す。
@@ -702,6 +702,8 @@ var Map = (function () {
     if (RG.admLOD) RG.admLOD();
     if (RG.jpAdmLOD) RG.jpAdmLOD();
     if (RG.geoLOD) RG.geoLOD();
+    if (RG.corpBubbleLOD) RG.corpBubbleLOD();
+    if (RG.buzzRailRefresh) RG.buzzRailRefresh();
     if (RG.map3DMoved) RG.map3DMoved();
     if ((RG.loadTilesFor || RG.zipOnMove) && vb) {
       clearTimeout(tileT);
@@ -890,6 +892,14 @@ var Map = (function () {
     vb.w = w; vb.h = w * ar; vb.x = cx - w / 2; vb.y = cy - vb.h / 2;
     apply();
   }
+  /* 地図座標の矩形を画面に収める（都道府県へ寄るときなどに使う） */
+  function fitBox(x0, y0, x1, y1, pad) {
+    var r = wrap.getBoundingClientRect(), ar = r.height / r.width, k = pad || 1.15;
+    var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    var w = Math.max((x1 - x0) * k, (y1 - y0) * k / ar, U(60));
+    vb.w = w; vb.h = w * ar; vb.x = cx - w / 2; vb.y = cy - vb.h / 2;
+    apply();
+  }
   function highlightLine(name) {
     svg.classList.toggle("linemode", !!name);
     if (name) fitLine(name);
@@ -1049,7 +1059,9 @@ var Map = (function () {
       c0.style.setProperty("r", (SZ2.poiC * uu).toFixed(3) + "px", "important");
       c0.style.setProperty("stroke-width", (1.6 * uu).toFixed(3) + "px", "important");
       c0.style.setProperty("--pc", g.c);
-      setEmoji(e0, g.e, t.x, t.y, (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * uu * 1.15);
+      var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15;
+      if (t.g === "buzz" || t.g === "ichinomiya") esz = Math.max(esz, 13);   // 都道府県単位の目印は、引いていても読める大きさに
+      setEmoji(e0, g.e, t.x, t.y, esz * uu);
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
       h0.style.setProperty("r", (14 * uu).toFixed(3) + "px", "important");
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
@@ -1147,7 +1159,7 @@ var Map = (function () {
            drawBase: drawBase, project: project,
            flyTo: flyTo,
            viewBox: function () { return { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; },
-           gotoLatLng: gotoLatLng,
+           gotoLatLng: gotoLatLng, fitBox: fitBox,
            paintWatch: paintWatch, paintLandmarks: paintLandmarks, buildLandmarks: buildLandmarks,
            paintMe: paintMe,
            buildPOI: buildPOI, rebuildPOI: rebuildPOI, setGenres: setGenres, setPoiScale: setPoiScale, poiLOD: poiLOD,
@@ -1929,10 +1941,20 @@ function mergeExtraPois(key) {
   if (RG.mergeCamSpot) RG.mergeCamSpot();
   if (RG.CORP) once("corp", function () {
     var E = RG.CORP_EMOJI || {};
+    // 市場区分でランクを分ける：プライム＝寄り始めから見える（ti1）、スタンダード・グロース・非上場＝街まで寄ったら（ti2）
+    var MKS = { P: 3.6, S: 3.0, G: 2.8, N: 2.6 };
     RG.CORP.forEach(function (c, i) {
-      RG.MAPPOI.push({ i: "k" + i, n: c.n, la: c.la, lo: c.lo, g: "corp", s: 3.0, ti: 1,
-                       t: c.i33, be: E[c.i17] || "🏢", bc: "#1B4F9C",
-                       corp: c, i17: c.i17, i33: c.i33 });
+      var mk = c.mk || "P";
+      RG.MAPPOI.push({ i: "k" + i, n: c.n, la: c.la, lo: c.lo, g: "corp", s: MKS[mk] || 3.0, ti: mk === "P" ? 1 : 2,
+                       t: (c.i33 || "") + (mk === "P" ? "" : mk === "S" ? "（スタンダード）" : mk === "G" ? "（グロース）" : "（非上場・有報提出）"),
+                       be: E[c.i17] || "🏢", bc: mk === "P" ? "#1B4F9C" : mk === "N" ? "#6B7A8F" : "#3F7CC4",
+                       corp: c, i17: c.i17, i33: c.i33, mk: mk, sl: c.cap ? Math.log10(c.cap + 1) * 4 : 0 });
+    });
+  });
+  if (RG.CORP_GONE) once("corp_gone", function () {
+    RG.CORP_GONE.forEach(function (c, i) {
+      RG.MAPPOI.push({ i: "kg" + i, n: c.n, la: c.la, lo: c.lo, g: "corp_gone", s: 2.4, ti: 2,
+                       t: (c.yd ? c.yd + "年に消滅" : "消滅した会社"), be: "🏚️", bc: "#9AA0A6", gone: c });
     });
   });
   if (RG.USER_POIS) once("user", function () {
@@ -2001,7 +2023,7 @@ RG.boot = function () {
   });
   step("週カレンダー", function () { if (RG.buildWeekBar) RG.buildWeekBar(); });
   step("郵便番号", function () { if (RG.initZip) RG.initZip(); });
-  step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); });
+  step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); if (RG.corpBubbleInit) RG.corpBubbleInit(); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });
@@ -2011,11 +2033,8 @@ RG.boot = function () {
 
   var sl = $("#statline");
   if (sl) {
-    sl.innerHTML = RG.NET.stations.length + "駅 / " + RG.NET.lines.length + "路線" +
-      (RG.VERSION ? ' <button class="ver" type="button" id="ver-btn" title="いま動いている版">' +
-        RG.VERSION + "</button>" : "");
-    var vb2 = $("#ver-btn");
-    if (vb2) vb2.addEventListener("click", function () { if (RG.showState) RG.showState(); });
+    // 版の表示は設定パネルのいちばん下へ移した（v72）。訪問者が意識する必要はないため
+    sl.textContent = RG.NET.stations.length + "駅 / " + RG.NET.lines.length + "路線";
   }
   step("最初の表示位置", function () { Map.focus(RG.HUB, isTouch() && innerWidth < 560 ? 440 : 700); });
 

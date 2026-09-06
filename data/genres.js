@@ -116,8 +116,10 @@ RG.GENRES = [
   { id: "smoke",   e: "🚬", label: "喫煙できる場所", c: "#2E7D32", enabled: true, optIn: true, smoke: true,
     desc: "屋外の喫煙所・席で吸える店・喫煙室のある店・加熱式のみの店。🎫ヤニカスチケットが必要です" },
 
-  { id: "corp",    e: "🏢", label: "上場企業の本社", c: "#1B4F9C", enabled: true, optIn: true, corp: true,
-    desc: "東証プライム上場企業の本社。アイコンを押すと業種でしぼりこめます（17業種→33業種）" },
+  { id: "corp",    e: "🏢", label: "企業の本社", c: "#1B4F9C", enabled: true, corp: true,
+    desc: "上場企業 3,700社（プライム・スタンダード・グロース）と有報提出の大企業 570社の本社。プライムは広域から、それ以外は街まで寄ると出ます。業種でしぼりこみ・規模のバブル表示もここから" },
+  { id: "corp_gone", e: "🏚️", label: "消えた会社", c: "#9AA0A6", enabled: true,
+    desc: "解散・消滅した会社の本社があった場所（Wikidata）。栄枯盛衰の記録としてグレーで残しています" },
 
   /* ---- チェーン店（OpenStreetMap ODbL）。件数が多いので選んだときだけ出します ---- */
   { id: "cvs",     e: "🏪", label: "コンビニ",       c: "#00A040", enabled: true, optIn: true, chain: true,
