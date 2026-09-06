@@ -1946,6 +1946,7 @@ function mergeExtraPois(key) {
   if (RG.mergeBuzz) RG.mergeBuzz();
   if (RG.mergeViews) RG.mergeViews();
   if (RG.mergeOnsen) RG.mergeOnsen();
+  if (RG.mergeNearSpecial) RG.mergeNearSpecial();
   if (RG.mergeEdu) RG.mergeEdu();
   if (RG.mergeSmoke) RG.mergeSmoke();
   if (RG.mergeAdult) RG.mergeAdult();

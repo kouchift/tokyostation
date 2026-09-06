@@ -8,6 +8,8 @@ RG.GENRES = [
     desc: "国宝・重要文化財・国指定史跡・名勝など、国が指定した建造物と史跡" },
   { id: "history",  e: "🏯", label: "歴史的建築物",     c: "#8A5A2B", enabled: true,
     desc: "登録有形文化財・東京都選定歴史的建造物・遺跡・古墳・城門・橋" },
+  { id: "near_special", e: "⭐", label: "SPECIAL圏内の見どころ", c: "#C9A227", enabled: true,
+    desc: "中村橋・池袋・品川の徒歩30分圏（半径2.4km）にある Wikipedia 記事つきの場所 837件（写真 669）。このサイトが特別扱いしている場所のまわり" },
   { id: "view_jp", e: "🔭", label: "絶景",           c: "#0E7C7B", enabled: true,
     desc: "全国 1,835 の絶景（名勝・滝百選・渚百選・百名山・日本百景・夜景 ほか）。95%に写真。田舎ほど濃い" },
   { id: "onsen_jp", e: "♨️", label: "温泉",          c: "#EC6E00", enabled: true,

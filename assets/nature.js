@@ -33,6 +33,20 @@ RG.mergeOnsen = function () {
   });
 };
 
+/* SPECIAL 圏内（中村橋・池袋・品川 徒歩30分）の見どころ：Wikipedia 記事つきの場所を写真つきで */
+RG.mergeNearSpecial = function () {
+  if (!RG.NEAR_SPECIAL || RG.__nearMerged) return; RG.__nearMerged = 1;
+  RG.MAPPOI = RG.MAPPOI || [];
+  var have = {}; RG.MAPPOI.forEach(function (p) { have[p.n] = p; });
+  RG.NEAR_SPECIAL.forEach(function (r, i) {
+    var dup = have[r.n]; if (dup && RG.hav([dup.la, dup.lo], [r.la, r.lo]) < 0.4) { if (!dup.img && r.img) dup.img = r.img; return; }
+    RG.MAPPOI.push({ i: "ns" + i, n: r.n, la: r.la, lo: r.lo, g: "near_special", s: r.img ? 3.9 : 3.4, ti: r.img ? 1 : 2,
+                     t: r.a + " 圏内 " + r.km + "km" + (r.d ? "・" + r.d : ""), be: "⭐", bc: "#C9A227", img: r.img || null,
+                     url: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp), ad: null, near: r,
+                     srcNote: "SPECIAL 圏内の見どころ: Wikipedia 日本語版（位置情報つき記事・CC BY-SA）。写真は記事の代表画像。" });
+  });
+};
+
 /* カードの追加ブロック */
 RG.viewBlock = function (p) {
   var r = p.view; if (!r) return "";

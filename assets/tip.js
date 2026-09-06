@@ -36,12 +36,17 @@ function appName(a) { return a === "kyash" ? "Kyash" : "PayPay"; }
 function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (RG.isTouch && RG.isTouch() && innerWidth < 900); }
 
 /* ---- 記録（すべての「送りました」はここを通る） ---- */
+var CAP = 999999;   // 9回目の解脱の天井。累計がここに達すると、それ以上の寄付はできない
 function record(amt, app) {
   var S = st();
+  if ((S.total || 0) >= CAP) { RG.tripStatus && RG.tripStatus("🙏 累計が 999,999 円に達しています。これ以上の寄付はできません（9回目の解脱が最大です）。", "info", 6000); return S; }
+  if ((S.total || 0) + amt > CAP) amt = CAP - (S.total || 0);
   S.hist = S.hist || [];
   S.hist.push({ t: Date.now(), a: amt, p: app || "paypay" });
   if (S.hist.length > 500) S.hist = S.hist.slice(-500);
   S.lastAmount = amt; S.app = app || "paypay"; S.count = (S.count || 0) + 1; S.total = (S.total || 0) + amt;
+  S.life = S.life || { total: 0, count: 0, by: {} };                       // 解脱でリセットされない «生涯» の記録（ランキング用）
+  S.life.total += amt; S.life.count += 1; S.life.by[app || "paypay"] = (S.life.by[app || "paypay"] || 0) + amt;
   save(S);
   RG.tripStatus && RG.tripStatus("🙏 " + yen(amt) + " の投げ銭、ありがとうございます（累計 " + S.count + " 回）", "ok", 5000);
   return S;
@@ -145,22 +150,143 @@ RG.openTip = function (next) {
 RG.showTip = function (tab) {
   var C = cfg(), S = st(); tab = tab || S.lastTab || "pay";
   var head = '<div class="tj">' +
-    '<div class="tj__tabs">' + [["pay", "☕ 投げ銭"], ["loop", "🔁 くり返し"], ["hist", "📜 履歴"], ["msg", "✉️ 救いの言葉"]].map(function (t) {
+    '<div class="tj__tabs">' + [["pay", "☕ 投げ銭"], ["ways", "💳 107の手段"], ["loop", "🔁 くり返し"], ["hist", "📜 履歴"], ["rank", "🏅 番付"], ["inro", "🪪 印籠"], ["msg", "✉️ 救いの言葉"]].map(function (t) {
       return '<button class="tj__tab' + (t[0] === tab ? " on" : "") + '" type="button" data-tab="' + t[0] + '">' + t[1] + "</button>"; }).join("") + "</div>";
-  var body = tab === "pay" ? payHTML(C, S) : tab === "loop" ? loopHTML(C, S) : tab === "hist" ? histHTML(C, S) : msgHTML(C, S);
+  var body = tab === "pay" ? payHTML(C, S) : tab === "ways" ? waysHTML(C, S) : tab === "loop" ? loopHTML(C, S) : tab === "hist" ? histHTML(C, S)
+           : tab === "rank" ? rankHTML(C, S) : tab === "inro" ? (RG.inroForm ? RG.inroForm(S, vid()) : "") : msgHTML(C, S);
   var foot = '<p class="src">当サイトはお金も個人情報も<b>一切あずかりません</b>。送金は各アプリの中で完結し、金額・回数はご自身の判断です。' +
     "確認POPをスキップにした設定・履歴は、この端末だけに保存されます。" +
     '<button id="tip-reset" class="tj__lnk" type="button">確認POPを元に戻す</button></p></div>';
   var m = RG.openModal("☕ 制作者への窓口", head + body + foot);
   m.querySelectorAll("[data-tab]").forEach(function (b) { b.addEventListener("click", function () { var S2 = st(); S2.lastTab = b.dataset.tab; save(S2); RG.showTip(b.dataset.tab); }); });
   $("#tip-reset", m).addEventListener("click", function () { var S2 = st(); S2.skipConfirm = false; save(S2); RG.tripStatus && RG.tripStatus("次回から確認POPが出ます。", "info", 3000); });
-  if (tab === "pay") bindPay(m, C); else if (tab === "loop") bindLoop(m, C); else if (tab === "hist") bindHist(m, C); else bindMsg(m, C);
+  if (tab === "pay") bindPay(m, C); else if (tab === "ways") bindWays(m, C); else if (tab === "loop") bindLoop(m, C); else if (tab === "hist") bindHist(m, C);
+  else if (tab === "rank") bindRank(m, C); else if (tab === "inro") { if (RG.inroBind) RG.inroBind(m, st, vid(), save); } else bindMsg(m, C);
+  var gd = gedatsuBadge(S); var hd = m.querySelector(".modal__hd b"); if (gd && hd && !hd.querySelector(".gd")) hd.insertAdjacentHTML("beforeend", " " + gd);
 };
+/* 解脱回数のアイコン（3回目以降は ★ ギラギラ、1桁） */
+function gedatsuBadge(S) {
+  var n = Math.min(9, S.gedatsu || 0); if (!n) return "";
+  if (n < 3) return '<span class="gd gd--soft" title="解脱 ' + n + ' 回">' + "🕊️".repeat(n) + "</span>";
+  return '<span class="gd gd--star" title="解脱 ' + n + ' 回（3回目以降は累計額の壁を越えた証）">★' + n + "</span>";
+}
+RG.gedatsuBadge = function () { return gedatsuBadge(st()); };
+
+/* ---- 107 の手段 ---- */
+var SCHOOL_NOTE = '<div class="tj__school">🏫 <b>学校法人（幼稚園・小学校は免除）・学習塾・セミナー</b>など、第三者から対価を得て開催される場で本サイトを使う場合は、' +
+  "社会人である閲覧者からの<b>最低 100 円</b>の投げ銭を渇望しています。一度でも投げ銭をすると、所属組織（複数拠点なら拠点数分）またはご本人に永続利用の <b>🪪 デジタル印籠</b> を発行します。</div>";
+function waysHTML(C, S) {
+  var M = (RG.PAYMETHODS || []).slice().sort(function (a, b) { return (b.ease + b.users) - (a.ease + a.users) || b.users - a.users; });
+  var cats = []; M.forEach(function (x) { if (cats.indexOf(x.cat) < 0) cats.push(x.cat); });
+  var cur = S.wayCat || "";
+  var list = cur ? M.filter(function (x) { return x.cat === cur; }) : M;
+  var ST = { ok: ["いま送れる", "ok"], prep: ["制作者の準備待ち", "prep"], end: ["サービス終了（供養）", "end"], neta: ["金額ではないが潤う", "neta"] };
+  return SCHOOL_NOTE +
+    '<p class="tj__lead">寄付の手段 <b>' + M.length + ' 種類</b>。手順のかんたんさ × 利用者の多さで上から並んでいます。' + esc(RG.PAYMETHODS_NOTE || "") + "</p>" +
+    '<div class="ways__cats"><button class="ways__c' + (!cur ? " on" : "") + '" type="button" data-wcat="">すべて</button>' + cats.map(function (c) { return '<button class="ways__c' + (c === cur ? " on" : "") + '" type="button" data-wcat="' + esc(c) + '">' + esc(c) + "</button>"; }).join("") + "</div>" +
+    '<ol class="ways">' + list.map(function (x, i) {
+      var rank = M.indexOf(x) + 1;
+      return '<li class="way way--' + x.st + '"><span class="way__rk">' + rank + '</span><span class="way__ic" style="--lc:' + esc(x.c) + '">' + esc(x.ic || x.n.charAt(0)) + "</span>" +
+        '<span class="way__b"><b>' + esc(x.n) + '</b><span class="way__st way__st--' + x.st + '">' + ST[x.st][0] + "</span>" + (x.money ? "" : '<span class="way__st">累計に数えない</span>') +
+        '<i>' + esc(x.how) + (x.to ? "　▶ " + esc(x.to) : "") + "</i>" +
+        '<span class="way__meter" title="かんたんさ ' + x.ease + '/5・利用者 ' + x.users + '/5">' + "●".repeat(x.ease) + "○".repeat(5 - x.ease) + " ／ " + "●".repeat(x.users) + "○".repeat(5 - x.users) + "</span></span>" +
+        '<span class="way__act">' + (x.id === "paypay" || x.id === "kyash" ? '<button class="tj__cp" type="button" data-way-quick="' + x.id + '">送る</button>'
+          : x.bank ? '<button class="tj__cp" type="button" data-way-bank="' + x.id + '">振込依頼書／FBデータ</button>'
+          : x.id === "cheerword" || x.id === "photo" || x.id === "info" ? '<button class="tj__cp" type="button" data-way-msg="1">窓口へ</button>'
+          : x.id === "share" ? '<button class="tj__cp" type="button" data-way-share="1">共有</button>'
+          : x.url ? '<a class="tj__cp" href="' + esc(x.url) + '" target="_blank" rel="noopener">公式 ↗</a>' : "") + "</span></li>"; }).join("") + "</ol>" +
+    '<p class="src">アイコンは頭文字とブランド色による表現で、各社のロゴ（商標）は使っていません。「準備待ち」は制作者側のアカウント・リンク・口座の登録が要るもの。手数料・上限・本人確認は各サービスの規約に従います。</p>';
+}
+function bindWays(m, C) {
+  m.querySelectorAll("[data-wcat]").forEach(function (b) { b.addEventListener("click", function () { var S = st(); S.wayCat = b.dataset.wcat; save(S); RG.showTip("ways"); }); });
+  m.querySelectorAll("[data-way-quick]").forEach(function (b) { b.addEventListener("click", function () { var S = st(); S.app = b.dataset.wayQuick; save(S); RG.tipQuick(); }); });
+  m.querySelectorAll("[data-way-bank]").forEach(function (b) { b.addEventListener("click", function () { RG.bankForm(b.dataset.wayBank); }); });
+  m.querySelectorAll("[data-way-msg]").forEach(function (b) { b.addEventListener("click", function () { RG.showTip("msg"); }); });
+  m.querySelectorAll("[data-way-share]").forEach(function (b) { b.addEventListener("click", function () { RG.closeModal(); RG.shareOpen && RG.shareOpen(); }); });
+}
+
+/* ---- 銀行振込：振込依頼書（印刷）と FB データ（全銀フォーマット・総合振込） ---- */
+RG.bankForm = function (fromId) {
+  var C = cfg(), B = C.bank || {}, S = st();
+  var ready = !!(B.code && B.branch && B.number);
+  var html = '<div class="bank">' +
+    '<p class="tj__lead">🏦 銀行振込（ゆうちょ銀行 ほか）。振込先は制作者が <code>data/support.js</code> の <code>bank</code> に登録したものを使います。' + (ready ? "" : "<b>まだ未登録です</b>（制作者の準備待ち。フォームの動きは試せます）。") + "</p>" +
+    '<div class="bank__to"><b>振込先</b><div>' + esc(B.bankName || "ゆうちょ銀行") + "　" + (B.symbol ? "記号 " + esc(B.symbol) + "　番号 " + esc(B.number || "") : "店名 " + esc(B.branchName || "―") + "（" + esc(B.branch || "―") + "）　普通 " + esc(B.number || "―")) + "　" + esc(B.holder || "受取人名 ―") + "</div></div>" +
+    '<div class="tj__form"><label>振込人名（半角カナは FB データ用に自動変換されません。カナ欄に入力）<input id="bk-name" maxlength="40" value="' + esc(S.name || "") + '"></label>' +
+    '<label>振込人名（半角カナ・FBデータ用）<input id="bk-kana" maxlength="30" placeholder="ﾀﾅｶ ﾀﾛｳ"></label>' +
+    '<label>金額（100〜999,999 円）<input id="bk-amt" type="number" min="100" max="999999" step="1" value="' + (S.lastAmount || 500) + '"></label>' +
+    '<label>振込指定日<input id="bk-date" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></label>' +
+    '<label>ご自身の金融機関コード（4桁・FBデータの仕向銀行）<input id="bk-mycode" maxlength="4" placeholder="9900"></label>' +
+    '<div class="tj__row"><button id="bk-slip" class="set__b2" type="button">🖨️ 振込依頼書を表示・印刷</button>' +
+    '<button id="bk-fb" class="set__b2" type="button">💾 FBデータ（全銀フォーマット）を作る</button>' +
+    '<button id="bk-done" class="set__b" type="button">振込みました（記録する）</button></div><div id="bk-res" class="tj__res"></div></div>' +
+    '<p class="src">FB データは全銀協 総合振込フォーマット（120 バイト固定長・Shift_JIS 想定の半角カナ）で、多くの法人向けインターネットバンキングで取り込めます。振込依頼書は窓口用の様式（当サイト独自）です。振込手数料はご負担ください。</p></div>';
+  var m = RG.openModal("🏦 銀行振込", html);
+  $("#bk-slip", m).addEventListener("click", function () {
+    var amt = Math.max(100, Math.min(999999, +$("#bk-amt", m).value || 0)), nm = $("#bk-name", m).value || "";
+    var w = window.open("", "_blank");
+    if (!w) { $("#bk-res", m).textContent = "ポップアップがブロックされました。許可してもう一度。"; return; }
+    w.document.write('<!doctype html><meta charset="utf-8"><title>振込依頼書</title><style>body{font:14px/1.8 serif;margin:32px;color:#111}h1{text-align:center;letter-spacing:.3em;font-size:22px}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #333;padding:8px 10px;text-align:left}th{width:9em;background:#f3f3f3}.amt{font-size:26px;font-weight:700;letter-spacing:.1em}.foot{font-size:10px;color:#555}.stamp{border:2px solid #b00;color:#b00;display:inline-block;padding:4px 12px;border-radius:6px;margin-top:8px}@media print{button{display:none}}</style>' +
+      '<h1>振 込 依 頼 書</h1><p style="text-align:right">' + new Date().toLocaleDateString("ja-JP") + "</p>" +
+      "<table><tr><th>金融機関</th><td>" + esc(B.bankName || "ゆうちょ銀行") + "</td></tr>" +
+      "<tr><th>店名・口座</th><td>" + (B.symbol ? "記号 " + esc(B.symbol) + "　番号 " + esc(B.number || "") : "店名 " + esc(B.branchName || "―") + "（店番 " + esc(B.branch || "―") + "）　普通 " + esc(B.number || "―")) + "</td></tr>" +
+      "<tr><th>受取人</th><td>" + esc(B.holder || "―") + "</td></tr>" +
+      '<tr><th>金額</th><td class="amt">￥' + amt.toLocaleString("ja-JP") + "－</td></tr>" +
+      "<tr><th>依頼人</th><td>" + esc(nm) + "</td></tr>" +
+      "<tr><th>摘要</th><td>東京ステーションガイド お布施（投げ銭）</td></tr></table>" +
+      '<div class="stamp">お布施・非課税・端数なし</div>' +
+      '<p class="foot">本書は「東京ステーションガイド」が生成した窓口提出用の様式です。1人宗教法人へのお布施の形式であり、非課税・端数処理の無い世界で発行されているため、発行者の事業所番号は記載されません。振込手数料は依頼人負担。</p>' +
+      '<button onclick="print()">印刷 / PDF に保存</button>');
+    w.document.close();
+  });
+  $("#bk-fb", m).addEventListener("click", function () {
+    var amt = Math.max(100, Math.min(999999, +$("#bk-amt", m).value || 0)), kana = ($("#bk-kana", m).value || "").trim() || "ﾌﾒｲ";
+    var d = ($("#bk-date", m).value || "").replace(/-/g, "").slice(4), my = ($("#bk-mycode", m).value || "0000").padStart(4, "0");
+    function pad(s, n, right) { s = String(s == null ? "" : s); if (s.length > n) s = s.slice(0, n); return right ? s.padEnd(n, " ") : s.padStart(n, "0"); }
+    // 全銀 総合振込: ヘッダ(1) データ(2) トレーラ(8) エンド(9)。各 120 バイト
+    var hdr = "1" + "21" + "0" + pad("", 10) + pad(kana, 40, true) + pad(d, 4) + pad(my, 4) + pad("", 15, true) + pad("", 3) + pad("", 15, true) + "1" + pad("", 7) + pad("", 17, true);
+    var dat = "2" + pad(B.code || "9900", 4) + pad(B.bankName ? B.bankKana || "ﾕｳﾁﾖ" : "ﾕｳﾁﾖ", 15, true) + pad(B.branch || "", 3) + pad(B.branchKana || "", 15, true) + pad("", 4) + (B.type || "1") + pad(B.number || "", 7) + pad(B.holderKana || "", 30, true) + pad(amt, 10) + "0" + pad("", 10, true) + pad("", 10, true) + "7" + pad("", 8, true);
+    var trl = "8" + pad(1, 6) + pad(amt, 12) + pad("", 101, true);
+    var end = "9" + pad("", 119, true);
+    var txt = [hdr, dat, trl, end].map(function (l) { return pad(l, 120, true); }).join("\r\n") + "\r\n";
+    var blob = new Blob([txt], { type: "text/plain" }), url = URL.createObjectURL(blob);
+    $("#bk-res", m).innerHTML = '<a class="set__b2" download="fb_sougou_' + d + '.txt" href="' + url + '">💾 FBデータを保存</a> <span class="tj__hint">半角カナは Shift_JIS で保存し直す必要がある銀行もあります（テキストエディタで文字コードを変更）。</span>';
+  });
+  $("#bk-done", m).addEventListener("click", function () { var amt = Math.max(100, Math.min(999999, +$("#bk-amt", m).value || 0)); var S2 = record(amt, "bank"); afterTip(S2, amt); });
+};
+
+/* ---- 番付（ランキング） ---- */
+var RANKS = [[0, "序ノ口", "🌱"], [500, "三段目", "🍃"], [3000, "幕下", "🌿"], [10000, "十両", "🎋"], [30000, "前頭", "🏵️"], [100000, "小結", "🥉"], [200000, "関脇", "🥈"], [400000, "大関", "🥇"], [800000, "横綱", "👑"]];
+function scoreOf(life, gedatsu) { return (life ? life.total : 0) + (gedatsu || 0) * 50000; }   // 解脱 1 回 = 5 万円ぶんの加点（ブースト）
+function rankHTML(C, S) {
+  var life = S.life || { total: S.total || 0, count: S.count || 0, by: {} }, g = S.gedatsu || 0, sc = scoreOf(life, g);
+  var tier = RANKS[0]; RANKS.forEach(function (r) { if (sc >= r[0]) tier = r; });
+  var next = RANKS[RANKS.indexOf(tier) + 1];
+  var by = Object.keys(life.by || {}).map(function (k) { var M = (RG.PAYMETHODS || []).filter(function (x) { return x.id === k; })[0]; return { k: k, n: M ? M.n : k, v: life.by[k] }; }).sort(function (a, b) { return b.v - a.v; });
+  return '<div class="rank"><div class="rank__me"><div class="rank__tier">' + tier[2] + " " + tier[1] + "</div>" +
+    '<div class="rank__sc">番付スコア <b>' + sc.toLocaleString("ja-JP") + "</b><small>＝ 生涯累計 " + yen(life.total) + " ＋ 解脱 " + g + " 回 × 50,000</small></div>" +
+    (g ? '<div class="rank__gd">' + gedatsuBadge(S) + " 解脱 " + g + " 回（何よりも重視。ランキングを押し上げるブースト）</div>" : '<div class="rank__gd tj__hint">解脱（懺悔のリセット）はまだ 0 回。解脱 1 回で 50,000 点のブースト。</div>') +
+    (next ? '<div class="tj__hint">次の番付 ' + next[2] + next[1] + " まで、あと " + (next[0] - sc).toLocaleString("ja-JP") + " 点</div>" : '<div class="tj__hint">最高位です。</div>') + "</div>" +
+    '<table class="th__t"><thead><tr><th>番付</th><th>必要スコア</th><th>あなた</th></tr></thead><tbody>' + RANKS.slice().reverse().map(function (r) { return "<tr" + (r === tier ? ' class="on"' : "") + "><td>" + r[2] + " " + r[1] + "</td><td>" + r[0].toLocaleString("ja-JP") + " 〜</td><td>" + (r === tier ? "◀ いまここ" : "") + "</td></tr>"; }).join("") + "</tbody></table>" +
+    '<h4 class="rank__h">決済方法別（生涯）</h4>' + (by.length ? '<table class="th__t"><tbody>' + by.map(function (x) { return "<tr><td>" + esc(x.n) + '</td><td class="th__a">' + yen(x.v) + "</td></tr>"; }).join("") + '<tr><td><b>総トータル</b></td><td class="th__a"><b>' + yen(life.total) + "</b></td></tr></tbody></table>" : '<p class="tj__hint">まだ記録がありません。</p>') +
+    '<div id="rank-lb"></div>' +
+    '<p class="src">番付はこの端末の記録から計算します（累計・回数は「金額に換算できる」手段だけを数えます）。他の来訪者との比較表は、制作者が <code>data/support.js</code> の <code>leaderboardCsv</code>（公開スプレッドシートの CSV）を設定すると、ここに出ます。解脱 3 回目以降は累計額の壁（1万円→等比級数→9回目 999,999 円）があります。</p></div>';
+}
+function bindRank(m, C) {
+  var url = C.leaderboardCsv; var box = $("#rank-lb", m); if (!url || !box) return;
+  box.innerHTML = '<p class="tj__hint">みんなの番付を読み込んでいます…</p>';
+  fetch(url).then(function (r) { return r.text(); }).then(function (t) {
+    var rows = t.split(/\r?\n/).slice(1).map(function (l) { return l.split(","); }).filter(function (r) { return r.length >= 3; })
+      .map(function (r) { return { n: r[0], total: +r[1] || 0, count: +r[2] || 0, g: +r[3] || 0, sc: (+r[1] || 0) + (+r[3] || 0) * 50000 }; }).sort(function (a, b) { return b.sc - a.sc; });
+    box.innerHTML = '<h4 class="rank__h">みんなの番付</h4><table class="th__t"><thead><tr><th>#</th><th>名前</th><th>解脱</th><th>累計</th><th>スコア</th></tr></thead><tbody>' +
+      rows.slice(0, 50).map(function (r, i) { return "<tr><td>" + (i + 1) + "</td><td>" + esc(r.n) + "</td><td>" + (r.g >= 3 ? '<span class="gd gd--star">★' + Math.min(9, r.g) + "</span>" : "🕊️".repeat(Math.min(2, r.g))) + '</td><td class="th__a">' + yen(r.total) + '</td><td class="th__a">' + r.sc.toLocaleString("ja-JP") + "</td></tr>"; }).join("") + "</tbody></table>";
+  }).catch(function () { box.innerHTML = '<p class="tj__hint">みんなの番付を読み込めませんでした。</p>'; });
+}
 
 /* ---- 投げ銭 ---- */
 function payHTML(C, S) {
   var app = S.app || "paypay";
-  return '<p class="tj__lead">たった一人の制作者（<b>従業員1名の宗教法人</b>のような、非課税で端数の概念が無い世界の住人）を、確実に笑顔にできます。' +
+  return SCHOOL_NOTE + '<p class="tj__lead">たった一人の制作者（<b>従業員1名の宗教法人</b>のような、非課税で端数の概念が無い世界の住人）を、確実に笑顔にできます。' +
     "このサイトの維持管理は<b>この投げ銭だけ</b>で成り立っています。</p>" +
     '<p class="tj__hint">いま見えているのは «投げ銭前» の姿です。投げ銭が積み上がるほど、制作者はビジュアルをよりリアルに・より高解像に・コンテンツをより充実させる努力をするつもりです（実現の日は未定、保証はまるでありません）。' +
     "初回の投げ銭では画面が確かに変わります。2回目以降は何も変わりません――それが世知辛さというものです。</p>" +
@@ -355,12 +481,26 @@ function histHTML(C, S) {
       return "<tr><td>" + (H.length - i) + "</td><td>" + (h.t ? esc(new Date(h.t).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })) : "（履歴機能より前・" + h.legacy + "回分の合計）") +
         "</td><td>" + appName(h.p) + "</td><td class=\"th__a\">" + yen(h.a) + "</td></tr>"; }).join("") + "</tbody></table>" +
     '<p class="tj__hint">記録はこの端末のブラウザにだけあります（当サイトのサーバーには何も送られていません）。</p>' +
-    '<div class="th__clr"><button id="tip-clear" class="tj__clr" type="button">🧹 履歴をぜんぶ消す（懺悔のリセット）</button>' +
+    '<div class="th__clr">' + (S.gedatsu ? '<p class="tj__hint">これまでの解脱: ' + gedatsuBadge(S) + " " + S.gedatsu + " 回</p>" : "") +
+    '<button id="tip-clear" class="tj__clr" type="button">🧹 履歴をぜんぶ消す（懺悔のリセット＝解脱）</button>' +
     '<p class="tj__hint">消すと、支援者の印と累計も消えて «まっさら» に戻ります。次の投げ銭がまた «初回» になります。</p></div>';
 }
 function bindHist(m, C) {
   var b = $("#tip-clear", m); if (!b) return;
   b.addEventListener("click", function () {
+    var S0 = st(), n = (S0.gedatsu || 0) + 1, need = GEDATSU_WALL[n];
+    if (n > 9) { RG.openModal("🧹 懺悔のリセット", '<div class="tj tj--c"><p class="tj__big">解脱は 9 回目が最大です。</p><p>あなたはすでに 9 回、暗いトンネルを抜けました。これ以上の解脱はなく、累計 999,999 円を超える寄付もできません。あとは静かに地図を眺めてください。</p></div>'); return; }
+    if (need && (S0.total || 0) < need) {
+      RG.openModal("⚠️ 所定の金額に達していません", '<div class="tj tj--c">' +
+        '<p class="tj__big">' + n + " 回目の解脱には、累計 <b>" + yen(need) + "</b> が必要です。</p>" +
+        "<p>いまの累計は <b>" + yen(S0.total || 0) + "</b>。あと " + yen(need - (S0.total || 0)) + "。</p>" +
+        '<img class="gd__gif" src="' + (RG.withV ? RG.withV("assets/img/gedatsu.gif") : "assets/img/gedatsu.gif") + '" alt="解脱の壁のグラフ">' +
+        "<p>2 回目までは上限なしで容易に解脱できましたが、3 回目からは <b>1 万円</b>、以降は <b>×2.155 の等比級数</b>で壁が高くなり、9 回目の <b>999,999 円</b>が天井です（そこで寄付も打ち止め）。" +
+        "べらぼうに上がっていくのが、解脱の厳しさです。ここで初めてお伝えしました。</p>" +
+        '<div class="tj__row"><button class="set__b2" type="button" id="gd-pay">☕ 投げ銭で壁を越える</button><button class="set__b" type="button" onclick="RG.closeModal()">今日は俗世で</button></div></div>');
+      var gp = document.getElementById("gd-pay"); if (gp) gp.addEventListener("click", function () { RG.showTip("pay"); });
+      return;
+    }
     var mm = RG.openModal("🧹 懺悔のリセット", '<div class="tj tj--c">' +
       '<p class="tj__big">これまでの投げ銭の記録を、すべて消します。</p>' +
       "<p>日々の懺悔を水に流すように。暗いトンネルを抜けて、まっさらな明るい世界へ。出家するかのような、すがすがしい気持ちで押してください。</p>" +
@@ -370,6 +510,7 @@ function bindHist(m, C) {
     $("#tip-clear-go", mm).addEventListener("click", function () { RG.closeModal(); rebirth(); });
   });
 }
+var GEDATSU_WALL = { 3: 10000, 4: 21550, 5: 46440, 6: 100090, 7: 215700, 8: 464800, 9: 999999 };   // 3回目 1万円、以降 ×2.155、9回目 999,999円
 /* トンネルの向こうの光へ（GIF を流しながら履歴を消す） */
 function rebirth() {
   var ov = document.createElement("div"); ov.className = "rebirth";
@@ -379,8 +520,10 @@ function rebirth() {
   requestAnimationFrame(function () { ov.classList.add("on"); });
   var t = ov.querySelector(".rebirth__t");
   setTimeout(function () {
-    var S = st(); var keep = { skipConfirm: S.skipConfirm, name: S.name, lastTab: "hist", quickSeen: S.quickSeen }; save(keep); applyPatron();
-    t.innerHTML = "<b>すべて、消えました</b><span>懺悔も、累計も、支援者の印も</span>";
+    var S = st(); var keep = { skipConfirm: S.skipConfirm, name: S.name, org: S.org, sites: S.sites, lastTab: "hist", quickSeen: S.quickSeen,
+                               gedatsu: (S.gedatsu || 0) + 1, life: S.life, inro: S.inro };   // 解脱回数と «生涯» 記録は残す（番付・印籠のため）
+    save(keep); applyPatron();
+    t.innerHTML = "<b>すべて、消えました</b><span>懺悔も、累計も、支援者の印も（解脱 " + ((S.gedatsu || 0) + 1) + " 回目）</span>";
   }, 1600);
   setTimeout(function () { t.innerHTML = "<b>🌅 新しい世界へ</b><span>おかえりなさい。次の投げ銭は、また «初回» です</span>"; ov.classList.add("light"); }, 3200);
   setTimeout(function () { ov.classList.remove("on"); setTimeout(function () { ov.remove(); RG.showTip("hist"); }, 600); }, 5200);

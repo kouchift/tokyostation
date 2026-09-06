@@ -2844,3 +2844,30 @@ button,.lr__i,.tq__amt,.tj__amt{touch-action:manipulation}
 .bzr__i--img{grid-template-columns:40px 44px 64px 1fr 18px}
 .bzr__im{width:40px;height:30px;object-fit:cover;border-radius:6px;background:#eee}
 .bzr__im--ph{display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+/* v76 107の手段・番付・解脱・印籠・銀行 */
+.tj__school{background:#fff8e1;border:1px solid #f1d27a;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.6;margin-bottom:8px}
+.ways__cats{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.ways__c{border:1px solid #ccc;background:#fff;border-radius:999px;padding:3px 9px;font-size:11.5px;cursor:pointer}.ways__c.on{background:#333;color:#fff;border-color:#333}
+.ways{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.way{display:grid;grid-template-columns:28px 40px 1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:10px;padding:6px 8px;background:#fff}
+.way--end{opacity:.55}.way--neta{background:#fdfdf5}
+.way__rk{font-size:12px;color:#888;text-align:right}
+.way__ic{width:36px;height:36px;border-radius:50%;background:var(--lc,#888);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;letter-spacing:-.5px;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.way__b{min-width:0;font-size:12.5px}.way__b b{display:block;font-size:13px}.way__b i{display:block;font-style:normal;color:#666;font-size:11.5px}
+.way__st{display:inline-block;font-size:10px;border-radius:4px;padding:0 5px;margin:2px 4px 0 0;background:#eee;color:#555}
+.way__st--ok{background:#E8F5E9;color:#1B5E20}.way__st--prep{background:#FFF3E0;color:#8A4B00}.way__st--end{background:#f3f3f3;color:#888;text-decoration:line-through}.way__st--neta{background:#F3E5F5;color:#6A1B9A}
+.way__meter{display:block;font-size:9px;color:#999;letter-spacing:1px}
+.way__act .tj__cp{margin:0}
+.bank__to{background:#f4f8ff;border:1px solid #cfd8e6;border-radius:10px;padding:8px 10px;font-size:13px;margin:6px 0}
+.rank__me{background:linear-gradient(135deg,#1a2540,#0d1524);color:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.rank__tier{font-size:24px;font-weight:900}.rank__sc{font-size:14px;margin:4px 0}.rank__sc small{display:block;font-size:11px;opacity:.8}
+.rank__gd{margin-top:6px;font-size:13px}.rank__h{margin:12px 0 4px;font-size:13.5px}
+.th__t tr.on td{background:#fff3b0;font-weight:700}
+.gd{display:inline-block;vertical-align:middle;margin-left:4px}
+.gd--star{font-weight:900;font-size:14px;color:#3a2a00;padding:1px 8px;border-radius:999px;background:linear-gradient(90deg,#ffd54a,#fff2b3,#ffb300,#fff2b3,#ffd54a);background-size:300% 100%;animation:gira 1.6s linear infinite;text-shadow:0 0 6px #fff,0 0 2px #ffea00;box-shadow:0 0 10px rgba(255,200,0,.8),0 0 2px #fff}
+@keyframes gira{0%{background-position:0 0}100%{background-position:300% 0}}
+.gd__gif{display:block;width:100%;max-width:480px;margin:8px auto;border-radius:10px}
+.inro__hero{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(135deg,#0d1524,#1a2540);color:#f3f5f8;border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.inro__hero p{font-size:12.5px;line-height:1.6;margin:4px 0 0;color:#cfd8e6}
+.inro__seal{flex:0 0 auto;width:64px;height:64px;border-radius:50%;border:3px solid #e6c46a;color:#e6c46a;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;font-family:serif}
+.inro__pv{display:block;width:100%;max-width:360px;border:1px solid #ccc;border-radius:8px;margin:8px 0;box-shadow:0 4px 16px rgba(0,0,0,.25)}

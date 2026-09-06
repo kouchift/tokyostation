@@ -8,7 +8,7 @@ const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..');
 const ORDER = ['app', 'score', 'planner', 'plannerui', 'lines_ui', 'basemap', 'three', 'wikicard',
   'corp', 'smoking', 'adult', 'edu', 'hensachi', 'pins', 'groups', 'koyomi2', 'koyomi', 'search',
-  'nav', 'plan', 'logbook', 'geohelp', 'tiles', 'geo', 'zipcode', 'enrich', 'focus', 'buzz', 'qr', 'tip', 'shinkansen', 'share', 'nature', 'loader'];
+  'nav', 'plan', 'logbook', 'geohelp', 'tiles', 'geo', 'zipcode', 'enrich', 'focus', 'buzz', 'qr', 'inro', 'tip', 'shinkansen', 'share', 'nature', 'loader'];
 let src = ORDER.map(n => {
   const f = path.join(root, 'assets', n + '.js');
   return `/* ===== ${n}.js ===== */\n;` + fs.readFileSync(f, 'utf8') + '\n;';

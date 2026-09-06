@@ -37,6 +37,7 @@ var IDLE = [
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/shinkansen.js", key: "shinkansen", label: "新幹線の駅" },
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
+  { f: "data/paymethods.js", key: "paymethods", label: "寄付の手段" },
   { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ" },
   { f: "data/wikiinfo.js",  key: "wiki",      label: "区と路線の説明" },
   { f: "data/heat.js",      key: "heat",      label: "区の統計" },
@@ -71,7 +72,8 @@ var ONDEMAND = [
   { f: "data/camadult.js",  key: "camadult", label: "カメラほか",         group: "spots" },
   { f: "data/cams_jp.js",   key: "cams_jp",  label: "全国ライブカメラ",   group: "spots" },
   { f: "data/views_jp.js",  key: "views_jp", label: "全国の絶景",         group: "spots" },
-  { f: "data/onsen_jp.js",  key: "onsen_jp", label: "全国の温泉",         group: "spots" }
+  { f: "data/onsen_jp.js",  key: "onsen_jp", label: "全国の温泉",         group: "spots" },
+  { f: "data/near_special.js", key: "nearsp", label: "SPECIAL圏内",     group: "spots" }
 ];
 
 var loaded = {}, inflight = {};
@@ -119,7 +121,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;

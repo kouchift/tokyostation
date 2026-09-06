@@ -26,6 +26,10 @@ RG.TIP = {
   googleForm: { action: "", name: "", text: "" },
   mailto: "tonbo7@gmail.com",
   siteUrl: "https://kouchift.github.io/tokyostation/",
+  /* 銀行振込（ゆうちょ）。空のままだと「準備待ち」表示。記号・番号 or 店名・店番・口座番号、受取人名（カナは FB データ用） */
+  bank: { bankName: "ゆうちょ銀行", bankKana: "ﾕｳﾁﾖ", code: "9900", symbol: "", branch: "", branchName: "", branchKana: "", type: "1", number: "", holder: "", holderKana: "" },
+  /* みんなの番付：公開スプレッドシートの CSV（列: name,total,count,gedatsu）。空なら端末内の番付だけ */
+  leaderboardCsv: "",
   amounts: [100, 500, 1000, 3000]
 };
 RG.BANLIST = [];
