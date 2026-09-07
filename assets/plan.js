@@ -341,26 +341,16 @@ RG.openPlan = function () {
       var payload = { title: title, text: txt };
       var gr = gmapRoute();
       if (gr) payload.url = gr;   // url を渡すと LINE などがリンクカードにしてくれる
+      /* v84: 送り先の並びは共通（assets/sns.js）。PV ができていれば動画も一緒に */
       function doShare(pv) {
-        if (pv && navigator.canShare && navigator.canShare({ files: [new File([pv.blob], pv.name, { type: pv.mime })] })) {
-          navigator.share({ files: [new File([pv.blob], pv.name, { type: pv.mime })], title: title, text: txt }).catch(function () { navigator.share(payload).catch(function () {}); });
-          return;
-        }
-        if (navigator.share) navigator.share(payload).catch(function () { navigator.share({ title: title, text: txt }).catch(function () {}); });
+        var f = null; if (pv) { try { f = new File([pv.blob], pv.name, { type: pv.mime }); } catch (e) { f = null; } }
+        var pl = { title: title, text: txt, url: payload.url || "", file: f, blobUrl: f ? URL.createObjectURL(pv.blob) : null, fileName: pv ? pv.name : "", kind: f ? "video" : "" };
+        if (RG.snsOpen) { RG.snsOpen("📤 プランを送る", pl, { video: !!f, main: "line" }); return; }
+        if (navigator.share) navigator.share({ title: title, text: txt }).catch(function () {});
       }
       // v78: 経路があれば先に 20 秒のルート PV を作る（作れない環境ではそのまま共有）
       if (RG.pvFlow && P.items.some(function (x) { return x.k === "route"; })) { RG.pvFlow("share", function (pv) { RG.closeModal(); doShare(pv); }, null, { memo: P.memo }); return; }
-      if (navigator.share) {
-        navigator.share(payload).catch(function () {
-          // url 付きを拒否する実装があるので、その場合は text だけで再挑戦
-          navigator.share({ title: title, text: txt }).catch(function () {});
-        });
-      } else {
-        // 共有シートが無い環境ではコピーで代替
-        (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
-          .then(function () { RG.tripStatus("この端末に共有シートが無いため、テキストをコピーしました。貼り付けて送ってください。", "ok", 4200); })
-          .catch(function () { RG.tripStatus("この端末では共有できません。「送る内容を見る」から選んでコピーしてください。", "warn", 5000); });
-      }
+      doShare(null);
     });
     $("#pl-clear", m).addEventListener("click", function () {
       P.items = []; save(); RG.refreshPlanBadge(); redraw();

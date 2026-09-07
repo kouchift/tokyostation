@@ -3006,7 +3006,7 @@ html.kuni-on .geo__pn{display:none!important}
 .rc__acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 6px}
 .rc__a{display:block;text-align:center;border:1px solid #d9d9d9;background:#fff;color:#1a1a1a;border-radius:12px;padding:12px 8px;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit}
 .rc__a--x{background:#1a1a1a;color:#fff;border-color:#1a1a1a}.rc__a--ghost{color:#666}
-.rc__sub{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px;margin:4px 0;align-items:center}.rc__sub a,.rc__sub button{border:0;background:transparent;color:#0B5394;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:inherit}
+.rc__sub{display:block;font-size:12px;margin:4px 0}.rc__sub>a,.rc__sub>button{border:0;background:transparent;color:#0B5394;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:inherit}
 .rc__img{max-width:100%;width:100%;border:1px solid #eee;border-radius:12px;display:block;margin:4px auto}
 /* 調査ずみの印（現場メモ 3 件以上）: 駅の丸に小さな緑の輪 */
 .node.memo .st-dot{stroke:#2E7D32!important}
@@ -3061,3 +3061,69 @@ html.kuni-on .geo__pn{display:none!important}
 .lg__l{display:block;font-size:12px;color:#555;margin:6px 0 2px}.lg__cnt{float:right;font-size:11.5px;color:#777;font-variant-numeric:tabular-nums}.lg__cnt.is-near{color:#C45E1A}.lg__cnt.is-full{color:#C62828;font-weight:700}
 .lg__l .lg__rev,.lg__l .pl__memo{margin-top:4px}
 
+/* =========================================================================
+   v84: いまの天気と昼夜（assets/weather.js）
+   地図の上に 3 枚の «触れない» 層。空の色（multiply）・雲の灰色・雨雪の演出。ボタン類（z-index 10 以上）の下
+   ========================================================================= */
+#wxsky,#wxcloud,#wxfx{position:absolute;inset:0;pointer-events:none;z-index:9}
+#wxsky{mix-blend-mode:multiply;opacity:0;background:#f5c48a;transition:opacity 1.6s ease}
+#wxcloud{mix-blend-mode:multiply;background:#d3d8de;opacity:0;transition:opacity 1.2s ease}
+#wxfx{overflow:hidden;opacity:0;transition:opacity 1s ease}
+#wxfx.wx-on{opacity:1}
+#wxfx i{position:absolute;left:-30%;top:-400px;width:160%;height:calc(100% + 800px);background-repeat:repeat;will-change:transform;opacity:0;display:none}
+#wxfx.wx-rain i,#wxfx.wx-sleet i,#wxfx.wx-thunder i{display:block;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%234a6a9a' stop-opacity='0'/%3E%3Cstop offset='.55' stop-color='%234a6a9a' stop-opacity='.75'/%3E%3Cstop offset='1' stop-color='%234a6a9a' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='11' y='6' width='1.2' height='20' fill='url(%23g)'/%3E%3Crect x='47' y='58' width='1.2' height='16' fill='url(%23g)'/%3E%3Crect x='73' y='22' width='1.2' height='24' fill='url(%23g)'/%3E%3Crect x='30' y='96' width='1.1' height='18' fill='url(%23g)'/%3E%3C/svg%3E");background-size:96px 128px;transform:rotate(9deg);animation:wxrain .9s linear infinite;opacity:.5}
+#wxfx.wx-rain i+i,#wxfx.wx-sleet i+i,#wxfx.wx-thunder i+i{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='192'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%234a6a9a' stop-opacity='0'/%3E%3Cstop offset='.55' stop-color='%234a6a9a' stop-opacity='.75'/%3E%3Cstop offset='1' stop-color='%234a6a9a' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='20' y='10' width='1.5' height='34' fill='url(%23g)'/%3E%3Crect x='84' y='88' width='1.6' height='40' fill='url(%23g)'/%3E%3Crect x='56' y='140' width='1.4' height='30' fill='url(%23g)'/%3E%3C/svg%3E");background-size:128px 192px;animation:wxrain2 1.15s linear infinite;opacity:.4;display:none}
+#wxfx.wx-l2 i{opacity:.65}#wxfx.wx-l2 i+i,#wxfx.wx-l3 i+i{display:block}#wxfx.wx-l3 i{opacity:.85;animation-duration:.65s}#wxfx.wx-l3 i+i{opacity:.6;animation-duration:.85s}
+#wxfx.wx-snow i{display:block;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cg fill='%239fb4cc' fill-opacity='.8'%3E%3Ccircle cx='12' cy='10' r='1.7'/%3E%3Ccircle cx='88' cy='30' r='1.3'/%3E%3Ccircle cx='50' cy='52' r='2'/%3E%3Ccircle cx='110' cy='84' r='1.5'/%3E%3Ccircle cx='28' cy='100' r='1.2'/%3E%3Ccircle cx='70' cy='118' r='1.8'/%3E%3C/g%3E%3C/svg%3E");background-size:128px 128px;transform:rotate(-7deg);animation:wxsnow 5.5s linear infinite;opacity:.9}
+#wxfx.wx-snow i+i{display:block;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23ffffff' stroke='%239fb4cc' stroke-width='.8' fill-opacity='.95'%3E%3Ccircle cx='30' cy='120' r='2.6'/%3E%3Ccircle cx='120' cy='28' r='2.2'/%3E%3Ccircle cx='80' cy='80' r='2.4'/%3E%3C/g%3E%3C/svg%3E");background-size:160px 160px;transform:rotate(6deg);animation:wxsnow2 8s linear infinite;opacity:.8}
+#wxfx.wx-snow.wx-l1 i+i{display:none}#wxfx.wx-snow.wx-l3 i{animation-duration:3.5s}
+#wxfx.wx-fog i{display:block;left:-20%;top:0;width:140%;height:100%;background:radial-gradient(ellipse 45% 40% at 25% 35%,rgba(255,255,255,.75),transparent 70%),radial-gradient(ellipse 50% 45% at 75% 65%,rgba(255,255,255,.7),transparent 70%),radial-gradient(ellipse 60% 30% at 50% 90%,rgba(255,255,255,.6),transparent 70%);animation:wxfog 40s ease-in-out infinite alternate;opacity:1}
+#wxfx.wx-fog i+i{display:block;left:-20%;top:0;width:140%;height:100%;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.42));animation:none;opacity:1}
+#wxfx.wx-thunder::after{content:"";position:absolute;inset:0;background:#fff;opacity:0;animation:wxflash 9s linear infinite}
+#wxfx.wx-still i,#wxfx.wx-still::after{animation:none !important}
+@keyframes wxrain{from{transform:rotate(9deg) translateY(0)}to{transform:rotate(9deg) translateY(128px)}}
+@keyframes wxrain2{from{transform:rotate(9deg) translateY(0)}to{transform:rotate(9deg) translateY(192px)}}
+@keyframes wxsnow{from{transform:rotate(-7deg) translateY(0)}to{transform:rotate(-7deg) translateY(128px)}}
+@keyframes wxsnow2{from{transform:rotate(6deg) translateY(0)}to{transform:rotate(6deg) translateY(160px)}}
+@keyframes wxfog{from{transform:translateX(-4%)}to{transform:translateX(4%)}}
+@keyframes wxflash{0%,86%,100%{opacity:0}87%{opacity:.5}88%{opacity:0}90%{opacity:.3}91%{opacity:0}}
+/* 天気チップ（地図の右上） */
+.wxchip{position:absolute;right:10px;top:10px;z-index:12;display:inline-flex;align-items:center;gap:6px;max-width:min(58%,300px);
+  border:1px solid var(--grid);background:rgba(255,255,255,.93);color:#1a2733;border-radius:999px;padding:4px 11px 4px 8px;font:inherit;font-size:12px;line-height:1.2;cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.wxchip:hover{background:#fff;border-color:#b8c2cc}
+.wxchip__i{font-size:17px;line-height:1}.wxchip__t{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}.wxchip__w{font-weight:700;white-space:nowrap}
+.wxchip__p{color:#5a6472;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.wxchip--night{background:rgba(24,30,56,.86);color:#f2f4ff;border-color:rgba(255,255,255,.18)}.wxchip--night .wxchip__p{color:#c2c8e6}.wxchip--night:hover{background:rgba(24,30,56,.95)}
+body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
+@media (max-width:560px){.wxchip__w{display:none}.wxchip{max-width:52%}.hint{max-width:calc(100% - 150px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+/* くわしく（モーダル） */
+.wxm__hd{display:flex;align-items:center;gap:12px;margin:2px 0 10px}.wxm__i{font-size:44px;line-height:1}.wxm__t{font-size:26px;font-weight:900}.wxm__w{font-size:15px;font-weight:700;margin-left:4px}.wxm__p{color:#5a6472;font-size:12px;margin-top:2px}
+.wxm__g{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-bottom:10px}
+.wxm__g div{background:#f5f6f8;border-radius:10px;padding:7px 9px;display:flex;flex-direction:column}.wxm__g span{font-size:10.5px;color:#666}.wxm__g b{font-size:14px;font-variant-numeric:tabular-nums}
+.wxhs{display:flex;gap:4px;overflow-x:auto;padding:2px 0 8px;margin-bottom:4px;-webkit-overflow-scrolling:touch}
+.wxh{flex:0 0 auto;width:52px;text-align:center;background:#fff;border:1px solid #e3e6ea;border-radius:10px;padding:5px 2px;display:flex;flex-direction:column;gap:2px;font-size:11px}
+.wxh__t{color:#666;font-size:10px}.wxh__i{font-size:18px;line-height:1.2}.wxh__d{font-weight:800}.wxh__p{color:#1A6FB5;font-size:10px}
+
+/* =========================================================================
+   v84: SNS へ送るボタンの並び（assets/sns.js）。主軸 X・Instagram・TikTok・LINE ＋「その他」
+   ========================================================================= */
+.snsp{margin:8px 0 4px}
+.snsp__row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.sns{border:1px solid #cfd4da;background:#fff;color:#1a2733;border-radius:999px;padding:7px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;line-height:1.2;white-space:nowrap}
+.sns:hover{filter:brightness(.96)}
+.sns--big{padding:9px 18px;font-size:14px}
+.sns--x{background:#000;color:#fff;border-color:#000}
+.sns--ig{background:#E1306C;color:#fff;border-color:#E1306C}
+.sns--tt{background:#111;color:#fff;border-color:#111;box-shadow:inset 0 0 0 2px #69C9D0, inset 0 0 0 4px #111}
+.sns--line{background:#06C755;color:#fff;border-color:#06C755}
+.sns--fb{background:#1877F2;color:#fff;border-color:#1877F2}
+.sns--wa{background:#25D366;color:#fff;border-color:#25D366}
+.sns--tg{background:#229ED9;color:#fff;border-color:#229ED9}
+.sns--dc{background:#5865F2;color:#fff;border-color:#5865F2}
+.sns--wc{background:#07C160;color:#fff;border-color:#07C160}
+.sns--yt{background:#FF0000;color:#fff;border-color:#FF0000}
+.sns--more{background:#f3f4f6}
+.snsp__hint{font-size:12px;color:#444;margin:4px 0 0;min-height:1.2em;line-height:1.5}
+.snsp__txt{white-space:pre-wrap;font-size:12px;background:#f5f6f8;border-radius:8px;padding:8px 10px;margin:6px 0 0;max-height:200px;overflow:auto}
+@media (pointer:coarse){.sns{padding:9px 14px;font-size:14px}.sns--big{padding:11px 20px;font-size:15px}}

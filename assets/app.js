@@ -713,7 +713,7 @@ var Map = (function () {
     if (RG.quakeLOD) RG.quakeLOD();
     if (RG.buzzRailRefresh) RG.buzzRailRefresh();
     if (RG.map3DMoved) RG.map3DMoved();
-    if ((RG.loadTilesFor || RG.zipOnMove) && vb) {
+    if ((RG.loadTilesFor || RG.zipOnMove || RG.weatherOnMove) && vb) {
       clearTimeout(tileT);
       tileT = setTimeout(function () {
         var a = RG.unproject(vb.x, vb.y + vb.h), b = RG.unproject(vb.x + vb.w, vb.y);
@@ -721,6 +721,7 @@ var Map = (function () {
                      w: Math.min(a.lo, b.lo), e: Math.max(a.lo, b.lo) };
         if (RG.loadTilesFor) RG.loadTilesFor(bbox);
         if (RG.zipOnMove) RG.zipOnMove(bbox);
+        if (RG.weatherOnMove) RG.weatherOnMove(bbox);     // v84: 見ている場所の天気（升目が変わったときだけ取りに行く）
       }, 300);
     }
   }
@@ -2088,6 +2089,7 @@ RG.boot = function () {
   step("郵便番号", function () { if (RG.initZip) RG.initZip(); });
   step("話題・窓口", function () { if (RG.buzzBind) RG.buzzBind(); if (RG.tipInit) RG.tipInit(); if (RG.corpBubbleInit) RG.corpBubbleInit(); if (RG.shareInit) RG.shareInit(); });
   step("地理レイヤ・地震", function () { if (RG.geoRestore) RG.geoRestore(); if (RG.quakeInit) setTimeout(RG.quakeInit, 6000); if (RG.memoInit) setTimeout(RG.memoInit, 3000); });
+  step("いまの天気", function () { if (RG.weatherInit) setTimeout(RG.weatherInit, 1500); });
   step("3Dの角度そうさ", function () { if (RG.initTiltDrag) RG.initTiltDrag(); });
   step("全国の地名", function () { if (RG.buildJPAdmin) RG.buildJPAdmin(); });
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });

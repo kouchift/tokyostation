@@ -105,3 +105,7 @@ tools/build_standalone.py  単一ファイル版の生成
 - `data/net.json`（v80 で掃除）— Wikidata（CC0）由来の全国路線網から、廃線・廃駅（Wikidata P576 廃止日／P3999 閉鎖日）、貨物線・計画線、信号場・貨物駅、同名別駅の混同による長すぎる辺、途中駅を飛ばす辺を除いたもの。手順は tools/fix_skip_edges.py → tools/fix_net_hygiene.py → tools/fix_net_snap.py（冪等）。
 - `assets/vendor/mp4-muxer.min.js` — mp4-muxer 5.2.2（MIT License, Copyright (c) 2023-present Vanilagy, https://github.com/Vanilagy/mp4-muxer）。ルート PV の MP4 化に使用。ルート PV 生成時だけ読み込む。
 
+## v84
+- いまの天気（`assets/weather.js`）— [Open-Meteo](https://open-meteo.com/) Forecast API（https://api.open-meteo.com/v1/forecast）。非商用・API キー不要・CC BY 4.0（「Weather data by Open-Meteo.com」の表示を天気の画面に記載）。各国気象機関（気象庁 MSM/GSM を含む）の数値予報を合成した推定値。端末から直接取得し、サーバーを介さない。0.1 度の升目・10 分キャッシュで 1 人あたり多くても 1 時間に数回。
+- 昼夜（太陽の高さ）— NOAA の太陽位置の近似式（Astronomical Algorithms に基づく一般式）を自前で計算。外部データなし。
+- 参考にした表現 — Mini Tokyo 3D（https://minitokyo3d.com/ 、Akihiko Kusanagi 氏。オープンソースで公開）。コード・データは使っていない（見た目の参考のみ）。

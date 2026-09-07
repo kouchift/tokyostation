@@ -18,6 +18,7 @@ var ST = (function () {
 })();
 function save() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) {} }
 RG.settings = ST;
+RG.saveSettings = save;      // v84: 各モジュールが RG.saveSettings を呼んでいたのに実体が無く、地理レイヤ等の切替が保存されていなかった
 RG.MAX_WATCH = 5;
 
 /* ------------------------------------------------ ランドマーク（駅以外） */
@@ -692,6 +693,7 @@ function openSettings() {
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
     (RG.geoSwitchHTML ? RG.geoSwitchHTML() : "") +
+    (RG.weatherSwitchHTML ? RG.weatherSwitchHTML() : "") +
     (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "") +
     '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
       '<p class="set__d">いま動いている版: <b>' + esc(RG.VERSION || "不明") + "</b>（" + esc(RG.BUILT || "?") + " 作成）" +
@@ -701,6 +703,7 @@ function openSettings() {
   var sst = $("#set-state", m); if (sst) sst.addEventListener("click", function () { if (RG.showState) RG.showState(); });
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
   if (RG.geoSwitchBind) RG.geoSwitchBind(m);
+  if (RG.weatherSwitchBind) RG.weatherSwitchBind(m);
   if (RG.tipBind) RG.tipBind(m);
   renderWatch();
 

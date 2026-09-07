@@ -332,39 +332,27 @@ RG.pvShow = function (rec, kind, proceed) {
   var expStr = exp.getFullYear() + "/" + (exp.getMonth() + 1) + "/" + exp.getDate();
   var isMp4 = RG.pvIsMp4(rec), sns = RG.pvSnsReady(rec), file = null;
   try { file = new File([rec.blob], rec.name, { type: rec.mime }); } catch (e) { file = null; }
-  var canShareFile = !!(file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] }));
-  var mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  var mobile = RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent);
   var postTxt = "【東京移動メモ】" + rec.title + "\n20秒のルートPV\n\n地図で確認 → " + SITE;
   var html = '<div class="pv"><video id="pv-v" class="pv__v" src="' + url + '" controls autoplay muted playsinline></video>' +
     '<div class="pv__exp">⏳ この動画の保有期限: <b>' + expStr + '</b>（1週間）。応援の有無にかかわらず、期限を過ぎると消える可能性があります。</div>' +
+    (RG.snsPanelHTML ? RG.snsPanelHTML({ video: true, main: "x" }) : "") +
     '<div class="sh__btns">' +
-      (canShareFile ? '<button class="sh__b sh__b--main" type="button" id="pv-share">📤 共有する（X・Instagram・TikTok・LINE…）</button>' : "") +
-      (!canShareFile && sns ? '<button class="sh__b sh__b--main" type="button" id="pv-x">Xに投稿（動画を保存して添付）</button>' : "") +
       '<a class="sh__b" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (isMp4 ? "MP4" : "WebM") + '・' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
-      (kind === "mail" || !kind ? '<a class="sh__b" href="mailto:?subject=' + encodeURIComponent("ルート PV: " + rec.title) + "&body=" + encodeURIComponent("ルートPV「" + rec.title + "」を送ります。動画ファイル（" + rec.name + "）を添付してください。\n保有期限: " + expStr + "\n" + SITE) + '">📧 メールを開く（動画は保存して添付）</a>' : "") +
       (proceed ? '<button class="sh__b" type="button" id="pv-go">' + (kind === "obsidian" ? "🟣 Obsidian に送る（続ける）" : kind === "mail" ? "📧 メールに進む" : "📤 共有に進む") + "</button>" : "") +
       '<button class="sh__b" type="button" id="pv-tip">☕ 応援する</button>' +
     "</div>" +
     '<p class="rc__hint" id="pv-hint"></p>' +
-    '<p class="src">' + (sns ? "MP4（H.264）なので X・Instagram・TikTok・LINE にそのまま投稿できます。" + (mobile ? "iPhone は「共有する」→「ビデオを保存」で写真アプリにも入ります。" : "PC は保存した MP4 を X の投稿画面にドラッグしてください。") :
+    '<p class="src">' + (sns ? "MP4（H.264）なので X・Instagram・TikTok・LINE にそのまま投稿できます。" + (mobile ? "スマホは各ボタンで共有シートが開くので、そこでアプリを選んでください（iPhone は「ビデオを保存」で写真アプリにも入ります）。" : "PC の Instagram・TikTok・Discord・WeChat・YouTube は Web から動画を渡す入口が無いので、動画を保存し本文をコピーしてそのサービスを開きます。") :
       "この端末では " + (isMp4 ? "MP4 でも中身が " + (rec.codec || "H.264 以外").toUpperCase() + " の形式" : "WebM 形式") + "でしか作れませんでした。LINE・メールには送れますが、X・Instagram・TikTok は H.264 の MP4 しか受け付けないため、Chrome・Edge・Safari（iPhone）で作り直してください。") +
       " 動画はこの端末の中（ブラウザの保存領域）に " + expStr + " まで残ります。</p></div>";
   var m = RG.openModal("🎬 ルート PV（20秒）", html);
   var v = $("#pv-v", m);
   if (v) v.addEventListener("ended", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });
   var hint = $("#pv-hint", m);
-  var sh = $("#pv-share", m); if (sh) sh.addEventListener("click", function () {
-    navigator.share({ files: [file], title: "ルート PV: " + rec.title, text: postTxt }).catch(function (e) {
-      if (e && e.name === "AbortError") return;
-      navigator.share({ title: "ルート PV: " + rec.title, text: postTxt, url: SITE }).catch(function () {});
-      if (hint) hint.textContent = "動画つきの共有ができないアプリでした。「動画を保存」してからアプリで選んでください。";
-    });
-  });
-  var xb = $("#pv-x", m); if (xb) xb.addEventListener("click", function () {
-    var a = document.createElement("a"); a.href = url; a.download = rec.name; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 500);
-    (navigator.clipboard ? navigator.clipboard.writeText(postTxt) : Promise.reject()).catch(function () {});
-    if (hint) hint.textContent = "動画を保存し、投稿文をコピーしました。X の投稿画面で動画を添付して投稿してください。";
-    setTimeout(function () { try { window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(postTxt), "_blank", "noopener"); } catch (e) {} }, 600);
+  /* v84: SNS の並びは共通（assets/sns.js）。スマホは共有シートに動画と本文を載せて渡す。PC は保存＋本文コピー＋投稿画面 */
+  if (RG.snsBind) RG.snsBind(m.querySelector(".snsp"), function () {
+    return { title: "ルート PV: " + rec.title, text: postTxt.replace("\n\n地図で確認 → " + SITE, ""), url: SITE, file: file, blobUrl: url, fileName: rec.name, kind: "video" };
   });
   var go = $("#pv-go", m); if (go) go.addEventListener("click", function () { proceed && proceed(rec); });
   var tp = $("#pv-tip", m); if (tp) tp.addEventListener("click", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });

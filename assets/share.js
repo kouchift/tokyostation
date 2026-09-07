@@ -1,7 +1,7 @@
 /* =========================================================================
    いま見ている地図をキャプチャして、SNS へ共有する  v75〜
    ・地図（SVG）を Canvas に描き、右下にクレジット「～この世知辛い世の、喉の渇きを潤したい～」を焼き込む
-   ・共有: Web Share API（画像ファイルつき、スマホ）／X・LINE・Facebook・メール・SMS の共有リンク／画像の保存／URL コピー
+   ・共有: v84 から assets/sns.js の共通の並び（X・Instagram・TikTok・LINE ＋ その他）／画像の保存／URL コピー
    ・誘導リンク https://kouchift.github.io/tokyostation/ を必ず添える
    ・外部ライブラリなし。地図の絵文字画像は data: URL なので Canvas が汚染されない
    ========================================================================= */
@@ -35,6 +35,17 @@ RG.captureMap = function (cb) {
     cx.fillStyle = bg === "rgba(0, 0, 0, 0)" ? "#fbfbf7" : bg; cx.fillRect(0, 0, W, H);
     try { cx.drawImage(img, 0, 0, W, H); } catch (e) {}
     URL.revokeObjectURL(url);
+    // v84: 空の色（昼夜）と雲の灰色も焼き込む（地図の上の層は SVG に入っていないので、同じ色を multiply で重ねる）
+    try {
+      [document.getElementById("wxsky"), document.getElementById("wxcloud")].forEach(function (L) {
+        if (!L) return; var st = getComputedStyle(L), o = +st.opacity; if (!(o > 0.02)) return;
+        var cols = (st.backgroundImage + " " + st.backgroundColor).match(/rgba?\([^)]*\)/g) || [];
+        if (!cols.length) return;
+        var fill = cols[0];
+        if (cols.length >= 2 && /gradient/.test(st.backgroundImage)) { fill = cx.createLinearGradient(0, 0, 0, H); fill.addColorStop(0, cols[0]); fill.addColorStop(1, cols[1]); }
+        cx.save(); cx.globalAlpha = o; cx.globalCompositeOperation = "multiply"; cx.fillStyle = fill; cx.fillRect(0, 0, W, H); cx.restore();
+      });
+    } catch (e) {}
     // タイトルとクレジット
     cx.font = "700 " + Math.max(13, Math.round(W / 60)) + "px system-ui, sans-serif"; cx.textBaseline = "top";
     var t = "東京ステーションガイド  " + SITE;
@@ -60,30 +71,24 @@ RG.shareOpen = function () {
   var text = "東京ステーションガイド " + CREDIT + " " + link;
   var m = RG.openModal("📤 この画面を共有", '<div class="sh">' +
     '<div class="sh__pv"><p class="mini">画像をつくっています…</p></div>' +
+    (RG.snsPanelHTML ? RG.snsPanelHTML({ main: "x" }) : "") +
     '<div class="sh__btns">' +
-      (navigator.share ? '<button class="sh__b sh__b--main" type="button" id="sh-native">📱 スマホの共有メニュー（画像つき）</button>' : "") +
-      '<a class="sh__b sh__b--x" href="https://twitter.com/intent/tweet?text=' + encodeURIComponent("東京ステーションガイド " + CREDIT) + "&url=" + encodeURIComponent(link) + '" target="_blank" rel="noopener">𝕏 X に投稿</a>' +
-      '<a class="sh__b sh__b--line" href="https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(link) + "&text=" + encodeURIComponent("東京ステーションガイド " + CREDIT) + '" target="_blank" rel="noopener">💬 LINE で送る</a>' +
-      '<a class="sh__b sh__b--fb" href="https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(link) + '" target="_blank" rel="noopener">📘 Facebook</a>' +
-      '<a class="sh__b" href="sms:?&body=' + encodeURIComponent(text) + '">✉️ SMS</a>' +
-      '<a class="sh__b" href="mailto:?subject=' + encodeURIComponent("東京ステーションガイド") + "&body=" + encodeURIComponent(text) + '">📧 メール</a>' +
       '<button class="sh__b" type="button" id="sh-copy">🔗 リンクをコピー</button>' +
       '<a class="sh__b" id="sh-dl" download="tokyostation.png" href="#">💾 画像を保存</a>' +
     "</div>" +
-    '<p class="mini">X・LINE・Facebook はリンク文を共有します（画像はスマホの共有メニュー、または保存した画像を添付してください）。' +
+    '<p class="mini">スマホは各ボタンで共有シートが開き、画像と文を一緒に渡せます。PC の X は画像をクリップボードに入れて投稿画面を開きます（貼り付けるだけ）。' +
     "画像の右下にはクレジット「" + esc(CREDIT) + "」、左上にサイトのURLが入ります。</p></div>");
+  var cur = { blob: null, dataUrl: null };
+  if (RG.snsBind) RG.snsBind(m.querySelector(".snsp"), function () {
+    var f = null; try { if (cur.blob) f = new File([cur.blob], "tokyostation.png", { type: "image/png" }); } catch (e) { f = null; }
+    return { title: "東京ステーションガイド", text: "東京ステーションガイド " + CREDIT, url: link, file: f, blobUrl: cur.dataUrl, fileName: "tokyostation.png", kind: f ? "image" : "" };
+  });
   RG.captureMap(function (blob, dataUrl) {
     var pv = $(".sh__pv", m); if (!pv) return;
     if (!blob) { pv.innerHTML = '<p class="mini">この端末では画像化できませんでした（リンクの共有はできます）。</p>'; return; }
+    cur.blob = blob; cur.dataUrl = dataUrl;
     pv.innerHTML = '<img src="' + dataUrl + '" alt="地図のキャプチャ">';
     var dl = $("#sh-dl", m); if (dl) dl.href = dataUrl;
-    var nb = $("#sh-native", m);
-    if (nb) nb.addEventListener("click", function () {
-      var file = new File([blob], "tokyostation.png", { type: "image/png" });
-      var data = { title: "東京ステーションガイド", text: text, url: link };
-      if (navigator.canShare && navigator.canShare({ files: [file] })) data.files = [file];
-      navigator.share(data).catch(function () {});
-    });
   });
   var cp = $("#sh-copy", m); if (cp) cp.addEventListener("click", function () {
     try { navigator.clipboard.writeText(text).then(function () { cp.textContent = "コピーしました"; }); } catch (e) { cp.textContent = link; }

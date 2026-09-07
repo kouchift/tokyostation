@@ -265,7 +265,7 @@ RG.showRouteCard = function (fromId, toId, cond, preset) {
     '<div id="rc-out" hidden>' +
       '<div class="rc__acts"><button class="rc__a rc__a--main" type="button" id="rc-x">Xに投稿</button><a class="rc__a" id="rc-dl" href="#" download="route-card.png">画像を保存</a><button class="rc__a" type="button" id="rc-close">閉じる</button></div>' +
       '<p class="rc__hint" id="rc-hint"></p>' +
-      '<div class="rc__sub"><button type="button" id="rc-share" hidden>ほかのアプリへ共有</button><a id="rc-line" target="_blank" rel="noopener">LINEで送る</a><button type="button" id="rc-copy">投稿文をコピー</button><button type="button" id="rc-showtxt">投稿文を見る</button></div>' +
+      '<div class="rc__sub">' + (RG.snsPanelHTML ? RG.snsPanelHTML({ primary: ["instagram", "tiktok", "line"] }) : "") + '<button type="button" id="rc-copy" hidden>投稿文をコピー</button><button type="button" id="rc-showtxt" hidden>投稿文を見る</button></div>' +
       '<pre class="rc__txt" id="rc-txt" hidden></pre></div></div>';
   var m = RG.openModal("ルートカード", html);
   var cv = $("#rc-cv", m), sk = $("#rc-sk", m), out = $("#rc-out", m), cvwrap = $("#rc-cvwrap", m), fail = $("#rc-fail", m), textv = $("#rc-textv", m), ld = $("#rc-ld", m), btn = $("#rc-make", m);
@@ -285,27 +285,19 @@ RG.showRouteCard = function (fromId, toId, cond, preset) {
   $("#rc-showtxt", m).addEventListener("click", function () { var p = $("#rc-txt", m); p.hidden = !p.hidden; });
   $("#rc-copy", m).addEventListener("click", function () { var t = postText(s); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { RG.tripStatus("投稿文をコピーしました", "ok", 2000); }).catch(function () { $("#rc-txt", m).hidden = false; }); });
   function enableSaveOnly(url) { var dl = $("#rc-dl", m); dl.href = url; dl.download = fileName(s); out.hidden = false; $("#rc-x", m).classList.add("is-off"); }
+  /* v84: X 以外の SNS（Instagram・TikTok・LINE・その他）は共通の並び（assets/sns.js）。カードができるまでは押しても案内だけ */
+  if (RG.snsBind) RG.snsBind(m.querySelector(".snsp"), function () {
+    if (!cur.url) return null;
+    return { title: "東京ステーションガイド " + s.from.n + " → " + s.to.n, text: postText(s), url: RG.CARD_SHORT_URL || SITE, file: fileOf(cur.url, s), blobUrl: cur.url, fileName: fileName(s), kind: "image" };
+  });
   function finish(url, cached) {
     timers.forEach(clearTimeout); timers = [];
     cur.url = url;
     sk.hidden = true; ld.hidden = true; textv.hidden = true; cvwrap.hidden = false; out.hidden = false; btn.disabled = false; btn.textContent = "作り直す";
     var dl = $("#rc-dl", m); dl.href = url; dl.download = fileName(s);
     var txt = postText(s); $("#rc-txt", m).textContent = txt;
-    $("#rc-line", m).href = "https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(RG.CARD_SHORT_URL || SITE) + "&text=" + encodeURIComponent(txt.replace(RG.CARD_SHORT_URL || SITE, "").replace(/地図で確認 →\s*$/, "").trim());
     var xb = $("#rc-x", m); xb.classList.remove("is-off");
     xb.onclick = function () { postToX(url, s, $("#rc-hint", m), $("#rc-txt", m)); };
-    /* 共有シート（画像ファイルを渡せる端末だけ小さなリンクで） */
-    var sb = $("#rc-share", m), f = fileOf(url, s);
-    sb.hidden = !canShareFile(f);
-    sb.onclick = function () {
-      var data = { title: "東京ステーションガイド", text: txt, url: RG.CARD_SHORT_URL || SITE, files: [f] };
-      navigator.share(data).catch(function (e) {
-        if (e && e.name === "AbortError") return;
-        if (e && e.name === "TypeError") { delete data.files; navigator.share(data).catch(function () {}); return; }
-        download(url, fileName(s)); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).catch(function () {});
-        $("#rc-hint", m).textContent = "画像を保存し、投稿文をコピーしました。共有先のアプリで画像を選び、文を貼り付けてください。";
-      });
-    };
     if (!finish.scrolled) { finish.scrolled = true; out.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
   }
   function make() {
