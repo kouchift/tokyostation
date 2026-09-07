@@ -109,3 +109,6 @@ tools/build_standalone.py  単一ファイル版の生成
 - いまの天気（`assets/weather.js`）— [Open-Meteo](https://open-meteo.com/) Forecast API（https://api.open-meteo.com/v1/forecast）。非商用・API キー不要・CC BY 4.0（「Weather data by Open-Meteo.com」の表示を天気の画面に記載）。各国気象機関（気象庁 MSM/GSM を含む）の数値予報を合成した推定値。端末から直接取得し、サーバーを介さない。0.1 度の升目・10 分キャッシュで 1 人あたり多くても 1 時間に数回。
 - 昼夜（太陽の高さ）— NOAA の太陽位置の近似式（Astronomical Algorithms に基づく一般式）を自前で計算。外部データなし。
 - 参考にした表現 — Mini Tokyo 3D（https://minitokyo3d.com/ 、Akihiko Kusanagi 氏。オープンソースで公開）。コード・データは使っていない（見た目の参考のみ）。
+
+## v85
+- みんなの声（イイね！・閲覧）— 利用者が端末内（localStorage）に残すデータ。制作者が Google フォーム／公開シート CSV を用意したときだけ、投稿・イイね！・閲覧（1 端末 1 日 1 回）が制作者のシートに送られ、みんなで共有される。個人情報は求めず、端末ごとのランダムな番号（vid）だけを付ける。

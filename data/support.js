@@ -26,9 +26,15 @@ RG.TIP = {
   googleForm: { action: "", name: "", text: "" },
   /* 現場メモ（v79）: 受け皿を用意すると «みんなのメモ» になる（無くても端末内で動く）
      memoForm: Google フォームの action URL と、各項目の entry.xxxx（st,name,nick,text,vid,t,quiet,step,xfer,night,toilet,elev）
-     memoCsv : そのフォームの回答スプレッドシートを「ウェブに公開 → CSV」した URL（列名を st,name,nick,text,vid,t,quiet,step,xfer,night,toilet にする） */
-  memoForm: { action: "", fields: { st: "", name: "", nick: "", text: "", vid: "", t: "", quiet: "", step: "", xfer: "", night: "", toilet: "", elev: "" } },
+     memoCsv : そのフォームの回答スプレッドシートを「ウェブに公開 → CSV」した URL（列名を st,name,nick,text,vid,t,quiet,step,xfer,night,toilet,elev,kind,pref,la,lo にする。kind 以降は任意） */
+  memoForm: { action: "", fields: { st: "", name: "", nick: "", text: "", vid: "", t: "", quiet: "", step: "", xfer: "", night: "", toilet: "", elev: "", kind: "", pref: "", la: "", lo: "" } },
   memoCsv: "",
+  /* イイね！（v85）: 別の Google フォーム（列: id,vid,t,name）。id は «投稿者の印:投稿時刻» で投稿と結びつく。likeCsv はその回答シートの CSV */
+  likeForm: { action: "", fields: { id: "", vid: "", t: "", name: "" } },
+  likeCsv: "",
+  /* 閲覧（v85、任意）: 場所ごとの閲覧者数を «みんな» で数えたいときだけ（列: name,vid,t。1 端末 1 日 1 回）。無ければ投稿・イイね！した人＋自分だけで数える */
+  viewForm: { action: "", fields: { name: "", vid: "", t: "" } },
+  viewCsv: "",
   mailto: "tonbo7@gmail.com",
   siteUrl: "https://kouchift.github.io/tokyostation/",
   /* 銀行振込（ゆうちょ）。空のままだと「準備待ち」表示。記号・番号 or 店名・店番・口座番号、受取人名（カナは FB データ用） */

@@ -182,10 +182,11 @@ RG.buzzRailRefresh = function (force) {
         '<span class="bzr__p">' + p.e + "</span></button>";
     }
     box.innerHTML = '<div class="bzr__h">いま見ている範囲の話題 <b>' + inv.length + "</b>件" + (near.length ? "（近くにさらに " + near.length + "件）" : "") +
-      ' <button class="lr__c" type="button" id="bzr-all">📚 一覧をひらく</button></div>' +
+      ' <button class="lr__c" type="button" id="bzr-all">📚 一覧をひらく</button> <button class="lr__c" type="button" id="bzr-voice">🗣️ みんなの声</button></div>' +
       (shown.length ? '<div class="bzr__l">' + shown.map(function (b) { return rowMini(b, inv.indexOf(b) < 0); }).join("") + "</div>"
                     : '<p class="bzr__none">この範囲にはまだ話題がありません。地図を引くと近くの話題が出ます。</p>');
     var all = document.getElementById("bzr-all"); if (all) all.addEventListener("click", function () { RG.showBuzz(null, "fresh"); });
+    var vc = document.getElementById("bzr-voice"); if (vc) vc.addEventListener("click", function () { if (RG.voiceList) RG.voiceList(); });
     box.querySelectorAll("[data-bzid]").forEach(function (el) { el.addEventListener("click", function () {
       var it = byId(el.dataset.bzid); if (!it) return;
       RG.Map.gotoLatLng(it.la, it.lo, 220);

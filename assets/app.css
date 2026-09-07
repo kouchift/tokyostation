@@ -3127,3 +3127,28 @@ body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
 .snsp__hint{font-size:12px;color:#444;margin:4px 0 0;min-height:1.2em;line-height:1.5}
 .snsp__txt{white-space:pre-wrap;font-size:12px;background:#f5f6f8;border-radius:8px;padding:8px 10px;margin:6px 0 0;max-height:200px;overflow:auto}
 @media (pointer:coarse){.sns{padding:9px 14px;font-size:14px}.sns--big{padding:11px 20px;font-size:15px}}
+
+/* =========================================================================
+   v85: みんなの声（一覧カード・イイね！・投稿者・保持枠）assets/memo.js
+   ========================================================================= */
+.mm__ts{list-style:none;padding-left:0}.mm__t{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;padding:4px 0;border-bottom:1px dashed #e8ebee}.mm__t small{display:inline-flex;align-items:center;gap:2px}
+.mm__u{border:0;background:transparent;color:#0B5394;padding:0;font:inherit;font-size:10.5px;cursor:pointer;text-decoration:underline dotted}.mm__uid{font-style:normal;color:#9aa4ae;font-size:10px}
+.mm__like{border:1px solid #e0b4bd;background:#fff;color:#c2185b;border-radius:999px;padding:2px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;line-height:1.3;margin-left:auto}
+.mm__like b{font-weight:700;font-variant-numeric:tabular-nums}.mm__like.on{background:#c2185b;color:#fff;border-color:#c2185b}.mm__like:hover{filter:brightness(.97)}
+.mm__like--s{font-size:11px;padding:1px 8px}
+.mm__cap{font-size:11px;color:#777;margin:4px 0 8px;line-height:1.6}.mm__cap b{color:#333}
+.mm__lst{border:1px solid #cfd8dc;background:#fff;color:#0B5394;border-radius:999px;padding:2px 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px}
+.vcl__tabs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.vcl__tab{border:1px solid #cfd8dc;background:#fff;border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.vcl__tab[aria-pressed=true]{background:#1a2733;color:#fff;border-color:#1a2733}
+.vcl__sel{font:inherit;font-size:13px;padding:6px 8px;border:1px solid #cfd8dc;border-radius:8px;background:#fff;max-width:100%}
+.vcl__cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin:6px 0 10px}
+.vc{border:1px solid #e3e6ea;border-radius:12px;padding:9px 11px;background:#fff;display:flex;flex-direction:column;gap:5px;min-width:0}
+.vc--out{opacity:.55;background:#fafafa}
+.vc__hd{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px}
+.vc__pl{border:0;background:transparent;padding:0;font:inherit;font-size:13px;font-weight:800;color:#1a2733;cursor:pointer;text-align:left}.vc__pl:hover{color:#0B5394}
+.vc__pref{font-size:10.5px;color:#fff;background:#8DA6C9;border-radius:999px;padding:1px 7px}.vc__t{margin-left:auto;font-size:10.5px;color:#888;font-variant-numeric:tabular-nums}
+.vc__tx{margin:0;font-size:13.5px;line-height:1.55;color:#1a1a1a;word-break:break-word}
+.vc__chips{display:flex;flex-wrap:wrap;gap:4px}.vc__chip{font-size:10.5px;background:#f2f5f8;border-radius:999px;padding:2px 7px;color:#333}
+.vc__ft{display:flex;align-items:center;gap:8px;font-size:11px;margin-top:2px}.vc__ft .mm__u{font-size:11.5px}.vc__out{font-size:10.5px;color:#a66}
+.vcu__hd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:15px;margin-bottom:4px}.vcu__me{font-size:10.5px;background:#E8F3FF;color:#1A6FB5;border-radius:999px;padding:1px 8px}.vcu__n{font-size:12px;color:#666;margin-left:auto}
+@media (pointer:coarse){.mm__like{min-height:34px;padding:4px 14px;font-size:13px}.mm__like--s{min-height:30px;padding:2px 12px;font-size:12px}.mm__u{min-height:0;font-size:12px}.vc__pl{min-height:0}.mm__lst{min-height:30px}}

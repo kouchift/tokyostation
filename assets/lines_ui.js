@@ -694,6 +694,7 @@ function openSettings() {
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
     (RG.geoSwitchHTML ? RG.geoSwitchHTML() : "") +
     (RG.weatherSwitchHTML ? RG.weatherSwitchHTML() : "") +
+    (RG.voiceSwitchHTML ? RG.voiceSwitchHTML() : "") +
     (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "") +
     '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
       '<p class="set__d">いま動いている版: <b>' + esc(RG.VERSION || "不明") + "</b>（" + esc(RG.BUILT || "?") + " 作成）" +
@@ -704,6 +705,7 @@ function openSettings() {
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
   if (RG.geoSwitchBind) RG.geoSwitchBind(m);
   if (RG.weatherSwitchBind) RG.weatherSwitchBind(m);
+  if (RG.voiceSwitchBind) RG.voiceSwitchBind(m);
   if (RG.tipBind) RG.tipBind(m);
   renderWatch();
 

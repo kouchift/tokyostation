@@ -429,6 +429,7 @@ RG.showSpot = function (p) {
        "東京都オープンデータカタログサイト</a>（" + esc(p.org || "") + "）／ライセンス CC BY 4.0<br>" +
        "更新のタイミングは団体ごとに異なります。最新情報は各自治体の公開データでご確認ください。</p>" : "") +
     (p.srcNote ? '<p class="src">' + esc(p.srcNote) + "</p>" : "") +
+    (RG.memoSpotHtml ? RG.memoSpotHtml(p) : "") +
     (RG.reqHtml ? RG.reqHtml("spot", p.n) : "") +
     '<p class="src">☆は「行く価値のめやす」です。文化財は指定の格（国宝5.0／重要文化財4.5／史跡4.5／登録有形3.5…）、' +
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
@@ -437,6 +438,7 @@ RG.showSpot = function (p) {
   if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), q: p.q || null,
                                                                         wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
   if (RG.reqBind) RG.reqBind(m);
+  if (RG.memoSpotBind) RG.memoSpotBind(m, p);          // v85: スポットにも «行った人の声»
   if (RG.focusBind) RG.focusBind(m);
   if (RG.natureBind) RG.natureBind(m, p);
   if (RG.terraBind) RG.terraBind(m, p);
