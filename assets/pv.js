@@ -30,8 +30,19 @@ RG.pvSweep = function () { if (!window.indexedDB) return; all().then(function (r
 /* ---- ルートの素材（おでかけプランから） ---- */
 function ll(x) { return x && x.la != null ? [x.la, x.lo] : null; }
 function stationLL(label) { var n = String(label || "").replace(/駅$/, ""); var s = (RG.byName && RG.byName[n] || [])[0]; return s ? [s.la, s.lo] : null; }
-RG.pvSpecFromPlan = function (itemsIn) {
-  var P = RG.Plan || {}, items = (itemsIn || P.items || []).filter(function (x) { return x.k === "route"; });
+/* v83: 字幕にする文章を集める。手前で書いたメモ・感想・日記・各行程の «ひとこと» を順に。
+   opts: { review, diary, memo, comments:[…] } を渡せる（訪問メモから送るときは感想→日記→ひとこと、予定からは事前メモ→ひとこと） */
+function gatherCaptions(itemsAll, opts) {
+  var P = RG.Plan || {}, o = opts || {}, parts = [];
+  function add(x) { x = String(x || "").replace(/\r/g, "").trim(); if (x) parts.push(x); }
+  if (o.review) add(o.review);
+  if (o.diary) add(o.diary);
+  if (o.memo != null) add(o.memo); else if (!o.review && !o.diary) add(P.memo);
+  (o.comments || (itemsAll || P.items || []).map(function (it) { return it.comment; })).forEach(function (cm) { add(cm); });
+  return parts.join("\n");
+}
+RG.pvSpecFromPlan = function (itemsIn, opts) {
+  var P = RG.Plan || {}, itemsAll = itemsIn || P.items || [], items = itemsAll.filter(function (x) { return x.k === "route"; });
   if (!items.length) return null;
   var legs = [], first = items[0], last = items[items.length - 1];
   items.forEach(function (it) {
@@ -49,7 +60,7 @@ RG.pvSpecFromPlan = function (itemsIn) {
     legs.push({ kind: kind, label: it.label, mode: it.mode, emoji: it.emoji, minutes: it.min, yen: it.yen, from: from, to: to, path: path, detail: it.detail || [] });
   });
   var tmin = legs.reduce(function (a, l) { return a + (l.minutes || 0); }, 0), tyen = legs.reduce(function (a, l) { return a + (l.yen || 0); }, 0);
-  return { title: (first.from || "出発地") + " → " + (last.to || "目的地"), legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()) };
+  return { title: (first.from || "出発地") + " → " + (last.to || "目的地"), legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()), captions: gatherCaptions(itemsAll, opts) };
 };
 function arc(a, b) {
   var out = [], n = 24;
@@ -90,12 +101,48 @@ function makeDrawer(spec) {
   var lo0 = Math.min.apply(null, pts.map(function (p) { return p[1]; })), lo1 = Math.max.apply(null, pts.map(function (p) { return p[1]; }));
   var padLa = Math.max(0.08, (la1 - la0) * 0.35), padLo = Math.max(0.1, (lo1 - lo0) * 0.35);
   la0 -= padLa; la1 += padLa; lo0 -= padLo; lo1 += padLo;
-  var MX = 40, MY = 90, MW = 760, MH = 560;
+  var hasCap = !!(spec.captions && spec.captions.trim());
+  var MX = 40, MY = hasCap ? 70 : 90, MW = 760, MH = hasCap ? 500 : 560;      // 字幕があるときは下に帯の場所を空ける
   var kx = MW / (lo1 - lo0), ky = MH / ((la1 - la0) * 1.22), k = Math.min(kx, ky);
   function pj(p) { return [MX + (p[1] - lo0) * k + (MW - (lo1 - lo0) * k) / 2, MY + (la1 - p[0]) * k * 1.22 + (MH - (la1 - la0) * k * 1.22) / 2]; }
   var total = spec.legs.reduce(function (a, l) { return a + Math.max(1, (l.path || []).length - 1); }, 0);
   var exp = new Date(Date.now() + KEEP_DAYS * 864e5);
   var expStr = exp.getFullYear() + "/" + (exp.getMonth() + 1) + "/" + exp.getDate();
+  /* 字幕: 3〜17 秒の 14 秒間に、2 行ずつ順番に出す。1 コマ最短 2.2 秒。入りきらない分は最後に「…」 */
+  var CAP_FONT = 30, CAP_W = W - 120, capSched = null;
+  function wrapLines(c, text) {
+    c.font = "700 " + CAP_FONT + "px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
+    var lines = [];
+    text.split("\n").forEach(function (para) {
+      para = para.replace(/\s+/g, " ").trim(); if (!para) return;
+      var line = "";
+      for (var i = 0; i < para.length; i++) { var ch = para[i]; if (line && c.measureText(line + ch).width > CAP_W) { lines.push(line); line = ""; } line += ch; }
+      if (line) lines.push(line);
+    });
+    return lines;
+  }
+  function schedule(c) {
+    if (capSched) return capSched;
+    if (!hasCap) return (capSched = []);
+    var lines = wrapLines(c, spec.captions), pages = [];
+    for (var i = 0; i < lines.length; i += 2) pages.push(lines.slice(i, i + 2));
+    var T0 = 3, T1 = 17, MIN = 2.2, maxPages = Math.floor((T1 - T0) / MIN);
+    if (pages.length > maxPages) { pages = pages.slice(0, maxPages); var lp = pages[maxPages - 1]; lp[lp.length - 1] = lp[lp.length - 1].slice(0, -1) + "…"; }
+    var dur = (T1 - T0) / pages.length;
+    capSched = pages.map(function (pg, i) { return { from: T0 + i * dur, to: T0 + (i + 1) * dur, lines: pg }; });
+    return capSched;
+  }
+  function drawCaption(c, t) {
+    var sc = schedule(c); if (!sc.length) return;
+    var cur = null; for (var i = 0; i < sc.length; i++) if (t >= sc[i].from && t < sc[i].to) { cur = sc[i]; break; }
+    if (!cur) return;
+    var fade = Math.min(1, (t - cur.from) / 0.25, (cur.to - t) / 0.25 + 0.001);
+    var lh = CAP_FONT * 1.45, bh = cur.lines.length * lh + 26, by = H - 24 - bh;
+    c.save(); c.globalAlpha = Math.max(0, Math.min(1, fade));
+    roundRect(c, 40, by, W - 80, bh, 14); c.fillStyle = "rgba(0,0,0,0.58)"; c.fill();
+    cur.lines.forEach(function (ln, i) { txt(c, ln, W / 2, by + 13 + lh * (i + 0.5), CAP_FONT, "#fff", "center", 700); });
+    c.restore();
+  }
   return function draw(c, t) {
     // 背景
     var g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#0f2027"); g.addColorStop(0.5, "#203a43"); g.addColorStop(1, "#2c5364");
@@ -152,7 +199,7 @@ function makeDrawer(spec) {
         yy += 90;
       });
       txt(c, "合計 " + fmtMin(spec.minutes) + " / " + yen(spec.yen), px + 22, MY + MH - 30, 26, "#fff", "left", 900);
-      c.globalAlpha = 1; return;
+      c.globalAlpha = 1; drawCaption(c, t); return;
     }
     if (t < 17) {
       var v = ease((t - 14) / 0.6);
@@ -162,7 +209,7 @@ function makeDrawer(spec) {
       txt(c, "所要 " + fmtMin(spec.minutes) + "　運賃 " + yen(spec.yen) + "　区間 " + spec.legs.length, W / 2, 320, 36, "#e0f2f1", "center", 700);
       txt(c, "※ 時刻表・道路状況を見ていない概算です。各社の公式情報で確認してください", W / 2, 400, 22, "#b0bec5", "center", 500);
       txt(c, "地図: 国土数値情報（行政区域）を加工　経路: 東京ステーションガイド", W / 2, 470, 20, "#90a4ae", "center", 500);
-      c.globalAlpha = 1; return;
+      c.globalAlpha = 1; drawCaption(c, t); return;
     }
     var w2 = ease((t - 17) / 0.6);
     c.globalAlpha = w2;
@@ -205,7 +252,7 @@ function makeMp4(spec, onProgress) {
       function step() {
         if (failed) return;
         try {
-          var budget = 5;                                                       // 1 回に数コマずつ（画面を固めない）
+          var budget = 12;                                                      // 1 回に十数コマずつ（画面を固めない・裏に回っても進む）
           while (i < N && budget-- > 0 && enc.encodeQueueSize < 8) {
             draw(c, i / FPS);
             var vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
@@ -264,11 +311,11 @@ RG.pvSnsReady = function (rec) { return RG.pvIsMp4(rec) && (rec.codec === "h264"
 
 /* ---- 画面 ---- */
 function fname(spec, mime) { return "route-pv-" + spec.title.replace(/[\\/:*?"<>|\s]/g, "_").slice(0, 40) + "-" + (spec.date.getMonth() + 1) + (spec.date.getDate()) + (/mp4/.test(mime || "") ? ".mp4" : ".webm"); }
-RG.pvFlow = function (kind, proceed, items) {
-  var spec = RG.pvSpecFromPlan(items);
+RG.pvFlow = function (kind, proceed, items, opts) {
+  var spec = RG.pvSpecFromPlan(items, opts);
   if (!spec || !RG.pvSupported()) { proceed && proceed(null); return; }
   var m = RG.openModal("🎬 ルート PV を作っています（20秒）", '<div class="pv"><p class="set__d">' + esc(spec.title) + " の 20 秒動画をこの端末で作っています。作り終わると " + (kind === "obsidian" ? "Obsidian に送ります" : kind === "mail" ? "メールを開きます" : "共有に進みます") + "。</p>" +
-    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + W + '" height="' + H + '" class="pv__cv"></canvas><p class="src">動画は端末内だけで作られ、どこにも送信されません。</p></div>');
+    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + W + '" height="' + H + '" class="pv__cv"></canvas><p class="src">' + (spec.captions ? "書いてあるメモ・感想・ひとことは字幕として動画に入ります。" : "メモ欄に書いておくと、字幕として動画に入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
   var cv = $("#pv-cv", m), c = cv.getContext("2d"), draw = makeDrawer(spec), bar = $("#pv-bar", m);
   var t0 = performance.now(), live = true;
   (function tick() { if (!live) return; var t = (performance.now() - t0) / 1000; draw(c, Math.min(DUR, t)); if (t < DUR) requestAnimationFrame(tick); })();

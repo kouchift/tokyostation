@@ -281,8 +281,9 @@ RG.openPlan = function () {
       '<div class="pl__list">' + rows + "</div>" +
       '<div class="pl__sum"><span>合計</span><b>' + yen(t.sum) + "</b>" +
         '<span class="pl__per">1人あたり 約' + yen(t.head ? t.sum / t.head : 0) + "</span></div>" +
-      '<textarea id="pl-memo" class="pl__memo" placeholder="メモ（集合時間、持ちもの、雨のときの代案…）">' +
-        esc(P.memo) + "</textarea>" +
+      '<label class="lg__l">メモ <span class="lg__cnt" id="pl-memo-cnt"></span>' +
+      '<textarea id="pl-memo" class="pl__memo" maxlength="' + ((RG.LOG_LIMITS || {}).memo || 1000) + '" placeholder="メモ（集合時間、持ちもの、雨のときの代案…）。ルート PV の字幕にも入ります">' +
+        esc(P.memo) + "</textarea></label>" +
       '<div class="pl__share">' +
         '<button id="pl-share" class="pl__b1" type="button">📤 このプランを共有する</button>' +
         '<button id="pl-pv" class="set__b2" type="button">🎬 20秒のルートPVを作る</button>' +
@@ -321,6 +322,7 @@ RG.openPlan = function () {
       i.addEventListener("change", function () { P.items[+i.dataset.fee].yenPer = Math.max(0, +this.value || 0); save(); redraw(); });
     });
     $("#pl-memo", m).addEventListener("input", function () { P.memo = this.value; save(); });
+    if (RG.bindCounter) RG.bindCounter($("#pl-memo", m), $("#pl-memo-cnt", m), (RG.LOG_LIMITS || {}).memo || 1000);
     var txt = planText(), title = planTitle();
     $("#pl-prev", m).addEventListener("click", function () {
       var pv = $("#pl-preview", m);
@@ -333,7 +335,7 @@ RG.openPlan = function () {
         .then(function () { RG.tripStatus("📋 コピーしました", "ok", 2000); })
         .catch(function () { RG.tripStatus("コピーできませんでした。テキストを選んでコピーしてください。", "warn"); });
     });
-    var pvb = $("#pl-pv", m); if (pvb) pvb.addEventListener("click", function () { if (RG.pvFlow) RG.pvFlow(null, null); });
+    var pvb = $("#pl-pv", m); if (pvb) pvb.addEventListener("click", function () { if (RG.pvFlow) RG.pvFlow(null, null, null, { memo: P.memo }); });
     var pvl = $("#pl-pvl", m); if (pvl) pvl.addEventListener("click", function () { if (RG.pvList) RG.pvList(); });
     $("#pl-share", m).addEventListener("click", function () {
       var payload = { title: title, text: txt };
@@ -347,7 +349,7 @@ RG.openPlan = function () {
         if (navigator.share) navigator.share(payload).catch(function () { navigator.share({ title: title, text: txt }).catch(function () {}); });
       }
       // v78: 経路があれば先に 20 秒のルート PV を作る（作れない環境ではそのまま共有）
-      if (RG.pvFlow && P.items.some(function (x) { return x.k === "route"; })) { RG.pvFlow("share", function (pv) { RG.closeModal(); doShare(pv); }); return; }
+      if (RG.pvFlow && P.items.some(function (x) { return x.k === "route"; })) { RG.pvFlow("share", function (pv) { RG.closeModal(); doShare(pv); }, null, { memo: P.memo }); return; }
       if (navigator.share) {
         navigator.share(payload).catch(function () {
           // url 付きを拒否する実装があるので、その場合は text だけで再挑戦

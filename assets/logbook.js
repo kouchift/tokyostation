@@ -167,7 +167,31 @@ function download(name, text) {
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 RG.downloadMd = download;
+/* Obsidian へ渡す（v83）。URL の content= は OS の URL 長の制限で 7,000 文字（日本語だと 700 字ほど）で切れる／開けなくなる。
+   短いときだけ content=、長いときはクリップボードに本文を入れて obsidian://new?…&clipboard で開く（Obsidian がクリップボードから本文を読む） */
+RG.sendToObsidian = function (e) {
+  var base = "obsidian://new?" + (RG.Plan.vault ? "vault=" + encodeURIComponent(RG.Plan.vault) + "&" : "") + "name=" + encodeURIComponent(e.name);
+  if (e.obsidian.length <= 1800) { location.href = e.obsidian; return; }
+  var open = function () { location.href = base + "&clipboard=true"; };
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(e.md) : Promise.reject()).then(function () {
+    RG.tripStatus("本文（" + e.md.length + " 文字）をクリップボード経由で Obsidian に渡します。ノートが空で開いたら、そのまま貼り付けてください。", "ok", 6000);
+    setTimeout(open, 150);
+  }).catch(function () {
+    if (e.obsidian.length <= 7000) { location.href = e.obsidian; return; }
+    RG.tripStatus("本文が長く、この端末ではクリップボードが使えません。「.md を保存」か「📋 Markdownをコピー」→ Obsidian に貼り付けてください。", "warn", 7000);
+  });
+};
 
+/* ------------------------------------------------ 文字数の上限（v83）
+   前は上限が見えないまま書けて、送るときに «長すぎる» と止まっていた。上限を見せ、超える入力はできないようにする */
+RG.LOG_LIMITS = { review: 1000, diary: 3000, comment: 120, memo: 1000 };
+function cntText(v, max) { var n = String(v || "").length, r = max - n; return (r < 0 ? 0 : r) + " 文字 入力できます"; }
+RG.cntText = cntText;
+RG.bindCounter = function (ta, span, max) {
+  if (!ta || !span) return;
+  function upd() { var n = ta.value.length; span.textContent = cntText(ta.value, max); span.classList.toggle("is-full", n >= max); span.classList.toggle("is-near", n >= max * 0.9 && n < max); }
+  ta.addEventListener("input", upd); upd();
+};
 /* ------------------------------------------------ 訪問メモの画面 */
 RG.renderLogs = function () {
   var P = RG.Plan;
@@ -192,12 +216,14 @@ RG.renderLogs = function () {
           return '<div class="lg__it"><span>' + (it.emoji || "・") + " " + esc(it.label) + "</span>" +
             '<input type="number" min="0" step="10" placeholder="実費" data-la="' + gi + "_" + ii +
             '" value="' + (it.actual == null ? "" : it.actual) + '">' +
-            '<input type="text" placeholder="ひとこと" data-lc="' + gi + "_" + ii +
+            '<input type="text" placeholder="ひとこと" maxlength="' + RG.LOG_LIMITS.comment + '" data-lc="' + gi + "_" + ii +
             '" value="' + esc(it.comment || "") + '"></div>'; }).join("") + "</div>" +
-        '<textarea class="lg__rev" data-lf="review" data-i="' + gi + '" placeholder="感想（また行きたい？ 次はどうする？）">' +
-          esc(g.review) + "</textarea>" +
-        '<textarea class="lg__rev" data-lf="diary" data-i="' + gi + '" placeholder="日記（リンクに載らない、自分だけの所感メモ。Obsidianにそのまま入ります）">' +
-          esc(g.diary || "") + "</textarea>" +
+        '<label class="lg__l">感想 <span class="lg__cnt" data-cnt="review_' + gi + '">' + cntText(g.review, RG.LOG_LIMITS.review) + '</span>' +
+        '<textarea class="lg__rev" data-lf="review" data-i="' + gi + '" maxlength="' + RG.LOG_LIMITS.review + '" placeholder="感想（また行きたい？ 次はどうする？）動画の字幕にも入ります">' +
+          esc(g.review) + "</textarea></label>" +
+        '<label class="lg__l">日記 <span class="lg__cnt" data-cnt="diary_' + gi + '">' + cntText(g.diary, RG.LOG_LIMITS.diary) + '</span>' +
+        '<textarea class="lg__rev" data-lf="diary" data-i="' + gi + '" maxlength="' + RG.LOG_LIMITS.diary + '" placeholder="日記（リンクに載らない、自分だけの所感メモ。Obsidianにそのまま入ります）">' +
+          esc(g.diary || "") + "</textarea></label>" +
         (g.exported ? '<p class="lg__done">✅ 書き出しずみ（訪問回数に反映されています）</p>' : "") +
         '<div class="lg__acts">' +
           '<button class="lg__b1" type="button" data-obs="' + gi + '">🟣 Obsidian へ送る</button>' +
@@ -213,17 +239,19 @@ RG.renderLogs = function () {
     '<input id="lg-vault" type="text" placeholder="（空でもOK。既定のVaultが開きます）" value="' +
     esc(P.vault || "") + '"></label>' +
     '<p class="set__d">「Obsidian へ送る」は <code>obsidian://new</code> で新規ノートを作ります。' +
-    "本文が長いと開けないことがあるので、そのときは「.md を保存」か「コピー」をお使いください。</p></div>";
+    "本文はクリップボード経由で渡すので、感想 " + RG.LOG_LIMITS.review + " 字・日記 " + RG.LOG_LIMITS.diary + " 字まで丸ごと入ります（上限を超える入力はできません）。うまく開かないときは「.md を保存」か「コピー」をお使いください。</p></div>";
 };
 
 RG.bindLogs = function (m, redraw) {
   var P = RG.Plan;
   $$("[data-lf]", m).forEach(function (i) {
-    i.addEventListener("change", function () {
+    var ev = (i.dataset.lf === "review" || i.dataset.lf === "diary") ? "input" : "change";   // 文章は打つたびに保存（閉じても消えない）
+    i.addEventListener(ev, function () {
       var g = P.logs[+i.dataset.i];
       g[i.dataset.lf] = (i.dataset.lf === "rating") ? +i.value : i.value;
       RG.savePlan(); if (i.dataset.lf === "rating" || i.dataset.lf === "date") redraw();
     });
+    if (ev === "input") RG.bindCounter(i, m.querySelector('[data-cnt="' + i.dataset.lf + "_" + i.dataset.i + '"]'), RG.LOG_LIMITS[i.dataset.lf]);
   });
   $$("[data-la]", m).forEach(function (i) {
     i.addEventListener("change", function () {
@@ -247,14 +275,11 @@ RG.bindLogs = function (m, redraw) {
         if (pv) g0.pv = { name: pv.name, expires: pv.expires };
         var e = RG.exportMd(g0);
         RG.markVisited(g0);
-        if (e.obsidian.length > 7000) {
-          RG.tripStatus("本文が長すぎてObsidianに直接渡せません。「.md を保存」を使ってください。", "warn", 5000);
-          return;
-        }
-        location.href = e.obsidian;
+        RG.sendToObsidian(e);
       }
-      // v78: 先に 20 秒のルート PV を作ってから送る（作れない環境ではそのまま）
-      if (RG.pvFlow && (g0.items || []).some(function (it) { return it.k === "route"; })) RG.pvFlow("obsidian", go, g0.items); else go(null);
+      // v78: 先に 20 秒のルート PV を作ってから送る（作れない環境ではそのまま）。v83: 感想・日記・ひとことを字幕に
+      var opts = { review: g0.review, diary: g0.diary, comments: (g0.items || []).map(function (it) { return it.comment; }) };
+      if (RG.pvFlow && (g0.items || []).some(function (it) { return it.k === "route"; })) RG.pvFlow("obsidian", go, g0.items, opts); else go(null);
     });
   });
   $$("[data-mdc]", m).forEach(function (b) {
