@@ -157,9 +157,9 @@ RG.initSearchUI = function () {
       sug.appendChild(b);
     }
   }
-  input.addEventListener("input", function () {
+  function run(force) {
     var v = input.value.trim();
-    if (v === last) return; last = v; remoteRows = [];
+    if (!force && v === last) return; last = v; remoteRows = [];
     if (!v) { clear(); return; }
     var loc = RG.searchLocal(v, 12);
     render(loc, [], true);                    // ローカルは同期・即時
@@ -186,14 +186,25 @@ RG.initSearchUI = function () {
         render(loc, rows, false);
       });
     }
+  }
+  input.addEventListener("input", function () { run(false); });
+  /* v82: いったん離れて戻ってきたとき、入れてあった文字で候補を出し直す（前は何も出ず、打ち直しになっていた）。
+     文字は全選択にしておくので、そのまま打てば上書きできる */
+  input.addEventListener("focus", function () {
+    if (!input.value.trim()) return;
+    run(true);
+    try { input.setSelectionRange(0, input.value.length); } catch (e) {}
   });
   input.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
       var first = sug.querySelector(".sg__r");
-      if (first) first.click();
+      if (first) first.click(); else run(true);
     }
+    if (e.key === "Escape") { input.value = ""; last = ""; clear(); input.blur(); }
   });
-  input.addEventListener("blur", function () { setTimeout(clear, 200); });
+  /* 候補を押すときに入力欄のフォーカスが外れて候補が消えないように（スマホで押せないことがあった） */
+  sug.addEventListener("pointerdown", function (e) { if (e.target && e.target.closest && e.target.closest("button")) e.preventDefault(); });
+  input.addEventListener("blur", function () { setTimeout(clear, 300); });
 };
 
 })(window.RG);

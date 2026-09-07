@@ -1,7 +1,9 @@
 /* =========================================================================
-   ルート紹介 PV（20秒の動画）  v78
+   ルート紹介 PV（20秒の動画）  v78 → v82 で MP4 化
    ・確定したルート（おでかけプランの経路）を、地図アニメーション＋要点＋クレジットの 20 秒動画にする
-   ・Canvas → MediaRecorder（WebM / 環境により MP4）。端末の中だけで作る（サーバーには送らない）
+   ・v82: WebCodecs（VideoEncoder, H.264）＋ mp4-muxer で **MP4（H.264）** を端末内で作る。X・Instagram・TikTok・LINE に
+     そのまま渡せる形式。WebCodecs が無い環境だけ MediaRecorder（MP4 が作れる端末は MP4、それ以外は WebM）に落ちる。
+     動画はサーバーには送らない
    ・動画の末尾と画面で «保有期限は 1 週間。応援の有無にかかわらず消える可能性» を示し、再生が終わると応援画面へ
    ・共有・メール・Obsidian へ送るときに先に作る（作れない環境ではそのまま送る）
    ========================================================================= */
@@ -175,17 +177,61 @@ function makeDrawer(spec) {
 }
 
 /* ---- 録画 ---- */
-RG.pvSupported = function () { return !!(window.MediaRecorder && document.createElement("canvas").captureStream); };
-RG.pvMake = function (spec, onProgress) {
+RG.pvSupported = function () { return !!((window.VideoEncoder && window.VideoFrame) || (window.MediaRecorder && document.createElement("canvas").captureStream)); };
+var MUXER_SRC = "assets/vendor/mp4-muxer.min.js";
+function loadMuxer() {
   return new Promise(function (res, rej) {
-    if (!RG.pvSupported()) { rej(new Error("unsupported")); return; }
+    if (window.Mp4Muxer) { res(); return; }
+    var sc = document.createElement("script"); sc.src = MUXER_SRC + (RG.VERSION ? "?v=" + RG.VERSION : ""); sc.async = true;
+    sc.onload = function () { window.Mp4Muxer ? res() : rej(new Error("muxer")); }; sc.onerror = function () { rej(new Error("muxer")); };
+    document.head.appendChild(sc);
+  });
+}
+/* WebCodecs で H.264 の MP4 を作る（オフライン描画: 1 コマずつ描いて渡すので、実時間の 20 秒より速く終わる） */
+function makeMp4(spec, onProgress) {
+  if (!(window.VideoEncoder && window.VideoFrame && VideoEncoder.isConfigSupported)) return Promise.reject(new Error("no webcodecs"));
+  var ov = RG.PV_CODEC || null;                                            // 検証用の差し替え（{codec:"vp09.00.10.08", mux:"vp9"} など）。通常は H.264
+  var cfg = { codec: ov ? ov.codec : "avc1.42001f", width: W, height: H, bitrate: 3000000, framerate: FPS, latencyMode: "quality" };
+  if (!ov) cfg.avc = { format: "avc" };
+  return loadMuxer().then(function () { return VideoEncoder.isConfigSupported(cfg); }).then(function (sup) {
+    if (!sup || !sup.supported) throw new Error("h264 unsupported");
+    return new Promise(function (res, rej) {
+      var muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: ov ? ov.mux : "avc", width: W, height: H, frameRate: FPS }, fastStart: "in-memory" });
+      var failed = false;
+      var enc = new VideoEncoder({ output: function (chunk, meta) { try { muxer.addVideoChunk(chunk, meta); } catch (e) { failed = true; rej(e); } }, error: function (e) { failed = true; rej(e); } });
+      enc.configure(cfg);
+      var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      var c = cv.getContext("2d"), draw = makeDrawer(spec), N = Math.round(DUR * FPS), i = 0;
+      function step() {
+        if (failed) return;
+        try {
+          var budget = 5;                                                       // 1 回に数コマずつ（画面を固めない）
+          while (i < N && budget-- > 0 && enc.encodeQueueSize < 8) {
+            draw(c, i / FPS);
+            var vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+            enc.encode(vf, { keyFrame: i % (FPS * 2) === 0 }); vf.close(); i++;
+          }
+          if (onProgress) onProgress(i / N);
+          if (i < N) setTimeout(step, enc.encodeQueueSize >= 8 ? 12 : 0);
+          else enc.flush().then(function () { muxer.finalize(); try { enc.close(); } catch (e) {} res({ blob: new Blob([muxer.target.buffer], { type: "video/mp4" }), mime: "video/mp4", spec: spec }); }).catch(rej);
+        } catch (e) { failed = true; try { enc.close(); } catch (e2) {} rej(e); }
+      }
+      step();
+    });
+  });
+}
+/* MediaRecorder（従来）。MP4 を作れる端末（iPhone など）は MP4、それ以外は WebM */
+function makeRec(spec, onProgress) {
+  return new Promise(function (res, rej) {
+    if (!(window.MediaRecorder && document.createElement("canvas").captureStream)) { rej(new Error("unsupported")); return; }
     var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
     var c = cv.getContext("2d"), draw = makeDrawer(spec);
     var stream = cv.captureStream(FPS);
-    var mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"].filter(function (m) { return MediaRecorder.isTypeSupported(m); })[0];
-    var rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2500000 } : undefined), chunks = [];
+    /* H.264 の MP4 を最優先（X・Instagram が受け付ける形式）。Chrome の "video/mp4" は VP9 入りの MP4 になることがあるので、あとで中身を確かめる */
+    var mime = ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/mp4;codecs=h264", "video/mp4", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].filter(function (m) { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } })[0];
+    var rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 3000000 } : undefined), chunks = [];
     rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
-    rec.onstop = function () { res({ blob: new Blob(chunks, { type: rec.mimeType || mime || "video/webm" }), mime: rec.mimeType || mime, spec: spec }); };
+    rec.onstop = function () { var mt = (rec.mimeType || mime || "video/webm").split(";")[0]; res({ blob: new Blob(chunks, { type: mt }), mime: mt, spec: spec }); };
     rec.onerror = function (e) { rej(e.error || new Error("record")); };
     var t0 = performance.now(); draw(c, 0); rec.start(250);
     function frame() {
@@ -196,10 +242,28 @@ RG.pvMake = function (spec, onProgress) {
     }
     requestAnimationFrame(frame);
   });
+}
+/* 動画の中身のコーデックを見る（MP4 の stsd の avc1/vp09/av01、WebM の V_VP9 など）。SNS に渡せるのは MP4 × H.264 だけ */
+function sniffCodec(blob) {
+  return blob.slice(0, Math.min(blob.size, 12 * 1048576)).arrayBuffer().then(function (ab) {
+    var u = new Uint8Array(ab), pats = { h264: ["avc1", "avc3", "V_MPEG4/ISO/AVC"], vp9: ["vp09", "V_VP9"], vp8: ["V_VP8"], av1: ["av01", "V_AV1"], hevc: ["hvc1", "hev1"] };
+    function has(str) { var n = str.length, first = str.charCodeAt(0); for (var i = 0; i <= u.length - n; i++) { if (u[i] !== first) continue; var ok = true; for (var j = 1; j < n; j++) if (u[i + j] !== str.charCodeAt(j)) { ok = false; break; } if (ok) return true; } return false; }
+    for (var k in pats) for (var q = 0; q < pats[k].length; q++) if (has(pats[k][q])) return k;
+    return "";
+  }).catch(function () { return ""; });
+}
+RG.pvMake = function (spec, onProgress) {
+  return makeMp4(spec, onProgress).then(function (r) { r.codec = RG.PV_CODEC ? RG.PV_CODEC.mux : "h264"; return r; }).catch(function (e) {
+    if (window.console) console.info("PV: MP4(WebCodecs) は使えないので MediaRecorder に切り替え", e && e.message);
+    return makeRec(spec, onProgress).then(function (r) { return sniffCodec(r.blob).then(function (cd) { r.codec = cd; return r; }); });
+  });
 };
+RG.pvIsMp4 = function (rec) { return /mp4/.test(rec && rec.mime || ""); };
+/* SNS（X・Instagram・TikTok）にそのまま出せる形式か: MP4 × H.264 */
+RG.pvSnsReady = function (rec) { return RG.pvIsMp4(rec) && (rec.codec === "h264" || rec.codec == null); };
 
 /* ---- 画面 ---- */
-function fname(spec) { return "route-pv-" + spec.title.replace(/[\\/:*?"<>|\s]/g, "_").slice(0, 40) + "-" + (spec.date.getMonth() + 1) + (spec.date.getDate()) + ".webm"; }
+function fname(spec, mime) { return "route-pv-" + spec.title.replace(/[\\/:*?"<>|\s]/g, "_").slice(0, 40) + "-" + (spec.date.getMonth() + 1) + (spec.date.getDate()) + (/mp4/.test(mime || "") ? ".mp4" : ".webm"); }
 RG.pvFlow = function (kind, proceed, items) {
   var spec = RG.pvSpecFromPlan(items);
   if (!spec || !RG.pvSupported()) { proceed && proceed(null); return; }
@@ -211,7 +275,7 @@ RG.pvFlow = function (kind, proceed, items) {
   RG.pvMake(spec, function (p) { if (bar) bar.style.width = (p * 100).toFixed(0) + "%"; }).then(function (r) {
     live = false;
     var id = "pv" + Date.now(), exp = Date.now() + KEEP_DAYS * 864e5;
-    var rec = { id: id, blob: r.blob, mime: r.mime, title: spec.title, created: Date.now(), expires: exp, name: fname(spec) };
+    var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime) };
     put(rec).catch(function () {});
     RG.pvShow(rec, kind, proceed);
   }).catch(function () { live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
@@ -219,21 +283,42 @@ RG.pvFlow = function (kind, proceed, items) {
 RG.pvShow = function (rec, kind, proceed) {
   var url = URL.createObjectURL(rec.blob), exp = new Date(rec.expires);
   var expStr = exp.getFullYear() + "/" + (exp.getMonth() + 1) + "/" + exp.getDate();
-  var canShareFile = !!(navigator.canShare && navigator.canShare({ files: [new File([rec.blob], rec.name, { type: rec.mime })] }));
-  var html = '<div class="pv"><video id="pv-v" class="pv__v" src="' + url + '" controls autoplay playsinline></video>' +
+  var isMp4 = RG.pvIsMp4(rec), sns = RG.pvSnsReady(rec), file = null;
+  try { file = new File([rec.blob], rec.name, { type: rec.mime }); } catch (e) { file = null; }
+  var canShareFile = !!(file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] }));
+  var mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  var postTxt = "【東京移動メモ】" + rec.title + "\n20秒のルートPV\n\n地図で確認 → " + SITE;
+  var html = '<div class="pv"><video id="pv-v" class="pv__v" src="' + url + '" controls autoplay muted playsinline></video>' +
     '<div class="pv__exp">⏳ この動画の保有期限: <b>' + expStr + '</b>（1週間）。応援の有無にかかわらず、期限を過ぎると消える可能性があります。</div>' +
     '<div class="sh__btns">' +
-      '<a class="sh__b sh__b--main" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
-      (canShareFile ? '<button class="sh__b" type="button" id="pv-share">📤 動画を共有（LINE・メールなど）</button>' : "") +
+      (canShareFile ? '<button class="sh__b sh__b--main" type="button" id="pv-share">📤 共有する（X・Instagram・TikTok・LINE…）</button>' : "") +
+      (!canShareFile && sns ? '<button class="sh__b sh__b--main" type="button" id="pv-x">Xに投稿（動画を保存して添付）</button>' : "") +
+      '<a class="sh__b" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (isMp4 ? "MP4" : "WebM") + '・' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
       (kind === "mail" || !kind ? '<a class="sh__b" href="mailto:?subject=' + encodeURIComponent("ルート PV: " + rec.title) + "&body=" + encodeURIComponent("ルートPV「" + rec.title + "」を送ります。動画ファイル（" + rec.name + "）を添付してください。\n保有期限: " + expStr + "\n" + SITE) + '">📧 メールを開く（動画は保存して添付）</a>' : "") +
       (proceed ? '<button class="sh__b" type="button" id="pv-go">' + (kind === "obsidian" ? "🟣 Obsidian に送る（続ける）" : kind === "mail" ? "📧 メールに進む" : "📤 共有に進む") + "</button>" : "") +
       '<button class="sh__b" type="button" id="pv-tip">☕ 応援する</button>' +
     "</div>" +
-    '<p class="src">動画はこの端末の中（ブラウザの保存領域）に ' + expStr + ' まで残ります。「保存」で手元のファイルにできます。</p></div>';
+    '<p class="rc__hint" id="pv-hint"></p>' +
+    '<p class="src">' + (sns ? "MP4（H.264）なので X・Instagram・TikTok・LINE にそのまま投稿できます。" + (mobile ? "iPhone は「共有する」→「ビデオを保存」で写真アプリにも入ります。" : "PC は保存した MP4 を X の投稿画面にドラッグしてください。") :
+      "この端末では " + (isMp4 ? "MP4 でも中身が " + (rec.codec || "H.264 以外").toUpperCase() + " の形式" : "WebM 形式") + "でしか作れませんでした。LINE・メールには送れますが、X・Instagram・TikTok は H.264 の MP4 しか受け付けないため、Chrome・Edge・Safari（iPhone）で作り直してください。") +
+      " 動画はこの端末の中（ブラウザの保存領域）に " + expStr + " まで残ります。</p></div>";
   var m = RG.openModal("🎬 ルート PV（20秒）", html);
   var v = $("#pv-v", m);
   if (v) v.addEventListener("ended", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });
-  var sh = $("#pv-share", m); if (sh) sh.addEventListener("click", function () { navigator.share({ files: [new File([rec.blob], rec.name, { type: rec.mime })], title: "ルート PV: " + rec.title, text: rec.title + "（保有期限 " + expStr + "）" + SITE }).catch(function () {}); });
+  var hint = $("#pv-hint", m);
+  var sh = $("#pv-share", m); if (sh) sh.addEventListener("click", function () {
+    navigator.share({ files: [file], title: "ルート PV: " + rec.title, text: postTxt }).catch(function (e) {
+      if (e && e.name === "AbortError") return;
+      navigator.share({ title: "ルート PV: " + rec.title, text: postTxt, url: SITE }).catch(function () {});
+      if (hint) hint.textContent = "動画つきの共有ができないアプリでした。「動画を保存」してからアプリで選んでください。";
+    });
+  });
+  var xb = $("#pv-x", m); if (xb) xb.addEventListener("click", function () {
+    var a = document.createElement("a"); a.href = url; a.download = rec.name; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 500);
+    (navigator.clipboard ? navigator.clipboard.writeText(postTxt) : Promise.reject()).catch(function () {});
+    if (hint) hint.textContent = "動画を保存し、投稿文をコピーしました。X の投稿画面で動画を添付して投稿してください。";
+    setTimeout(function () { try { window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(postTxt), "_blank", "noopener"); } catch (e) {} }, 600);
+  });
   var go = $("#pv-go", m); if (go) go.addEventListener("click", function () { proceed && proceed(rec); });
   var tp = $("#pv-tip", m); if (tp) tp.addEventListener("click", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });
 };

@@ -14,14 +14,21 @@ var KEY = "tsg.basemap.v1";
 var DEF = {
   relief: false, mode3d: false, tilt: 52, exagg: 1.0, flood: false,
   admin: true, blank: false, qbMini: true, qbHeat: false, under: true, seeUnder: true,
-  lv: { 1: { on: true,  c: "#333333", w: 2.2 },
-        2: { on: true,  c: "#0055AD", w: 1.1 },
+  lv: { 1: { on: true,  c: "#6B7480", w: 1.5 },        // v82: 都県境・区境は淡く細く（駅と路線が主役）
+        2: { on: true,  c: "#8DA6C9", w: 0.9 },
         3: { on: false, c: "#999999", w: 0.5 } },
+  lvv: 82,
   fill: true, labels: true,
   heat: null
 };
 var B = JSON.parse(JSON.stringify(DEF));
 try { B = Object.assign(B, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+/* v82: 線の濃さの既定値を変えたので、前の既定値のまま（自分で変えていない）なら新しい既定値に */
+if (B.lvv !== 82) {
+  var oldDef = { 1: { c: "#333333", w: 2.2 }, 2: { c: "#0055AD", w: 1.1 } };
+  [1, 2].forEach(function (i) { var l = B.lv && B.lv[i]; if (l && l.c === oldDef[i].c && l.w === oldDef[i].w) { l.c = DEF.lv[i].c; l.w = DEF.lv[i].w; } });
+  B.lvv = 82;
+}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(B)); } catch (e) {} }
 RG.Base = B;
 
@@ -234,6 +241,7 @@ RG.jpAdmLOD = function () {
     var t = ts[i];
     var x = +t.getAttribute("x"), y = +t.getAttribute("y");
     var inv = x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h;
+    if (inv && RG.__muniNames && RG.__muniNames[t.textContent]) inv = false;   // v82: 市区町村の面に同じ名前が出ているなら重ねない
     var ok = false;
     if (inv && shown < room) {
       var lw = (t.textContent.length * ((SZ ? SZ.jpadm : 12) + 1) + 14) * upx, lh = ((SZ ? SZ.jpadm : 12) * 2) * upx;

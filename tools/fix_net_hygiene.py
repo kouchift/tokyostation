@@ -105,20 +105,70 @@ for e in ed: nodes_of.setdefault(e[2], set()).update([e[0], e[1]])
 def frac(i):
     ns = nodes_of.get(i, set())
     return (sum(1 for n in ns if n in FLAG) / len(ns)) if ns else 0.0
-# 0) あり得ない長さの在来線の辺を外す（駅名が同じ別の駅（入谷・菊川・平和台・江北 …）が 1 つに束ねられて生まれた辺）。
-#    首都圏（緯度 35.3〜36.3・経度 139.0〜140.4）の在来線は 13km 超、全国では 36km 超（石勝線 新夕張–占冠 34km が最長）
+# 0) あり得ない長さの在来線の辺 = 「同じ名前の別の駅」が 1 つの駅に束ねられている印（入谷・菊川・平和台・江北・大泉 …）。
+#    首都圏（緯度 35.3〜36.3・経度 139.0〜140.4）の在来線は 13km 超、全国では 36km 超（石勝線 新夕張–占冠 34km が最長）。
+#    v82: 消すのではなく «駅を分ける»。束ねられた駅 X がその路線に短い辺を 1 本も持たないなら X はその路線にとって
+#    よその駅なので、遠い側の隣駅たちの真ん中に同名の新しい駅 X' を作り、長い辺を X' につなぎ替える（路線が途切れない）。
+#    両端とも短い辺を持つ本物の長い辺（飛び越し・穴）だけ外す
 RX_LONG_OK = re.compile(r"新幹線|ライナー|特急|快速|エクスプレス|乗り換え")
 def kanto(s): return 35.3 <= s[2] <= 36.3 and 139.0 <= s[3] <= 140.4
-long_edges = set()
-for k, e in enumerate(ed):
-    n = L[e[2]][0]
-    if RX_LONG_OK.search(n): continue
+def is_long(e):
     a, b = st[e[0]], st[e[1]]
     d = hav(a[2:4], b[2:4])
-    if d > 36 or (d > 13 and kanto(a) and kanto(b)): long_edges.add(k)
-if long_edges:
-    print("長すぎる辺 %d 本を除外: %s" % (len(long_edges), " / ".join("%s %s–%s %.0fkm" % (L[ed[k][2]][0], st[ed[k][0]][1], st[ed[k][1]][1], hav(st[ed[k][0]][2:4], st[ed[k][1]][2:4])) for k in sorted(long_edges))[:1200]))
-ed = [e for k, e in enumerate(ed) if k not in long_edges]
+    return d > 36 or (d > 13 and kanto(a) and kanto(b))
+long_idx = [k for k, e in enumerate(ed) if not RX_LONG_OK.search(L[e[2]][0]) and is_long(e)]
+def lkey(i):                                         # 路線名の «芯»（西武鉄道池袋線 と 西武池袋線、小田急電鉄小田原線 と 小田急小田原線 を同じに）
+    return re.sub(r"\s*[:：].*$", "", L[i][0]).replace("電鉄", "").replace("鉄道", "").replace("東京地下鉄", "東京メトロ").replace("JR", "").strip()
+short_lines = {}                                     # (node, 路線の芯) -> 短い辺の本数
+LSET = set(long_idx)
+for k, e in enumerate(ed):
+    if k in LSET or L[e[2]][0] == "乗り換え": continue
+    short_lines[(e[0], lkey(e[2]))] = short_lines.get((e[0], lkey(e[2])), 0) + 1
+    short_lines[(e[1], lkey(e[2]))] = short_lines.get((e[1], lkey(e[2])), 0) + 1
+split_plan = {}                                      # (foreign node, line) -> [(edge index, far node)]
+drop_long = set()
+for k in long_idx:
+    a, b, l = ed[k]
+    fa, fb = short_lines.get((a, lkey(l)), 0) == 0, short_lines.get((b, lkey(l)), 0) == 0
+    if fa and not fb: split_plan.setdefault((a, l), []).append((k, b))
+    elif fb and not fa: split_plan.setdefault((b, l), []).append((k, a))
+    else: drop_long.add(k)                          # 両方ともその路線の駅（本物の長い辺）／両方よそ者（判断できない）→ 外す
+new_nodes, moved = [], 0
+for (x, l), lst in split_plan.items():
+    # 遠い側の隣駅を 30km 以内でまとめる（同名駅が 3 つ以上あるとき用）
+    groups = []
+    for k, far in lst:
+        for g in groups:
+            if hav(st[far][2:4], st[g[0][1]][2:4]) < 30: g.append((k, far)); break
+        else: groups.append([(k, far)])
+    for g in groups:
+        if len(g) < 2:                               # 遠い側の隣駅が 1 つだけ: 場所を決められない（壊れた辺のことも多い）→ 外す
+            for k, far in g: drop_long.add(k)
+            continue
+        las = [st[far][2] for _, far in g]; los = [st[far][3] for _, far in g]
+        la, lo = sum(las) / len(las), sum(los) / len(los)
+        src = st[x]
+        used = set(s2[0] or s2[1] for s2 in st) | set(n[0][0] for n in new_nodes)
+        k2 = 2
+        while src[1] + "_" + str(k2) in used: k2 += 1
+        nid = src[1] + "_" + str(k2)
+        node = [nid, src[1], round(la, 6), round(lo, 6), [l], src[5] if len(src) > 5 else "", 0, "", 0, "", 0, 0]
+        new_nodes.append((node, g))
+# 追加・つなぎ替え
+for node, g in new_nodes:
+    st.append(node); ni = len(st) - 1
+    for k, far in g:
+        a, b, l = ed[k]
+        ed[k] = [ni, far, l] if st[a][1] == node[1] and a != far else [far, ni, l]
+        moved += 1
+    # 元の駅の路線リストからその路線を外す（短い辺が無いので）
+    x = [i for i, s2 in enumerate(st) if s2 is not node and s2[1] == node[1] and node[4][0] in s2[4]]
+    for i in x:
+        if short_lines.get((i, node[4][0]), 0) == 0: st[i][4] = [q for q in st[i][4] if q != node[4][0]]
+if new_nodes or drop_long:
+    print("同名の別駅を分離: 新しい駅 %d（つなぎ替え %d 本）: %s" % (len(new_nodes), moved, " ".join(n[0][1] + "(" + L[n[0][4][0]][0] + ")" for n in new_nodes)[:1500]))
+    print("本物の長すぎる辺 %d 本を除外: %s" % (len(drop_long), " / ".join("%s %s–%s %.0fkm" % (L[ed[k][2]][0], st[ed[k][0]][1], st[ed[k][1]][1], hav(st[ed[k][0]][2:4], st[ed[k][1]][2:4])) for k in sorted(drop_long))[:1200]))
+ed = [e for k, e in enumerate(ed) if k not in drop_long]
 nodes_of = {}
 for e in ed: nodes_of.setdefault(e[2], set()).update([e[0], e[1]])
 # 1) 路線ごと外す（辺をすべて消す）: 名前パターン ／ 既知の廃線 ／ Wikidata に廃止日があり駅の半分以上が廃駅 ／ 駅が 2 つ以下で全部廃駅
@@ -190,8 +240,17 @@ for i, s in enumerate(st):
 new_ed = [[remap[e[0]], remap[e[1]], e[2]] for e in keep_edges]
 alive = {}
 for e in new_ed: alive.setdefault(e[0], set()).add(e[2]); alive.setdefault(e[1], set()).add(e[2])
+fixed_ls = 0
 for j, s in enumerate(new_st):
-    s[4] = [k for k in s[4] if k not in drop_line]
+    keep = [k for k in s[4] if k not in drop_line]
+    # 辺のある駅では、辺のない路線名（同名の別駅から紛れ込んだもの: 富山の大泉に阿武隈急行線 など）を外す
+    al = alive.get(j)
+    if al:
+        keep2 = [k for k in keep if k in al or L[k][0] == "乗り換え"]
+        if len(keep2) != len(keep): fixed_ls += 1
+        keep = keep2
+    s[4] = keep
+if fixed_ls: print("辺のない路線名を外した駅 %d" % fixed_ls)
 cnt = {}
 for e in new_ed: cnt[e[2]] = cnt.get(e[2], 0) + 1
 for i, l in enumerate(L): l[2] = cnt.get(i, 0)

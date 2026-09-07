@@ -103,4 +103,5 @@ tools/build_standalone.py  単一ファイル版の生成
 - 地震情報 — P2P地震情報 API v2（https://www.p2pquake.net/develop/json_api_v2/）。気象庁発表の中継。利用規約に従いキャッシュせず、出典を表示。
 - ルートカードの画像生成 — html2canvas 1.4.1（MIT、cdnjs）。
 - `data/net.json`（v80 で掃除）— Wikidata（CC0）由来の全国路線網から、廃線・廃駅（Wikidata P576 廃止日／P3999 閉鎖日）、貨物線・計画線、信号場・貨物駅、同名別駅の混同による長すぎる辺、途中駅を飛ばす辺を除いたもの。手順は tools/fix_skip_edges.py → tools/fix_net_hygiene.py → tools/fix_net_snap.py（冪等）。
+- `assets/vendor/mp4-muxer.min.js` — mp4-muxer 5.2.2（MIT License, Copyright (c) 2023-present Vanilagy, https://github.com/Vanilagy/mp4-muxer）。ルート PV の MP4 化に使用。ルート PV 生成時だけ読み込む。
 

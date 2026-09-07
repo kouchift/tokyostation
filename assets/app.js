@@ -703,8 +703,8 @@ var Map = (function () {
     if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
     if (RG.admLOD) RG.admLOD();
-    if (RG.jpAdmLOD) RG.jpAdmLOD();
-    if (RG.geoLOD) RG.geoLOD();
+    if (RG.geoLOD) RG.geoLOD();          // 先に市区町村の面と名前を決める（v82）
+    if (RG.jpAdmLOD) RG.jpAdmLOD();      // 全国地名は、面の名前と重複しないものだけ
     if (RG.corpBubbleLOD) RG.corpBubbleLOD();
     if (RG.terraLOD) RG.terraLOD();
     if (RG.kuniLOD) RG.kuniLOD();
@@ -774,7 +774,21 @@ var Map = (function () {
       vb.w = nw; vb.h = nh; apply();
     }, { passive: false });
     wrap.addEventListener("touchend", function (e) { if (e.touches.length < 2) pinch = null; }, { passive: true });
-    window.addEventListener("resize", scheduleLod);
+    /* v82: 画面の縦横比が変わったら（スマホのアドレスバーの出し入れ・キーボード・回転）、viewBox の縦横比も合わせ直す。
+       合っていないと SVG が上下に余白を作って中央寄せになり、タップ位置と地図がずれる／使えない領域ができる */
+    var arTimer = null;
+    function syncAspect() {
+      var r = wrap.getBoundingClientRect(); if (!r.width || !r.height) return;
+      var ar = r.height / r.width, cur = vb.h / vb.w;
+      if (Math.abs(ar - cur) / ar < 0.005) return;
+      var cy = vb.y + vb.h / 2; vb.h = vb.w * ar; vb.y = cy - vb.h / 2; apply();
+    }
+    RG.syncAspect = syncAspect;
+    function onResize() { clearTimeout(arTimer); arTimer = setTimeout(syncAspect, 60); scheduleLod(); }
+    window.addEventListener("resize", onResize);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", function () { setTimeout(syncAspect, 250); });
+    setTimeout(syncAspect, 1200);
   }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
@@ -902,7 +916,10 @@ var Map = (function () {
   }
   /* 地図座標の矩形を画面に収める（都道府県へ寄るときなどに使う） */
   function fitBox(x0, y0, x1, y1, pad) {
+    /* pad は «倍率»（1.15 = 15% の余白）。0.12 のような «割合» で渡されたら 1.12 と読む
+       （v82: 航空路・高速道路・川の fit が 0.12 を渡していて、範囲の 12% だけ＝海の真ん中に寄ってしまっていた） */
     var r = wrap.getBoundingClientRect(), ar = r.height / r.width, k = pad || 1.15;
+    if (k > 0 && k < 1) k = 1 + k;
     var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
     var w = Math.max((x1 - x0) * k, (y1 - y0) * k / ar, U(60));
     vb.w = w; vb.h = w * ar; vb.x = cx - w / 2; vb.y = cy - vb.h / 2;
@@ -989,9 +1006,11 @@ var Map = (function () {
     var hideVisited = RG.settings && RG.settings.hideVisited;
     var pad = vb.w * 0.06, cand = [];
     var list = RG.MAPPOI || [];
+    var airmode = svg.classList.contains("airmode");                  // v82: 航空路モードは空港だけ（ズームに関係なく）
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
       if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }   // あとから足されたものは、ここで座標を出す
+      if (airmode) { if (p.g !== "airport") continue; if (p.x < vb.x - pad || p.x > vb.x + vb.w + pad || p.y < vb.y - pad || p.y > vb.y + vb.h + pad) continue; cand.push(p); continue; }
       // ピンで絞っているときは «自分が付けたもの» なので、ズームに関係なく必ず出す
       var pinned = RG.pinFilter != null;
       if (!picked && !pinned && (p.ti > maxTier || p.s < minStar)) continue;
@@ -1038,12 +1057,13 @@ var Map = (function () {
     var cap = Math.round(SZ2.maxPoi * Math.min(1.5, Math.max(0.6, area2)));
     var poiSlots = [];
     var used = {}, show = [];
+    var cellA = cell * 0.45;                                          // 航空路モードの空港は密に（数の上限なし・間引きは小さなマス目で）
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
-      var special = q.g === "ichinomiya" || q.g === "buzz";           // 一之宮は数の上限・間引きの対象外（必ず出す）
+      var special = q.g === "ichinomiya" || q.g === "buzz" || airmode;   // 一之宮は数の上限・間引きの対象外（必ず出す）
       if (!special && show.length >= cap) continue;
-      var key = Math.round(q.x / cell) + "," + Math.round(q.y / cell);
-      if (used[key] && !special) continue;
+      var key = airmode ? Math.round(q.x / cellA) + "," + Math.round(q.y / cellA) : Math.round(q.x / cell) + "," + Math.round(q.y / cell);
+      if (used[key] && (!special || airmode)) continue;
       used[key] = 1; show.push(q);
     }
     while (pool.length < show.length) makeNode();

@@ -2272,8 +2272,8 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 
 /* スマホの横向き（高さが足りない）：中でスクロールできるように */
 @media (max-height:480px){
-  .modal__bd{max-height:calc(100vh - 96px);overflow-y:auto}
-  .sheet{max-height:88vh}
+  .modal__bd{max-height:calc(100vh - 96px);max-height:calc(100dvh - 96px);overflow-y:auto}
+  .sheet{max-height:88vh;max-height:88dvh}
   .lr__rows{max-height:46vh}
   .weekbar{padding:3px 8px}
   .weekbar .wb__d{min-height:38px;width:40px}
@@ -2285,7 +2285,7 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 @media (max-width:560px){
   .modal{align-items:flex-end}
   .modal__box{width:100%;max-width:none;border-radius:16px 16px 0 0;
-    max-height:90vh;padding-bottom:env(safe-area-inset-bottom,0px)}
+    max-height:90vh;max-height:90dvh;padding-bottom:env(safe-area-inset-bottom,0px)}
   .modal__hd{position:sticky;top:0;background:#fff;z-index:2}
   .legend__foot{position:sticky;bottom:0;background:#fff;padding:8px 0;
     border-top:1px solid var(--grid);z-index:2}
@@ -2297,6 +2297,9 @@ html.bigtext .smkr, html.bigtext .cr, html.bigtext .day__l li { font-size: 13.5p
 @media (pointer:coarse){
   .node .hit{r:calc(var(--hitr,12) * 1.5)}
   .poi{--poihit:1.5}
+  /* v82: iPhone は 16px 未満の入力欄にフォーカスすると画面全体が拡大されて戻らない → 入力欄は 16px に */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important}
+  .pv__cv,.pv__v{max-height:42dvh}
 }
 
 
@@ -2931,13 +2934,22 @@ html.kuni-on .geo__pn{display:none!important}
 .airshops__g{margin:6px 0}.airshops__h{font-size:12px;font-weight:800;margin-bottom:4px}.airshops__h i{font-style:normal;color:#888;font-weight:400;margin-left:4px}
 .airshops__row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.airshops__i{flex:0 0 auto;width:84px;border:1px solid #e0e0e0;border-top:3px solid var(--lc,#888);border-radius:10px;background:#fff;padding:5px 3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
 .airshops__i img{width:40px;height:26px;object-fit:contain}.airshops__i span{font-size:22px;line-height:26px}.airshops__i b{font-size:10px;line-height:1.2;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.airl{pointer-events:auto}.airl__glow{fill:none;stroke:#fff;stroke-opacity:.7;stroke-linecap:round}.airl__p{fill:none;stroke-linecap:round;stroke-dasharray:calc(9 * var(--u,1px)) calc(6 * var(--u,1px));animation:tcurflow 1.2s linear infinite;--dash:calc(15 * var(--u,1px))}.airl__hit{fill:none;stroke:transparent;cursor:pointer}
+.airl{pointer-events:auto}.airl__glow{fill:none;stroke:#fff;stroke-opacity:.5;stroke-linecap:round}.airl__p{fill:none;stroke-linecap:round;stroke-opacity:.55;stroke-dasharray:calc(9 * var(--u,1px)) calc(7 * var(--u,1px));animation:tcurflow 1.6s linear infinite;--dash:calc(16 * var(--u,1px))}.airl__hit{fill:none;stroke:transparent;cursor:pointer}
+/* v82: 航空路モード = 空港だけの白地図。県境は淡く、それ以外の地上の要素は消す */
+#map.airmode .edges,#map.airmode .nodes,#map.airmode .lms,#map.airmode .relief,#map.airmode .terra,#map.airmode .kuni,#map.airmode .roads,#map.airmode .jpadm,#map.airmode .adm-labels,#map.airmode .adminval,#map.airmode .quake,#map.airmode .geo__munis{display:none}
+#map.airmode .pois .poi:not(.poi--airport){display:none !important}
+#map.airmode .geo__pref{fill:#FFFFFF;stroke:#D5DBE2;stroke-width:.8px}#map.airmode .adm--2{fill:#fff;stroke:#E3E7EC}#map.airmode .adm--1{stroke:#D5DBE2}
+#map.airmode{background:#F7F9FB}
+.airoff{position:fixed;right:12px;bottom:calc(var(--chips-h,56px) + 14px + env(safe-area-inset-bottom,0px));z-index:45;border:1px solid #cfd6de;background:rgba(255,255,255,.96);color:#1A237E;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.12);cursor:pointer;font-family:inherit}
+/* 区の境目は少し淡く（v82） */
+.adm--2{stroke-opacity:.75}
+.geo__muni{stroke:#CDD5DE}#map.geo-near .geo__muni{stroke:#BFC9D4;stroke-width:.7px}
 .airrt__hd{display:flex;align-items:center;gap:8px;font-size:18px;margin-bottom:4px}.airrt__arrow{color:#1A237E;font-size:22px;margin:0 4px}.airrt__m{font-size:12px;color:#555;margin-bottom:8px}
 .airrt__t,.airtt{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0 8px}.airrt__t th,.airtt th{font-size:10.5px;color:#666;text-align:left;padding:4px 6px;background:#f3f3f3}.airrt__t td,.airtt td{padding:6px;border-top:1px solid #eee;vertical-align:middle}
 .airrt__n{font-size:10.5px;color:#666}.airrt__y{font-family:var(--mono);font-weight:800;white-space:nowrap}.airrt__k{font-size:10px;color:#888;font-weight:400}.airrt__dim{color:#999}.airrt__sh{margin-top:8px}.airrt__sh>b{display:block;font-size:12.5px;margin-bottom:4px}.airrt__sh u{text-decoration:underline dotted}
 .airtt{max-height:260px;display:block;overflow:auto}.airtt thead,.airtt tbody,.airtt tr{display:table;width:100%;table-layout:fixed}
 .lnk--s{font-size:11px;padding:3px 8px}.opt__lnks{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px}
-.tsx{margin-left:6px;border:1px solid #fff;background:transparent;color:#fff;border-radius:6px;padding:1px 6px;font-size:11px;cursor:pointer}
+.tsx{margin-left:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);color:inherit;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 .pv__bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin:6px 0}.pv__bar i{display:block;height:100%;background:#1A237E;width:0;transition:width .2s}
 .pv__cv,.pv__v{width:100%;max-height:52vh;border-radius:10px;background:#000;display:block}.pv__exp{background:#fff3e0;border:1px solid #ffcc80;border-radius:10px;padding:8px 10px;font-size:12.5px;margin:8px 0}
 /* v79 ルートカード */
@@ -3025,3 +3037,24 @@ html.kuni-on .geo__pn{display:none!important}
 .rcp__b{font-style:normal;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--bg,#f2f2f2);color:var(--fg,#555)}
 .rcp__m{font-size:12.5px;color:#444;margin-top:4px}.rcp__c{font-size:13px;color:#222;margin-top:2px;line-height:1.5}
 .rcp__a{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.rcp__a .rc__a{padding:10px 8px;font-size:13.5px}
+/* v82: スポットカードのジャンル印は押せる（そのジャンルだけ表示） */
+.gbadge--tap{cursor:pointer;font-family:inherit;padding:0}
+.spotcard__g{border:1px solid #ddd;background:#fff;border-radius:999px;padding:2px 9px;font-size:12px;color:#333;cursor:pointer;font-family:inherit}.spotcard__g i{font-style:normal;color:#0B5394;font-size:11px}
+/* v82: 全国の市区町村の «面»（寄ったときだけ読み込む県ごとの詳しい境界） */
+.geo__mu{stroke:#BFC9D4;stroke-width:.7px;vector-effect:non-scaling-stroke;stroke-linejoin:round;fill-opacity:.9;cursor:pointer;transition:fill .15s}
+.geo__mu:hover{fill:#DCE9F7 !important;stroke:#7F8C9B}
+#map.geo-far .geo__mus{display:none}
+#map.blank .geo__mu,#map.airmode .geo__mu{fill:#fff !important;fill-opacity:1}
+.geo__mn{font-weight:700;fill:#5A6472;paint-order:stroke;stroke:#FAFAF6;stroke-linejoin:round;pointer-events:none;opacity:.92}
+.mutip{position:fixed;z-index:70;pointer-events:none;background:rgba(255,255,255,.96);border:1px solid #d7dde4;border-radius:8px;padding:4px 8px;font-size:12px;color:#1a2733;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.mucard__g{display:flex;flex-wrap:wrap;gap:6px}
+/* v82: 画面の縦の割り付けを «バーは中身の高さ・地図が残り全部» に。
+   グリッド（見出し／出発バー／1fr／auto／チップ）に後から「スポットをさがす」バーが増えたため、
+   スマホでは 1fr の行にそのバーが入って 140px にふくらみ、地図が狭くなっていた */
+.app{display:flex;flex-direction:column}
+.app>*{flex:0 0 auto}
+.app>.hdr{height:var(--header-h);box-sizing:border-box}
+.app>.topbar{height:var(--tripbar-h);box-sizing:border-box;overflow:hidden}
+.app>.linerail{height:var(--chips-h);box-sizing:border-box;overflow-y:hidden}
+.app>.mapwrap{flex:1 1 0;min-height:160px}
+

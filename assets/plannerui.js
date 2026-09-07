@@ -111,10 +111,11 @@ function useGeo(retry) {
 }
 RG.useGeo = useGeo;
 var stTimer = null;
-function status(msg, kind, ms) {
+function status(msg, kind, ms, html) {
   var s = $("#t-status");
   clearTimeout(stTimer);
-  s.textContent = msg || ""; s.className = "tb__status" + (kind ? " " + kind : "");
+  if (html) s.innerHTML = msg || ""; else s.textContent = msg || "";     // v82: 4 つ目が true なら HTML（«消す» «解除» のボタン用）
+  s.className = "tb__status" + (kind ? " " + kind : "");
   s.style.display = msg ? "block" : "none";
   if (msg && ms !== 0) stTimer = setTimeout(function () { s.style.display = "none"; }, ms || 5000);
 }
@@ -374,10 +375,10 @@ RG.showSpot = function (p) {
         '<span class="spotcard__pht">' +
           (p.url ? "自由に使える写真がありません。公式ページでご覧ください"
                  : "自由に使える写真が見つかりませんでした") + "</span></div>") +
-    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + (p.bc || g.c) + '">' +
-      (p.be || g.e) + "</span>" +
+    '<div class="spotcard__hd"><button class="gbadge gbadge--b gbadge--tap" type="button" data-gonly="' + esc(p.g || "") + '" style="--lc:' + (p.bc || g.c) + '" title="このジャンルだけを地図に出す">' +
+      (p.be || g.e) + "</button>" +
       "<div><h3>" + esc(p.n) + "</h3>" +
-      '<p class="spotcard__k">' + esc(g.label) +
+      '<p class="spotcard__k"><button class="spotcard__g" type="button" data-gonly="' + esc(p.g || "") + '">' + esc(g.label) + ' <i>だけ表示</i></button>' +
         (p.t && p.t !== p.n ? " ・ " + esc(p.t) : "") + "</p></div></div>" +
     '<div class="spotcard__st">' + stars(p.s || 3) +
       '<span class="spotcard__why">行く価値のめやす</span>' +
@@ -444,6 +445,15 @@ RG.showSpot = function (p) {
   if (RG.airBind && p.air) RG.airBind(m, p);
   if (RG.roadsBind) RG.roadsBind(m, p);
   if (RG.bindPinRow) RG.bindPinRow(m, p);
+  /* v82: ジャンルの印を押すと、そのジャンルだけを地図に出す（解除は上の「スポットをさがす」→ぜんぶ解除） */
+  $$("[data-gonly]", m).forEach(function (b) {
+    b.addEventListener("click", function () {
+      var gid = b.dataset.gonly; if (!gid || !RG.setGenreList) return;
+      RG.closeModal(); RG.setGenreList([gid]); if (RG.buildGroupBar) RG.buildGroupBar();
+      if (RG.Map && RG.Map.gotoLatLng) RG.Map.gotoLatLng(p.la, p.lo, 400);
+      RG.tripStatus && RG.tripStatus(g.e + " " + g.label + " だけを表示しています。<button class=\"tsx\" onclick=\"RG.setGenreList([]);RG.buildGroupBar&&RG.buildGroupBar()\">解除</button>", "ok", 6000, true);
+    });
+  });
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });
   var db2 = m.querySelector("[data-dest2]");

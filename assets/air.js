@@ -159,13 +159,27 @@ RG.airShowRoutes = function (code) {
     });
   }
   RG.airLOD();
+  airMode(true);
   // 全部が入るように
   var bb = [Infinity, Infinity, -Infinity, -Infinity];
   pts.forEach(function (q) { var P = RG.project(q[0], q[1]); bb[0] = Math.min(bb[0], P.x); bb[1] = Math.min(bb[1], P.y); bb[2] = Math.max(bb[2], P.x); bb[3] = Math.max(bb[3], P.y); });
   if (RG.Map && RG.Map.fitBox) RG.Map.fitBox(bb[0], bb[1], bb[2], bb[3], 0.12);
   if (RG.tripStatus) RG.tripStatus("🛫 " + (a.nick || a.n) + " から飛べる " + rts.length + " 空港。線を押すと路線の運賃・便の目安。<button class=\"tsx\" onclick=\"RG.airClear()\">消す</button>", "ok", 6000, true);
 };
-RG.airClear = function () { if (gAir) gAir.innerHTML = ""; airFrom = null; };
+RG.airClear = function () { if (gAir) gAir.innerHTML = ""; airFrom = null; airMode(false); };
+/* v82: 航空路を出している間は、地上を空港だけの白地図にする（路線・駅・スポット・道路・川はノイズになるため）。
+   右下に「✈ 航空路を消す」を固定で出す（トーストは消えてしまうので） */
+function airMode(on) {
+  var svg = document.getElementById("map"); if (svg) svg.classList.toggle("airmode", !!on);
+  document.body.classList.toggle("airmode", !!on);
+  var b = document.getElementById("airoff");
+  if (on) {
+    if (!b) { b = document.createElement("button"); b.id = "airoff"; b.type = "button"; b.className = "airoff"; b.textContent = "✈ 航空路を消す"; b.addEventListener("click", function () { RG.airClear(); }); document.body.appendChild(b); }
+    b.hidden = false;
+  } else if (b) b.hidden = true;
+  if (RG.Map && RG.Map.lod) { try { RG.Map.lod(); } catch (e) {} }
+}
+RG.airMode = airMode;
 RG.airLOD = function () {
   if (!gAir || !gAir.childNodes.length || !RG.Map) return;
   var u = RG.__u || 1;
