@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja" data-build="85">
+<html lang="ja" data-build="86">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
-<meta name="theme-color" content="#0071BC">
+<meta name="theme-color" content="#f7f9ff">
 <title>東京ステーションガイド｜路線図から、いちばん良い移動手段へ</title>
 <meta name="description" content="全国10,982駅・815路線を路線図から1タップ。徒歩・自転車・バス・電車・タクシーを時間と費用で並べて比べられる移動ダッシュボード。終電を逃した深夜にも使えます。">
 <meta property="og:type" content="website">
@@ -13,15 +13,20 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
 <!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
-<link rel="preload" href="data/net.json?v=85" as="fetch" crossorigin="anonymous">
-<link rel="preload" href="assets/app.bundle.js?v=85" as="script">
-<link rel="preload" href="data/config.js?v=85" as="script">
-<link rel="preload" href="data/lines_meta.js?v=85" as="script">
-<link rel="preload" href="data/genres.js?v=85" as="script">
-<link rel="preload" href="data/score.js?v=85" as="script">
-<link rel="preload" href="data/areas.js?v=85" as="script">
-<link rel="preload" href="data/focus.js?v=85" as="script">
-<link rel="stylesheet" href="assets/app.css?v=85">
+<link rel="preload" href="data/net.json?v=86" as="fetch" crossorigin="anonymous">
+<link rel="preload" href="assets/app.bundle.js?v=86" as="script">
+<link rel="preload" href="data/config.js?v=86" as="script">
+<link rel="preload" href="data/lines_meta.js?v=86" as="script">
+<link rel="preload" href="data/genres.js?v=86" as="script">
+<link rel="preload" href="data/score.js?v=86" as="script">
+<link rel="preload" href="data/areas.js?v=86" as="script">
+<link rel="preload" href="data/focus.js?v=86" as="script">
+<!-- v86: 書体（Plus Jakarta Sans／Noto Sans JP／JetBrains Mono）と Material Symbols。届くまでは端末の書体で描く（display=swap） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=ac_unit,add,arrow_back,bookmark,calendar_month,chat_bubble,check_circle,chevron_right,close,cloud,contactless,directions_subway,directions_walk,download,event,explore,favorite,foggy,forum,groups,info,layers,list,local_fire_department,luggage,map,markunread_mailbox,mic,my_location,navigation,near_me,nightlight,partly_cloudy_day,person,place,rainy,remove,route,schedule,search,settings,share,star,storefront,thunderstorm,timer,tips_and_updates,train,tune,warning,wb_sunny,zoom_out_map&display=block">
+<link rel="stylesheet" href="assets/app.css?v=86">
 <style>
 /* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
 .mapwrap{min-height:52vh;background:#F5F6F8}
@@ -36,18 +41,18 @@
 
 <div class="app">
   <header class="hdr">
-    <div class="hdr__mark"><i></i><span>東京ステーションガイド<small id="statline">読み込み中…</small></span></div>
+    <div class="hdr__mark"><i>TS</i><span>東京ステーションガイド<small id="statline">読み込み中…</small></span></div>
     <div class="hdr__search">
-      <span class="ic">🔍</span>
+      <span class="ic ms">search</span>
       <input id="q" type="search" placeholder="駅・地名・建物・郵便番号（スペースでAND）" autocomplete="off"
              aria-label="駅を検索" enterkeyhint="search">
       <div id="sug" class="sug" role="listbox"></div>
     </div>
-    <button id="btn-hub" class="hdr__btn" type="button">中村橋</button>
-    <button id="btn-share" class="hdr__btn" type="button" aria-label="この画面を共有" title="この画面を共有（画像＋リンク）">📤</button>
-    <button id="btn-buzz" class="hdr__btn" type="button" aria-label="SNSで話題の場所" title="SNSで話題の場所">🔥</button>
-    <button id="btn-plan" class="hdr__btn hdr__btn--plan" type="button" aria-label="おでかけプラン">🧳</button>
-    <button id="btn-set" class="hdr__btn" type="button" aria-label="設定">⚙️</button>
+    <button id="btn-hub" class="hdr__btn hdr__btn--hub" type="button"><span class="ms">near_me</span>中村橋</button>
+    <button id="btn-share" class="hdr__ic" type="button" aria-label="この画面を共有" title="この画面を共有（画像＋リンク）"><span class="ms">share</span></button>
+    <button id="btn-buzz" class="hdr__ic" type="button" aria-label="SNSで話題の場所" title="SNSで話題の場所"><span class="ms">local_fire_department</span></button>
+    <button id="btn-plan" class="hdr__ic hdr__btn--plan" type="button" aria-label="おでかけプラン" title="おでかけプラン"><span class="ms">luggage</span></button>
+    <button id="btn-set" class="hdr__ic hdr__ic--avatar" type="button" aria-label="設定" title="設定"><span class="ms">person</span></button>
   </header>
 
   <div class="topbar">
@@ -69,10 +74,10 @@
     <div id="skel" class="skel" aria-hidden="true"><i></i><span>路線図を用意しています…</span></div>
     <div class="hint">駅をタップで詳細。ドラッグで移動、ピンチで拡大。<span id="zlevel">全体</span></div>
     <div class="zoombar">
-      <button id="zin"  type="button" aria-label="拡大">＋</button>
-      <button id="zout" type="button" aria-label="縮小">−</button>
-      <button id="zfit" class="sm" type="button" aria-label="全体表示">全体</button>
-      <button id="zhub" class="sm" type="button" aria-label="中村橋へ">中心</button>
+      <button id="zin"  type="button" aria-label="拡大" title="拡大"><span class="ms">add</span></button>
+      <button id="zout" type="button" aria-label="縮小" title="縮小"><span class="ms">remove</span></button>
+      <button id="zfit" class="sm" type="button" aria-label="全体表示" title="日本全体"><span class="ms">zoom_out_map</span></button>
+      <button id="zhub" class="sm zb--home" type="button" aria-label="中村橋へ" title="中村橋へ"><span class="ms ms--fill">my_location</span></button>
     </div>
     <div id="linepop" class="linepop" role="tooltip"></div>
     <div class="poicount">📍 <span id="poicount">-</span></div>
@@ -94,14 +99,20 @@
 </div>
 
 <!-- ▼ 本体：assets/*.js を tools/build_bundle.js で1本にまとめたもの（直すときは元ファイルを） -->
-<script src="assets/app.bundle.js?v=85" defer></script>
+<script>
+/* v86: Material Symbols が届いたらアイコンを見せる（届く前は ligature の文字が見えないように隠している）。4 秒待っても届かなければ出す */
+(function(){var h=document.documentElement,done=false;function ok(){if(done)return;done=true;h.classList.add("fonts-ok");}
+try{if(document.fonts&&document.fonts.load){document.fonts.load('20px "Material Symbols Outlined"').then(ok,ok);}}catch(e){}
+setTimeout(ok,4000);})();
+</script>
+<script src="assets/app.bundle.js?v=86" defer></script>
 <script>
 /* 起動。
    ・data/net.json（駅・路線）は bundle と並列で取りに行く
    ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
    ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
-  var netP = fetch("data/net.json?v=85", { credentials: "same-origin" })
+  var netP = fetch("data/net.json?v=86", { credentials: "same-origin" })
     .then(function (r) { if (!r.ok) throw new Error("net.json " + r.status); return r.json(); })
     .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
@@ -121,7 +132,7 @@
       panic("読み込みが終わりませんでした。通信状態をご確認のうえ、再読み込みしてください。");
     }, 30000);
   }
-  var sc = document.querySelector('script[src="assets/app.bundle.js?v=85"]');
+  var sc = document.querySelector('script[src="assets/app.bundle.js?v=86"]');
   if (window.RG && window.RG.startApp) go();
   else if (sc) { sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); }); }
   // 地図の最初の駅が出たら骨組みを消す

@@ -1299,6 +1299,24 @@ var Card = (function () {
     document.head.appendChild(sc);
   }
 
+  /* v86: 駅名のまとまり（路線記号のバッジ・駅名・かな・市区町村と路線名・いまの天気） */
+  function plateId(s, ord) {
+    var L = ord[0], m = L && RG.LINEMETA && RG.LINEMETA[L], k = (m && m.k) || "", col = (m && m.conf !== "なし" && m.c) || RG.lineColor[L] || "#0061a1";
+    var mu = null, pf = null;
+    try { mu = RG.muniAt && RG.muniAt(s.la, s.lo); } catch (e) {}
+    try { pf = RG.prefAt && RG.prefAt(s.la, s.lo); } catch (e) {}
+    var place = (mu && mu.n) || (pf && pf.n) || "";
+    var lineName = L ? esc((m && m.o ? m.o + " " : "") + L) : "";
+    var wx = RG.weatherNow && RG.weatherNow(), wxc = wx && wx.data && wx.data.current, wxi = wxc && RG.wxIcon ? RG.wxIcon(wxc.weather_code) : null;
+    return '<div class="plate__id">' +
+      '<div class="plate__code" style="--lc:' + col + '"' + (k ? "" : ' data-empty="1"') + '>' + (k ? '<b>' + esc(k) + "</b>" : '<span class="ms">directions_subway</span>') + "</div>" +
+      '<div class="plate__names"><div class="plate__name">' + esc(s.n) + "</div>" +
+        (s.k ? '<div class="plate__kana">' + esc(s.k) + "</div>" : "") +
+        ((place || lineName) ? '<div class="plate__tags">' + (place ? '<span class="ptag">' + esc(place) + "</span>" : "") + (lineName ? '<span class="plate__line">' + lineName + "</span>" : "") + "</div>" : "") +
+      "</div>" +
+      (wxi ? '<div class="plate__wx" title="いま見ている場所の天気"><span class="plate__wxi">' + wxi[0] + '</span><b>' + Math.round(wxc.temperature_2m) + "°C</b><small>" + esc(wxi[1]) + "</small></div>" : "") +
+    "</div>";
+  }
   function plate(s) {
     // この駅を実際に通っている路線（隣接データにある路線）を先に、その他をあとに
     var onNet = {}, ord = [];
@@ -1322,16 +1340,15 @@ var Card = (function () {
       'data-watch="' + esc(s.id) + '" aria-label="注視駅にする">' +
       (RG.isWatched && RG.isWatched(s.id) ? "⭐" : "☆") + "</button>" +
       '<button class="plate__close" aria-label="閉じる" data-close>×</button></div>' +
-      '<div class="plate__name">' + esc(s.n) + "</div>" +
-      (s.k ? '<div class="plate__kana">' + esc(s.k) + "</div>" : "") +
+      plateId(s, ord) +
       (RG.memoHeadline ? RG.memoHeadline(s.n) : "") +
       '<div class="lchips">' + ls + '</div><div class="launcher" hidden></div>' +
       wikiIntro(s.n) +
       '<p class="plate__hl">' + esc(headline(s)) + "</p>" +
       (hops.length ? '<div class="hops"><span class="hops__l">となりの駅</span>' + hops.join("") + "</div>" : "") +
       '<div class="acts">' +
-        '<button class="act act--from" type="button" data-from="' + esc(s.id) + '">📍 ここから出発</button>' +
-        '<button class="act act--to" type="button" data-to="' + esc(s.id) + '">🧭 ここへ行く</button>' +
+        '<button class="act act--from" type="button" data-from="' + esc(s.id) + '"><span class="ms">near_me</span>ここから出発</button>' +
+        '<button class="act act--to" type="button" data-to="' + esc(s.id) + '"><span class="ms">navigation</span>ここへ行く</button>' +
         '<button class="act act--card" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
       "</div></div>" +
       (RG.memoHtml ? RG.memoHtml(s.n) : "") +
@@ -1614,6 +1631,7 @@ var Card = (function () {
   function render(id, d) {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
+           '<section class="sec sec--term" data-term="' + esc(s.id) + '" hidden><h3>主要駅へのアクセス <small>この駅から・日中の目安</small></h3><div class="term__l"></div></section>' +   // v86: 中身は開いたあとに計算して入れる（termFill）
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
            (RG.shinkansenHtml ? RG.shinkansenHtml(s.n) : "") +
            (RG.ytForStation ? RG.ytForStation(s.n) : "") +
@@ -1666,8 +1684,47 @@ var Card = (function () {
       '<div class="lu__cols">' + cols + "</div></div>";
   }
 
+  /* v86: 主要駅へのアクセス（参考にした画面の «ルートカード» の並び）。近くの主要駅 4 つへの所要・乗換・IC 運賃を、開いたあとに計算して差し込む */
+  var MAJOR = ["東京","新宿","池袋","渋谷","品川","上野","横浜","大宮","千葉","立川","八王子","川崎","町田","船橋","柏","宇都宮","高崎","水戸","甲府","名古屋","金山","岐阜","静岡","浜松","豊橋","京都","大阪","新大阪","難波","天王寺","三ノ宮","神戸","姫路","奈良","和歌山","大津","岡山","広島","福山","松江","米子","鳥取","下関","高松","松山","高知","徳島","博多","小倉","熊本","鹿児島中央","長崎","大分","宮崎","札幌","新千歳空港","函館","旭川","仙台","盛岡","秋田","山形","福島","郡山","青森","新潟","長野","松本","金沢","富山","福井","津","四日市","那覇"];
+  var CORE = { "東京": 1, "新宿": 1, "大阪": 1, "名古屋": 1, "博多": 1, "札幌": 1, "仙台": 1, "京都": 1, "横浜": 1, "広島": 1 };
+  function termFill(root, s) {
+    var sec = root.querySelector('.sec--term[data-term="' + (window.CSS && CSS.escape ? CSS.escape(s.id) : s.id) + '"]'); if (!sec || !RG.Planner || !RG.Planner.railPath) return;
+    // 主要駅 = 全国のターミナル一覧（下の MAJOR）のうち 150km 以内で近い順に 4 つ。都市の中心駅（CORE）は少し優先
+    var cands = [], seenN = {}; seenN[s.n] = 1;
+    MAJOR.forEach(function (n) {
+      if (seenN[n]) return; var arr = RG.byName[n]; if (!arr || !arr.length) return;
+      var t = arr.slice().sort(function (a, b) { return (b.ls || []).length - (a.ls || []).length; })[0]; if (t.id === s.id) return;
+      var km = RG.hav([s.la, s.lo], [t.la, t.lo]); if (km < 1.5 || km > 150) return;
+      seenN[n] = 1; cands.push({ t: t, km: km, key: km - (CORE[n] ? 6 : 0) });
+    });
+    cands.sort(function (a, b) { return a.key - b.key; }); cands = cands.slice(0, 4);
+    if (!cands.length) return;
+    var when = (RG.Trip && RG.Trip.when) || new Date(), rows = [];
+    cands.forEach(function (x) {
+      var rp = null; try { rp = RG.Planner.railPath([s.la, s.lo], [x.t.la, x.t.lo], when); } catch (e) { rp = null; }
+      if (!rp || !rp.minutes || rp.minutes > 150 || rp.transfers >= 4) return;          // 遠回りすぎるものは出さない
+      var L = rp.segs && rp.segs.length ? rp.segs[0].line : "", m = L && RG.LINEMETA && (RG.LINEMETA[L] || RG.LINEMETA[L.replace(/^(西武|東武|京王|小田急|東急|京成|京急|相鉄|近鉄|阪急|阪神|南海|京阪|名鉄)鉄道/, "$1")]), k = (m && m.k) || "", col = (m && m.conf !== "なし" && m.c) || RG.lineColor[L] || "#2d3135";
+      var via = rp.segs && rp.segs.length > 1 ? RG.byId[rp.segs[1].ids[0]] : null;
+      rows.push('<button class="term" type="button" data-termto="' + esc(x.t.id) + '">' +
+        '<span class="term__bd" style="--lc:' + col + '">' + (k ? esc(k) : '<span class="ms">directions_subway</span>') + "</span>" +
+        '<span class="term__nm"><b>' + esc(x.t.n) + "方面</b><small>" + esc(L ? L.replace(/^(JR|ＪＲ)(東日本|西日本|東海|北海道|四国|九州)/, "JR") : "") + (via ? "・" + esc(via.n) + "乗換" : "") + "</small></span>" +
+        '<span class="term__t"><i>約</i>' + Math.round(rp.minutes) + "<i>分</i></span>" +
+        '<span class="term__ft"><span class="term__x' + (rp.transfers ? "" : " term__x--0") + '">' + (rp.transfers ? "乗換 " + rp.transfers + "回" : "直通・乗換0回") + "</span>" + (rp.yen ? '<span class="term__y">IC ' + Math.round(rp.yen).toLocaleString("ja-JP") + "円</span>" : "") + "</span></button>");
+    });
+    if (!rows.length) return;
+    sec.querySelector(".term__l").innerHTML = rows.join("");
+    sec.hidden = false;
+    $$("[data-termto]", sec).forEach(function (b) {
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        RG.setOrigin([s.la, s.lo], s.n + "駅", s.id);                  // この駅を出発地にして、行き先の比較へ
+        if (RG.showRoutes) RG.showRoutes(b.dataset.termto);
+      });
+    });
+  }
   function bind(root, id, d) {
     var st0 = RG.byId[id];
+    if (st0) setTimeout(function () { try { termFill(root, st0); } catch (e) {} }, 80);
     if (RG.focusBind) RG.focusBind(root);
     if (RG.shinkansenBind && st0) RG.shinkansenBind(root, st0.n);
     if (RG.ytBind) RG.ytBind(root);

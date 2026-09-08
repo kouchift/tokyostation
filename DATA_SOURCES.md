@@ -112,3 +112,7 @@ tools/build_standalone.py  単一ファイル版の生成
 
 ## v85
 - みんなの声（イイね！・閲覧）— 利用者が端末内（localStorage）に残すデータ。制作者が Google フォーム／公開シート CSV を用意したときだけ、投稿・イイね！・閲覧（1 端末 1 日 1 回）が制作者のシートに送られ、みんなで共有される。個人情報は求めず、端末ごとのランダムな番号（vid）だけを付ける。
+
+## v86
+- 書体・アイコン — Google Fonts（Plus Jakarta Sans: SIL OFL 1.1／Noto Sans JP: SIL OFL 1.1／JetBrains Mono: SIL OFL 1.1／Material Symbols Outlined: Apache License 2.0）。端末から fonts.googleapis.com・fonts.gstatic.com へ直接取得する（Google のプライバシーポリシーに従う）。
+- 見た目の参考 — 本人が Google AI Studio で作った「Tokyo Station Wayfinding」（Station Map／Station Detail）。色・角丸・並びを参考にし、コード・画像は使っていない。

@@ -100,7 +100,7 @@ RG.addSpotToPlan = function (p, fee, note) {
 };
 RG.refreshPlanBadge = function () {
   var b = $("#btn-plan"); if (!b) return;
-  b.textContent = "🧳" + (P.items.length ? " " + P.items.length : "");
+  b.innerHTML = '<span class="ms">luggage</span>' + (P.items.length ? '<b class="hdr__cnt">' + P.items.length + "</b>" : "");   // v86: アイコン＋件数バッジ
   b.classList.toggle("has", P.items.length > 0);
 };
 

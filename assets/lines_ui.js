@@ -179,13 +179,13 @@ var Rail = (function () {
     box.innerHTML =
       '<div class="lr__bar">' +
         '<span class="lr__tabs">' +
-          '<button class="lr__tab" data-tab="line" type="button" aria-pressed="true">🚉 路線</button>' +
-          '<button class="lr__tab" data-tab="poi" type="button" aria-pressed="false">📍 スポット</button>' +
-          '<button class="lr__tab" data-tab="buzz" type="button" aria-pressed="false">🔥 話題の場所</button>' +
+          '<button class="lr__tab" data-tab="line" type="button" aria-pressed="true"><span class="ms">directions_subway</span><span class="lr__tl">路線</span></button>' +
+          '<button class="lr__tab" data-tab="poi" type="button" aria-pressed="false"><span class="ms">place</span><span class="lr__tl">スポット</span></button>' +
+          '<button class="lr__tab" data-tab="buzz" type="button" aria-pressed="false"><span class="ms">local_fire_department</span><span class="lr__tl">話題</span></button>' +
         "</span>" +
-        '<button class="lr__all" type="button">✕ 解除</button>' +
+        '<button class="lr__all" type="button" title="路線・ジャンルの選択を解除"><span class="ms">close</span><span class="lr__tl">解除</span></button>' +
         '<button id="lr-toggle" class="lr__t" type="button" aria-expanded="' + (ST.railOpen ? "true" : "false") +
-        '">えらぶ ' + (ST.railOpen ? "▴" : "▾") + "</button></div>" +
+        '"><span class="ms">' + (ST.railOpen ? "close" : "tune") + '</span><span class="lr__tl">' + (ST.railOpen ? "とじる" : "えらぶ") + "</span></button></div>" +
       '<div class="lr__rows" data-pane="line">' + rows + "</div>" +
       '<div class="lr__rows" data-pane="poi" hidden>' + grow + "</div>" +
       '<div class="lr__rows lr__rows--bz" data-pane="buzz" hidden><div id="lr-buzz"></div></div>';
@@ -455,7 +455,7 @@ var Rail = (function () {
       if (!t) return;
       box.classList.toggle("open", !!ST.railOpen);
       t.setAttribute("aria-expanded", String(!!ST.railOpen));
-      t.textContent = ST.railOpen ? "とじる ▴" : "えらぶ ▾";
+      t.innerHTML = '<span class="ms">' + (ST.railOpen ? "close" : "tune") + '</span><span class="lr__tl">' + (ST.railOpen ? "とじる" : "えらぶ") + "</span>";
     }
     RG.paintRailToggle = paintToggle;
     $("#lr-toggle", box).addEventListener("click", function () {

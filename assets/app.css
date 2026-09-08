@@ -3152,3 +3152,367 @@ body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
 .vc__ft{display:flex;align-items:center;gap:8px;font-size:11px;margin-top:2px}.vc__ft .mm__u{font-size:11.5px}.vc__out{font-size:10.5px;color:#a66}
 .vcu__hd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:15px;margin-bottom:4px}.vcu__me{font-size:10.5px;background:#E8F3FF;color:#1A6FB5;border-radius:999px;padding:1px 8px}.vcu__n{font-size:12px;color:#666;margin-left:auto}
 @media (pointer:coarse){.mm__like{min-height:34px;padding:4px 14px;font-size:13px}.mm__like--s{min-height:30px;padding:2px 12px;font-size:12px}.mm__u{min-height:0;font-size:12px}.vc__pl{min-height:0}.mm__lst{min-height:30px}}
+
+/* =========================================================================
+   v86: デザイン刷新 — «Tokyo Station Wayfinding» の見た目に合わせる
+   ・書体: Plus Jakarta Sans ＋ Noto Sans JP、数字・記号は JetBrains Mono、アイコンは Material Symbols
+   ・色: 地 #f7f9ff／面 #fff／控えめな面 #f1f4f9・#ebeef4／線 #e0e3e8／文字 #181c20・#404751／青 #0061a1・#007ac9／緑 #006c4b・#6bfcc0／琥珀 #8f4c00
+   ・かたち: 丸い pill（999px）、カード 12〜16px、シート上端 24〜28px、影は薄く、白いガラス（半透明＋ぼかし）
+   ・このファイルは app.css の «後» に読む（同じセレクタは後勝ち）。機能・DOM は変えず、見た目だけを上書きする
+   ========================================================================= */
+:root{
+  --bg:#f7f9ff; --surface:#ffffff; --control:#f1f4f9; --control2:#ebeef4; --control3:#e5e8ee;
+  --text:#181c20; --label:#404751; --muted:#707882; --link:#0061a1; --highlight:#0061a1;
+  --grid:#e0e3e8; --border:#c0c7d3; --gray600:#404751; --gray800:#2d3135;
+  --lb50:#f1f4f9; --lb200:#d1e4ff; --lb400:#9dcaff; --lb600:#007ac9; --lb900:#0061a1;
+  --ok:#006c4b; --okbg:#6bfcc0; --amber:#8f4c00; --amberbg:#ffdcc3; --err:#ba1a1a;
+  --font:"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px; --header-h:64px; --chips-h:64px;
+  --sh-xs:0 1px 2px rgba(24,28,32,.06); --sh-sm:0 2px 8px rgba(24,28,32,.08); --sh-md:0 6px 20px rgba(24,28,32,.10); --sh-lg:0 -8px 24px rgba(24,28,32,.08);
+  --glass:rgba(255,255,255,.9);
+}
+@media (max-width:720px){ :root{--header-h:60px;--chips-h:62px} }
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);letter-spacing:.005em}
+b,strong{font-weight:700}
+:focus-visible{outline:2px solid var(--lb600);outline-offset:2px;border-radius:8px}
+
+/* Material Symbols（ligature 名で描く。フォントが届くまでは中身の文字を隠す） */
+.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;
+  font-feature-settings:"liga";-webkit-font-feature-settings:"liga";-webkit-font-smoothing:antialiased;font-variation-settings:"FILL" 0,"wght" 500,"GRAD" 0,"opsz" 24;vertical-align:middle;flex:0 0 auto}
+.ms--fill{font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24}
+html:not(.fonts-ok) .ms{visibility:hidden}
+
+/* ---------- ヘッダー：丸いロゴ・太い題字・pill の検索・丸いアイコンボタン・黒い丸のアバター（設定） ---------- */
+.hdr{background:rgba(247,249,255,.88);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-bottom:0;box-shadow:0 1px 8px rgba(0,0,0,.04);gap:8px;padding:0 12px 0 14px;z-index:30}
+.app>.hdr{height:var(--header-h)}
+.hdr__mark{gap:9px;font-size:17px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
+.hdr__mark i{width:34px;height:34px;border-radius:50%;background:var(--lb600);color:#fff;font-family:var(--mono);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-xs);letter-spacing:0}
+.hdr__mark small{font-size:10px;color:var(--label);font-weight:600;letter-spacing:.02em;margin-top:1px}
+.hdr__search{flex:1 1 auto;min-width:0;max-width:640px}
+.hdr__search input{height:42px;padding:0 14px 0 40px;border:1px solid transparent;border-radius:999px;background:var(--control);font-size:13.5px;font-weight:500;color:var(--text);box-shadow:inset 0 1px 2px rgba(24,28,32,.05);font-family:var(--font)}
+.hdr__search input::placeholder{color:var(--muted)}
+.hdr__search input:focus{background:var(--control2);border-color:rgba(0,122,201,.4);outline:none;box-shadow:none}
+.hdr__search .ic{left:13px;top:11px;font-size:21px;color:var(--lb900)}
+.sug{top:48px;border:1px solid var(--grid);border-radius:16px;box-shadow:var(--sh-md);max-height:52vh}
+.sug button{padding:10px 14px;border-bottom:1px solid var(--control)}
+.sug .n{font-weight:700}
+.hdr__btn{height:38px;border:1px solid var(--grid);border-radius:999px;background:#fff;font-weight:700;font-size:12.5px;padding:0 12px 0 8px;display:inline-flex;align-items:center;gap:4px;box-shadow:var(--sh-xs)}
+.hdr__btn .ms{font-size:17px;color:var(--lb900)}
+.hdr__btn:hover{background:var(--control);border-color:var(--grid)}
+.hdr__ic{width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--label);display:inline-flex;align-items:center;justify-content:center;padding:0;position:relative;flex:0 0 auto}
+.hdr__ic .ms{font-size:23px}
+.hdr__ic:hover{background:var(--control2);color:var(--text)}
+.hdr__ic--avatar{width:36px;height:36px;background:var(--text);color:#fff;box-shadow:var(--sh-xs);margin-left:2px}
+.hdr__ic--avatar .ms{font-size:20px}
+.hdr__ic--avatar:hover{background:#2d3135;color:#fff}
+.hdr__btn--plan.has{color:var(--lb900)}
+.hdr__cnt{position:absolute;top:2px;right:0;min-width:17px;height:17px;border-radius:999px;background:var(--lb900);color:#fff;font-family:var(--mono);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 0 2px var(--bg)}
+@media (max-width:720px){
+  .hdr{padding:0 8px 0 10px;gap:4px}
+  .hdr__mark span{display:none}
+  .hdr__btn--hub{display:none}
+  .hdr__search{max-width:none}
+  .hdr__search input{height:40px;font-size:16px !important;padding-left:38px}
+  .hdr__ic{width:38px;height:38px}
+}
+
+/* ---------- 上の操作列（出発地・日時・条件）：白いガラスの帯に pill を並べる ---------- */
+.topbar{background:rgba(247,249,255,.92);border-bottom:1px solid rgba(224,227,232,.7)}
+.tripbar{background:transparent;border:0;gap:6px;padding:0 12px}
+.app>.topbar{height:var(--tripbar-h,50px)}
+.tb__btn{height:34px;padding:0 13px;border:0;border-radius:999px;background:var(--control2);color:var(--text);font-weight:700;font-size:12px;box-shadow:none}
+.tb__btn:hover{background:var(--grid);border:0}
+.tb__btn--go{background:var(--lb900);color:#fff}
+.tb__btn--go:hover{background:var(--lb600)}
+.tb__btn--night{background:#181c20;color:#ffd86b}
+.tb__btn--warn{background:var(--amberbg);color:var(--amber)}
+.tb__from{font-size:11.5px;color:var(--muted);font-weight:500}
+.tb__from.on{color:var(--lb900);font-weight:700}
+.tb__dt{height:34px;border:0;border-radius:999px;background:var(--control2);padding:0 12px;font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)}
+.aggr{display:inline-flex;gap:0;background:var(--control2);border-radius:999px;padding:3px}
+.aggr__b{height:28px;border:0;border-radius:999px;background:transparent;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--label)}
+.aggr__b[aria-pressed=true]{background:#fff;color:var(--lb900);box-shadow:var(--sh-xs)}
+body.night .topbar{background:#181c20}
+body.night .tripbar{background:transparent}
+body.night .tb__btn{background:#2d3135;color:#f7f9ff}
+body.night .tb__from{color:#c7d0e6}
+body.night .aggr{background:#2d3135}
+body.night .aggr__b{color:#c7d0e6}
+body.night .aggr__b[aria-pressed=true]{background:#f7f9ff;color:#181c20}
+body.night .tb__dt{background:#2d3135;color:#f7f9ff}
+.weekbar{background:transparent}
+.tb__status{border-radius:999px;font-weight:600;box-shadow:var(--sh-sm);border:1px solid var(--grid);background:#fff}
+.tb__status.ok{background:rgba(107,252,192,.35);border-color:rgba(0,108,75,.25);color:#002114}
+.tb__status.warn{background:var(--amberbg);border-color:rgba(143,76,0,.25);color:var(--amber)}
+.tb__status.night{background:#181c20;border-color:#2d3135;color:#ffd86b}
+
+/* ---------- 「スポットをさがす」の帯 ---------- */
+.groupbar{background:rgba(247,249,255,.92);border-bottom:1px solid rgba(224,227,232,.7)}
+.gb__open{border:1px solid var(--grid);border-radius:999px;background:#fff;font-weight:700;font-size:12.5px;box-shadow:var(--sh-xs);color:var(--text)}
+.gb__open:hover{background:var(--control)}
+.gb__cnt{background:var(--lb900);color:#fff;border-radius:999px;font-family:var(--mono);font-size:10.5px;font-weight:800;padding:1px 6px;margin-left:4px}
+.gb__g{border:0;border-radius:12px;background:#fff;box-shadow:var(--sh-xs);font-weight:700}
+.gb__g.on{background:var(--text);color:#fff}
+.gb__clr{border:0;border-radius:999px;background:var(--control2);font-weight:700}
+
+/* ---------- 地図の上の «触れる» もの：白いガラスの pill と縦のドック ---------- */
+.mapwrap{background:#f1f4f9;background-image:linear-gradient(0deg,rgba(192,199,211,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(192,199,211,.18) 1px,transparent 1px);background-size:32px 32px}
+.hint{left:12px;top:12px;background:var(--glass);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:0;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;color:var(--label);box-shadow:var(--sh-xs)}
+.hint #zlevel{font-family:var(--mono);color:var(--lb900);font-weight:800;margin-left:4px}
+.quickbar.mini{padding:12px}
+.quickbar.mini .qb__open{border:0;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:var(--sh-xs);font-weight:700;font-size:12px;color:var(--text);height:32px;padding:0 12px}
+.quickbar.mini .qb__open--h{background:var(--lb900);color:#fff}
+.quickbar:not(.mini){background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:0;border-bottom:1px solid var(--grid);box-shadow:var(--sh-sm)}
+.qb__c{border:0;border-radius:999px;background:var(--control2);font-weight:700;font-size:12px;color:var(--text);height:32px;padding:0 12px}
+.qb__c[aria-pressed=true]{background:var(--text);color:#fff}
+.qb__c--x{background:transparent}
+.zoombar{right:12px;bottom:14px;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.95);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:var(--sh-md);border:1px solid rgba(224,227,232,.8);z-index:14}
+.zoombar button{width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--text);font-family:var(--mono);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:none;padding:0}
+.zoombar button:hover{background:var(--control2)}
+.zoombar button .ms{font-size:21px}
+.zoombar button.sm{font-size:14px}
+.zoombar button.zb--home{background:var(--lb200);color:#001d35}
+.zoombar button.zb--home:hover{filter:brightness(.96)}
+.zoombar button.on{background:var(--text);color:#fff}
+.zoombar button + button{border-top:0}
+.poicount{left:12px;bottom:14px;background:var(--glass);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:0;border-radius:999px;padding:5px 12px;font-family:var(--mono);font-weight:700;font-size:11px;color:var(--label);box-shadow:var(--sh-xs)}
+.attrib{font-size:9.5px;color:var(--muted);background:rgba(247,249,255,.7);border-radius:6px;padding:1px 5px}
+.wxchip{background:var(--glass);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:0;box-shadow:var(--sh-xs);padding:5px 12px 5px 9px;font-weight:700;font-size:11.5px}
+.wxchip__t{font-family:var(--mono);font-weight:800;font-size:14px}
+.wxchip--night{background:rgba(24,28,32,.88)}
+.airoff{border:0;border-radius:999px;background:var(--text);color:#fff;font-weight:700;box-shadow:var(--sh-md)}
+.heatlegend,.bublegend{border:1px solid var(--grid);border-radius:16px;box-shadow:var(--sh-md)}
+.zipchip{border-radius:999px;box-shadow:var(--sh-md);border-color:var(--grid)}
+.zipchip__z{font-family:var(--mono);color:var(--lb900)}
+.zipchip__c{border-radius:999px;border-color:var(--lb900);color:var(--lb900);background:var(--lb200)}
+.mutip{border-radius:999px;font-weight:700}
+.linepop{border-radius:12px;box-shadow:var(--sh-md)}
+.poipop{border-radius:16px;box-shadow:var(--sh-md);border:1px solid var(--grid)}
+@media (max-width:720px){ .zoombar{bottom:16px} .hint{max-width:calc(100% - 150px)} }
+
+/* ---------- 下の帯：シート風の «路線／スポット／話題» と絞り込み pill ---------- */
+.linerail{background:rgba(247,249,255,.94);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid rgba(224,227,232,.6);box-shadow:0 -2px 12px rgba(0,0,0,.05);z-index:22}
+.app>.linerail{height:var(--chips-h)}
+.lr__bar{height:100%;display:flex;align-items:center;gap:6px;padding:0 10px}
+.lr__tabs{border:0;border-radius:0;overflow:visible;display:flex;flex:1 1 auto;justify-content:space-around;gap:0}
+.lr__tab{height:52px;min-width:64px;border:0;border-right:0;background:transparent;border-radius:14px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 10px;font-size:11px;font-weight:700;color:var(--label)}
+.lr__tab .ms{font-size:24px}
+.lr__tab[aria-pressed=true]{background:transparent;color:var(--lb900);font-weight:800}
+.lr__tab[aria-pressed=true] .ms{font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24}
+.lr__tab:hover{color:var(--text)}
+.lr__all,.lr__t{height:38px;border:0;border-radius:999px;background:var(--control2);color:var(--text);font-weight:700;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;padding:0 12px 0 9px;flex:0 0 auto}
+.lr__all .ms,.lr__t .ms{font-size:18px}
+.lr__t[aria-expanded=true]{background:var(--text);color:#fff}
+.lr__all:hover,.lr__t:hover{filter:brightness(.96)}
+.linerail.open .lr__bar{background:transparent}
+.linerail .lr__rows{background:#fff;border-top:0;border-bottom:0;border-radius:24px 24px 0 0;box-shadow:0 -8px 24px rgba(24,28,32,.10);padding:12px 0 10px}
+.linerail .lr__rows::before{content:"";display:block;width:40px;height:5px;border-radius:999px;background:var(--grid);margin:0 auto 8px}
+.lr__row{padding:4px 12px;gap:6px}
+.lr__g{font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.lr__i{border-radius:12px;background:var(--control);border:0}
+.lr__i[aria-pressed=true]{background:var(--text)}
+.lr__c{border:0;border-radius:999px;background:var(--control2);font-weight:700;color:var(--text)}
+.lr__c--p{background:var(--lb200);color:#001d35}
+.lr__sel{border:1px solid var(--grid);border-radius:10px;background:#fff;font-weight:600;font-family:var(--font)}
+.lr__hint{color:var(--muted);font-size:11px}
+.lr__ctl{color:var(--label)}
+.lr__ctl b{color:var(--text)}
+.chips{background:rgba(247,249,255,.94);border-top:1px solid rgba(224,227,232,.6);gap:6px;padding:0 12px;height:48px}
+.chip{height:34px;border:0;border-radius:999px;background:var(--control2);font-weight:700;font-size:12px;color:var(--text);box-shadow:none}
+.chip[aria-pressed=true]{background:var(--text);color:#fff}
+.chip.legend{border:1px dashed var(--border);background:transparent;color:var(--muted)}
+.chip:hover{filter:brightness(.96)}
+@media (max-width:720px){
+  .app>.chips{order:8;height:46px}
+  .app>.linerail{order:9}
+  .app>#poipop{order:7}
+  .app>.mapwrap{order:5}
+  .lr__bar{padding:0 6px}
+  .lr__tab{min-width:58px;padding:0 6px}
+  .lr__all .lr__tl,.lr__t .lr__tl{display:none}
+  .lr__all,.lr__t{width:40px;height:40px;border-radius:50%;padding:0;justify-content:center}
+}
+
+/* ---------- 駅カード（シート）：上端は 28px、駅の記号バッジ、太い駅名、pill のボタン ---------- */
+.card{border:0;box-shadow:var(--sh-md)}
+.sheet{border-radius:28px 28px 0 0;box-shadow:0 -8px 32px rgba(24,28,32,.12);background:var(--bg)}
+.sheet__grab{padding:10px 0 2px}
+.sheet__grab i{width:40px;height:5px;border-radius:999px;background:rgba(192,199,211,.7)}
+.hovercard{border-radius:24px;box-shadow:var(--sh-md);background:var(--bg)}
+.plate{padding:8px 16px 10px}
+.plate__top{margin-bottom:6px}
+.plate__tag{border:0;border-radius:999px;background:var(--control3);color:var(--label);font-weight:700;font-size:10.5px;padding:3px 9px}
+.plate__close{width:34px;height:34px;border-radius:50%;background:var(--control2);color:var(--text);font-size:18px;display:inline-flex;align-items:center;justify-content:center}
+.plate__close:hover{background:var(--grid)}
+.star{border:0;background:var(--control2);border-radius:50%;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+.star.on{background:var(--amberbg)}
+.plate__name{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.plate__kana{font-size:12px;color:var(--label);letter-spacing:.14em;font-weight:600;margin-top:2px}
+.plate__hl{color:var(--label)}
+.lchips{gap:6px;margin-top:8px}
+.lchip{border-radius:999px;font-weight:700;box-shadow:var(--sh-xs)}
+.hops{margin-top:8px}
+.hops__l{font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.06em}
+.hop{border:0;border-radius:999px;background:var(--control2);font-weight:700;font-size:12px}
+.hop:hover{background:var(--grid)}
+.acts{gap:8px;margin-top:12px}
+.act{height:40px;border:0;border-radius:999px;background:var(--control3);font-weight:700;font-size:13px;box-shadow:none;color:var(--text)}
+.act:hover{background:var(--grid);border:0}
+.act--from{background:var(--lb900);color:#fff}
+.act--from:hover{background:var(--lb600);color:#fff}
+.act--to{background:var(--text);color:#fff}
+.act--to:hover{background:#2d3135}
+.act--card{background:var(--control3)}
+.sec{padding:12px 16px;border-top:0}
+.sec h3{font-size:16px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;margin:2px 0 8px}
+.sec h3::before{content:"";width:5px;height:18px;border-radius:999px;background:var(--lb900);flex:0 0 auto}
+.sec--memo h3::before,.sec--memo-spot h3::before{background:var(--ok)}
+.sec--kids h3::before{background:var(--amber)}
+.sec h3 small{font-weight:600;color:var(--label)}
+.exgrid{gap:8px}
+.exrow{border:1px solid rgba(224,227,232,.6);border-radius:14px;background:#fff;box-shadow:var(--sh-xs);padding:10px 12px}
+.exrow b{font-family:var(--mono);font-weight:800}
+.lnks{gap:8px}
+.lnk{border:0;border-radius:999px;background:var(--control3);font-weight:700;font-size:12.5px;color:var(--text);padding:8px 14px 8px 10px}
+.lnk:hover{background:var(--grid);border:0}
+.lnk span{font-size:16px}
+.mm__hl{border-radius:999px;background:rgba(107,252,192,.28);color:#002114;padding:5px 12px;font-weight:600;display:inline-block}
+.mm__hl-b{color:var(--ok)}
+.mm__hl--zero{background:var(--control2);color:var(--label)}
+.mm__open{border:0;border-radius:999px;background:var(--lb900);color:#fff;font-weight:700;box-shadow:var(--sh-sm)}
+.mm__open:hover{background:var(--lb600)}
+.mm__b{border:0;border-radius:10px;background:var(--control)}
+.mm__b[aria-pressed=true]{background:var(--text);color:#fff}
+.mm__go{border-radius:999px;font-weight:700}
+.mm__cheer{border-radius:999px}
+.mm__lst{border:0;background:var(--control2)}
+.mm__cap{background:var(--control);border-radius:10px;padding:6px 10px}
+.spotcard__ph{border-radius:18px}
+.spotcard__i{border-radius:18px}
+.spotcard__st{border-radius:14px;background:var(--control);padding:8px 12px}
+.spotcard__g{border-radius:999px;background:var(--control2);font-weight:700;padding:2px 9px}
+.handy{border-radius:14px;background:var(--control)}
+.handy__i{border-radius:999px;background:#fff;font-weight:700}
+.fromhere{border-radius:14px;background:var(--lb200);color:#001d35}
+.fromhere__b{border:0;border-radius:999px;background:var(--lb900);color:#fff;font-weight:700}
+.gbadge{border-radius:12px}
+
+/* ---------- 経路の比較（opt）：白いカード・太い等幅の分・pill のラベル ---------- */
+.opt{border:1px solid rgba(224,227,232,.7);border-left:1px solid rgba(224,227,232,.7);border-radius:16px;background:#fff;box-shadow:var(--sh-xs);padding:12px 14px;position:relative;overflow:hidden}
+.opt::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:5px;border-radius:0 6px 6px 0;background:var(--c,#0061a1)}
+.opt.hi{background:var(--bg);border-color:rgba(0,122,201,.35)}
+.opt__t{font-family:var(--mono);font-weight:800;font-size:22px;letter-spacing:-.02em;color:var(--lb900)}
+.opt__t i{font-family:var(--font);font-weight:700;font-size:11px;color:var(--label)}
+.opt__y{font-family:var(--mono);font-weight:700}
+.opt__bar{border-radius:999px;background:var(--control2)}
+.opt__b{border:0;border-radius:999px;background:var(--control3);font-weight:700}
+.opt__b--nav{background:var(--lb900);color:#fff}
+.opt--stop{opacity:.55}
+.optin{border-radius:12px;background:var(--control)}
+.nightbar{border-radius:16px}
+
+/* ---------- モーダル：上端 24px（スマホは下から）、ヘッダーは薄い地、丸い閉じるボタン ---------- */
+.modal{background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.modal__box{border-radius:24px 24px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.25);background:#fff;max-height:92dvh}
+@media (min-width:640px){ .modal__box{border-radius:20px;max-height:90dvh} }
+.modal__hd{background:var(--bg);border-bottom:1px solid var(--grid);padding:14px 18px}
+.modal__hd b{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.modal__x{width:36px;height:36px;border-radius:50%;background:transparent;color:var(--muted);font-size:20px;display:inline-flex;align-items:center;justify-content:center}
+.modal__x:hover{background:var(--grid);color:var(--text)}
+.modal__bd{padding:14px 18px 24px}
+.set__sec{border-top:1px solid var(--grid)}
+.set__sec h4{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;margin:0 0 6px}
+.set__sec h4::before{content:"";width:5px;height:16px;border-radius:999px;background:var(--lb900)}
+.set__d,.deep__d{color:var(--label);font-size:12.5px;line-height:1.6}
+.set__b{border:0;border-radius:999px;background:var(--lb900);color:#fff;font-weight:700;height:36px;padding:0 16px;box-shadow:var(--sh-xs)}
+.set__b:hover{background:var(--lb600)}
+.set__b2{border:0;border-radius:999px;background:var(--control3);font-weight:700;height:34px}
+.set__b2:hover{background:var(--grid);border:0}
+.set__sw{border-radius:10px}
+.set__n{border-radius:999px;background:var(--control2);color:var(--label);font-family:var(--mono);font-weight:700;padding:1px 8px;font-size:10.5px}
+.set__note{border-radius:12px;background:var(--control)}
+.set__ok{border-radius:999px;background:rgba(107,252,192,.35);color:#002114;display:inline-block;padding:4px 10px}
+.set__log{color:var(--label)}
+.set__add input,.mm__in,.mm__ta,.rc__ta,.lg__rev,.pl__memo,input[type=text],input[type=search],input[type=password],textarea,select{border:1px solid var(--grid);border-radius:12px;font-family:var(--font)}
+input[type=text]:focus,input[type=search]:focus,input[type=password]:focus,textarea:focus,select:focus{border-color:var(--lb600);outline:none}
+.sh__b{border:1px solid var(--grid);border-radius:999px;font-weight:700;box-shadow:var(--sh-xs)}
+.sh__b--main{background:var(--lb900);border-color:var(--lb900);color:#fff}
+.rc__a{border-radius:999px;font-weight:700}
+.rc__a--main{background:var(--lb900);border-color:var(--lb900)}
+.rc__c{border-radius:999px}
+.rc__make{border-radius:999px;font-weight:700;background:var(--lb900)}
+.rc__pre{border-radius:999px}
+.sns{font-weight:700}
+.snsp__hint{color:var(--label)}
+.pv__exp{border-radius:14px}
+.ytl{border-radius:14px}
+.vc{border-radius:16px;border:1px solid rgba(224,227,232,.7);box-shadow:var(--sh-xs)}
+.vc__pref{background:var(--lb200);color:#001d35;font-weight:700}
+.vcl__tab{border:0;background:var(--control3);border-radius:999px;font-weight:700}
+.vcl__tab[aria-pressed=true]{background:var(--text);color:#fff}
+.vcl__sel{border:1px solid var(--grid);border-radius:999px}
+.mm__like{border:1px solid rgba(194,24,91,.35);border-radius:999px;font-family:var(--mono)}
+.mm__like.on{border-color:#c2185b}
+.qkbar{border-radius:0 0 16px 16px}
+.wxm__g div{border-radius:12px;background:var(--control)}
+.wxm__t{font-family:var(--mono);font-weight:800}
+.wxh{border-radius:12px}
+.wxh__d{font-family:var(--mono)}
+.tsx{border-radius:999px;font-weight:700}
+.booterr{border-radius:16px}
+.loadbar{background:rgba(24,28,32,.96)}
+.navbar{background:#181c20}
+.pl__memo{border-radius:12px}
+.pl__n i{color:var(--muted)}
+.stars b{font-family:var(--mono)}
+.lbadge{font-family:var(--mono);font-weight:800;border-radius:6px}
+.lbadge--b{border-radius:8px}
+.mest{border-radius:14px}
+.mest.on{border-color:var(--lb900)}
+/* 数字は等幅で */
+.opt__y,.wxchip__t,.exrow b,.sp__v,.rk__sc,.plate__no,.hdr__cnt,.gb__cnt,.mm__like b{font-variant-numeric:tabular-nums}
+/* ボタンの押し心地 */
+button:active{transform:scale(.97)}
+.node .st-lbl{font-family:var(--font)}
+/* v86 追補: 駅名のまとまり・上の操作列の高さ・PC の下タブ */
+:root{--tripbar-h:50px}
+@media (max-width:720px){ :root{--tripbar-h:50px} }
+.app>.topbar{height:var(--tripbar-h)}
+.tripbar{height:100%}
+.hint{top:56px}
+@media (max-width:720px){ .hint{top:54px;left:12px} }
+.plate__id{display:flex;align-items:center;gap:12px;margin:4px 0 2px}
+.plate__code{width:54px;height:54px;border-radius:14px;background:var(--lc,#0061a1);color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:var(--sh-xs)}
+.plate__code b{font-family:var(--mono);font-weight:800;font-size:20px;letter-spacing:.04em}
+.plate__code .ms{font-size:26px;color:#fff}
+.plate__names{min-width:0;flex:1 1 auto}
+.plate__tags{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.ptag{border-radius:999px;background:var(--control3);color:var(--label);font-size:11px;font-weight:700;padding:2px 9px}
+.plate__line{font-size:12px;color:var(--label);font-weight:600}
+.plate__wx{display:flex;flex-direction:column;align-items:center;gap:0;flex:0 0 auto;background:var(--control);border-radius:14px;padding:6px 10px;min-width:64px}
+.plate__wxi{font-size:20px;line-height:1.1}
+.plate__wx b{font-family:var(--mono);font-size:13px;font-weight:800}
+.plate__wx small{font-size:9.5px;color:var(--label);font-weight:600}
+@media (min-width:721px){
+  .lr__tabs{justify-content:flex-start;gap:4px;flex:1 1 auto}
+  .lr__tab{flex-direction:row;height:40px;gap:6px;padding:0 14px 0 10px;border-radius:999px;font-size:13px;min-width:0}
+  .lr__tab .ms{font-size:20px}
+  .lr__tab[aria-pressed=true]{background:var(--lb200);color:#001d35}
+}
+/* v86: 主要駅へのアクセス（駅カード） */
+.sec--term .term__l{display:grid;gap:8px}
+.term{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"bd nm t" "ft ft ft";align-items:center;gap:6px 10px;width:100%;text-align:left;border:1px solid rgba(224,227,232,.7);border-radius:16px;background:#fff;box-shadow:var(--sh-xs);padding:12px 14px;font:inherit;color:var(--text)}
+.term:hover{box-shadow:var(--sh-sm);border-color:rgba(0,122,201,.35)}
+.term__bd{grid-area:bd;min-width:44px;height:30px;padding:0 8px;border-radius:8px;background:var(--lc,#2d3135);color:#fff;font-family:var(--mono);font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;letter-spacing:.06em}
+.term__bd .ms{font-size:18px;color:#fff}
+.term__nm{grid-area:nm;min-width:0;display:flex;flex-direction:column}
+.term__nm b{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.term__nm small{font-size:11.5px;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term__t{grid-area:t;font-family:var(--mono);font-weight:800;font-size:24px;letter-spacing:-.02em;color:var(--lb900);white-space:nowrap}
+.term__t i{font-family:var(--font);font-style:normal;font-weight:700;font-size:11px;color:var(--lb900);margin:0 2px}
+.term__ft{grid-area:ft;display:flex;align-items:center;gap:8px;margin-top:2px}
+.term__x{border-radius:999px;background:var(--control3);font-size:11px;font-weight:700;padding:3px 10px}
+.term__x--0{background:var(--lb200);color:#001d35}
+.term__y{margin-left:auto;font-family:var(--mono);font-weight:700;font-size:13px}
