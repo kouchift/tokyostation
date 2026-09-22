@@ -3555,7 +3555,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=89) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=100) format('woff2')}
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -3674,3 +3674,207 @@ body:not(.route-active) .tripbar{opacity:.72}
 body.route-active .tripbar{max-height:none;opacity:1}
 body.route-active .heroSearch{opacity:.92}
 body.route-active .heroSearch:hover,body.route-active .heroSearch:focus-within{opacity:1}
+
+/* =========================================================================
+   v90: 東京駅モード（駅カードの最上段・モーダル・ヒーローの行）
+   ========================================================================= */
+.sec--tokyo{border:2px solid var(--lb600,#0061a1);border-radius:16px;padding:12px 12px 10px;background:linear-gradient(180deg,#f3f8ff,#fff);margin-bottom:12px}
+.tk__top{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}.tk__top b{font-size:15px}.tk__top em{font-style:normal;font-size:11px;color:var(--label)}
+.tk__ride{display:flex;flex-wrap:wrap;gap:6px}
+.tk__pill{border:1px solid var(--grid);border-radius:999px;background:#fff;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px}
+.tk__pill small{font-weight:600;color:var(--label);font-size:11px}
+.tk__pill--sk{background:#1e50a2;color:#fff;border-color:#1e50a2}.tk__pill--sk small{color:rgba(255,255,255,.85)}
+.tk__lines{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.tk__ln{font-size:11px;background:var(--control2);border-radius:999px;padding:3px 8px}
+.tk__sides{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.tk__side{display:block;text-align:left;border:1px solid var(--grid);border-radius:14px;background:#fff;padding:10px 11px;font:inherit;cursor:pointer;min-height:44px;color:var(--text)}
+.tk__side:hover{background:var(--lb50)}
+.tk__side b{display:block;font-size:13.5px;margin-bottom:3px}.tk__side span{display:block;font-size:11px;color:var(--label);line-height:1.5}
+.tk__side .tk__ex{color:var(--text)}
+.tk__side--m{border-left:4px solid #8b1a1a}.tk__side--y{border-left:4px solid #b8860b}
+.tk__quick{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:10px}.tk__quick>span{font-size:11px;color:var(--label)}
+.tk__q{border:1px solid var(--grid);border-radius:999px;background:#fff;padding:5px 10px;font:inherit;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;min-height:34px}
+.tk__q:hover{background:var(--lb50)}
+.tk__src{font-size:10px;color:var(--label);margin:8px 0 0}
+.tk__lead{font-size:13px;line-height:1.6;margin:0 0 8px}
+.tk__h{font-size:11.5px;font-weight:800;color:var(--label);margin:10px 0 4px;letter-spacing:.04em}
+.tk__list{display:flex;flex-direction:column;gap:4px}
+.tk__row{display:block;width:100%;text-align:left;border:1px solid var(--grid);border-radius:12px;background:#fff;padding:8px 11px;font:inherit;cursor:pointer;color:var(--text);min-height:44px}
+.tk__row:hover{background:var(--lb50)}.tk__row b{display:block;font-size:13px}.tk__row small{display:block;font-size:11px;color:var(--label);line-height:1.5}
+.tk__note{font-size:12px;line-height:1.6;background:#fff7e0;border:1px solid #f1dd9c;border-radius:12px;padding:8px 11px;margin:8px 0}
+.tk--modal{border:0;padding:0;background:transparent;margin:0}
+@media (max-width:480px){ .tk__sides{grid-template-columns:1fr} }
+/* ヒーロー: 東京駅の行（PC はチップ、スマホは 1 ボタン） */
+.heroSearch__tokyo{display:flex;align-items:center;gap:5px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.heroSearch__tokyo::-webkit-scrollbar{display:none}
+.heroSearch__tl{flex:0 0 auto;font-size:9.5px;color:var(--label)}
+.heroSearch__tchips{display:flex;gap:5px;flex:0 0 auto}
+.heroSearch__tq{flex:0 0 auto;border:1px solid var(--grid);border-radius:999px;background:#fff;padding:5px 9px;font-size:10.5px;font-family:inherit;font-weight:700;color:var(--text);cursor:pointer;min-height:0}
+.heroSearch__tq:hover{background:var(--lb50)}
+.heroSearch__tbtn{display:none;flex:0 0 auto;border:1px solid var(--lb600,#0061a1);border-radius:999px;background:#fff;padding:5px 9px;font-size:10.5px;font-family:inherit;font-weight:700;color:var(--lb900,#0061a1);cursor:pointer;min-height:0}
+@media (max-width:720px){ .heroSearch__tokyo{display:none} .heroSearch__tbtn{display:inline-block} }
+@media (pointer:coarse){ .heroSearch__tbtn{min-height:40px;padding:6px 12px} .tk__q{min-height:40px} }
+
+/* =========================================================================
+   v91: ルート結果の要約・比較軸・直前の検索
+   ========================================================================= */
+.rs{border:2px solid var(--lb600,#0061a1);border-radius:16px;background:linear-gradient(180deg,#f3f8ff,#fff);padding:12px 14px;margin:8px 0 10px}
+.rs__hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}.rs__em{font-size:22px}.rs__hd b{font-size:16px}.rs__hd i{font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:var(--lb900,#0061a1);border-radius:999px;padding:2px 8px}
+.rs__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.rs__c{background:#fff;border:1px solid var(--grid);border-radius:12px;padding:6px 8px;text-align:center}.rs__c small{display:block;font-size:10px;color:var(--label);font-weight:700}.rs__c b{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--text)}.rs__c b i{font-style:normal;font-size:11px;margin-left:1px;color:var(--label)}
+.rs__feat{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.rs__feat span{font-size:11px;font-weight:700;background:var(--control2);border-radius:999px;padding:3px 9px}
+.rs__acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.axes{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 6px;align-items:stretch}.axes::-webkit-scrollbar{display:none}
+.axes__l{flex:0 0 auto;font-size:10.5px;color:var(--label);font-weight:800;align-self:center;padding-right:2px}
+.ax{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;flex:0 0 auto;min-width:130px;text-align:left;border:1px solid var(--grid);border-radius:12px;background:#fff;padding:7px 10px;font:inherit;cursor:pointer;color:var(--text);min-height:0}
+.ax__l,.ax b,.ax small{white-space:nowrap}
+.ax:hover{background:var(--lb50)}.ax__l{display:block;font-size:10px;color:var(--label);font-weight:800}.ax b{display:block;font-size:13px;margin:2px 0 1px}.ax small{display:block;font-size:10.5px;color:var(--label)}
+.rt__share{margin-left:4px}
+.heroSearch__last{margin-top:8px}
+.heroLast{display:flex;align-items:center;gap:6px;width:100%;border:1px dashed var(--lb600,#0061a1);border-radius:10px;background:#f3f8ff;padding:6px 10px;font:inherit;cursor:pointer;color:var(--text);text-align:left;min-height:38px}
+.heroLast b{font-size:12.5px}.heroLast small{color:var(--label);font-size:10.5px}.heroLast i{margin-left:auto;font-style:normal;font-size:11px;font-weight:800;color:var(--lb900,#0061a1);white-space:nowrap}
+@media (max-width:420px){ .rs__grid{grid-template-columns:repeat(2,1fr)} .rs__c b{font-size:16px} }
+
+/* =========================================================================
+   v92: お気に入りと履歴（入口の «前回» «お気に入り» の行・☆ ボタン・一覧）
+   ========================================================================= */
+.heroSearch__fav{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.heroLast--fav b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+.heroSearch__favrow{display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.heroSearch__favrow::-webkit-scrollbar{display:none}
+.heroSearch__favl{flex:0 0 auto;font-size:9.5px;color:var(--label);font-weight:800}
+.fv{flex:0 0 auto;border:1px solid var(--grid);border-radius:999px;background:#fff;padding:5px 9px;font-size:10.5px;font-family:inherit;font-weight:700;color:var(--text);cursor:pointer;min-height:0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fv:hover{background:var(--lb50)}
+.fv--r{border-color:#d9a300;background:#fffbea}.fv--s{border-color:#c9a400;background:#fff8dc}.fv--p{border-color:#e35d6a;background:#fff0f2}
+.fv--all{border-style:dashed;color:var(--lb900,#0061a1)}
+.rt__fav{margin-left:4px;border-color:#d9a300;color:#8a6500}
+.rt__fav.on{background:#ffd54f;border-color:#c9a400;color:#5b4300}
+.fvl h4{margin:12px 0 6px;font-size:13px}
+.fvl__r{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--grid);padding:4px 0}
+.fvl__open{flex:1 1 auto;display:flex;flex-direction:column;align-items:flex-start;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:var(--text);padding:4px 2px;min-width:0}
+.fvl__open b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.fvl__open small{font-size:10.5px;color:var(--label)}
+.fvl__x{flex:0 0 auto;border:1px solid var(--grid);background:#fff;border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;color:var(--text)}
+.fvl__chips{display:flex;flex-wrap:wrap;gap:5px}
+.fvl__e{font-size:11.5px;color:var(--label);margin:2px 0 6px}
+@media (pointer:coarse){ .fv{min-height:36px;padding:6px 11px} .fvl__x{width:40px;height:40px} }
+
+/* v93: 入口から «行き方ガイド»（静的ページ）へ */
+.heroSearch__guide{float:right;font-size:10px;font-weight:800;color:var(--lb900,#0061a1);text-decoration:none;letter-spacing:0;padding:0 2px;min-height:0}
+.heroSearch__guide:hover{text-decoration:underline}
+
+/* =========================================================================
+   v94: 駅カード → アクション（名前の直下に «ここへ／ここから／どこへ？»、近くのスポット、共有）
+   ========================================================================= */
+.cardActs{display:grid;grid-template-columns:1.4fr 1fr;gap:6px;margin-top:10px}
+.cact{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"i b" "i s";column-gap:8px;align-items:center;text-align:left;min-height:48px;padding:6px 12px;border-radius:12px;border:1px solid var(--lb600,#0061a1);background:#fff;color:var(--lb900,#0061a1);font:inherit;cursor:pointer}
+.cact .ms{grid-area:i;font-size:22px}.cact b{grid-area:b;font-size:13.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cact small{grid-area:s;font-size:10px;opacity:.85;white-space:nowrap}
+.cact--p{background:var(--lb900,#0061a1);color:#fff;border-color:var(--lb900,#0061a1)}
+.cact:hover{filter:brightness(1.06)}.cact[disabled]{opacity:.55;cursor:default;filter:none}
+.cardActs__mini{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.cmini{border:1px solid var(--grid);border-radius:999px;background:#fff;padding:5px 10px;font-size:11px;font-weight:700;color:var(--text);cursor:pointer;min-height:0;font-family:inherit}
+.cmini:hover{background:var(--lb50)}
+.cardq{grid-column:1/-1;position:relative;margin-top:2px}
+.cardq__l{display:flex;align-items:center;gap:6px;border:1.5px solid var(--grid);border-radius:12px;background:#fff;padding:0 10px;min-height:40px}
+.cardq__l:focus-within{border-color:var(--lb600,#0061a1);box-shadow:0 0 0 3px rgba(0,97,161,.12)}
+.cardq__l .ms{font-size:20px;color:var(--label)}
+.cardq__in{flex:1;border:0;background:none;font:inherit;font-size:14px;min-height:38px;outline:none;color:var(--text);min-width:0}
+.cardq__in::placeholder{color:var(--label)}
+.cardq__sug{position:absolute;left:0;right:0;top:100%;z-index:6;background:#fff;border:1px solid var(--grid);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);overflow:hidden;max-height:264px;overflow-y:auto}
+.sec--near .near__l{display:flex;flex-wrap:wrap;gap:6px}
+.nsp{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(224,227,232,.9);border-radius:999px;background:#fff;padding:6px 11px;font:inherit;color:var(--text);cursor:pointer;min-height:36px}
+.nsp b{font-size:12.5px;font-weight:700}.nsp small{font-size:10px;color:var(--label)}.nsp:hover{background:var(--lb50)}
+@media (max-width:720px){
+  .card .lchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  .card .lchips::-webkit-scrollbar{display:none}
+  .card .lchip{flex:0 0 auto}
+  .cact{min-height:52px}
+}
+
+/* =========================================================================
+   v95: 現地モード（下に固定・片手）
+   ========================================================================= */
+.onsite{position:absolute;left:8px;right:8px;bottom:8px;z-index:16;background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(224,227,232,.9);border-radius:18px;box-shadow:0 12px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:min(46vh,420px);overflow:hidden}
+.os__hd{display:flex;align-items:center;gap:6px;padding:8px 8px 4px}
+.os__anc{border:1px solid var(--grid);border-radius:999px;background:#fff;padding:7px 11px;font:inherit;font-size:12px;font-weight:800;color:var(--text);cursor:pointer;min-height:40px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48%}
+.os__anc.on{background:var(--lb900,#0061a1);color:#fff;border-color:var(--lb900,#0061a1)}.os__anc small{font-weight:600;opacity:.85}
+.os__sp{flex:1}
+.os__x{width:40px;height:40px;border:0;border-radius:50%;background:var(--control2);font-size:18px;cursor:pointer;color:var(--text)}
+.os__cats{display:flex;gap:6px;padding:4px 8px 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex:0 0 auto}
+.os__cats::-webkit-scrollbar{display:none}
+.os__cat{flex:0 0 auto;border:1px solid var(--grid);border-radius:999px;background:#fff;padding:0 12px;min-height:44px;font:inherit;font-size:12.5px;font-weight:800;color:var(--text);cursor:pointer}
+.os__cat.on{background:#1a2733;color:#fff;border-color:#1a2733}
+.os__list{overflow-y:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:4px}
+.os__row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 10px;border:1px solid rgba(224,227,232,.8);border-radius:12px;background:#fff;font:inherit;text-align:left;color:var(--text);cursor:pointer}
+.os__row:hover{background:var(--lb50)}
+.os__e2{font-size:20px;width:26px;text-align:center}
+.os__nm{min-width:0;display:flex;flex-direction:column}.os__nm b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.os__nm small{font-size:10.5px;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.os__d{display:flex;flex-direction:column;align-items:flex-end}.os__d b{font-size:14px;font-family:var(--mono)}.os__d small{font-size:10px;color:var(--label);white-space:nowrap}
+.os__br{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;color:#fff;font-size:11px;font-weight:900;font-style:normal;margin-right:5px;vertical-align:-3px}
+.os__e{font-size:12.5px;color:var(--label);padding:8px 6px;margin:0}
+body.onsite-on .zoombar{bottom:calc(min(46vh,420px) + 16px)}
+body.onsite-on .lvbtn,body.onsite-on .poicount,body.onsite-on .attrib{display:none}
+@media (min-width:721px){ .onsite{left:auto;right:76px;width:380px} body.onsite-on .zoombar{bottom:14px} body.onsite-on .lvbtn,body.onsite-on .poicount,body.onsite-on .attrib{display:inline-flex} }
+@media (max-width:720px){ body.onsite-on .heroSearch{display:none} }
+
+/* v96: 流れの統合 */
+.heroSearch__onsite{display:inline-block!important;background:var(--lb900,#0061a1);color:#fff;border-color:var(--lb900,#0061a1)}
+.heroSearch__onsite[hidden]{display:none!important}
+.os__q{position:relative;margin:2px 0 6px}
+.os__qin{width:100%;box-sizing:border-box;border:1.5px solid var(--grid);border-radius:12px;padding:0 12px;min-height:44px;font:inherit;font-size:14px;background:#fff;color:var(--text)}
+.os__qin:focus{outline:none;border-color:var(--lb600,#0061a1);box-shadow:0 0 0 3px rgba(0,97,161,.12)}
+.os__qsug{position:absolute;left:0;right:0;top:100%;z-index:5;background:#fff;border:1px solid var(--grid);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);overflow:hidden}
+
+/* =========================================================================
+   v97: UX 監査の直し（押しやすさ・エラー状態・読み上げ）
+   ========================================================================= */
+.modal__bd:focus{outline:none}
+.os__retry{align-self:flex-start;border:1px solid var(--lb600,#0061a1);border-radius:999px;background:#fff;color:var(--lb900,#0061a1);padding:8px 14px;min-height:44px;font:inherit;font-weight:800;cursor:pointer;margin:0 6px 6px}
+@media (pointer:coarse){
+  .modal__x{width:44px;height:44px}
+  .cmini{min-height:36px;padding:6px 12px}
+  .nsp{min-height:40px}
+  .stp__b,.stepper button{min-width:40px;min-height:40px}
+  .fv{min-height:40px}
+  .heroSearch__tq{min-height:40px}
+}
+
+/* =========================================================================
+   v99: コンビニ 7／F／L の絞り込み
+   ========================================================================= */
+.cvsf{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cvsf__b{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px 0 6px;border:2px solid var(--bc,#888);border-radius:999px;background:#fff;color:var(--text);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;opacity:.5}
+.cvsf__b i{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--bc,#888);color:#fff;font-style:normal;font-weight:900;font-size:15px}
+.cvsf__b.on{opacity:1;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.cvsf__b:hover{filter:brightness(1.05)}.cvsf__b:focus-visible,.cvsf__all:focus-visible{outline:3px solid #f5b400;outline-offset:1px}
+.cvsf__all{min-height:44px;padding:0 12px;border:1px dashed var(--grid);border-radius:999px;background:#fff;font:inherit;font-size:12px;font-weight:800;color:var(--lb900,#0061a1);cursor:pointer}
+.cvsf__all.on{border-style:solid;color:var(--label);cursor:default}
+.cvsbar{position:absolute;left:12px;bottom:90px;z-index:12;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(224,227,232,.9);border-radius:16px;box-shadow:var(--sh-sm,0 2px 8px rgba(0,0,0,.12));padding:8px 10px;display:flex;flex-direction:column;gap:6px;max-width:calc(100% - 90px)}
+.cvsbar__l{font-size:12px;font-weight:800;color:var(--text)}.cvsbar__l small{font-weight:600;color:var(--label)}
+.cvsf--os{margin:0 0 8px}
+body.onsite-on .cvsbar{display:none}
+@media (max-width:420px){ .cvsf__b span{display:none} .cvsf__b{padding:0 8px 0 6px} }
+
+/* =========================================================================
+   v100: 投げ銭 — «ほかの方法» のサービスカード（受取先は data/support.js）
+   ========================================================================= */
+.tq__rec{font-size:10px;font-weight:800;color:var(--label);margin-right:2px;align-self:center}
+.tq__more{margin-top:10px}
+.tq__moreb{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:8px 12px;border:1px dashed var(--lb600,#0061a1);border-radius:12px;background:#f3f8ff;font:inherit;font-size:13.5px;font-weight:800;color:var(--lb900,#0061a1);cursor:pointer;text-align:left}
+.tq__moreb small{font-weight:600;font-size:10.5px;color:var(--label);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tq__moreb i{font-style:normal;transition:transform .15s}.tq__moreb[aria-expanded="true"] i{transform:rotate(180deg)}
+.tq__moreb:focus-visible{outline:3px solid #f5b400}
+.tq__svc{margin-top:8px}.tq__svcl{font-size:12.5px;color:var(--label);margin:2px 0 8px}
+.svl{display:flex;flex-direction:column;gap:8px}
+.sv{border:1px solid var(--grid);border-radius:14px;background:#fff;padding:10px 12px}
+.sv--ok{border-color:#9cc9a3}.sv--prep{background:#fafbfc}.sv--off{opacity:.65}.sv--focus{box-shadow:0 0 0 3px rgba(0,97,161,.25)}
+.sv__hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sv__hd b{font-size:14.5px}
+.sv__ic{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;background:var(--lc,#888);color:#fff;font-weight:900;font-size:12px}
+.sv__st{font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 8px;background:var(--control2);color:var(--label);margin-left:auto}
+.sv__st--ok{background:#e6f4ea;color:#1b7f3b}.sv__st--prep{background:#fff4e5;color:#b45309}.sv__st--off{background:#eee;color:#666}
+.sv__how{font-size:12px;color:var(--text);margin:6px 0 4px;line-height:1.55}
+.sv__id{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0}.sv__id small{font-size:10.5px;color:var(--label);flex:0 0 auto}.sv__id code{font-size:13px;background:var(--control);border-radius:6px;padding:3px 8px;word-break:break-all}
+.sv__acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.sv__go{display:inline-block;text-decoration:none;text-align:center;min-height:44px;line-height:28px;padding:8px 14px}
+.sv__note{font-size:10.5px;color:var(--label);margin:6px 0 0}
+.sv__qr{margin-top:8px}.sv__qr img{border:1px solid var(--grid);border-radius:8px;background:#fff}
+.sv__foot{font-size:10.5px;color:var(--label);margin:4px 0 0}
+@media (pointer:coarse){ .sv .tj__cp{min-height:40px;padding:6px 12px} .sv .tj__lnk{min-height:40px} }

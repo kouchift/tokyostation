@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /uploader/
+Disallow: /admin/
+Disallow: /tools/
+
+Sitemap: https://kouchift.github.io/tokyostation/sitemap.xml

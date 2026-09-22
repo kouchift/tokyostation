@@ -36,7 +36,8 @@ API = "https://api.github.com"
 
 # 上げないもの（作業用のファイル）
 SKIP = ["*.pyc", "__pycache__/*", ".git/*", "node_modules/*", "*.zip",
-        "standalone.html", ".DS_Store", "Thumbs.db", "*.tmp", "*.log"]
+        "standalone.html", ".DS_Store", "Thumbs.db", "*.tmp", "*.log",
+        "uploader/*", "*.tgz", "*_prev.js.gz", "tools/__pycache__/*"]   # v93: アップローダー自身（トークン入り）と作業ファイルは上げない
 
 
 # ----------------------------------------------------------------- 設定

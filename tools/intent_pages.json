@@ -1,0 +1,22 @@
+{
+  "_comment": "v93: 検索意図ページの一覧。少数の «厚い» ページだけを作る（薄い大量生成はしない）。追加するときはここに 1 行足して node tools/build_intent_pages.js",
+  "site": "https://kouchift.github.io/tokyostation/",
+  "from": "東京",
+  "when": "2026-09-24T10:00:00+09:00",
+  "aggr": 1,
+  "routes": [
+    { "slug": "tokyo-to-shinjuku", "to": "新宿_1", "q": "新宿", "intent": "東京駅 新宿駅 行き方", "why": "都庁・新宿御苑・歌舞伎町・バスタ新宿への玄関口" },
+    { "slug": "tokyo-to-shibuya", "to": "渋谷", "q": "渋谷", "intent": "東京駅 渋谷駅 行き方", "why": "スクランブル交差点・渋谷スカイ・原宿方面へ" },
+    { "slug": "tokyo-to-haneda", "to": "羽田空港第3ターミナル", "q": "羽田空港", "intent": "東京駅 羽田空港 行き方", "why": "国際線は第3ターミナル、国内線は第1・第2ターミナル" },
+    { "slug": "tokyo-to-narita", "to": "成田空港", "q": "成田空港", "intent": "東京駅 成田空港 行き方", "why": "第1ターミナルは成田空港駅、第2・第3ターミナルは空港第2ビル駅" },
+    { "slug": "tokyo-to-ikebukuro", "to": "池袋", "q": "池袋", "intent": "東京駅 池袋駅 行き方", "why": "サンシャインシティ・西武／東武への乗り換え" },
+    { "slug": "tokyo-to-shinagawa", "to": "品川", "q": "品川", "intent": "東京駅 品川駅 行き方", "why": "東海道新幹線・京急で羽田へ" },
+    { "slug": "tokyo-to-yokohama", "to": "横浜", "q": "横浜", "intent": "東京駅 横浜駅 行き方", "why": "みなとみらい・中華街方面へ" },
+    { "slug": "tokyo-to-ueno", "to": "上野", "q": "上野", "intent": "東京駅 上野駅 行き方", "why": "上野公園・動物園・美術館へ" },
+    { "slug": "tokyo-to-maihama", "to": "舞浜", "q": "舞浜", "intent": "東京駅 舞浜駅 ディズニー 行き方", "why": "東京ディズニーリゾートの最寄り駅（京葉線は地下ホーム）" },
+    { "slug": "tokyo-to-asakusa", "to": "浅草", "q": "浅草", "intent": "東京駅 浅草駅 行き方", "why": "浅草寺・仲見世・スカイツリー方面へ" }
+  ],
+  "stations": [
+    { "slug": "tokyo-station-exits", "kind": "exits", "intent": "東京駅 出口 丸の内 八重洲 わかりやすい" }
+  ]
+}

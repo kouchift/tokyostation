@@ -574,8 +574,8 @@ RG.basemapPanel = function () {
     var s = B.lv[i];
     return '<div class="bm__lv"><label class="set__sw"><input type="checkbox" data-lvon="' + i + '"' +
       (s.on ? " checked" : "") + "> <b>レベル" + i + "</b> " + name + "</label>" +
-      '<input type="color" data-lvc="' + i + '" value="' + s.c + '">' +
-      '<input type="range" data-lvw="' + i + '" min="0.2" max="6" step="0.1" value="' + s.w + '">' +
+      '<input type="color" aria-label="レベル' + i + ' の色" data-lvc="' + i + '" value="' + s.c + '">' +
+      '<input type="range" aria-label="レベル' + i + ' の線の太さ" data-lvw="' + i + '" min="0.2" max="6" step="0.1" value="' + s.w + '">' +
       '<output>' + s.w + "px</output></div>";
   }
   return '<div class="set__sec"><h4>🗺️ 地図の表示</h4>' +
@@ -585,9 +585,9 @@ RG.basemapPanel = function () {
       "> 🌊 浸水予想区域を重ねる（神田川・隅田川・石神井川の3流域）</label>" +
     '<label class="set__sw"><input id="bm-3d" type="checkbox"' + (B.mode3d ? " checked" : "") +
       "> 🧊 3D表示にする（高低差を斜めから見る）</label>" +
-    '<div class="set__row"><span>見おろす角度</span><input id="bm-tilt" type="range" min="15" max="75" step="1" value="' +
+    '<div class="set__row"><span>見おろす角度</span><input id="bm-tilt" type="range" aria-label="見おろす角度" min="15" max="75" step="1" value="' +
       B.tilt + '"><output id="bm-tilt-o">' + B.tilt + "°</output></div>" +
-    '<div class="set__row"><span>高さの強調</span><input id="bm-ex" type="range" min="0.3" max="4" step="0.1" value="' +
+    '<div class="set__row"><span>高さの強調</span><input id="bm-ex" type="range" aria-label="高さの強調" min="0.3" max="4" step="0.1" value="' +
       (B.exagg == null ? 1 : B.exagg) + '"><output id="bm-ex-o">×' + (B.exagg == null ? 1 : B.exagg) + "</output></div>" +
     '<p class="set__d">地形は国土地理院の標高タイルから作った画像1枚です。' +
     "3Dは地図全体を傾けて見せる方式なので、要素が増えず動作は軽いままです。</p></div>" +
@@ -609,7 +609,7 @@ RG.basemapPanel = function () {
     "画面のスクリーンショットを撮ってお使いください。</p></div>" +
 
     '<div class="set__sec"><h4>🌡️ 区ごとのヒートマップ</h4>' +
-    '<select id="bm-heat" class="bm__sel"><option value="">（表示しない）</option>' +
+    '<select id="bm-heat" class="bm__sel" aria-label="区の統計の色分け"><option value="">（表示しない）</option>' +
       (RG.HEAT_FACTORS || []).map(function (f) {
         return '<option value="' + f.id + '"' + (B.heat === f.id ? " selected" : "") + ">" +
           f.e + " " + esc(f.label) + "</option>"; }).join("") + "</select>" +

@@ -79,6 +79,7 @@ function setOrigin(coord, label, id, accuracy) {
   var f = $("#t-from"); f.textContent = "出発：" + label; f.classList.add("on");
   status(label + " を出発地にしました。行き先の駅をタップするか「🧭 行き先をさがす」へ。", "ok", 3500);
   refreshIso();
+  try { document.dispatchEvent(new CustomEvent("rg:origin", { detail: { label: label, id: Trip.id, isGeo: Trip.isGeo } })); } catch (e) {}   // v96: 内側からの呼び出し（現在地など）でも入口が追従する
 }
 RG.setOrigin = setOrigin;
 
@@ -130,23 +131,31 @@ function refreshIso() {
 }
 
 /* ------------------------------------------------------------- モーダル */
-var M = null;
+var M = null, mPrevFocus = null;
 function modal(title, html) {
   if (!M) {
     M = document.createElement("div"); M.className = "modal";
-    M.innerHTML = '<div class="modal__box"><div class="modal__hd"><b></b>' +
-      '<button class="modal__x" aria-label="閉じる">×</button></div><div class="modal__bd"></div></div>';
+    M.setAttribute("role", "dialog"); M.setAttribute("aria-modal", "true"); M.setAttribute("aria-labelledby", "modal-title");   // v97: 読み上げに «ダイアログ» と伝える
+    M.innerHTML = '<div class="modal__box"><div class="modal__hd"><b id="modal-title"></b>' +
+      '<button class="modal__x" type="button" aria-label="閉じる">×</button></div><div class="modal__bd" tabindex="-1"></div></div>';
     document.body.appendChild(M);
     M.addEventListener("click", function (e) {
-      if (e.target === M || e.target.classList.contains("modal__x")) M.classList.remove("show");
+      if (e.target === M || e.target.classList.contains("modal__x")) RG.closeModal();
     });
   }
+  if (!M.classList.contains("show")) mPrevFocus = document.activeElement;             // 閉じたら元の場所へ戻す
   $(".modal__hd b", M).textContent = title;
   $(".modal__bd", M).innerHTML = html;
   M.classList.add("show"); $(".modal__bd", M).scrollTop = 0;
+  var bd = $(".modal__bd", M); try { bd.focus({ preventScroll: true }); } catch (e) { bd.focus(); }   // v97: フォーカスを中へ（Esc・Tab が中で効く）
   return M;
 }
-RG.closeModal = function () { if (M) M.classList.remove("show"); };
+RG.closeModal = function () {
+  if (!M || !M.classList.contains("show")) return;
+  M.classList.remove("show");
+  var p = mPrevFocus; mPrevFocus = null;
+  if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
+};
 RG.openModal = modal;
 
 /* ---------------------------------------------- ☆評価の表示 */
@@ -718,6 +727,68 @@ function optCard(o, i, ctx) {
     "</div>";
 }
 
+/* ---- v91: 結果の «要約» と «比較軸»。既存の見積り（o.minutes / o.yen / o.rail.transfers / accessMin / egressMin）だけを使い、無い数字は出さない ---- */
+function walkOf(o) {
+  if (o.id === "walk") return o.minutes;
+  if (o.rail) return Math.round((o.rail.accessMin || 0) + (o.rail.egressMin || 0));
+  if (o.walkMin != null) return Math.round(o.walkMin);
+  return null;                                                       // バス・タクシーなどは徒歩の内訳を持っていない → 出さない
+}
+function xferOf(o) { return o.rail ? o.rail.transfers : (o.transfers != null ? o.transfers : null); }
+function featOf(o) {
+  var f = [];
+  if (o.pareto) f.push("パレート最適");
+  if (o.vsCheapest && o.vsCheapest.yen === 0) f.push("最安");
+  if (o.kicker) f.push(o.kicker);
+  if (o.rail && o.rail.transfers === 0) f.push("乗換なし");
+  if (o.rail && o.rail.shinkansen) f.push("新幹線");
+  return f.slice(0, 3);
+}
+function pickAxes(opts) {
+  var live = opts.filter(function (o) { return !o.stopped; }); if (!live.length) return null;
+  var fast = live.slice().sort(function (a, b) { return a.minutes - b.minutes || a.yen - b.yen; })[0];
+  var rail = live.filter(function (o) { return xferOf(o) != null; });
+  var few = rail.length ? rail.slice().sort(function (a, b) { return xferOf(a) - xferOf(b) || a.minutes - b.minutes; })[0] : null;
+  var wk = live.filter(function (o) { return walkOf(o) != null && o.id !== "walk"; });
+  var less = wk.length ? wk.slice().sort(function (a, b) { return walkOf(a) - walkOf(b) || a.minutes - b.minutes; })[0] : null;
+  var cheap = live.slice().sort(function (a, b) { return a.yen - b.yen || a.minutes - b.minutes; })[0];
+  return { fast: fast, few: few, less: less, cheap: cheap };
+}
+function summaryHtml(r, s, rec) {
+  if (!rec) return "";
+  var w = walkOf(rec), x = xferOf(rec), f = featOf(rec);
+  return '<div class="rs" data-i="' + rec.__i + '"><div class="rs__hd"><span class="rs__em">' + rec.m.emoji + "</span><b>" + esc(rec.m.label) + "</b><i>おすすめ</i></div>" +
+    '<div class="rs__grid">' +
+      '<div class="rs__c"><small>所要</small><b>' + rec.minutes + '<i>分</i></b></div>' +
+      '<div class="rs__c"><small>乗換</small><b>' + (x != null ? x + "<i>回</i>" : "—") + "</b></div>" +
+      '<div class="rs__c"><small>徒歩</small><b>' + (w != null ? w + "<i>分</i>" : "—") + "</b></div>" +
+      '<div class="rs__c"><small>費用</small><b>' + yen(rec.yen) + "</b></div>" +
+    "</div>" +
+    (f.length ? '<div class="rs__feat">' + f.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("") + "</div>" : "") +
+    '<div class="rs__acts"><button class="opt__b opt__b--nav" type="button" data-nav="' + rec.__i + '">🗺️ 地図で経路を見る</button>' +
+    '<button class="opt__b" type="button" data-add="' + rec.__i + '">🧳 リストに追加</button>' +
+    '<button class="opt__b" type="button" data-jump="' + rec.__i + '">▾ 詳細へ</button>' +
+    (RG.onsite && (Trip.id === "東京" || s.id === "東京" || (rec.rail && (rec.rail.board === "東京" || rec.rail.alight === "東京"))) ? '<button class="opt__b" type="button" data-onsite="exit">🚪 東京駅の出口を見る</button>' : "") +   // v96: 現地モードへ
+    "</div></div>";
+}
+function axesHtml(ax) {
+  if (!ax) return "";
+  function chip(key, icon, label, o) {
+    if (!o) return "";
+    var w = walkOf(o), x = xferOf(o);
+    return '<button class="ax" type="button" data-jump="' + o.__i + '"><span class="ax__l">' + icon + " " + label + "</span><b>" + o.m.emoji + " " + esc(o.m.label) + "</b><small>" + o.minutes + "分 ・ " + yen(o.yen) +
+      (key === "few" && x != null ? " ・ 乗換" + x + "回" : key === "less" && w != null ? " ・ 徒歩" + w + "分" : "") + "</small></button>";
+  }
+  return '<div class="axes"><span class="axes__l">比較軸</span>' + chip("fast", "⚡", "速さ重視", ax.fast) + chip("few", "🔁", "乗換少なめ", ax.few) + chip("less", "🚶", "徒歩少なめ", ax.less) + chip("cheap", "💴", "安さ重視", ax.cheap) + "</div>";
+}
+/* 検索条件を復元できる URL（?from=駅ID&to=駅ID。現在地からのときは from を省き、開いた人が出発地を決める） */
+RG.routeShareUrl = function (destId) {
+  var base = (RG.TIP && RG.TIP.siteUrl) || (location.origin + location.pathname);
+  var q = "to=" + encodeURIComponent(destId);
+  if (Trip.id) q = "from=" + encodeURIComponent(Trip.id) + "&" + q;
+  return base + (base.indexOf("?") >= 0 ? "&" : "?") + q;
+};
+RG.lastRoute = null;
 function showRoutes(destId) {
   if (!Trip.origin) { status("先に出発地を決めてください（📍現在地、または駅カードの「ここから出発」）", "warn"); return; }
   var s = RG.byId[destId]; if (!s) return;
@@ -728,7 +799,9 @@ function showRoutes(destId) {
   var r = RG.Planner.estimate(Trip.origin, [s.la, s.lo], Trip.when, Trip.aggr);
   var kl = { day: "日中", peak: "ラッシュ", night: "深夜・早朝" }[r.hourKind];
   var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(s.n) + "駅</b>" +
-    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '">🪪 ルートカードを作る</button></div>' +
+    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '">🪪 ルートカードを作る</button>' +
+    ' <button class="rt__card rt__share" type="button" data-rshare="' + esc(s.id) + '">🔗 この検索を共有</button>' +
+    (RG.favs ? ' <button class="rt__card rt__fav' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? " on" : "") + '" type="button" data-rfav="' + esc(s.id) + '" aria-pressed="' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "true" : "false") + '">' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "★ お気に入り" : "☆ お気に入り") + "</button>" : "") + "</div>" +
     '<div class="rt__meta">' + (r.at.getMonth() + 1) + "/" + r.at.getDate() + " " + hhmm(r.at) +
     " 発（" + kl + "）／直線 " + r.straightKm.toFixed(1) + "km／" +
     RG.CONFIG.aggr[r.aggr].emoji + RG.CONFIG.aggr[r.aggr].label + "</div></div>";
@@ -757,7 +830,12 @@ function showRoutes(destId) {
     (RG.stepperHTML ? RG.stepperHTML("pt-a", "大人", RG.Plan.adults, 0, 20) + RG.stepperHTML("pt-k", "子ども", RG.Plan.kids, 0, 20)
       : '<label>大人 <input id="pt-a" type="number" min="0" max="20" value="' + RG.Plan.adults + '"></label><label>子ども <input id="pt-k" type="number" min="0" max="20" value="' + RG.Plan.kids + '"></label>') +
     '<span class="party__n">' + head2 + "人ぶんの合計も表示します</span></div>";
-  var html = head + night + party + pareto(r) + sortBar +
+  // v91: 最初に «この案なら所要・乗換・徒歩・費用» を 1 枚で。おすすめ＝おすすめ順の先頭（運休でないもの）。比較軸は既存の値から選ぶだけ
+  var recOpt = r.options.filter(function (o) { return !o.stopped; })[0] || null;
+  var ax = pickAxes(r.options);
+  RG.lastRoute = { fromId: Trip.id || null, from: Trip.origin, label: Trip.label, toId: s.id, to: s.n, at: Date.now(), rec: recOpt ? { m: recOpt.m.label, e: recOpt.m.emoji, min: recOpt.minutes, yen: recOpt.yen } : null };
+  if (RG.heroLastRoute) RG.heroLastRoute();
+  var html = head + night + summaryHtml(r, s, recOpt) + axesHtml(ax) + party + pareto(r) + sortBar +
     '<div class="opts">' + base.map(function (o) { return optCard(o, o.__i, ctx); }).join("") + "</div>" +
     '<div class="disclaim">⚠ これはモデルによる<b>概算</b>です。時刻表・道路状況・バス系統・シェアサイクルの' +
     "ポート位置は見ていません。前提の数字はすべて <code>data/config.js</code> にあります。" +
@@ -782,6 +860,30 @@ function showRoutes(destId) {
   });
   var cb = $("[data-card]", m);
   if (cb) cb.addEventListener("click", function () { if (RG.showRouteCard) RG.showRouteCard(Trip.id, s.id, Trip.aggr); });
+  $$("[data-onsite]", m).forEach(function (b) {
+    b.addEventListener("click", function () { RG.closeModal(); if (RG.onsite) { RG.onsite.setStationAnchor("東京"); RG.onsite.open(b.dataset.onsite); } });
+  });
+  $$("[data-jump]", m).forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$(".opt", m).forEach(function (c) { c.classList.remove("hi"); });
+      var c = m.querySelector('.opt[data-i="' + b.dataset.jump + '"]');
+      if (c) { c.classList.add("hi"); c.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    });
+  });
+  var fvb = $("[data-rfav]", m);
+  if (fvb) fvb.addEventListener("click", function () {
+    var on = RG.favs.toggleRoute({ fromId: Trip.id || null, from: (Trip.label || "").replace(/^出発：/, ""), toId: s.id, to: s.n, rec: recOpt ? { m: recOpt.m.label, e: recOpt.m.emoji, min: recOpt.minutes, yen: recOpt.yen } : null });
+    if (on === null) { if (RG.tripStatus) RG.tripStatus("お気に入りのルートは 30 件までです。設定 → お気に入りと履歴 で整理できます", "warn", 4000); return; }
+    fvb.classList.toggle("on", on); fvb.setAttribute("aria-pressed", on ? "true" : "false"); fvb.textContent = on ? "★ お気に入り" : "☆ お気に入り";
+    if (RG.tripStatus) RG.tripStatus(on ? "☆ お気に入りに入れました（この端末だけ）。入口の «お気に入り» から 1 タップで開けます" : "お気に入りから外しました", "info", 3000);
+    if (RG.favs.heroRender) RG.favs.heroRender();
+  });
+  var sh = $("[data-rshare]", m);
+  if (sh) sh.addEventListener("click", function () {
+    var url = RG.routeShareUrl(s.id), txt = "【" + Trip.label + " → " + s.n + "駅】" + (recOpt ? " " + recOpt.m.emoji + " " + recOpt.m.label + " 約" + recOpt.minutes + "分・" + yen(recOpt.yen) : "") + "\n東京ステーションガイドで移動手段をくらべる →";
+    if (RG.snsOpen) RG.snsOpen("🔗 この検索を共有", { title: Trip.label + " → " + s.n + "駅", text: txt, url: url }, { main: "line", primary: ["line", "x", "copy"] });
+    else if (navigator.clipboard) navigator.clipboard.writeText(url);
+  });
   $$("[data-act]", m).forEach(function (b) {
     b.addEventListener("click", function () { var a = b.dataset.act.split(":"); if (a[0] === "airroute" && RG.airRouteModal) RG.airRouteModal(a[1], a[2]); });
   });

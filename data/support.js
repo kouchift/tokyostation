@@ -51,6 +51,23 @@ RG.TIP = {
   bank: { bankName: "ゆうちょ銀行", bankKana: "ﾕｳﾁﾖ", code: "9900", symbol: "", branch: "", branchName: "", branchKana: "", type: "1", number: "", holder: "", holderKana: "" },
   /* みんなの番付：公開スプレッドシートの CSV（列: name,total,count,gedatsu）。空なら端末内の番付だけ */
   leaderboardCsv: "",
-  amounts: [100, 500, 1000, 3000]
+  amounts: [100, 500, 1000, 3000],
+  /* v100: 受取先の設定（公開してよい識別子だけ。パスワード・認証コード・口座番号・電話番号は絶対に書かない）
+     ・link / qr が空のサービスは «準備待ち» として表示し、架空の URL は作らない。期限つきの受け取りリンク（楽天ペイ 3 日・請求リンク 2 週間など）は貼らない
+     ・email は «受取アカウントの情報» であって、メールアドレス宛に送れるかはサービスごとに違う（PayPal・ことら送金は可、楽天ペイ・d払い・au PAY は不可＝公式ガイド 2026-09 確認）
+     ・paypal.paypalMe を入れると PayPal.Me のボタンが出る（例 "tonbo7" → https://www.paypal.com/paypalme/tonbo7）。推測では作らない
+     ・coinplus.userNumber は エアウォレット等の対応アプリで «送金 → ユーザー番号» に入れる識別子。ブラウザから自動送金できるものではない
+     ・famipay.enabled は、FamiPay 残高の個人間送金が公式に確認できたら true に（それまでは «対象外» と表示）
+     ・cotra（ことら送金）: 送金する人は対応する銀行アプリから «メールアドレス» を指定。受け取る側は銀行アプリで «メールアドレスと口座の紐付け（受取設定）» が必要。
+       registered を false にすると「受取設定が必要です」と表示して送金ボタンを出さない。電話番号は使わない（公開しない） */
+  services: {
+    rakutenpay: { email: "tonbo7@gmail.com", link: "", qr: "" },
+    dbarai:     { email: "tonbo7@gmail.com", number: "", link: "", qr: "" },           // number = d払い番号（公開してよい ID。あれば «送れる» に）
+    aupay:      { email: "tonbo7@gmail.com", number: "", link: "", qr: "" },           // number = au PAY 会員ナンバー
+    paypal:     { email: "tonbo7@gmail.com", paypalMe: "", link: "" },
+    coinplus:   { userName: "トンボ", userNumber: "Z6FKYM", email: "tonbo7@gmail.com", link: "", qr: "" },
+    famipay:    { id: "6001np2307nx", email: "tonbo7@gmail.com", link: "", qr: "", enabled: false },
+    cotra:      { enabled: true, method: "email", email: "tonbo7@gmail.com", registered: true }
+  }
 };
 RG.BANLIST = [];

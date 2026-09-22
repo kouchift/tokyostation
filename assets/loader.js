@@ -36,8 +36,10 @@ var IDLE = [
   { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）
+  { f: "data/tokyo_station.js", key: "tokyost", label: "東京駅の出入口" },      // v90: 東京駅モード（小さい）
   { f: "data/shinkansen.js", key: "shinkansen", label: "新幹線の駅" },
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
+  { f: "data/analytics.js", key: "analytics", label: "利用状況の設定" },        // v98: endpoint が空なら送らない
   { f: "data/paymethods.js", key: "paymethods", label: "寄付の手段" },
   { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ" },
   { f: "data/wikiinfo.js",  key: "wiki",      label: "区と路線の説明" },
@@ -84,7 +86,7 @@ var ONDEMAND = [
   { f: "data/river_geo.js", key: "rivergeo", label: "川の線形",           group: "spots" },
   { f: "data/roads.js",     key: "roads",    label: "高速道路・国道",     group: "spots" },
   { f: "data/tokaido.js",   key: "kaido",    label: "五街道と宿場",       group: "spots" },
-  { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots" }
+  { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots", opt: true }   // 未作成のファイル（無くても数えない）
 ];
 
 var loaded = {}, inflight = {};
@@ -101,7 +103,8 @@ function loadJson(src, target) {
   if (inflight[src]) return inflight[src];
   inflight[src] = fetch(withV(src), { credentials: "same-origin" })
     .then(function (r) { if (!r.ok) throw new Error(src); return r.json(); })
-    .then(function (j) { RG[target] = j; loaded[src] = true; return src; });
+    .then(function (j) { RG[target] = j; loaded[src] = true; return src; })
+    .catch(function (e) { delete inflight[src]; throw e; });                                 // v97: 失敗した約束を残さない
   return inflight[src];
 }
 function load(src, target) {
@@ -112,7 +115,7 @@ function load(src, target) {
     var s = document.createElement("script");
     s.src = withV(src); s.async = true;
     s.onload = function () { loaded[src] = true; res(src); };
-    s.onerror = function () { rej(new Error(src)); };
+    s.onerror = function () { delete inflight[src]; try { s.remove(); } catch (e) {} rej(new Error(src)); };   // v97: 失敗した約束を残さない（あとでもう一度取りに行ける）
     document.head.appendChild(s);
   });
   return inflight[src];
@@ -174,13 +177,13 @@ function flush() {
 
 /* 順番に、端末が暇なときに読む */
 function runQueue(items, onEach, done) {
-  var i = 0;
+  var i = 0, failed = 0;
   function next() {
-    if (i >= items.length) { done && done(); return; }
+    if (i >= items.length) { done && done(failed); return; }
     var item = items[i++];
     onEach && onEach(item, i, items.length);
     load(item.f, item.json).then(function () { refresh(item.key); })
-                .catch(function () { /* 無くても動く */ })
+                .catch(function () { if (!item.opt) { failed++; (RG.dataFailed = RG.dataFailed || []).push(item.f); } /* 無くても動く。ただし数えておく（v97: 通信の失敗を黙らない）。opt はまだ無いファイル */ })
                 .then(function () {
                   if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 700 });
                   else setTimeout(next, 40);
@@ -194,6 +197,7 @@ var groupState = {};   // group → "loading" | "done"
 RG.ensureData = function (group, cb) {
   var items = ONDEMAND.filter(function (x) { return x.group === group; });
   if (!items.length || groupState[group] === "done") { cb && cb(); return; }
+  if (groupState[group] === "failed") groupState[group] = null;                       // v97: 失敗したあとはもう一度試せる
   document.addEventListener("rg:ondemand:" + group, function h() {
     document.removeEventListener("rg:ondemand:" + group, h); cb && cb();
   });
@@ -204,21 +208,30 @@ RG.ensureData = function (group, cb) {
   var n = 0;
   runQueue(items, function (item, i, total) {
     setProgress(item.label + " をよみこんでいます", (i / total) * 100);
-  }, function () {
-    groupState[group] = "done";
+  }, function (failed) {
     setProgress("", 100);
+    if (failed >= items.filter(function (x) { return !x.opt; }).length) {                                                       // v97: ぜんぶ失敗＝通信が切れている。«そろいました» と言わない
+      groupState[group] = "failed";
+      if (RG.tripStatus) RG.tripStatus("⚠️ スポットのデータを読み込めませんでした（通信を確認して、もう一度お試しください）", "warn", 8000);
+      document.dispatchEvent(new CustomEvent("rg:ondemand:" + group, { detail: { failed: failed, total: items.length } }));
+      return;
+    }
+    groupState[group] = "done";
+    if (failed && RG.tripStatus) RG.tripStatus("⚠️ スポットのデータの一部（" + failed + "／" + items.length + "）を読み込めませんでした。無いぶんは出ません", "warn", 7000);
     // 升目（見ている範囲だけ読む追加スポット）があれば、ここから使えるようにする
     if (group === "spots" && RG.initTiles) RG.initTiles(function (meta) {
       if (meta && RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
     });
     // まとめて反映（250ms 待たずに）
     clearTimeout(flushT); flush();
-    if (RG.tripStatus) RG.tripStatus("✅ スポットのデータがそろいました", "ok", 2500);
+    if (!failed && RG.tripStatus) RG.tripStatus("✅ スポットのデータがそろいました", "ok", 2500);
     document.dispatchEvent(new CustomEvent("rg:ondemand:" + group));
   });
 };
 RG.ensureSpots = function (cb) { RG.ensureData("spots", cb); };
 RG.spotsReady = function () { return groupState.spots === "done"; };
+RG.spotsFailed = function () { return groupState.spots === "failed"; };
+RG.dataGroupState = function (g) { return groupState[g] || null; };
 
 /* «スポットをさがす» 系の操作が起きたら、そのときに読む */
 function armOnDemandTriggers() {
@@ -281,10 +294,26 @@ RG.startApp = function (netPromise) {
     if (m) {
       m.hidden = false;
       var p2 = m.querySelector("p");
-      if (p2) p2.innerHTML = "つぎのファイルが見つかりませんでした。<br><code>" +
+      var offline = (typeof navigator !== "undefined" && navigator.onLine === false);
+      if (p2) p2.innerHTML = (offline ? "いまはオフラインのようです。通信がつながる場所で再読み込みしてください。<br>" : "通信が不安定か、つぎのファイルが見つかりませんでした。<br>") + "<code>" +
         String(e.message || "").replace(/</g, "&lt;") + "</code><br>" +
-        "ファイルがそろっているかご確認ください。";
+        (offline ? "" : "しばらくしてから「再読み込み」を押してください。何度も出るときは制作者へ（設定 → 制作者への窓口）。");
+      var sk = document.getElementById("skel"); if (sk) sk.remove();                        // v97: 骨組みを残さない
     }
+  });
+};
+/* v97: 一部だけ読めなかったスポットデータをもう一度取りに行く（通信が戻ったあと用） */
+RG.retryFailedData = function (cb) {
+  var want = {}; (RG.dataFailed || []).forEach(function (f) { want[f] = 1; });
+  var items = ONDEMAND.filter(function (x) { return want[x.f]; });
+  RG.dataFailed = [];
+  if (!items.length) { cb && cb(0); return; }
+  if (RG.tripStatus) RG.tripStatus("🔄 読み込めなかったデータ（" + items.length + " 件）をもう一度取りに行きます…", "info", 5000);
+  runQueue(items, function (item, i, total) { setProgress(item.label + " をよみこんでいます", (i / total) * 100); }, function (failed) {
+    setProgress("", 100); clearTimeout(flushT); flush();
+    if (RG.tripStatus) RG.tripStatus(failed ? "⚠️ まだ " + failed + " 件を読み込めません。通信を確認してください" : "✅ 読み込めました", failed ? "warn" : "ok", 5000);
+    if (RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
+    cb && cb(failed);
   });
 };
 

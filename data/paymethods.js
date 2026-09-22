@@ -16,16 +16,17 @@
    ========================================================================= */
 RG.PAYMETHODS = [
   { id: "paypay", n: "PayPay 送る", cat: "QRコード決済", ease: 5, users: 5, money: 1, st: "ok", how: "アプリ「送る」→ ID 検索 → 金額", to: "PayPay ID: tonbo7", url: "https://paypay.ne.jp/guide/send/", ic: "P", c: "#E60012" },
-  { id: "rakutenpay", n: "楽天ペイ 送る", cat: "QRコード決済", ease: 4, users: 5, money: 1, st: "prep", how: "楽天キャッシュを送る（楽天IDかリンク）", ic: "R", c: "#BF0000" },
-  { id: "dbarai", n: "d払い 送金", cat: "QRコード決済", ease: 4, users: 4, money: 1, st: "prep", how: "d払い残高を送る（電話番号／リンク）", ic: "d", c: "#CC0033" },
-  { id: "aupay", n: "au PAY 送る", cat: "QRコード決済", ease: 4, users: 4, money: 1, st: "prep", how: "au PAY 残高を送る（au ID／電話番号）", ic: "au", c: "#EB5505" },
+  { id: "rakutenpay", n: "楽天ペイ 送る", cat: "QRコード決済", ease: 4, users: 5, money: 1, st: "prep", how: "楽天ペイ残高を送る（アプリの送り先一覧・請求用リンク／コード）。受け取り用リンクは 3 日・請求用は 2 週間で切れるため固定リンクは無い", url: "https://pay.rakuten.co.jp/guide/cash/send_receive/", ic: "R", c: "#BF0000", svc: "rakutenpay" },
+  { id: "dbarai", n: "d払い 送金", cat: "QRコード決済", ease: 4, users: 4, money: 1, st: "prep", how: "d払い残高を送る（電話番号／d払い番号／QR／リンク。メールアドレス宛は不可）", url: "https://service.smt.docomo.ne.jp/keitai_payment/guide/wallet/remit.html", ic: "d", c: "#CC0033", svc: "dbarai" },
+  { id: "aupay", n: "au PAY 送る", cat: "QRコード決済", ease: 4, users: 4, money: 1, st: "prep", how: "au PAY 残高を送る（携帯電話番号／会員ナンバー／QR。送る側は本人確認が要る）", url: "https://wallet.auone.jp/contents/sp/guide/moneytransfer.html", ic: "au", c: "#EB5505", svc: "aupay" },
+  { id: "coinplus", n: "COIN+（エアウォレット）", cat: "QRコード決済", ease: 3, users: 2, money: 1, st: "ok", how: "エアウォレット等の対応アプリの「送金」でユーザー番号を指定（手数料無料）", to: "ユーザー番号: Z6FKYM（トンボ）", url: "https://coinplus.jp/remittancemethod/", ic: "C+", c: "#1F6FE5", svc: "coinplus" },
   { id: "merpay", n: "メルペイ おくる", cat: "QRコード決済", ease: 4, users: 4, money: 1, st: "prep", how: "メルカリ ID 宛に送る", ic: "m", c: "#4DC9FF" },
   { id: "kyash", n: "Kyash 送金", cat: "QRコード決済", ease: 5, users: 3, money: 1, st: "ok", how: "Kyash ID で送る", to: "Kyash ID: tonbo7", url: "https://www.kyash.co/", ic: "K", c: "#3F51B5" },
   { id: "linepay", n: "LINE Pay 送金", cat: "QRコード決済", ease: 4, users: 4, money: 1, st: "end", how: "2025年4月に国内サービス終了（供養）", ic: "L", c: "#06C755" },
   { id: "jcoin", n: "J-Coin Pay", cat: "QRコード決済", ease: 3, users: 2, money: 1, st: "prep", how: "みずほ系の送金アプリ。ID か QR", ic: "J", c: "#0066CC" },
   { id: "yuchopay", n: "ゆうちょPay", cat: "QRコード決済", ease: 3, users: 2, money: 1, st: "prep", how: "個人間送金は非対応。店舗決済用（参考）", ic: "ゆ", c: "#1D8A3C" },
   { id: "bankpay", n: "Bank Pay", cat: "QRコード決済", ease: 3, users: 2, money: 1, st: "prep", how: "銀行口座直結の送金", ic: "B", c: "#0A3D91" },
-  { id: "kotora", n: "ことら送金", cat: "銀行", ease: 4, users: 3, money: 1, st: "prep", how: "銀行アプリから電話番号／口座宛に 10万円まで手数料無料", url: "https://www.cotra.ne.jp/", ic: "こ", c: "#00A0E9" },
+  { id: "kotora", n: "ことら送金", cat: "銀行", ease: 4, users: 4, money: 1, st: "ok", how: "対応する銀行アプリの「ことら送金」でメールアドレスを指定（1 回 10 万円まで・手数料無料の先が多い）", to: "メールアドレス: tonbo7@gmail.com", url: "https://www.cotra.ne.jp/p2pservice/", ic: "こ", c: "#00A0E9", svc: "cotra" },
   { id: "yucho", n: "ゆうちょ銀行 振込", cat: "銀行", ease: 3, users: 5, money: 1, st: "prep", how: "記号・番号（または店名・口座番号）へ振込。振込依頼書・FBデータも作れる", to: "ゆうちょ銀行 記号-番号（制作者が設定）", ic: "〒", c: "#1D8A3C", bank: 1 },
   { id: "mufg", n: "三菱UFJ銀行 振込", cat: "銀行", ease: 3, users: 5, money: 1, st: "prep", how: "他行宛振込（ネットバンキング）", ic: "U", c: "#E60012", bank: 1 },
   { id: "smbc", n: "三井住友銀行 振込", cat: "銀行", ease: 3, users: 5, money: 1, st: "prep", how: "他行宛振込（アプリ）", ic: "S", c: "#0B7A3B", bank: 1 },
@@ -44,7 +45,7 @@ RG.PAYMETHODS = [
   { id: "atmcash", n: "ATM 現金振込", cat: "銀行", ease: 2, users: 4, money: 1, st: "prep", how: "10万円以下はキャッシュカード不要で現金振込可", ic: "¥", c: "#455A64", bank: 1 },
   { id: "teigaku", n: "定額小為替（郵便局）", cat: "郵便", ease: 2, users: 2, money: 1, st: "prep", how: "郵便局で購入して封書で送る（手数料 200円/枚）", ic: "為", c: "#1D8A3C" },
   { id: "kakitome", n: "現金書留", cat: "郵便", ease: 2, users: 2, money: 1, st: "prep", how: "郵便局で現金書留封筒に入れて送る", ic: "書", c: "#1D8A3C" },
-  { id: "paypal", n: "PayPal.Me", cat: "海外・オンライン", ease: 4, users: 4, money: 1, st: "prep", how: "paypal.me/リンク を開いて金額を入れる", url: "https://www.paypal.com/paypalme/", ic: "PP", c: "#003087" },
+  { id: "paypal", n: "PayPal", cat: "海外・オンライン", ease: 4, users: 4, money: 1, st: "ok", how: "PayPal.Me（設定があれば 1 タップ）または PayPal の「送金」でメールアドレス宛に", to: "受取先: tonbo7@gmail.com", url: "https://www.paypal.com/jp/home", ic: "PP", c: "#003087", svc: "paypal" },
   { id: "wise", n: "Wise 送金", cat: "海外・オンライン", ease: 3, users: 3, money: 1, st: "prep", how: "メールアドレス宛に送金", ic: "W", c: "#9FE870" },
   { id: "revolut", n: "Revolut 送金", cat: "海外・オンライン", ease: 4, users: 3, money: 1, st: "prep", how: "@ユーザー名宛に送金", ic: "R", c: "#191C1F" },
   { id: "stripe", n: "クレジットカード（Stripe 決済リンク）", cat: "カード", ease: 5, users: 5, money: 1, st: "prep", how: "リンクを開いてカード番号を入れるだけ（制作者が Stripe のリンクを作れば）", ic: "S", c: "#635BFF" },
@@ -123,4 +124,4 @@ RG.PAYMETHODS = [
   { id: "info", n: "中村橋の実測データを提供する（乗車位置・混雑）", cat: "非金銭", ease: 3, users: 2, money: 0, st: "ok", how: "制作者が一番ほしいもの。窓口へ", ic: "📝", c: "#455A64" },
   { id: "pingpong", n: "ピンポン猛プッシュの見守りボランティア", cat: "非金銭", ease: 2, users: 1, money: 0, st: "neta", how: "朝、界隈のご家庭の平和を見守る。やられた方はたまりません", ic: "🔔", c: "#FF7043" }
 ];
-RG.PAYMETHODS_NOTE = "107 種類。あと 1 つで 108＝除夜の鐘（煩悩の数）が聞こえてしまうため、ここで止めています。宗教法人（従業員1名）ゆえ、煩悩にはまみれていません（念のため）。";
+RG.PAYMETHODS_NOTE = "v100 で COIN+ が加わり 108 種類＝除夜の鐘（煩悩の数）に到達。煩悩の数だけ、応援の入口があります。";

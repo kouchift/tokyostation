@@ -648,7 +648,7 @@ function openSettings() {
     '<div class="set__sec"><h4>⭐ 注視駅（最大' + RG.MAX_WATCH + '駅）</h4>' +
       '<p class="set__d">保存した駅は路線図で大きな星として強調表示されます。</p>' +
       '<div id="set-watch" class="set__watch"></div>' +
-      '<div class="set__add"><input id="set-q" type="search" placeholder="駅名で検索して追加" ' +
+      '<div class="set__add"><input id="set-q" type="search" placeholder="駅名で検索して追加" aria-label="注視駅にする駅名を検索" ' +
       'autocomplete="off"><div id="set-sug" class="sug sug--set"></div></div></div>' +
 
     '<div class="set__sec"><h4>📍 現在地のマーク</h4>' +
@@ -663,7 +663,7 @@ function openSettings() {
           '<span class="mest__t">' + esc(st.label.replace(/^\S+\s/, "")) + "</span></label>";
       }).join("") + "</div>" +
       '<div class="set__row"><span>色</span>' +
-        '<input id="set-mec" type="color" value="' + (ST.meColor || "#1A73E8") + '">' +
+        '<input id="set-mec" type="color" aria-label="現在地の印の色" value="' + (ST.meColor || "#1A73E8") + '">' +
         '<button id="set-mec-r" class="set__b2" type="button">既定に戻す</button></div>' +
       '<label class="set__sw"><input id="set-mel" type="checkbox"' + (ST.meLabel !== false ? " checked" : "") +
       "> 「現在地」の文字を出す</label></div>" +
@@ -674,7 +674,7 @@ function openSettings() {
       '<label class="set__sw"><input id="set-lm" type="checkbox"' + (ST.lmOn ? " checked" : "") +
       "> <b>ランドマークを表示する</b></label>" +
       '<div class="set__row"><span>アイコンの大きさ</span>' +
-        '<input id="set-scale" type="range" min="0.5" max="1.8" step="0.05" value="' + ST.lmScale + '">' +
+        '<input id="set-scale" type="range" aria-label="ランドマークの大きさ" min="0.5" max="1.8" step="0.05" value="' + ST.lmScale + '">' +
         '<output id="set-scale-o">' + Math.round(ST.lmScale * 100) + "%</output></div>" +
       '<label class="set__sw"><input id="set-hv" type="checkbox"' + (ST.hideVisited ? " checked" : "") +
       "> ✅ 訪問済みのスポットを地図から隠す" +
@@ -684,7 +684,7 @@ function openSettings() {
       '<label class="set__sw"><input id="set-own" type="checkbox"' + (ST.lmOwn ? " checked" : "") +
       '> 🏫 自分で追加した場所（' + RG.LANDMARKS_OWN.length + "件）</label>" +
       '<div class="set__row"><span>スポットの大きさ</span>' +
-        '<input id="set-pscale" type="range" min="0.6" max="2" step="0.05" value="' + (ST.poiScale || 1) + '">' +
+        '<input id="set-pscale" type="range" aria-label="スポットの印の大きさ" min="0.6" max="2" step="0.05" value="' + (ST.poiScale || 1) + '">' +
         '<output id="set-pscale-o">' + Math.round((ST.poiScale || 1) * 100) + "%</output></div>" +
       '<div class="set__cats">' + (RG.GENRES || []).map(function (g) {
         var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
@@ -703,7 +703,7 @@ function openSettings() {
       '<b>持ち込みアイコン</b>（自分で用意した画像を路線アイコンに使う機能）が有効になります。</p>' +
       (ST.secret
         ? '<p class="set__ok">🔓 解除済みです。<button id="set-lock" class="set__b" type="button">ロックする</button></p>'
-        : '<div class="set__add"><input id="set-pw" type="password" placeholder="合言葉" autocomplete="off">' +
+        : '<div class="set__add"><input id="set-pw" type="password" placeholder="合言葉" aria-label="合言葉" autocomplete="off">' +
           '<button id="set-unlock" class="set__b" type="button">解除</button></div>') +
       '<div class="set__note"><b>できること／できないこと</b><br>' +
       "○ 路線記号バッジ（G・M・JYなど）を大きく表示。バッジは本アプリの独自描画です<br>" +
@@ -712,6 +712,8 @@ function openSettings() {
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
+    (RG.favs ? RG.favs.settingsHTML() : "") +
+    (RG.statsSwitchHTML ? RG.statsSwitchHTML() : "") +
     (RG.geoSwitchHTML ? RG.geoSwitchHTML() : "") +
     (RG.weatherSwitchHTML ? RG.weatherSwitchHTML() : "") +
     (RG.voiceSwitchHTML ? RG.voiceSwitchHTML() : "") +
@@ -727,6 +729,8 @@ function openSettings() {
   if (RG.weatherSwitchBind) RG.weatherSwitchBind(m);
   if (RG.voiceSwitchBind) RG.voiceSwitchBind(m);
   if (RG.tipBind) RG.tipBind(m);
+  if (RG.favs) RG.favs.settingsBind(m);
+  if (RG.statsSwitchBind) RG.statsSwitchBind(m);
   renderWatch();
 
   $("#set-lm", m).addEventListener("change", function () { ST.lmOn = this.checked; save(); applyLandmarks(); });

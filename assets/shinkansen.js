@@ -33,7 +33,7 @@ var STRIPE = { "のぞみ": "#1e50a2", "ひかり": "#1e50a2", "こだま": "#1e
 
 /* 駅カードに差し込む新幹線ブロック */
 RG.shinkansenHtml = function (name) {
-  var s = RG.shinkansenOf(name); if (!s) return "";
+  var s = RG.SHINKANSEN ? RG.shinkansenOf(name) : null; if (!s) return "";
   var SK = RG.SHINKANSEN, svc = SK.svc || {};
   var stops = (s.stops || []).filter(function (x) { return x.stop !== "none"; });
   var trains = stops.map(function (x) {

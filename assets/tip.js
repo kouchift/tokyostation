@@ -32,7 +32,9 @@ function vid() {
   } catch (e) { return "nosave"; }
 }
 function yen(n) { return "¥" + (n || 0).toLocaleString("ja-JP"); }
-function appName(a) { return a === "kyash" ? "Kyash" : "PayPay"; }
+var APPNAME = { paypay: "PayPay", kyash: "Kyash", cotra: "ことら送金", paypal: "PayPal", rakutenpay: "楽天ペイ", dbarai: "d払い", aupay: "au PAY", coinplus: "COIN+", famipay: "FamiPay" };
+function appName(a) { return APPNAME[a] || (a === "kyash" ? "Kyash" : "PayPay"); }
+function isMainApp(a) { return a === "kyash" || a === "paypay"; }
 function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (RG.isTouch && RG.isTouch() && innerWidth < 900); }
 
 /* ---- 記録（すべての「送りました」はここを通る） ---- */
@@ -178,6 +180,7 @@ function waysHTML(C, S) {
   var M = (RG.PAYMETHODS || []).slice().sort(function (a, b) { return (b.ease + b.users) - (a.ease + a.users) || b.users - a.users; });
   var cats = []; M.forEach(function (x) { if (cats.indexOf(x.cat) < 0) cats.push(x.cat); });
   var cur = S.wayCat || "";
+  M.forEach(function (x) { if (x.svc && x.st !== "end" && x.st !== "neta") { var s2 = svcState(x.svc).st; x.st = s2 === "ok" ? "ok" : "prep"; } });   // v100: 受取先の設定で «いま送れる» が決まる
   var list = cur ? M.filter(function (x) { return x.cat === cur; }) : M;
   var ST = { ok: ["いま送れる", "ok"], prep: ["制作者の準備待ち", "prep"], end: ["サービス終了（供養）", "end"], neta: ["金額ではないが潤う", "neta"] };
   return SCHOOL_NOTE +
@@ -190,6 +193,7 @@ function waysHTML(C, S) {
         '<i>' + esc(x.how) + (x.to ? "　▶ " + esc(x.to) : "") + "</i>" +
         '<span class="way__meter" title="かんたんさ ' + x.ease + '/5・利用者 ' + x.users + '/5">' + "●".repeat(x.ease) + "○".repeat(5 - x.ease) + " ／ " + "●".repeat(x.users) + "○".repeat(5 - x.users) + "</span></span>" +
         '<span class="way__act">' + (x.id === "paypay" || x.id === "kyash" ? '<button class="tj__cp" type="button" data-way-quick="' + x.id + '">送る</button>'
+          : x.svc && svcState(x.svc).st === "ok" ? '<button class="tj__cp" type="button" data-way-svc="' + x.svc + '">送る</button>'
           : x.bank ? '<button class="tj__cp" type="button" data-way-bank="' + x.id + '">振込依頼書／FBデータ</button>'
           : x.id === "cheerword" || x.id === "photo" || x.id === "info" ? '<button class="tj__cp" type="button" data-way-msg="1">窓口へ</button>'
           : x.id === "share" ? '<button class="tj__cp" type="button" data-way-share="1">共有</button>'
@@ -199,6 +203,7 @@ function waysHTML(C, S) {
 function bindWays(m, C) {
   m.querySelectorAll("[data-wcat]").forEach(function (b) { b.addEventListener("click", function () { var S = st(); S.wayCat = b.dataset.wcat; save(S); RG.showTip("ways"); }); });
   m.querySelectorAll("[data-way-quick]").forEach(function (b) { b.addEventListener("click", function () { var S = st(); S.app = b.dataset.wayQuick; save(S); RG.tipQuick(); }); });
+  m.querySelectorAll("[data-way-svc]").forEach(function (b) { b.addEventListener("click", function () { var S = st(); S.app = b.dataset.waySvc; save(S); RG.tipQuick(); }); });   // v100: カードを開いた状態で «押すだけ» へ
   m.querySelectorAll("[data-way-bank]").forEach(function (b) { b.addEventListener("click", function () { RG.bankForm(b.dataset.wayBank); }); });
   m.querySelectorAll("[data-way-msg]").forEach(function (b) { b.addEventListener("click", function () { RG.showTip("msg"); }); });
   m.querySelectorAll("[data-way-share]").forEach(function (b) { b.addEventListener("click", function () { RG.closeModal(); RG.shareOpen && RG.shareOpen(); }); });
@@ -284,7 +289,7 @@ function bindRank(m, C) {
 
 /* ---- 投げ銭 ---- */
 function payHTML(C, S) {
-  var app = S.app || "paypay";
+  var app = isMainApp(S.app) ? S.app : "paypay";
   return SCHOOL_NOTE + '<p class="tj__lead">たった一人の制作者（<b>従業員1名の宗教法人</b>のような、非課税で端数の概念が無い世界の住人）を、確実に笑顔にできます。' +
     "このサイトの維持管理は<b>この投げ銭だけ</b>で成り立っています。</p>" +
     '<p class="tj__hint">いま見えているのは «投げ銭前» の姿です。投げ銭が積み上がるほど、制作者はビジュアルをよりリアルに・より高解像に・コンテンツをより充実させる努力をするつもりです（実現の日は未定、保証はまるでありません）。' +
@@ -355,7 +360,7 @@ function afterTip(S2, amt) {
   var u2 = document.getElementById("tip-undo"); if (u2) u2.addEventListener("click", function () { undoLast(); RG.closeModal(); });
 }
 function bindPay(m, C) {
-  var S = st(), app = S.app || "paypay", amt = S.lastAmount || 0, how = $("#tip-how", m);
+  var S = st(), app = isMainApp(S.app) ? S.app : "paypay", amt = S.lastAmount || 0, how = $("#tip-how", m);
   function paint() { how.innerHTML = amt ? howHTML(C, app, amt) : '<p class="tj__hint">金額を選ぶと手順が出ます。</p>'; bindHow(); }
   function bindHow() {
     how.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
@@ -419,7 +424,7 @@ function qrTarget(C, app, amt) {
 }
 function emojiOf(a) { return a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬"; }
 RG.tipQuick = function (preAmt) {
-  var S = st(), C = cfg(), app = S.app || "paypay", id = app === "kyash" ? C.kyashId : C.paypayId, mob = isMobile(), name = appName(app);
+  var S = st(), C = cfg(), app = S.app === "kyash" ? "kyash" : "paypay", focusSvc = svcOf(S.app) ? S.app : null, id = app === "kyash" ? C.kyashId : C.paypayId, mob = isMobile(), name = appName(app);
   var amts = C.amounts || [100, 500, 1000, 3000];
   var main = preAmt || S.lastAmount || amts[1] || amts[0];          // いつもの額（初回は 2 番目＝¥500）
   var L = linkFor(C, app, main), direct = L.kind !== "scheme";
@@ -428,8 +433,8 @@ RG.tipQuick = function (preAmt) {
     return '<a class="' + cls + '" href="' + esc(l.href) + '"' + (l.ext ? ' target="_blank" rel="noopener"' : "") + ' data-qamt="' + amt + '">' + inner + "</a>";
   }
   var html = '<div class="tq' + (mob ? " tq--m" : " tq--pc") + '">' +
-    '<div class="tq__apps" role="tablist"><button class="tq__app' + (app === "paypay" ? " on" : "") + '" type="button" data-qapp="paypay">PayPay</button>' +
-    '<button class="tq__app' + (app === "kyash" ? " on" : "") + '" type="button" data-qapp="kyash">Kyash</button></div>' +
+    '<div class="tq__apps" role="group" aria-label="送金アプリ"><span class="tq__rec">おすすめ</span><button class="tq__app' + (app === "paypay" ? " on" : "") + '" type="button" data-qapp="paypay" aria-pressed="' + (app === "paypay") + '">PayPay</button>' +
+    '<button class="tq__app' + (app === "kyash" ? " on" : "") + '" type="button" data-qapp="kyash" aria-pressed="' + (app === "kyash") + '">Kyash</button></div>' +
     (mob
       ? aTag(main, "tq__one", emojiOf(main) + " " + yen(main) + " を " + name + " で送る<small>" +
           (direct ? "1 タップで " + name + " が «送り先入り» で開きます" : "ID をコピーして " + name + " を開きます → 「送る」に貼り付け") + "</small>") +
@@ -445,6 +450,8 @@ RG.tipQuick = function (preAmt) {
     '<div class="tq__id">送り先 ID <b>' + esc(id) + '</b> <button class="tj__cp" type="button" data-cp="' + esc(id) + '">コピー</button>' +
       (direct ? '<small>（リンクで開くので、ふつうは不要）</small>' : "") + "</div>" +
     '<div id="tq-res" class="tq__res" aria-live="polite"></div>' +
+    '<div class="tq__more"><button class="tq__moreb" type="button" id="tq-more" aria-expanded="' + (focusSvc ? "true" : "false") + '" aria-controls="tq-svc">💳 ほかの方法 <small>ことら送金・PayPal・楽天ペイ・d払い・au PAY・COIN+</small><i>▾</i></button>' +
+      '<div id="tq-svc" class="tq__svc"' + (focusSvc ? "" : " hidden") + "></div></div>" +
     '<p class="tq__hint">押した時点で «送った» として履歴に残ります（まちがえたら「取り消す」）。当サイトはお金も個人情報もあずかりません。' +
       (S.count ? "これまで " + S.count + " 回・" + yen(S.total) + "。" : "") +
       ' <button class="tj__lnk" type="button" id="tq-full">くわしい窓口</button> <button class="tj__lnk" type="button" id="tq-msg">🙏 救いの言葉・要望</button></p></div>';
@@ -511,8 +518,122 @@ RG.tipQuick = function (preAmt) {
   bindSend(m);
   var f = $("#tq-full", m); if (f) f.addEventListener("click", function () { RG.openTip(function () { RG.showTip("pay"); }); });
   var mg = $("#tq-msg", m); if (mg) mg.addEventListener("click", function () { RG.showTip("msg"); });
+  /* v100: ほかの方法（金額はこの画面で選んだ額を引き継ぐ） */
+  var moreB = $("#tq-more", m), svcBox = $("#tq-svc", m);
+  function paintSvc() {
+    if (!svcBox || svcBox.hidden) return;
+    svcBox.innerHTML = '<p class="tq__svcl">' + (curAmt ? "<b>" + yen(curAmt) + "</b> を、ふだん使っている手段で。" : "") + "金額はアプリ側で入力します。</p>" + RG.tipServicesHtml(curAmt, mob);
+    RG.tipServicesBind(svcBox, function () { return curAmt; });
+    if (focusSvc) { var card = svcBox.querySelector('[data-sv="' + focusSvc + '"]'); if (card) { card.classList.add("sv--focus"); setTimeout(function () { try { card.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }, 60); } focusSvc = null; }
+  }
+  if (moreB && svcBox) {
+    moreB.addEventListener("click", function () { svcBox.hidden = !svcBox.hidden; moreB.setAttribute("aria-expanded", svcBox.hidden ? "false" : "true"); paintSvc(); if (!svcBox.hidden && RG.stat) RG.stat("tip", "more"); });
+    m.querySelectorAll("[data-qamt],[data-pcamt]").forEach(function (b) { b.addEventListener("click", function () { setTimeout(paintSvc, 0); }); });
+    paintSvc();
+  }
 };
 function qrImg(C, app) { return app === "kyash" ? (C.kyashQr || "") : (C.paypayQr || ""); }
+
+/* ---- v100: サービスカード（PayPay・Kyash 以外の受取先） ----
+   ・受取先は data/support.js の services にだけ書く（ここには ID を書かない）
+   ・「送れる」と表示するのは、公式に確認できた指定方法（メールアドレス・ユーザー番号・PayPal.Me）か、制作者が固定リンク／QR を設定したものだけ
+   ・架空 URL・期限つき URL・推測のディープリンクは作らない。電話番号・口座番号は扱わない */
+var SVC = [
+  { id: "cotra",      pm: "kotora",     n: "ことら送金", ic: "こ", c: "#00A0E9", url: "https://www.cotra.ne.jp/p2pservice/" },
+  { id: "paypal",     pm: "paypal",     n: "PayPal",     ic: "PP", c: "#003087", url: "https://www.paypal.com/jp/home" },
+  { id: "rakutenpay", pm: "rakutenpay", n: "楽天ペイ",   ic: "R",  c: "#BF0000", url: "https://pay.rakuten.co.jp/guide/cash/send_receive/" },
+  { id: "dbarai",     pm: "dbarai",     n: "d払い",      ic: "d",  c: "#CC0033", url: "https://service.smt.docomo.ne.jp/keitai_payment/guide/wallet/remit.html" },
+  { id: "aupay",      pm: "aupay",      n: "au PAY",     ic: "au", c: "#EB5505", url: "https://wallet.auone.jp/contents/sp/guide/moneytransfer.html" },
+  { id: "coinplus",   pm: "coinplus",   n: "COIN+",      ic: "C+", c: "#1F6FE5", url: "https://coinplus.jp/remittancemethod/" },
+  { id: "famipay",    pm: null,         n: "FamiPay",    ic: "F",  c: "#00A040", url: "" }
+];
+function svcOf(id) { return SVC.filter(function (x) { return x.id === id; })[0] || null; }
+function svcCfg(id) { var C = cfg(); return (C.services && C.services[id]) || {}; }
+function httpOk(u) { return typeof u === "string" && /^https:\/\//.test(u); }
+/* いま «送れる» か。st: ok（送れる）／prep（制作者の設定待ち）／off（対象外） */
+function svcState(id, amt) {
+  var c = svcCfg(id), ids = [], go = null, how = "", note = "";
+  switch (id) {
+    case "cotra":
+      if (c.email) ids.push(["メールアドレス", c.email]);
+      how = "対応する銀行アプリ（ゆうちょ通帳アプリ・各行アプリ）の「ことら送金」で、送り先に <b>メールアドレス</b> を入れて送金。1 回 10 万円まで、手数料は無料の先が多い（専用アプリはありません）";
+      note = "※送金時の受取人名義等の表示は、ことら送金・ご利用アプリの仕様に従います。";
+      if (!c.enabled) return { st: "off", label: "対象外", ids: ids, how: how, note: note };
+      if (!c.registered) return { st: "prep", label: "受取設定が必要です", ids: ids, how: how, note: "制作者側で «メールアドレスと口座の紐付け（受取設定）» が済むと送れるようになります。" };
+      return { st: c.email ? "ok" : "prep", label: c.email ? "メールアドレスで送れます" : "受取先が未設定", ids: ids, how: how, note: note };
+    case "paypal":
+      if (c.paypalMe) go = { href: "https://www.paypal.com/paypalme/" + encodeURIComponent(c.paypalMe) + (amt ? "/" + amt + "JPY" : ""), label: "PayPal.Me をひらく（" + (amt ? yen(amt) : "金額はリンク先で") + "）" };
+      else if (httpOk(c.link)) go = { href: c.link, label: "PayPal をひらく" };
+      if (c.email) ids.push(["受取先（メールアドレス）", c.email]);
+      how = go ? "リンクを開いて金額を確認して送るだけ" : "PayPal アプリ／サイトの「送金」で <b>メールアドレス</b> を指定して送金（「友達や家族に送金」を選ぶと手数料がかかりません）";
+      return { st: go || c.email ? "ok" : "prep", label: go ? "1 タップで開けます" : (c.email ? "メールアドレスで送れます" : "受取先が未設定"), ids: ids, how: how, go: go, qr: c.qr };
+    case "rakutenpay":
+      if (httpOk(c.link)) go = { href: c.link, label: "楽天ペイをひらく" };
+      if (c.email) ids.push(["受取アカウント（参考）", c.email]);
+      how = go ? "リンクを開いて送る" : "楽天ペイアプリの「送る」→ 送り先一覧（連絡先）から。受け取り用リンクは 3 日・請求用リンクは 2 週間で切れるため、このサイトに固定リンクはありません";
+      return { st: go || httpOk(c.qr) ? "ok" : "prep", label: go ? "リンクで送れます" : "制作者の設定待ち（固定リンクなし）", ids: ids, how: how, go: go, qr: c.qr };
+    case "dbarai":
+      if (httpOk(c.link)) go = { href: c.link, label: "d払いをひらく" };
+      if (c.number) ids.push(["d払い番号", c.number]);
+      if (c.email) ids.push(["受取アカウント（参考）", c.email]);
+      how = go || c.number ? "d払いアプリの「送る」で d払い番号（またはリンク）を指定" : "d払いアプリの「送る」は 電話番号・d払い番号・QR・リンク宛（メールアドレス宛は不可）。制作者が d払い番号か固定リンクを設定すると送れるようになります";
+      return { st: go || c.number || httpOk(c.qr) ? "ok" : "prep", label: go || c.number ? "送れます" : "制作者の設定待ち", ids: ids, how: how, go: go, qr: c.qr };
+    case "aupay":
+      if (httpOk(c.link)) go = { href: c.link, label: "au PAY をひらく" };
+      if (c.number) ids.push(["au PAY 会員ナンバー", c.number]);
+      if (c.email) ids.push(["受取アカウント（参考）", c.email]);
+      how = go || c.number ? "au PAY アプリの「送る」で会員ナンバー（またはリンク）を指定。送る側は本人確認（または auじぶん銀行の口座連携）が必要" : "au PAY の「送る」は 携帯電話番号・会員ナンバー・QR 宛（メールアドレス宛は不可）。制作者が会員ナンバーか固定リンクを設定すると送れるようになります";
+      return { st: go || c.number || httpOk(c.qr) ? "ok" : "prep", label: go || c.number ? "送れます" : "制作者の設定待ち", ids: ids, how: how, go: go, qr: c.qr };
+    case "coinplus":
+      if (c.userNumber) ids.push(["ユーザー番号", c.userNumber]);
+      if (c.userName) ids.push(["受取人の表示名", c.userName]);
+      if (httpOk(c.link)) go = { href: c.link, label: "エアウォレットをひらく" };
+      how = "1. エアウォレット等の対応アプリを開く → 2.「送金」→ 3. ユーザー番号「" + esc(c.userNumber || "—") + "」を指定 → 4. 金額を入力 → 5. 送金。手数料無料（ブラウザからの自動送金はできません）";
+      return { st: c.userNumber ? "ok" : "prep", label: c.userNumber ? "対応アプリで送れます" : "受取先が未設定", ids: ids, how: how, go: go, qr: c.qr };
+    case "famipay":
+      if (c.id) ids.push(["FamiPay ID（参考）", c.id]);
+      how = "FamiPay 残高の個人間送金を公式に確認できないため、現在は投げ銭の送金対象外です（ギフトとは別物）。確認できたら data/support.js の famipay.enabled を true に";
+      if (c.enabled && (httpOk(c.link) || httpOk(c.qr))) { if (httpOk(c.link)) go = { href: c.link, label: "FamiPay をひらく" }; return { st: "ok", label: "送れます", ids: ids, how: "リンク／QR から送る", go: go, qr: c.qr }; }
+      return { st: "off", label: "現在は投げ銭送金対象外", ids: ids, how: how };
+  }
+  return { st: "prep", label: "未設定", ids: [], how: "" };
+}
+RG.tipServiceState = svcState;
+function svcCardHtml(sv, amt, mob) {
+  var s = svcState(sv.id, amt), st = s.st;
+  return '<div class="sv sv--' + st + '" data-sv="' + sv.id + '" role="group" aria-label="' + esc(sv.n) + "（" + esc(s.label) + '）">' +
+    '<div class="sv__hd"><span class="sv__ic" style="--lc:' + sv.c + '">' + esc(sv.ic) + "</span><b>" + esc(sv.n) + '</b><span class="sv__st sv__st--' + st + '">' + esc(s.label) + "</span></div>" +
+    (s.how ? '<p class="sv__how">' + s.how + "</p>" : "") +
+    s.ids.map(function (x) { return '<div class="sv__id"><small>' + esc(x[0]) + "</small><code>" + esc(x[1]) + '</code><button class="tj__cp" type="button" data-cp="' + esc(x[1]) + '" aria-label="' + esc(x[0]) + " " + esc(x[1]) + ' をコピー">コピー</button></div>'; }).join("") +
+    '<div class="sv__acts">' +
+      (st === "ok" && s.go ? '<a class="set__b2 sv__go" href="' + esc(s.go.href) + '" target="_blank" rel="noopener" data-sv-go="' + sv.id + '">' + esc(s.go.label) + " ↗</a>" : "") +
+      (!mob && st === "ok" && httpOk(s.qr) ? '<button class="tj__cp" type="button" data-sv-qr="' + sv.id + '">QR を見る</button>' : "") +
+      (sv.url ? '<a class="tj__cp" href="' + esc(sv.url) + '" target="_blank" rel="noopener">送る方法を見る ↗</a>' : "") +
+      (st === "ok" ? '<button class="tj__lnk" type="button" data-sv-done="' + sv.id + '">送りました（' + (amt ? yen(amt) + " を" : "") + '記録する）</button>' : "") +
+    "</div>" +
+    (s.note ? '<p class="sv__note">' + esc(s.note) + "</p>" : "") +
+    (!mob && st === "ok" && httpOk(s.qr) ? '<div class="sv__qr" hidden><img src="' + esc(s.qr) + '" alt="' + esc(sv.n) + ' の受取用 QR" width="180" height="180"></div>' : "") +
+  "</div>";
+}
+/* 一覧: おすすめ（PayPay）に続く «その他の方法»。ok → prep → off の順で、ok の中は 108 手段の ease+users 順 */
+RG.tipServicesHtml = function (amt, mob) {
+  var order = { ok: 0, prep: 1, off: 2 };
+  var list = SVC.slice().sort(function (a, b) {
+    var sa = svcState(a.id, amt).st, sb = svcState(b.id, amt).st;
+    if (order[sa] !== order[sb]) return order[sa] - order[sb];
+    var pa = (RG.PAYMETHODS || []).filter(function (x) { return x.id === a.pm; })[0] || { ease: 0, users: 0 }, pb = (RG.PAYMETHODS || []).filter(function (x) { return x.id === b.pm; })[0] || { ease: 0, users: 0 };
+    return (pb.ease + pb.users) - (pa.ease + pa.users);
+  });
+  return '<div class="svl">' + list.map(function (sv) { return svcCardHtml(sv, amt, mob); }).join("") +
+    '<p class="sv__foot">受取先は data/support.js に集約（画面には公開してよい識別子だけ）。「準備待ち」は制作者側の設定が要るもの。当サイトはお金も個人情報もあずかりません。</p></div>';
+};
+RG.tipServicesBind = function (root, getAmt, onRecorded) {
+  root.querySelectorAll("[data-cp]").forEach(function (b) { if (!b.__cp) { b.__cp = 1; b.addEventListener("click", function () { copy(b.dataset.cp, b); }); } });
+  root.querySelectorAll("[data-sv-qr]").forEach(function (b) { b.addEventListener("click", function () { var q = b.closest(".sv").querySelector(".sv__qr"); if (q) { q.hidden = !q.hidden; b.textContent = q.hidden ? "QR を見る" : "QR をとじる"; } }); });
+  root.querySelectorAll("[data-sv-done]").forEach(function (b) { b.addEventListener("click", function () { var amt = getAmt ? getAmt() : 0; if (!amt) { RG.tripStatus && RG.tripStatus("上で金額を選んでから記録してください", "info", 3000); return; } var S2 = st(); S2.app = b.dataset.svDone; save(S2); var S3 = record(amt, b.dataset.svDone); if (S3.count === 1) applyPatron(); onRecorded ? onRecorded(S3, amt, b.dataset.svDone) : afterTip(S3, amt); }); });
+  root.querySelectorAll("[data-sv-go]").forEach(function (a) { a.addEventListener("click", function () { var S2 = st(); S2.app = a.dataset.svGo; save(S2); }); });   // 最後に選んだ手段だけ覚える（決済情報は保存しない）
+};
+
 
 /* ---- くり返し（前回の金額 × 回数） ---- */
 function loopHTML(C, S) {
@@ -532,10 +653,10 @@ function bindLoop(m, C) {
   $("#tip-start", m).addEventListener("click", function () { var S2 = st(); S2.loopN = total; save(S2); i = 0; step(); });
   function step() {
     if (i >= total) { box.innerHTML = '<p class="tj__big">🎉 ' + total + " 回、完了。累計 " + yen(st().total || 0) + "。制作者は確実に笑顔です。</p>"; return; }
-    box.innerHTML = '<p class="tj__big">' + (i + 1) + " / " + total + " 回目 ― " + yen(S.lastAmount) + "</p>" + howHTML(C, S.app || "paypay", S.lastAmount);
+    box.innerHTML = '<p class="tj__big">' + (i + 1) + " / " + total + " 回目 ― " + yen(S.lastAmount) + "</p>" + howHTML(C, isMainApp(S.app) ? S.app : "paypay", S.lastAmount);
     box.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
     box.querySelectorAll("[data-done]").forEach(function (b) { b.addEventListener("click", function () {
-      var S3 = record(S.lastAmount, S.app || "paypay"); i++;
+      var S3 = record(S.lastAmount, isMainApp(S.app) ? S.app : "paypay"); i++;
       if (S3.count === 1) afterTip(S3, S.lastAmount);
       step();
     }); });

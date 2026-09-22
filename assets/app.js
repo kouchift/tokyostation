@@ -1037,6 +1037,7 @@ var Map = (function () {
         if (RG.corpFilter.i17 && p.i17 !== RG.corpFilter.i17) continue;
       }
       if (hideVisited && RG.visitCount && RG.visitCount(p.n) > 0) continue;
+      if (RG.poiFilterPass && !RG.poiFilterPass(p)) continue;              // v90: 絞り込みの土台（v99 のコンビニ 3 社など）
       if (p.x < vb.x - pad || p.x > vb.x + vb.w + pad ||
           p.y < vb.y - pad || p.y > vb.y + vb.h + pad) continue;
       cand.push(p);
@@ -1323,6 +1324,40 @@ var Card = (function () {
       (wxi ? '<div class="plate__wx" title="いま見ている場所の天気"><span class="plate__wxi">' + wxi[0] + '</span><b>' + Math.round(wxc.temperature_2m) + "°C</b><small>" + esc(wxi[1]) + "</small></div>" : "") +
     "</div>";
   }
+  /* v94: 駅カードの «次の一手»。出発地が別の駅なら「○○駅から ここへ」（1 タップで比較）、この駅が出発地なら「ここから、どこへ？」（検索欄へ）。
+     ☆（注視駅＝お気に入り）は右上に既存。共有はこの駅のリンク（?st=）。データが無くても壊れない（すべて既存の値だけ） */
+  function cardActs(s) {
+    var T = RG.Trip || {}, isOrigin = !!(T.origin && T.id === s.id);
+    var from = (T.origin && T.label ? T.label : "東京駅").replace(/^出発：/, "");
+    var primary = isOrigin
+      ? '<button class="cact cact--p" type="button" data-cardq-focus="1"><span class="ms">search</span><b>ここから、どこへ？</b><small>行き先を入れて比較</small></button>'
+      : '<button class="cact cact--p" type="button" data-to="' + esc(s.id) + '"><span class="ms">navigation</span><b>' + esc(from.length > 12 ? from.slice(0, 11) + "…" : from) + 'から ここへ</b><small>移動手段をくらべる</small></button>';
+    return '<div class="cardActs">' + primary +
+      '<button class="cact" type="button" data-from="' + esc(s.id) + '"' + (isOrigin ? ' disabled aria-disabled="true"' : "") + '><span class="ms">near_me</span><b>' + (isOrigin ? "出発地です" : "ここから出発") + '</b><small>' + (isOrigin ? "いまの出発地" : "出発地にする") + "</small></button>" +
+      '<div class="cardActs__mini">' +
+        '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '">🔗 共有</button>' +
+        '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
+        (RG.favs ? '<button class="cmini" type="button" data-fav-open="1">⭐ お気に入り一覧</button>' : "") +
+      "</div>" +
+      '<div class="cardq"><label class="cardq__l"><span class="ms">search</span><input class="cardq__in" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(s.n) + '駅から、どこへ？（駅名・地名）" aria-label="' + esc(s.n) + '駅からの行き先"></label><div class="cardq__sug" role="listbox" hidden></div></div>' +
+      "</div>";
+  }
+  /* v94: 近くのスポット（読めているデータの範囲で・900m 以内・同名はまとめる・6 つまで）。無ければ出さない */
+  function nearSpotsHtml(s) {
+    var P = RG.MAPPOI; if (!P || !P.length || !RG.hav) return "";
+    var seen = {}, out = [], gl = {}; (RG.GENRES || []).forEach(function (g) { gl[g.id] = g.e; });
+    for (var i = 0; i < P.length; i++) {
+      var p = P[i]; if (!p || p.g === "buzz" || !p.la) continue;
+      if (Math.abs(p.la - s.la) > 0.0085 || Math.abs(p.lo - s.lo) > 0.011) continue;   // ざっくり箱で絞ってから距離
+      var km = RG.hav([s.la, s.lo], [p.la, p.lo]); if (km > 0.9 || seen[p.n]) continue; seen[p.n] = 1;
+      out.push({ p: p, km: km, ti: p.ti == null ? 9 : p.ti });
+    }
+    if (!out.length) return "";
+    out.sort(function (a, b) { return a.ti - b.ti || a.km - b.km; }); out = out.slice(0, 6);
+    return '<section class="sec sec--near"><h3>近くのスポット <small>900m 以内・' + out.length + " 件</small></h3><div class=\"near__l\">" + out.map(function (x) {
+      return '<button class="nsp" type="button" data-nspot="' + esc(x.p.i || "") + '" data-nll="' + x.p.la + "," + x.p.lo + '"><span class="nsp__e">' + esc(gl[x.p.g] || "📍") + "</span><b>" + esc(x.p.n) + "</b><small>" + Math.round(x.km * 1000) + "m</small></button>";
+    }).join("") + "</div></section>";
+  }
   function plate(s) {
     // この駅を実際に通っている路線（隣接データにある路線）を先に、その他をあとに
     var onNet = {}, ord = [];
@@ -1347,16 +1382,14 @@ var Card = (function () {
       (RG.isWatched && RG.isWatched(s.id) ? "⭐" : "☆") + "</button>" +
       '<button class="plate__close" aria-label="閉じる" data-close>×</button></div>' +
       plateId(s, ord) +
+      cardActs(s) +                                                                    // v94: 名前の直下に «ここへのルート／ここから出発／どこへ？»
       (RG.memoHeadline ? RG.memoHeadline(s.n) : "") +
       '<div class="lchips">' + ls + '</div><div class="launcher" hidden></div>' +
       wikiIntro(s.n) +
       '<p class="plate__hl">' + esc(headline(s)) + "</p>" +
       (hops.length ? '<div class="hops"><span class="hops__l">となりの駅</span>' + hops.join("") + "</div>" : "") +
-      '<div class="acts">' +
-        '<button class="act act--from" type="button" data-from="' + esc(s.id) + '"><span class="ms">near_me</span>ここから出発</button>' +
-        '<button class="act act--to" type="button" data-to="' + esc(s.id) + '"><span class="ms">navigation</span>ここへ行く</button>' +
-        '<button class="act act--card" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
-      "</div></div>" +
+      "</div>" +
+      (RG.tokyoModeHtml ? RG.tokyoModeHtml(s) : "") +                                  // v90: 東京駅だけ «迷わない» を声より上に
       (RG.memoHtml ? RG.memoHtml(s.n) : "") +
       (RG.kidsHtml ? RG.kidsHtml(s.n) : "");
   }
@@ -1638,6 +1671,7 @@ var Card = (function () {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
            '<section class="sec sec--term" data-term="' + esc(s.id) + '" hidden><h3>主要駅へのアクセス <small>この駅から・日中の目安</small></h3><div class="term__l"></div></section>' +   // v86: 中身は開いたあとに計算して入れる（termFill）
+           nearSpotsHtml(s) +                                                                                                      // v94: 近くのスポット
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
            (RG.shinkansenHtml ? RG.shinkansenHtml(s.n) : "") +
            (RG.ytForStation ? RG.ytForStation(s.n) : "") +
@@ -1728,9 +1762,50 @@ var Card = (function () {
       });
     });
   }
+  /* v94: カードの中の «この駅から、どこへ？»。候補はヒーロー検索と同じ RG.heroSearch。選ぶと この駅を出発地にして比較へ */
+  function bindCardQ(root, id, input) {
+    var sug = root.querySelector(".cardq__sug"), s = RG.byId[id], last = "";
+    if (!sug || !s || !RG.heroSearch) return;
+    function close() { sug.innerHTML = ""; sug.hidden = true; last = ""; }
+    function go(r) {
+      RG.setOrigin([s.la, s.lo], s.n + "駅", s.id);
+      document.body.classList.add("route-active");
+      if (r.t === "station") { if (r.id === s.id) return; if (RG.showRoutes) RG.showRoutes(r.id); }
+      else if (RG.selectHeroPlace) RG.selectHeroPlace(r);
+    }
+    function render(q) {
+      q = (q || "").trim(); if (!q) { close(); return; } if (q === last) return; last = q;
+      var rows = RG.heroSearch(q, 6).filter(function (r) { return !(r.t === "station" && r.id === s.id); });
+      sug.innerHTML = "";
+      if (!rows.length) { sug.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした。駅名・地名・建物名で</div>'; sug.hidden = false; return; }
+      rows.forEach(function (r) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");
+        b.innerHTML = r.t === "station" ? "<b>🚉 " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>"
+                                        : "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small><span>" + esc(r.sub || "") + "</span>";
+        b.addEventListener("click", function (e) { e.stopPropagation(); input.value = r.n; close(); go(r); });
+        sug.appendChild(b);
+      });
+      sug.hidden = false;
+    }
+    input.addEventListener("click", function (e) { e.stopPropagation(); });
+    input.addEventListener("input", function () { render(input.value); });
+    input.addEventListener("keydown", function (e) {
+      e.stopPropagation();
+      if (e.key === "Enter") { var f = sug.querySelector("button.heroSug"); if (f) { e.preventDefault(); f.click(); } else { last = ""; render(input.value); } }
+      else if (e.key === "Escape") { close(); input.blur(); }
+      else if (e.key === "ArrowDown") { var f0 = sug.querySelector("button.heroSug"); if (f0) { e.preventDefault(); f0.focus(); } }
+    });
+    sug.addEventListener("keydown", function (e) {
+      var items = Array.prototype.slice.call(sug.querySelectorAll("button.heroSug")), i = items.indexOf(document.activeElement);
+      if (e.key === "ArrowDown" && i < items.length - 1) { e.preventDefault(); items[i + 1].focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); if (i > 0) items[i - 1].focus(); else input.focus(); }
+      else if (e.key === "Escape") { close(); input.focus(); }
+    });
+  }
   function bind(root, id, d) {
     var st0 = RG.byId[id];
     if (st0) setTimeout(function () { try { termFill(root, st0); } catch (e) {} }, 80);
+    if (RG.tokyoModeBind) RG.tokyoModeBind(root);
     if (RG.focusBind) RG.focusBind(root);
     if (RG.shinkansenBind && st0) RG.shinkansenBind(root, st0.n);
     if (RG.ytBind) RG.ytBind(root);
@@ -1776,9 +1851,25 @@ var Card = (function () {
       }
     });
     var t2 = root.querySelector("[data-to]");
-    if (t2) t2.addEventListener("click", function (e) { e.stopPropagation(); RG.showRoutes(t2.dataset.to); });
+    if (t2) t2.addEventListener("click", function (e) { e.stopPropagation(); if (RG.selectHeroDestination) RG.selectHeroDestination(t2.dataset.to); else RG.showRoutes(t2.dataset.to); });   // v94: 出発地が無ければ東京駅から
     var t3 = root.querySelector("[data-card]");
     if (t3) t3.addEventListener("click", function (e) { e.stopPropagation(); if (RG.showRouteCard) RG.showRouteCard(null, t3.dataset.card); });
+    // v94: 共有・お気に入り一覧・行き先検索・近くのスポット
+    var sh = root.querySelector("[data-share-st]");
+    if (sh) sh.addEventListener("click", function (e) { e.stopPropagation(); if (RG.shareStation) RG.shareStation(sh.dataset.shareSt); });
+    var fo = root.querySelector("[data-fav-open]");
+    if (fo) fo.addEventListener("click", function (e) { e.stopPropagation(); if (RG.favs) RG.favs.openList(); });
+    var qf = root.querySelector("[data-cardq-focus]"), qi = root.querySelector(".cardq__in");
+    if (qf && qi) qf.addEventListener("click", function (e) { e.stopPropagation(); qi.focus(); });
+    if (qi) bindCardQ(root, id, qi);
+    $$("[data-nspot]", root).forEach(function (b) {
+      b.addEventListener("click", function (e) {
+        e.stopPropagation(); var ll = b.dataset.nll.split(","), p = null;
+        if (b.dataset.nspot) p = (RG.MAPPOI || []).filter(function (x) { return x.i === b.dataset.nspot; })[0];
+        if (RG.Map.gotoLatLng) RG.Map.gotoLatLng(+ll[0], +ll[1], 180);
+        if (p && RG.showSpot) { close(); RG.showSpot(p); }
+      });
+    });
     $$(".tab", root).forEach(function (b) {
       b.addEventListener("click", function () {
         tab = b.dataset.tab;
@@ -1824,7 +1915,7 @@ var Card = (function () {
     sheet.classList.remove("show", "full"); scrim.classList.remove("show");
   }
   function init() { hover = $("#hovercard"); sheet = $("#sheet"); scrim = $("#scrim"); }
-  return { init: init, open: open, refresh: function () { if (cur) open(cur); }, close: close,
+  return { init: init, open: open, refresh: function () { if (cur) open(cur); }, close: close, current: function () { return cur; },
     hover: function (id, ev) { if (isTouch() || pinned) return;
       clearTimeout(timer); timer = setTimeout(function () { hoverShow(id, ev); }, 150); },
     unhover: function () { if (pinned) return; clearTimeout(timer); hover.classList.remove("show"); } };
@@ -2215,6 +2306,9 @@ RG.initHeroSearch = function () {
       input.value = name; last = ""; render(name); input.focus();
     });
   });
+  // v90: 東京駅の入口（PC はチップ、スマホは 1 ボタン）と、出発地に合わせた見出し
+  if (RG.tokyoHeroInit) RG.tokyoHeroInit();
+  if (RG.setOrigin && !RG.setOrigin.__hero) { var so = RG.setOrigin; RG.setOrigin = function () { var r = so.apply(this, arguments); if (RG.heroSyncOrigin) RG.heroSyncOrigin(); return r; }; RG.setOrigin.__hero = 1; }
   // 駅数を小さく（«全国の路線図の上に東京駅の入口» という構造が分かるように）
   var hs = $("#hero-stat"); if (hs && RG.NET) hs.textContent = "・ " + RG.NET.stations.length.toLocaleString("ja-JP") + " 駅 / " + RG.NET.lines.length + " 路線";
   // 高さを CSS 変数に（スマホでは «地図の設定»・ヒント・天気チップを hero の下に置くため）
@@ -2222,6 +2316,63 @@ RG.initHeroSearch = function () {
   measure();
   if (window.ResizeObserver && hero) new ResizeObserver(measure).observe(hero);
   window.addEventListener("resize", measure);
+};
+
+/* ---- v91: 直前の検索を入口に残す（閉じても «もう一度» で戻れる）＋ 共有 URL の復元 ---- */
+RG.heroLastRoute = function () {
+  var hero = $("#hero"); if (!hero) return;
+  var box = hero.querySelector(".heroSearch__last");
+  var L = RG.lastRoute;
+  if (!L) { if (box) box.remove(); return; }
+  if (!box) { box = document.createElement("div"); box.className = "heroSearch__last"; var acts = hero.querySelector(".heroSearch__actions"); acts.parentNode.insertBefore(box, acts); }
+  box.innerHTML = '<button type="button" class="heroLast" data-relast="1"><span>🔁</span><b>' + esc((L.label || "").replace(/^出発：/, "")) + " → " + esc(L.to) + "駅</b>" +
+    (L.rec ? "<small>" + L.rec.e + " 約" + L.rec.min + "分・¥" + L.rec.yen.toLocaleString("ja-JP") + "</small>" : "") + "<i>もう一度</i></button>";
+  box.querySelector("[data-relast]").addEventListener("click", function () { RG.reopenLastRoute(); });
+};
+RG.reopenLastRoute = function () {
+  var L = RG.lastRoute; if (!L) return;
+  if (!RG.Trip.origin || (L.fromId && RG.Trip.id !== L.fromId)) {
+    if (L.fromId && RG.byId[L.fromId]) { var f = RG.byId[L.fromId]; RG.setOrigin([f.la, f.lo], f.n + "駅", f.id, null); }
+    else if (L.from) RG.setOrigin(L.from, L.label, null, null);
+  }
+  document.body.classList.add("route-active");
+  if (RG.showRoutes) RG.showRoutes(L.toId);
+};
+/* v94: この駅の共有リンク（?st=駅ID）と共有の呼び出し（既存の SNS 共有を使う） */
+RG.stationShareUrl = function (id) {
+  var u = location.origin + location.pathname.replace(/[^/]*$/, "") + "index.html?st=" + encodeURIComponent(id);
+  return u;
+};
+RG.shareStation = function (id) {
+  var s = RG.byId[id]; if (!s) return;
+  var url = RG.stationShareUrl(id), ls = (s.ls || []).filter(function (l) { return !/ : /.test(l); }).slice(0, 3).join("・");
+  var txt = "【" + s.n + "駅】" + (ls ? ls + "。" : "") + "路線・行き方・近くのスポットを東京ステーションガイドで →";
+  if (RG.snsOpen) RG.snsOpen("🔗 この駅を共有", { title: s.n + "駅 — 東京ステーションガイド", text: txt, url: url }, { main: "line", primary: ["line", "x", "copy"] });
+  else if (navigator.share) navigator.share({ title: s.n + "駅", text: txt, url: url }).catch(function () {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(url);
+};
+/* ?from=駅ID&to=駅ID（v91 の共有リンク）: 開いた人の画面で同じ比較を開く。from が無ければ東京駅から。?st=駅ID（v94）: その駅のカードを開く */
+RG.restoreRouteFromUrl = function () {
+  var q; try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+  var st = q.get("st");
+  if (st && RG.byId[st] && !q.get("to")) {
+    setTimeout(function () {
+      RG.Map.focus(st, isTouch() && innerWidth < 560 ? 360 : 520); RG.openStation(st);
+      try { history.replaceState(null, "", location.pathname + (location.hash || "")); } catch (e) {}
+    }, 400);
+    return true;
+  }
+  var to = q.get("to"); if (!to || !RG.byId[to]) return false;
+  var from = q.get("from"), f = from && RG.byId[from] ? RG.byId[from] : (RG.getDefaultOriginStation ? RG.getDefaultOriginStation() : null);
+  if (!f) return false;
+  setTimeout(function () {
+    RG.setOrigin([f.la, f.lo], f.n + "駅", f.id, null);
+    document.body.classList.add("route-active");
+    var inp = $("#hero-q"); if (inp) inp.value = RG.byId[to].n;
+    if (RG.showRoutes) RG.showRoutes(to);
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  }, 700);
+  return true;
 };
 
 RG.boot = function () {
@@ -2251,6 +2402,12 @@ RG.boot = function () {
   // ---- ここから下は «無くても地図は見られる» もの ----
   step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
   step("メイン検索", function () { if (RG.initHeroSearch) RG.initHeroSearch(); });   // v89: 東京駅から、どこへ行く？
+  step("共有リンクの復元", function () { if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl(); });   // v91: ?from=&to=
+  step("お気に入りと履歴", function () { if (RG.favs) RG.favs.init(); });   // v92: この端末だけ（tsg.fav.v1）
+  step("現地モード", function () { if (RG.onsite) RG.onsite.init(); });   // v95: 下のパネル（押したときだけ位置情報）
+  step("コンビニの絞り込み", function () { if (RG.cvsFilterInit) RG.cvsFilterInit(); });   // v99: 7／F／L
+  step("流れの統合", function () { if (RG.flowInit) RG.flowInit(); });   // v96: 戻るボタン・Esc・現在地→近く
+  step("利用状況", function () { if (RG.statsInit) setTimeout(RG.statsInit, 1500); });   // v98: 起動が落ち着いてから（DOM は作らない）
   step("フィルタ", function () { initChips(); });
   step("シートの操作", function () { initSheetDrag(); });
   step("出発バー", function () { if (RG.initPlannerUI) RG.initPlannerUI(); });
