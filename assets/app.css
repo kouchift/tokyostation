@@ -1605,9 +1605,9 @@ body.secret .lbadge{min-width:25px;height:25px;font-size:11.5px;background:var(-
 .day__rn em{display:block;font-style:normal;font-size:9.5px;color:var(--label);margin-top:3px}
 .day__l{margin:0;padding-left:19px}
 .day__l li{font-size:12px;line-height:1.75;margin-bottom:5px}
-.pl{border:0;background:none;padding:0;font:inherit;color:var(--highlight);font-weight:700;
-  text-decoration:underline;text-decoration-style:dotted;cursor:pointer}
-.pl:hover{background:var(--lb50)}
+.plk{border:0;background:none;padding:0;font:inherit;color:var(--highlight);font-weight:700;
+  text-decoration:underline;text-decoration-style:dotted;cursor:pointer}   /* v88: 旧 .pl。おでかけプランの入れ物 .pl と名前が衝突し、プラン画面の文字が全部 青太字＋点線下線 になっていた */
+.plk:hover{background:var(--lb50)}
 .wall{text-align:center;padding:6px 2px}
 .wall__e{font-size:44px}
 .wall__t{font-size:14px;font-weight:700;line-height:1.8;margin:10px 0}
@@ -3055,7 +3055,7 @@ html.kuni-on .geo__pn{display:none!important}
 .app>*{flex:0 0 auto}
 .app>.hdr{height:var(--header-h);box-sizing:border-box}
 .app>.topbar{height:var(--tripbar-h);box-sizing:border-box;overflow:hidden}
-.app>.linerail{height:var(--chips-h);box-sizing:border-box;overflow-y:hidden}
+.app>.linerail{height:var(--chips-h);box-sizing:border-box;overflow:visible}   /* v88: overflow-y:hidden だと «えらぶ» で開く中身（バーの真上に出る）が切れて見えなかった（v82〜v87 の不具合） */
 .app>.mapwrap{flex:1 1 0;min-height:160px}
 /* v83: 文章欄の残り文字数 */
 .lg__l{display:block;font-size:12px;color:#555;margin:6px 0 2px}.lg__cnt{float:right;font-size:11.5px;color:#777;font-variant-numeric:tabular-nums}.lg__cnt.is-near{color:#C45E1A}.lg__cnt.is-full{color:#C62828;font-weight:700}
@@ -3244,7 +3244,7 @@ body.night .aggr__b[aria-pressed=true]{background:#f7f9ff;color:#181c20}
 body.night .tb__dt{background:#2d3135;color:#f7f9ff}
 .weekbar{background:transparent}
 .tb__status{border-radius:999px;font-weight:600;box-shadow:var(--sh-sm);border:1px solid var(--grid);background:#fff}
-.tb__status.ok{background:rgba(107,252,192,.35);border-color:rgba(0,108,75,.25);color:#002114}
+.tb__status.ok{background:#e4fbf1;border-color:rgba(0,108,75,.25);color:#002114}   /* v87: 下の札が透けないように不透明に */
 .tb__status.warn{background:var(--amberbg);border-color:rgba(143,76,0,.25);color:var(--amber)}
 .tb__status.night{background:#181c20;border-color:#2d3135;color:#ffd86b}
 
@@ -3516,3 +3516,85 @@ button:active{transform:scale(.97)}
 .term__x{border-radius:999px;background:var(--control3);font-size:11px;font-weight:700;padding:3px 10px}
 .term__x--0{background:var(--lb200);color:#001d35}
 .term__y{margin-left:auto;font-family:var(--mono);font-weight:700;font-size:13px}
+/* v87: レベチなレストラン */
+.lvbtn{position:absolute;left:12px;bottom:48px;z-index:12;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 6px;border:0;border-radius:999px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:var(--sh-sm,0 2px 8px rgba(0,0,0,.12));font:inherit;font-size:12px;font-weight:800;color:#5c4300;cursor:pointer;transition:transform .12s,background .12s}
+.lvbtn:hover{transform:translateY(-1px)}.lvbtn:active{transform:scale(.97)}
+.lvbtn img{width:22px;height:22px}.lvbtn b{font-family:var(--mono);font-size:11px;background:#F5C542;color:#3d2c00;border-radius:999px;padding:1px 7px}
+.lvbtn.on{background:#3d2c00;color:#fff}.lvbtn.on b{background:#F5C542}
+@media (pointer:coarse){.lvbtn{min-height:40px;height:40px}}
+.poi.poi--levechi image{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.lvc{border:1px solid #F0DDA0;background:linear-gradient(180deg,#FFF9E6,#fff);border-radius:16px;padding:12px 14px;margin:10px 0}
+.lvc__hd{display:flex;align-items:center;gap:10px}.lvc__ic{width:40px;height:40px}.lvc__t{display:block;font-size:15px;font-weight:800;color:#3d2c00}.lvc__hd small{font-size:11px;color:#7a5c00}
+.lvc__star{margin-left:auto;font-family:var(--mono);font-weight:800;font-size:15px;color:#B8860B}
+.lvc__tags{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 0}.lvc__tag{font-size:11px;font-weight:700;background:#F5C542;color:#3d2c00;border-radius:999px;padding:2px 9px}
+.lvc__d{font-size:13.5px;line-height:1.7;margin:8px 0 0;color:#1a1a1a}
+.lvc__ex{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0 0;font-size:12px}.lvc__ex dt{color:#7a5c00;font-weight:700}.lvc__ex dd{margin:0;color:#333}
+
+/* ---------- v87 押すだけ投げ銭（1 タップ） ---------- */
+.tq__one{display:block;width:100%;box-sizing:border-box;text-align:center;text-decoration:none;border:0;border-radius:20px;padding:16px 12px;font-size:21px;font-weight:800;color:#fff;background:linear-gradient(180deg,#f07a1a,#d45500);box-shadow:var(--sh-md,0 6px 16px rgba(0,0,0,.14));margin:6px 0 10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tq__one small{display:block;font-size:12px;font-weight:500;opacity:.92;margin-top:5px;line-height:1.4}
+.tq__one:active{transform:scale(.985)}
+.tq__one--again{background:linear-gradient(180deg,#0e7a5a,#006c4b);margin-top:10px}
+.tq__amts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;color:#3a2a10;min-height:68px;padding:8px 4px;font-size:15px;border-radius:16px}
+.tq__amt span{font-size:24px;margin-bottom:2px}
+.tq__amt.on{border-color:#d45500;background:#fff1e3;box-shadow:inset 0 0 0 1px #d45500}
+.tq__id{font-size:12.5px;color:var(--label);margin:6px 0 4px}.tq__id b{font-size:15px}.tq__id small{font-size:11px;opacity:.8}
+.tq__wait{background:#eef6ff;border-radius:14px;padding:10px 12px;font-size:14px;font-weight:700;color:#0b3a6b}.tq__wait small{display:block;font-weight:400;font-size:12px;margin-top:3px;color:#3b5a7c}
+.tq__fb{background:#fff7e6;border:1px solid #f0d9a8;border-radius:14px;padding:10px 12px;font-size:13.5px;line-height:1.7}
+.tq__fb .set__b2{display:block;text-align:center;margin:8px 0;text-decoration:none}.tq__fb p{margin:6px 0}
+.tq__row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.tq--pc .tq__pc{align-items:flex-start}.tq--pc .tq__amts{margin:10px 0 8px}.tq--pc .tq__amt{min-height:58px;font-size:14px}.tq--pc .tq__amt span{font-size:20px}
+.tq__pcrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tq__qrimg{display:block;border-radius:10px;border:1px solid var(--grid)}
+.tq__apps{margin-bottom:10px}.tq__app{border-radius:14px}.tq__app.on{border-color:#d45500;background:#fff1e3}
+@media (max-width:420px){.tq__amts{grid-template-columns:repeat(4,1fr);gap:6px}a.tq__amt{font-size:13px;min-height:62px}.tq__amt span{font-size:20px}}
+.tq .tj__lnk,.tq .tj__cp{min-height:34px;padding:4px 10px;border-radius:999px;font-size:12.5px}
+.tq__hint{line-height:2}
+
+/* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
+   Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
+   アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=88) format('woff2')}
+
+#zrail{display:none}
+/* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
+   地図が約 110px 広くなる。機能は右下ドックの「≡」で開く «えらぶ» シートにまとめる（チップの行もシートの中へ）。PC は今までどおり */
+@media (max-width:720px){
+  .app>.chips{display:none}
+  .app>.linerail{display:none}
+  .app>.linerail.open{display:block;position:fixed;left:0;right:0;bottom:0;height:var(--chips-h);z-index:60}
+  .app>.linerail.open::after{content:"";position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(24,28,32,.28);z-index:-1}
+  .linerail.open .lr__rows{z-index:61}
+  .linerail .chips{display:flex;flex-wrap:wrap;height:auto;border:0;background:transparent;padding:2px 12px 8px;gap:6px;overflow:visible}
+  .lr__chiph{font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.06em;padding:6px 12px 2px}
+  .zoombar #zrail{display:inline-flex}
+}
+#zrail.on{background:var(--text);color:#fff}
+@media (max-width:720px){ .linerail.open .lr__all{width:auto;padding:0 12px 0 9px;border-radius:999px} .linerail.open .lr__all .lr__tl{display:inline} }
+
+/* ---------- v88 人数ステッパー・案のストック ---------- */
+.stp{display:inline-flex;align-items:center;gap:0;background:#fff;border:1px solid var(--grid);border-radius:999px;padding:2px;height:36px;box-sizing:border-box}
+.stp__l{font-size:12px;font-weight:700;color:var(--label);padding:0 6px 0 10px}
+.stp__b{width:30px;height:30px;border:0;border-radius:50%;background:var(--control2);color:var(--text);font-size:18px;font-weight:800;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;min-height:0}
+.stp__b:disabled{opacity:.35;cursor:default}
+.stp__b:not(:disabled):active{transform:scale(.94)}
+.stp__v{width:34px;height:30px;border:0;background:transparent;text-align:center;font-family:var(--mono);font-size:15px;font-weight:800;color:var(--text);padding:0;-moz-appearance:textfield}
+.stp__v::-webkit-outer-spin-button,.stp__v::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stp__v:focus{outline:2px solid var(--lb400,#7fb2e5);outline-offset:-2px;border-radius:8px}
+@media (pointer:coarse){.stp{height:42px}.stp__b{width:36px;height:36px;font-size:20px}.stp__v{height:36px;font-size:16px}}
+.plcur{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;padding:8px 12px;border-radius:12px;background:#fff;border:1px solid var(--grid)}
+.plcur__n{font-size:13px;font-weight:700;flex:1 1 auto;min-width:0}.plcur__d{font-style:normal;font-size:11px;font-weight:700;color:#b25e00;background:#fff3e0;border-radius:999px;padding:1px 8px;margin-left:4px}.plcur__d--ok{color:#0b6b46;background:#e4fbf1}
+.plcur__b{display:flex;flex-wrap:wrap;gap:6px}.plcur__b .set__b2{font-size:12px;padding:5px 10px}
+.stk{display:flex;flex-direction:column;gap:8px}
+.stk__r{border:1px solid var(--grid);border-radius:14px;background:#fff;padding:8px 10px}.stk__r.on{border-color:var(--lb600,#0061a1);box-shadow:inset 0 0 0 1px var(--lb600,#0061a1)}
+.stk__open{display:block;width:100%;text-align:left;border:0;background:transparent;padding:4px 2px;cursor:pointer;font:inherit;min-height:0}
+.stk__open b{display:block;font-size:14px}.stk__cur{font-style:normal;font-size:10.5px;color:#fff;background:var(--lb600,#0061a1);border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle}
+.stk__open small{display:block;color:var(--label);font-size:11.5px;margin-top:2px}.stk__items{display:block;font-size:12px;color:var(--text);margin-top:4px;line-height:1.5}
+.stk__acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+/* v88 共有: 3 ステップの案内・開き直しリンク・Obsidian の色 */
+.sns__steps{display:block;background:#f1f4f9;border-radius:12px;padding:8px 12px;line-height:1.7}.sns__steps b{display:block;font-weight:700}
+.sns__go{display:inline-block;margin-top:4px;padding:6px 12px;border-radius:999px;background:var(--lb900,#0061a1);color:#fff !important;font-weight:700;text-decoration:none}
+.sns--ob{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.sns--yt{background:#ff0000;color:#fff;border-color:#ff0000}
+.mm__local{margin:6px 0 0;font-size:11.5px;line-height:1.6;color:#6b4e00;background:#fff7e0;border:1px solid #f1dd9c;border-radius:10px;padding:6px 10px}

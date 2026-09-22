@@ -32,7 +32,7 @@ RG.focusBind = function (root) {
   });
   Array.prototype.forEach.call(root.querySelectorAll("[data-cheer]"), function (b) {
     if (b.__bound) return; b.__bound = 1;
-    b.addEventListener("click", function (e) { e.stopPropagation(); if (RG.openTip) RG.openTip(function () { RG.tipQuick(); }); });
+    b.addEventListener("click", function (e) { e.stopPropagation(); if (RG.tipQuick) RG.tipQuick(); });
   });
 };
 /* 独立したカード（東京都のように既存カードが無いもの） */

@@ -243,9 +243,16 @@ RG.memoBindLikes = bindLikes;
 
 /* ---- 駅カードのセクション ---- */
 function bar(v) { var w = Math.round((v - 1) / 3 * 100); return '<span class="mm__bar"><i style="width:' + w + '%"></i></span>'; }
+/* v88: 受け皿（Google フォーム＋公開 CSV）があるか。無いあいだは «この端末にだけ残る» ことを隠さず見せる */
+function backendOn() { var C = cfg(); return !!(C.memoForm && C.memoForm.action && C.memoCsv); }
+RG.memoBackendOn = backendOn;
+function localNote() {
+  if (backendOn()) return "";
+  return '<p class="mm__local">📱 いまは投稿が<b>この端末（このブラウザ）にだけ</b>残ります。ほかの人・ほかの端末には見えません。制作者が受け皿（無料の Google フォーム）を設定すると、みんなの声として共有されます。</p>';
+}
 function capLine(name) {
   var r = retained(name), viewers = RG.memoViewers(name);
-  return '<p class="mm__cap">保持枠 <b>' + r.cap + "</b> 件（閲覧・投稿・イイね！した人 " + viewers + " 人）" + (r.dropped ? "・枠を超えたので古い " + r.dropped + " 件は表示から外れています" : "") + ' <button type="button" class="mm__lst" data-memo-list="' + esc(name) + '">🗣️ みんなの声の一覧</button></p>';
+  return '<p class="mm__cap">保持枠 <b>' + r.cap + "</b> 件（閲覧・投稿・イイね！した人 " + viewers + " 人）" + (r.dropped ? "・枠を超えたので古い " + r.dropped + " 件は表示から外れています" : "") + ' <button type="button" class="mm__lst" data-memo-list="' + esc(name) + '">🗣️ みんなの声の一覧</button></p>' + localNote();
 }
 RG.memoHtml = function (name) {
   var ms = retained(name), avg = RG.memoAvg(name), n = ms.length;
@@ -283,7 +290,7 @@ RG.memoBind = function (root, name) {
   var f = root.querySelector('[data-memo-form="' + (window.CSS && CSS.escape ? CSS.escape(name) : name) + '"]') || root.querySelector("[data-memo-form]"); if (!f) return;
   var ob = root.querySelector(".mm__open");
   if (ob) ob.addEventListener("click", function () { f.hidden = !f.hidden; ob.textContent = f.hidden ? "この駅の情報を追加する" : "閉じる"; if (!f.hidden) { var b0 = f.querySelector(".mm__b"); b0 && b0.scrollIntoView({ behavior: "smooth", block: "center" }); } });
-  Array.prototype.forEach.call(root.querySelectorAll("[data-cheer]"), function (b) { b.addEventListener("click", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); }); });
+  Array.prototype.forEach.call(root.querySelectorAll("[data-cheer]"), function (b) { b.addEventListener("click", function () { if (RG.tipQuick) RG.tipQuick(); }); });
   var picked = {};
   Array.prototype.forEach.call(f.querySelectorAll(".mm__b"), function (b) {
     b.addEventListener("click", function () {
@@ -309,13 +316,13 @@ RG.memoBind = function (root, name) {
     }
     rememberNick(nick);
     var er0 = f.querySelector(".mm__err"); if (er0) er0.remove(); f.__fails = 0;
-    RG.tripStatus && RG.tripStatus("ありがとう。あなたの経験が、この駅の情報に追加されました。", "ok", 2000);
+    RG.tripStatus && RG.tripStatus(backendOn() ? "ありがとう。あなたの経験が、この駅の情報に追加されました（数分後にみんなの地図にも）。" : "ありがとう。この端末に残しました（受け皿ができると、みんなにも届きます）。", "ok", 3200);
     var sec = root.querySelector(".sec--memo");
     if (sec) { var wrap = document.createElement("div"); wrap.innerHTML = RG.memoHtml(name); sec.replaceWith(wrap.firstChild); RG.memoBind(root, name);
       var sec2 = root.querySelector(".sec--memo"), th = document.createElement("div"); th.className = "mm__thanks";
-      th.innerHTML = '<p class="mm__thanks-t">ありがとう。あなたの経験が、この駅の情報に追加されました。</p><p class="mm__thanks-s">ありがとう。あなたの経験が地図に残りました。この地図を育て続けたいと思っています。 <button type="button" class="mm__cheer mm__cheer--s">応援する</button></p>';
+      th.innerHTML = '<p class="mm__thanks-t">ありがとう。あなたの経験が、この駅の情報に追加されました。</p><p class="mm__thanks-s">' + (backendOn() ? "ありがとう。あなたの経験が地図に残りました。" : "ありがとう。この端末の地図に残りました（みんなへの共有は受け皿ができてから）。") + "この地図を育て続けたいと思っています。 <button type=\"button\" class=\"mm__cheer mm__cheer--s\">応援する</button></p>";
       sec2.insertBefore(th, sec2.firstChild.nextSibling);
-      th.querySelector(".mm__cheer").addEventListener("click", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });
+      th.querySelector(".mm__cheer").addEventListener("click", function () { if (RG.tipQuick) RG.tipQuick(); });
       setTimeout(function () { var t0 = th.querySelector(".mm__thanks-t"); if (t0) t0.remove(); }, 2000);
       if (RG.Map && RG.Map.lod) RG.Map.lod();
     }

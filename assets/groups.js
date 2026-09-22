@@ -16,7 +16,7 @@ var GROUPS = [
   { id: "help",  e: "🆘", label: "こまったとき", c: "#E53935",
     ids: ["toilet", "baby", "water", "hosp", "pharm", "police", "aed", "shelter", "wifi", "civic", "library"] },
   { id: "eat",   e: "🍜", label: "食べる・買う", c: "#F0851E",
-    ids: ["cvs", "cafe", "burger", "gyudon", "curry", "sushi", "noodle", "family", "chuka", "other", "pizza",
+    ids: ["levechi", "cvs", "cafe", "burger", "gyudon", "curry", "sushi", "noodle", "family", "chuka", "other", "pizza",
           "food", "super", "drug", "hc", "elec", "cloth", "disc", "life", "shopping"] },
   { id: "move",  e: "🚶", label: "移動する",     c: "#0079C2",
     ids: ["airport", "fuel", "cycle", "locker", "bike", "camspot"] },

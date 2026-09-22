@@ -35,6 +35,7 @@ var IDLE = [
   { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮" },
   { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
+  { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）
   { f: "data/shinkansen.js", key: "shinkansen", label: "新幹線の駅" },
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
   { f: "data/paymethods.js", key: "paymethods", label: "寄付の手段" },
@@ -131,7 +132,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;
@@ -226,9 +227,12 @@ function armOnDemandTriggers() {
   // ジャンルを選んだ（保存された選択の復元を含む）
   if (RG.Map && RG.Map.setGenres) {
     var orig = RG.Map.setGenres;
+    // v87: 第2段で来る軽いジャンル（レベチ・話題・一之宮・神社仏閣）だけなら、6MB の第3段は読まない
+    var LIGHT = { levechi: 1, buzz: 1, ichinomiya: 1, shrine_major: 1, temple_major: 1 };
     RG.Map.setGenres = function (list) {
       var real = list && list.length && list.indexOf("__none__") < 0;
-      if (real) RG.ensureSpots(function () { orig(list); });
+      var heavy = real && list.some(function (g) { return !LIGHT[g]; });
+      if (heavy) RG.ensureSpots(function () { orig(list); });
       orig(list);
     };
   }

@@ -190,6 +190,14 @@ var Rail = (function () {
       '<div class="lr__rows" data-pane="poi" hidden>' + grow + "</div>" +
       '<div class="lr__rows lr__rows--bz" data-pane="buzz" hidden><div id="lr-buzz"></div></div>';
     box.classList.toggle("open", !!ST.railOpen);
+    // v88 スマホ: 駅の絞り込みチップ（乗換ハブ・大きい駅…）は下の帯をやめて、このシートの «路線» の上に入れる（同じ要素を移すのでイベントはそのまま）
+    if (window.matchMedia && matchMedia("(max-width:720px)").matches) {
+      var chips = document.getElementById("chips"), pane0 = $('[data-pane="line"]', box);
+      if (chips && pane0) {
+        var h = document.createElement("div"); h.className = "lr__chiph"; h.textContent = "駅の絞り込み（押すと地図で光る）";
+        pane0.insertBefore(chips, pane0.firstChild); pane0.insertBefore(h, chips);
+      }
+    }
     function showTab(t) {
       ST.railTab = t; save();
       $$(".lr__tab", box).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.tab === t)); });
@@ -455,13 +463,25 @@ var Rail = (function () {
       if (!t) return;
       box.classList.toggle("open", !!ST.railOpen);
       t.setAttribute("aria-expanded", String(!!ST.railOpen));
+      var zr2 = document.getElementById("zrail"); if (zr2) { zr2.classList.toggle("on", !!ST.railOpen); zr2.setAttribute("aria-expanded", String(!!ST.railOpen)); zr2.innerHTML = '<span class="ms">' + (ST.railOpen ? "close" : "tune") + "</span>"; }
       t.innerHTML = '<span class="ms">' + (ST.railOpen ? "close" : "tune") + '</span><span class="lr__tl">' + (ST.railOpen ? "とじる" : "えらぶ") + "</span>";
     }
     RG.paintRailToggle = paintToggle;
-    $("#lr-toggle", box).addEventListener("click", function () {
-      ST.railOpen = !ST.railOpen; save(); paintToggle();
-    });
+    function railToggle(force) { ST.railOpen = force == null ? !ST.railOpen : !!force; save(); paintToggle(); }
+    RG.railToggle = railToggle;
+    $("#lr-toggle", box).addEventListener("click", function () { railToggle(); });
     paintToggle();
+    // v88: 右下ドックの「≡」（スマホだけ表示）。開いているあいだは暗い幕を押すと閉じる
+    var zr = document.getElementById("zrail");
+    if (zr && !zr.__bound) {
+      zr.__bound = 1;
+      zr.addEventListener("click", function () { railToggle(); });
+      document.addEventListener("pointerdown", function (e) {
+        if (!ST.railOpen || !box.classList.contains("open")) return;
+        if (e.target.closest("#linerail") || e.target.closest("#zrail") || e.target.closest(".modal")) return;
+        if (matchMedia("(max-width:720px)").matches) railToggle(false);
+      }, true);
+    }
     var ps = $("#lr-pref", box);
     if (ps) ps.addEventListener("change", function () {
       ST.pref = ps.value; save();
@@ -828,6 +848,7 @@ function delegate(root, sel, fn) {
 RG.delegateClick = delegate;
 
 RG.initLinesUI = function () {
+  if (window.matchMedia && matchMedia("(max-width:720px)").matches) ST.railOpen = false;   // v88: スマホは «えらぶ» シートを閉じた状態で始める（地図の上に重なるため）
   Rail.build();
   if (ST.secret) document.body.classList.add("secret");
   RG.Map.paintWatch(ST.watch);

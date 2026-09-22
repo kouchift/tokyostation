@@ -997,6 +997,7 @@ var Map = (function () {
     return OPTIN;
   }
   var tileT = null;
+  var NAME_Z = 22, NAME_MAX = 12;   // v88: 名前を出すズーム（最大 33.3 の 2 段手前から）と文字数
   function poiLOD() {
     if (!poiReady) return;
     var z = zl();
@@ -1061,7 +1062,7 @@ var Map = (function () {
     var cellA = cell * 0.45;                                          // 航空路モードの空港は密に（数の上限なし・間引きは小さなマス目で）
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
-      var special = q.g === "ichinomiya" || q.g === "buzz" || airmode;   // 一之宮は数の上限・間引きの対象外（必ず出す）
+      var special = q.g === "ichinomiya" || q.g === "buzz" || q.g === "levechi" || airmode;   // 一之宮・レベチは数の上限・間引きの対象外（必ず出す）
       if (!special && show.length >= cap) continue;
       var key = airmode ? Math.round(q.x / cellA) + "," + Math.round(q.y / cellA) : Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key] && (!special || airmode)) continue;
@@ -1095,7 +1096,8 @@ var Map = (function () {
       if (t.g === "buzz" || t.g === "ichinomiya") esz = Math.max(esz, 13);   // 都道府県単位の目印は、引いていても読める大きさに
       // v77: 寄ったとき（街〜詳細）だけ、企業・チェーンのロゴを極小で（識別目的。商標は各社に帰属）
       var logo = (z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
-      if (logo) { esz = Math.max(esz * 1.35, 11); }
+      if (t.g === "levechi" && RG.LEVECHI_ICON) { logo = RG.LEVECHI_ICON; esz = Math.max(esz * 1.5, 14); }   // v87: レベチは専用の印（どのズームでも）
+      else if (logo) { esz = Math.max(esz * 1.35, 11); }
       setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
       n.classList.toggle("poi--logo", !!logo);
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
@@ -1108,10 +1110,13 @@ var Map = (function () {
         // アイコンが少ないほど、名前を出す余裕がある。
         // 寄って画面が空いてきたら、名前を出す。
         // «アイコンが上限に届いていない» ＝ まわりに余裕がある、という目安。
-        var wantT = show.length < cap;
+        /* v88: 名前は «最大ズームとその一つ手前» だけ（z ≥ NAME_Z）。引いた地図では出さない（重なって読めず、うるさいだけ）。
+           全ジャンル共通（レベチ・話題・一之宮・チェーン店・くらしの施設…すべてこの 1 か所を通る）。重なる名前は出さない */
+        var wantT = z >= NAME_Z;
         var okT = false;
         if (wantT) {
-          var tw = Math.min(9, (t.n || "").length) * 7.2 * (vb.w / wpx);
+          var nm = String(t.n || ""), nlen = Math.min(NAME_MAX, nm.length);
+          var tw = nlen * 7.2 * (vb.w / wpx);
           var th = 15 * (vb.w / wpx);
           var a0 = t.x - tw / 2, a1 = t.x + tw / 2, b0 = t.y + th * 0.5, b1 = t.y + th * 1.7;
           var bad = false;
@@ -1123,9 +1128,9 @@ var Map = (function () {
         }
         if (okT) {
           t0.setAttribute("x", t.x); t0.setAttribute("y", t.y + 19 * uu);
-          t0.style.setProperty("font-size", (SZ2.poiT * uu).toFixed(2) + "px", "important");
+          t0.style.setProperty("font-size", (Math.max(SZ2.poiT, 9.5) * uu).toFixed(2) + "px", "important");
           t0.style.setProperty("stroke-width", (2.8 * uu).toFixed(2) + "px", "important");
-          t0.textContent = (t.n || "").slice(0, 9);
+          t0.textContent = nm.length > NAME_MAX ? nm.slice(0, NAME_MAX - 1) + "…" : nm;
           t0.style.display = "";
         } else { t0.textContent = ""; t0.style.display = "none"; }
       }
@@ -2046,6 +2051,7 @@ function mergeExtraPois(key) {
   if (RG.mergeBuzz) RG.mergeBuzz();
   if (RG.mergeViews) RG.mergeViews();
   if (RG.mergeOnsen) RG.mergeOnsen();
+  if (RG.mergeLevechi) { RG.mergeLevechi(); if (RG.levechiInit) RG.levechiInit(); }
   if (RG.mergeNearSpecial) RG.mergeNearSpecial();
   if (RG.mergeMountains) RG.mergeMountains();
   if (RG.mergeRivers) RG.mergeRivers();

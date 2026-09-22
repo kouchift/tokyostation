@@ -336,26 +336,27 @@ RG.pvShow = function (rec, kind, proceed) {
   var postTxt = "【東京移動メモ】" + rec.title + "\n20秒のルートPV\n\n地図で確認 → " + SITE;
   var html = '<div class="pv"><video id="pv-v" class="pv__v" src="' + url + '" controls autoplay muted playsinline></video>' +
     '<div class="pv__exp">⏳ この動画の保有期限: <b>' + expStr + '</b>（1週間）。応援の有無にかかわらず、期限を過ぎると消える可能性があります。</div>' +
-    (RG.snsPanelHTML ? RG.snsPanelHTML({ video: true, main: "x" }) : "") +
+    (RG.snsPanelHTML ? RG.snsPanelHTML({ video: true, main: "youtube" }) : "") +
     '<div class="sh__btns">' +
       '<a class="sh__b" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (isMp4 ? "MP4" : "WebM") + '・' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
       (proceed ? '<button class="sh__b" type="button" id="pv-go">' + (kind === "obsidian" ? "🟣 Obsidian に送る（続ける）" : kind === "mail" ? "📧 メールに進む" : "📤 共有に進む") + "</button>" : "") +
       '<button class="sh__b" type="button" id="pv-tip">☕ 応援する</button>' +
     "</div>" +
     '<p class="rc__hint" id="pv-hint"></p>' +
-    '<p class="src">' + (sns ? "MP4（H.264）なので X・Instagram・TikTok・LINE にそのまま投稿できます。" + (mobile ? "スマホは各ボタンで共有シートが開くので、そこでアプリを選んでください（iPhone は「ビデオを保存」で写真アプリにも入ります）。" : "PC の Instagram・TikTok・Discord・WeChat・YouTube は Web から動画を渡す入口が無いので、動画を保存し本文をコピーしてそのサービスを開きます。") :
+    '<p class="src">' + (sns ? "MP4（H.264）なので YouTube・X・Instagram・TikTok・LINE にそのまま投稿できます。" + (mobile ? "スマホは各ボタンで OS の共有シートが開き、動画と本文がいっしょに渡ります。そこで YouTube／LINE／X／Instagram／TikTok／Discord を選ぶだけです（iPhone は「ビデオを保存」で写真アプリにも入ります）。" : "PC は YouTube・TikTok・Instagram・Discord・WeChat に Web から動画を直接渡す入口が無いので、ボタン 1 回で «動画を保存＋本文をコピー＋そのサービスのアップロード画面を開く» まで進めます。あとは開いた画面に動画をドラッグして本文を貼るだけです。") :
       "この端末では " + (isMp4 ? "MP4 でも中身が " + (rec.codec || "H.264 以外").toUpperCase() + " の形式" : "WebM 形式") + "でしか作れませんでした。LINE・メールには送れますが、X・Instagram・TikTok は H.264 の MP4 しか受け付けないため、Chrome・Edge・Safari（iPhone）で作り直してください。") +
       " 動画はこの端末の中（ブラウザの保存領域）に " + expStr + " まで残ります。</p></div>";
   var m = RG.openModal("🎬 ルート PV（20秒）", html);
   var v = $("#pv-v", m);
-  if (v) v.addEventListener("ended", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });
   var hint = $("#pv-hint", m);
+  // v87: 再生が終わっても投げ銭の画面を勝手に開かない（押しつけない）。ひとことと «応援する» への誘導だけ
+  if (v) v.addEventListener("ended", function () { if (hint && !hint.textContent) hint.innerHTML = "🎬 ここまで見てくれてありがとうございます。よければ <b>☕ 応援する</b>（1 タップで送金アプリが開きます）。"; });
   /* v84: SNS の並びは共通（assets/sns.js）。スマホは共有シートに動画と本文を載せて渡す。PC は保存＋本文コピー＋投稿画面 */
   if (RG.snsBind) RG.snsBind(m.querySelector(".snsp"), function () {
     return { title: "ルート PV: " + rec.title, text: postTxt.replace("\n\n地図で確認 → " + SITE, ""), url: SITE, file: file, blobUrl: url, fileName: rec.name, kind: "video" };
   });
   var go = $("#pv-go", m); if (go) go.addEventListener("click", function () { proceed && proceed(rec); });
-  var tp = $("#pv-tip", m); if (tp) tp.addEventListener("click", function () { if (RG.openTip) RG.openTip(function () { RG.tipQuick && RG.tipQuick(); }); });
+  var tp = $("#pv-tip", m); if (tp) tp.addEventListener("click", function () { if (RG.tipQuick) RG.tipQuick(); });
 };
 RG.pvList = function () {
   all().then(function (rs) {

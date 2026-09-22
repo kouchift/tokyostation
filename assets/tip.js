@@ -1,9 +1,9 @@
 /* =========================================================================
    制作者への窓口：投げ銭と、改善要望  v71〜（v73 で履歴・リセット・スマホ即投げを追加）
 
-   ■ 流れ
-     入口（設定パネル／地図右のズーム列の ☕）→ 【確認POP】→ 窓口（投げ銭・くり返し・履歴・救いの言葉）
-     確認POPは «次回からスキップ» を入れると出なくなる。
+   ■ 流れ（v87 で «押すだけ» を 1 タップに）
+     入口（応援するボタン・設定パネル・PV の最後・投稿の後）→ 押すだけ投げ銭（金額 1 タップ＝コピー＋記録＋アプリへ）
+     くわしい窓口（くり返し・履歴・番付・印籠・救いの言葉）は押すだけ画面の «くわしい窓口» から。【確認POP】はそこでだけ出る。
    ■ 送金
      PayPay / Kyash とも、アカウント名だけで開ける公開URLは用意されていないので、
      data/support.js の paypayLink / kyashLink（アプリで作る送金リンク）が空のときは
@@ -123,7 +123,7 @@ RG.tipEntryHTML = function () {
     '<button id="tip-hist" class="set__b" type="button">📜 応援の履歴' + (S.count ? "（" + S.count + "回・" + yen(S.total) + "）" : "") + "</button></div></div>";
 };
 RG.tipBind = function (root) {
-  var b = $("#tip-open", root); if (b) b.addEventListener("click", function () { RG.openTip(); });
+  var b = $("#tip-open", root); if (b) b.addEventListener("click", function () { RG.tipQuick(); });   // v87: 確認POPを挟まず «押すだけ» へ
   var h = $("#tip-hist", root); if (h) h.addEventListener("click", function () { RG.showTip("hist"); });
 };
 
@@ -297,7 +297,7 @@ function payHTML(C, S) {
     '<button class="tj__amt tj__amt--poor" type="button" data-poor="1"><span>🙏</span>貧乏なので<br>救いの言葉を</button></div>' +
     '<div id="tip-how" class="tj__how"></div>' +
     (S.lastAmount ? '<p class="tj__last">前回: ' + yen(S.lastAmount) + "（" + appName(S.app) + "）。同じ額をくり返すなら「🔁 くり返し」へ。</p>" : "") +
-    (isMobile() ? '<p class="tj__hint">📱 スマホなら、地図の右の <b>☕</b> ボタンから「押すだけ」で送れます（IDを自動コピーしてアプリを開きます）。</p>' : "");
+    (isMobile() ? '<p class="tj__hint">📱 スマホなら <button class="tj__lnk" type="button" data-quick="1">☕ 押すだけ投げ銭</button> が 1 タップです（ID を自動コピーしてアプリを開きます）。</p>' : "");
 }
 function link(C, app) { var l = app === "kyash" ? C.kyashLink : C.paypayLink; return l ? l : null; }
 function scheme(app) { return app === "kyash" ? "kyash://" : "paypay://"; }
@@ -369,6 +369,7 @@ function bindPay(m, C) {
     amt = +b.dataset.amt; m.querySelectorAll("[data-amt]").forEach(function (x) { x.classList.toggle("on", x === b); }); paint();
   }); });
   var poor = m.querySelector("[data-poor]"); if (poor) poor.addEventListener("click", function () { RG.showTip("msg"); });
+  var qk = m.querySelector("[data-quick]"); if (qk) qk.addEventListener("click", function () { RG.tipQuick(); });
   paint();
 }
 function copy(text, btn, cb) {
@@ -377,65 +378,141 @@ function copy(text, btn, cb) {
   try { var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); var ok = document.execCommand("copy"); document.body.removeChild(ta); done(ok); } catch (e2) { done(false); }
 }
 
-/* ---- «押すだけ» 投げ銭（スマホ：押す→IDコピー→アプリ／PC：QR をスマホで読む） ---- */
+/* ---- «押すだけ» 投げ銭  v87 で作り直し：手数を «1 タップ» に ----
+   ■ ねらい
+     「投げ銭アイコン → 確認POP → 金額 → コピー → 開く」の 4〜5 手を、「金額（またはいつもの額）を 1 回押す」だけにする。
+     ・押した瞬間に (1) 送り先 ID をコピー (2) 履歴に記録 (3) 送金アプリを開く。すべて同じ 1 タップの中で行う
+       （<a href> の素の遷移にしているのは、iOS Safari が «タップ直後でない» URL スキーム遷移を止めるため。以前の
+       setTimeout(location.href=…) は端末によって開かなかった）。
+     ・リンクの優先順位: 金額つきリンク（paypayLinks[金額]）＞ 金額なしリンク（paypayLink）＞ アプリの URL スキーム
+       PayPay は «マイコード» の共有リンク、Kyash は «請求リンク» を data/support.js に貼ると、アプリが «送り先入り» で開く。
+       リンクが無い場合は ID をコピーしてアプリのトップを開く（アプリ側で「送る → ID を貼る」の 2 手が残る）。
+     ・Android はインテント URL（アプリが無ければストアへ自動フォールバック）。iOS はスキーム。
+     ・2.5 秒たっても画面がこのサイトのまま（＝アプリが開かなかった）なら、ストアへの案内と手動の手順を出す。
+     ・アプリから戻ってきたら「🙏 確かに」と «もう一回 同じ額» の大きなボタン（＝ループは 1 タップで続く）。
+     ・いつもの額（前回の額）を最上段の大きなボタンに。他の額はその下の小さなボタン（どれも 1 タップで送れる）。
+     ・確認POP（多忙のフリの注意書き）は、この «押すだけ» には出さない。くわしい窓口を開くときだけ。 */
+var STORE = {
+  paypay: { ios: "https://apps.apple.com/jp/app/id1435783608", android: "https://play.google.com/store/apps/details?id=jp.ne.paypay.android.app", pkg: "jp.ne.paypay.android.app" },
+  kyash:  { ios: "https://apps.apple.com/jp/app/id1084264883", android: "https://play.google.com/store/apps/details?id=co.kyash", pkg: "co.kyash" }
+};
+function isIOS() { return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+function isAndroid() { return /Android/i.test(navigator.userAgent); }
+function storeHref(app) { var s = STORE[app] || STORE.paypay; return isIOS() ? s.ios : s.android; }
+function schemeHref(app) {
+  var s = STORE[app] || STORE.paypay, sc = app === "kyash" ? "kyash" : "paypay";
+  if (isAndroid()) return "intent://#Intent;scheme=" + sc + ";package=" + s.pkg + ";S.browser_fallback_url=" + encodeURIComponent(s.android) + ";end";
+  return sc + "://";
+}
+/* 金額に対して «いちばん手数の少ない» 開き先 */
+function linkFor(C, app, amt) {
+  var L = app === "kyash" ? C.kyashLinks : C.paypayLinks;
+  if (L && amt && L[amt]) return { href: L[amt], kind: "amt", ext: true };
+  var l = link(C, app); if (l) return { href: l, kind: "link", ext: true };
+  return { href: schemeHref(app), kind: "scheme", ext: false };
+}
 function qrTarget(C, app, amt) {
-  var l = link(C, app);
-  if (l) return l;                                                    // 送金リンクがあれば、それを直接 QR に
+  var l = linkFor(C, app, amt);
+  if (l.ext) return l.href;                                           // 送金リンクがあれば、それを直接 QR に
   var base = C.siteUrl || (location.origin + location.pathname);
   return base + "?tip=1&app=" + app + (amt ? "&amt=" + amt : "");     // 無ければ、このサイトの «押すだけ» 画面を開く QR
 }
+function emojiOf(a) { return a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬"; }
 RG.tipQuick = function (preAmt) {
-  var S = st();
-  if (!S.skipConfirm && !S.quickSeen) { S.quickSeen = 1; save(S); RG.openTip(function () { RG.tipQuick(preAmt); }); return; }
-  var C = cfg(), app = S.app || "paypay", id = app === "kyash" ? C.kyashId : C.paypayId, mob = isMobile();
+  var S = st(), C = cfg(), app = S.app || "paypay", id = app === "kyash" ? C.kyashId : C.paypayId, mob = isMobile(), name = appName(app);
   var amts = C.amounts || [100, 500, 1000, 3000];
+  var main = preAmt || S.lastAmount || amts[1] || amts[0];          // いつもの額（初回は 2 番目＝¥500）
+  var L = linkFor(C, app, main), direct = L.kind !== "scheme";
+  function aTag(amt, cls, inner) {
+    var l = linkFor(C, app, amt);
+    return '<a class="' + cls + '" href="' + esc(l.href) + '"' + (l.ext ? ' target="_blank" rel="noopener"' : "") + ' data-qamt="' + amt + '">' + inner + "</a>";
+  }
   var html = '<div class="tq' + (mob ? " tq--m" : " tq--pc") + '">' +
-    '<div class="tq__apps"><button class="tq__app' + (app === "paypay" ? " on" : "") + '" type="button" data-qapp="paypay">PayPay</button>' +
+    '<div class="tq__apps" role="tablist"><button class="tq__app' + (app === "paypay" ? " on" : "") + '" type="button" data-qapp="paypay">PayPay</button>' +
     '<button class="tq__app' + (app === "kyash" ? " on" : "") + '" type="button" data-qapp="kyash">Kyash</button></div>' +
-    '<div class="tq__id">送り先 ID <b>' + esc(id) + '</b> <button class="tj__cp" type="button" data-cp="' + esc(id) + '">コピー</button></div>' +
-    (preAmt ? '<button class="tq__one" type="button" data-qamt="' + preAmt + '">☕ ' + yen(preAmt) + ' を送る <small>' + (mob ? "押すとIDをコピーして " + appName(app) + " が開きます" : "押すとIDをコピーします（PC は " + appName(app) + " のアプリ／ウェブで送ってください）") + '</small></button>' +
-              '<p class="tq__hint">ほかの金額:</p>' : '') +
-    '<div class="tq__amts">' + amts.map(function (a) {
-      var e = a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬";
-      return '<button class="tq__amt" type="button" data-qamt="' + a + '"><span>' + e + "</span>" + yen(a) + "</button>"; }).join("") + "</div>" +
-    (mob ? '<p class="tq__lead">金額を押すと <b>ID をコピー</b>して ' + appName(app) + ' が開きます。アプリで「送る」→ 貼り付け → 金額を入れるだけ。</p>'
-         : '<div class="tq__pc"><div class="tq__qr" id="tq-qr"></div>' +
-           '<div class="tq__pct"><b>スマホで読むと、そのまま「押すだけ」画面が開きます。</b>' +
-           "金額を選ぶと QR にも金額が入り、スマホ側は<b>ボタン1回</b>で送れます。" +
-           (link(C, app) ? "（この QR は " + appName(app) + " の送金リンクを直接開きます）" : "") + "</div></div>") +
-    '<div id="tq-res" class="tq__res"></div>' +
-    '<p class="tq__hint">押した時点で «送った» として履歴に残ります（まちがえたら「取り消す」）。' + (S.count ? "これまで " + S.count + " 回・" + yen(S.total) + "。" : "") +
-    ' <button class="tj__lnk" type="button" id="tq-full">くわしい窓口</button> <button class="tj__lnk" type="button" id="tq-msg">🙏 救いの言葉・要望</button></p></div>';
+    (mob
+      ? aTag(main, "tq__one", emojiOf(main) + " " + yen(main) + " を " + name + " で送る<small>" +
+          (direct ? "1 タップで " + name + " が «送り先入り» で開きます" : "ID をコピーして " + name + " を開きます → 「送る」に貼り付け") + "</small>") +
+        '<div class="tq__amts">' + amts.map(function (a) { return aTag(a, "tq__amt" + (a === main ? " on" : ""), "<span>" + emojiOf(a) + "</span>" + yen(a)); }).join("") + "</div>"
+      : '<div class="tq__pc"><div class="tq__qr" id="tq-qr"></div>' +
+        '<div class="tq__pct"><b>スマホで読むと、そのまま送れます。</b>' +
+        (qrImg(C, app) ? name + " の «マイコード» です。" + name + " アプリ（または標準カメラ）で読むと、送り先が入った状態で開きます。" :
+         "金額を選ぶと QR にも金額が入り、スマホ側は<b>ボタン 1 回</b>で送れます。") +
+        '<div class="tq__amts">' + amts.map(function (a) { return '<button class="tq__amt' + (a === main ? " on" : "") + '" type="button" data-pcamt="' + a + '"><span>' + emojiOf(a) + "</span>" + yen(a) + "</button>"; }).join("") + "</div>" +
+        '<div class="tq__pcrow"><button class="tj__cp" type="button" data-cp="' + esc(id) + '">ID をコピー</button>' +
+        (link(C, app) ? '<a class="tj__cp" href="' + esc(link(C, app)) + '" target="_blank" rel="noopener">' + name + ' のリンクを開く ↗</a>' : "") +
+        '<button class="tj__lnk" type="button" id="tq-pcdone">PC から送りました（記録する）</button></div></div></div>') +
+    '<div class="tq__id">送り先 ID <b>' + esc(id) + '</b> <button class="tj__cp" type="button" data-cp="' + esc(id) + '">コピー</button>' +
+      (direct ? '<small>（リンクで開くので、ふつうは不要）</small>' : "") + "</div>" +
+    '<div id="tq-res" class="tq__res" aria-live="polite"></div>' +
+    '<p class="tq__hint">押した時点で «送った» として履歴に残ります（まちがえたら「取り消す」）。当サイトはお金も個人情報もあずかりません。' +
+      (S.count ? "これまで " + S.count + " 回・" + yen(S.total) + "。" : "") +
+      ' <button class="tj__lnk" type="button" id="tq-full">くわしい窓口</button> <button class="tj__lnk" type="button" id="tq-msg">🙏 救いの言葉・要望</button></p></div>';
   var m = RG.openModal("☕ 押すだけ投げ銭", html);
   m.classList.add("modal--sheet");
-  var qrBox = $("#tq-qr", m), curAmt = preAmt || S.lastAmount || 0;
-  function paintQR() { if (qrBox && RG.qrSvg) qrBox.innerHTML = RG.qrSvg(qrTarget(C, app, curAmt), 180, { label: "投げ銭のQR" }) + '<small>' + (curAmt ? yen(curAmt) + " の" : "") + "QR</small>"; }
+  var qrBox = $("#tq-qr", m), res = $("#tq-res", m), curAmt = main;
+  function paintQR() {
+    if (!qrBox) return;
+    var img = qrImg(C, app);
+    if (img) { qrBox.innerHTML = '<img class="tq__qrimg" src="' + esc(RG.withV ? RG.withV(img) : img) + '" alt="' + name + ' のマイコード" width="180" height="180"><small>' + name + " マイコード</small>"; return; }
+    if (RG.qrSvg) qrBox.innerHTML = RG.qrSvg(qrTarget(C, app, curAmt), 180, { label: "投げ銭のQR" }) + "<small>" + (curAmt ? yen(curAmt) + " の" : "") + "QR</small>";
+  }
   paintQR();
   m.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
   m.querySelectorAll("[data-qapp]").forEach(function (b) { b.addEventListener("click", function () { var S2 = st(); S2.app = b.dataset.qapp; save(S2); RG.tipQuick(preAmt); }); });
-  m.querySelectorAll("[data-qamt]").forEach(function (b) { b.addEventListener("click", function () {
-    var amt = +b.dataset.qamt, res = $("#tq-res", m);
-    curAmt = amt; m.querySelectorAll(".tq__amt").forEach(function (x) { x.classList.toggle("on", +x.dataset.qamt === amt); });
-    if (!mob) { paintQR(); copy(id, null);
-      res.innerHTML = "📋 ID をコピーしました。📱 左の QR をスマホで読むと、" + yen(amt) + " の「押すだけ」画面が開きます。PC から送るなら " + appName(app) + " のアプリ／ウェブで ID を貼り付けて送ってください。" +
-      ' <button class="tj__lnk" type="button" id="tq-pcdone">PC から送りました（記録する）</button>';
-      var pd = $("#tq-pcdone", m); if (pd) pd.addEventListener("click", function () { var S3 = record(amt, app); afterTip(S3, amt); });
-      return; }
-    copy(id, null, function (ok) {
-      var S2 = record(amt, app);
-      res.innerHTML = (ok ? "📋 ID をコピーしました。" : "⚠️ コピーできませんでした。ID: <code>" + esc(id) + "</code>") +
-        (link(C, app) ? ' <a class="set__b2" href="' + esc(link(C, app)) + '" target="_blank" rel="noopener">' + appName(app) + ' をひらく ↗</a>'
-                      : ' <a class="set__b2" href="' + scheme(app) + '">' + appName(app) + ' をひらく</a>') +
-        ' <button class="tj__lnk" type="button" id="tq-undo">取り消す</button>' +
-        '<div class="tq__thx">🙏 ' + yen(amt) + "、確かに。累計 " + S2.count + " 回・" + yen(S2.total) + "。" + (S2.count === 1 ? " 初回なので画面が変わりました。" : " 画面は変わりません（世知辛さ）。") + "</div>";
-      var u = $("#tq-undo", m); if (u) u.addEventListener("click", function () { undoLast(); RG.tipQuick(); });
-      if (S2.count === 1) applyPatron();
-      setTimeout(function () { try { location.href = link(C, app) || scheme(app); } catch (e) {} }, 350);   // アプリへ（スキームが無効なら何も起きない＝安全）
-    });
+  /* PC: 金額は «記録する額» と QR の中身。送るのはスマホ側 */
+  m.querySelectorAll("[data-pcamt]").forEach(function (b) { b.addEventListener("click", function () {
+    curAmt = +b.dataset.pcamt; m.querySelectorAll("[data-pcamt]").forEach(function (x) { x.classList.toggle("on", +x.dataset.pcamt === curAmt); }); paintQR();
   }); });
-  var f = $("#tq-full", m); if (f) f.addEventListener("click", function () { RG.showTip("pay"); });
+  var pd = $("#tq-pcdone", m); if (pd) pd.addEventListener("click", function () { var S3 = record(curAmt, app); afterTip(S3, curAmt); });
+  /* スマホ: 1 タップ＝コピー＋記録＋アプリへ（<a> の遷移はそのまま通す） */
+  var launched = 0, wentAway = false, waitT = null;
+  function alive() { return m.classList.contains("show") && m.contains(res); }   // この画面がまだ出ているか（モーダルは共用）
+  function onVis() {
+    if (!alive()) { document.removeEventListener("visibilitychange", onVis); clearTimeout(waitT); return; }
+    if (document.visibilityState === "hidden") { if (launched) wentAway = true; return; }
+    if (launched && wentAway) { wentAway = false; clearTimeout(waitT); paintBack(); }
+  }
+  document.addEventListener("visibilitychange", onVis);
+  function paintBack() {
+    var S2 = st();
+    var top = m.querySelector(".tq__one:not(.tq__one--again)"); if (top) top.style.display = "none";   // 大きなボタンは «もう一回» に役目を渡す
+    res.innerHTML = '<div class="tq__thx">🙏 ' + yen(curAmt) + "、確かに。累計 " + (S2.count || 0) + " 回・" + yen(S2.total || 0) + "。" +
+      (S2.count === 1 ? " 初回なので画面が変わりました。" : " 画面は変わりません（世知辛さ）。") + "</div>" +
+      aTag(curAmt, "tq__one tq__one--again", "🔁 もう一回 " + yen(curAmt) + "<small>1 タップで、また " + name + " へ</small>") +
+      '<div class="tq__row"><button class="tj__lnk" type="button" id="tq-undo">取り消す</button><button class="tj__lnk" type="button" onclick="RG.closeModal()">今日はここまで</button></div>';
+    bindSend(res);
+  }
+  function paintWaiting() {
+    res.innerHTML = '<div class="tq__wait">📋 ID をコピーしました。' + name + " を開いています…<small>戻ってきたら、ここに «もう一回» が出ます</small></div>";
+  }
+  function paintFallback() {
+    res.innerHTML = '<div class="tq__fb"><b>' + name + " が開かないようです。</b>" +
+      '<a class="set__b2" href="' + esc(storeHref(app)) + '" target="_blank" rel="noopener">📲 ' + name + " をインストール（" + (isIOS() ? "App Store" : "Google Play") + "）</a>" +
+      '<p>手動で送るなら: ' + name + ' を開く → 「送る」→ ID <code>' + esc(id) + '</code> を貼り付け → ' + yen(curAmt) + "</p>" +
+      '<div class="tq__row"><button class="tj__cp" type="button" data-cp="' + esc(id) + '">ID をコピー</button><button class="tj__lnk" type="button" id="tq-undo">取り消す（記録を消す）</button></div></div>';
+    res.querySelectorAll("[data-cp]").forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.cp, b); }); });
+    var u = $("#tq-undo", res); if (u) u.addEventListener("click", function () { undoLast(); RG.tipQuick(); });
+  }
+  function bindSend(root) {
+    root.querySelectorAll("[data-qamt]").forEach(function (a) { a.addEventListener("click", function () {
+      var amt = +a.dataset.qamt; curAmt = amt;
+      m.querySelectorAll(".tq__amt").forEach(function (x) { x.classList.toggle("on", +x.dataset.qamt === amt); });
+      copy(id, null);                                                  // ID は保険（リンクがあれば要らない）
+      var S2 = record(amt, app); if (S2.count === 1) applyPatron();
+      launched = Date.now(); wentAway = false;
+      paintWaiting();
+      clearTimeout(waitT);
+      waitT = setTimeout(function () { if (alive() && !wentAway && document.visibilityState === "visible") paintFallback(); }, 2500);
+      // <a> の遷移はそのまま（preventDefault しない）＝ タップ直後の遷移として iOS でも開く
+    }); });
+    var u = $("#tq-undo", root); if (u) u.addEventListener("click", function () { undoLast(); RG.tipQuick(); });
+  }
+  bindSend(m);
+  var f = $("#tq-full", m); if (f) f.addEventListener("click", function () { RG.openTip(function () { RG.showTip("pay"); }); });
   var mg = $("#tq-msg", m); if (mg) mg.addEventListener("click", function () { RG.showTip("msg"); });
 };
+function qrImg(C, app) { return app === "kyash" ? (C.kyashQr || "") : (C.paypayQr || ""); }
 
 /* ---- くり返し（前回の金額 × 回数） ---- */
 function loopHTML(C, S) {

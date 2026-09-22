@@ -213,7 +213,7 @@ function linkPlaces(text) {
   // 長い名前から置き換える（「東京」より「東京タワー」を優先）
   hits.sort(function (a, b) { return b.length - a.length; });
   hits.slice(0, 6).forEach(function (n) {
-    out = out.split(esc(n)).join('<button class="pl" type="button" data-place="' +
+    out = out.split(esc(n)).join('<button class="plk" type="button" data-place="' +
       esc(n) + '">' + esc(n) + "</button>");
   });
   return out;

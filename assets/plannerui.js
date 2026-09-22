@@ -387,6 +387,7 @@ RG.showSpot = function (p) {
     (RG.focusHtml ? RG.focusHtml(p.n) : "") +
     (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") +
     (RG.mountainBlock ? RG.mountainBlock(p) : "") + (RG.riverBlock ? RG.riverBlock(p) : "") + (RG.castleBlock ? RG.castleBlock(p) : "") +
+    (RG.levechiBlock ? RG.levechiBlock(p) : "") +
     (RG.chainBlock ? RG.chainBlock(p) : "") + (RG.fuelBlock ? RG.fuelBlock(p) : "") + (RG.koshinBlock ? RG.koshinBlock(p) : "") + (RG.zooBlock ? RG.zooBlock(p) : "") +
     (RG.ytBlock ? RG.ytBlock(p) : "") + (RG.airportBlock ? RG.airportBlock(p) : "") + (RG.shukubaBlock ? RG.shukubaBlock(p) : "") +
     (RG.enrichSlot && (!p.chain || p.zoo || p.airport) && !p.od ? RG.enrichSlot() : "") +
@@ -446,6 +447,7 @@ RG.showSpot = function (p) {
   if (RG.ytBind) RG.ytBind(m, p);
   if (RG.airBind && p.air) RG.airBind(m, p);
   if (RG.roadsBind) RG.roadsBind(m, p);
+  if (RG.levechiBind) RG.levechiBind(m);
   if (RG.bindPinRow) RG.bindPinRow(m, p);
   /* v82: ジャンルの印を押すと、そのジャンルだけを地図に出す（解除は上の「スポットをさがす」→ぜんぶ解除） */
   $$("[data-gonly]", m).forEach(function (b) {
@@ -752,8 +754,8 @@ function showRoutes(destId) {
     }).join("") + "</div>";
   var head2 = RG.Plan.adults + RG.Plan.kids;
   var party = '<div class="party"><span>人数</span>' +
-    '<label>大人 <input id="pt-a" type="number" min="0" max="20" value="' + RG.Plan.adults + '"></label>' +
-    '<label>子ども <input id="pt-k" type="number" min="0" max="20" value="' + RG.Plan.kids + '"></label>' +
+    (RG.stepperHTML ? RG.stepperHTML("pt-a", "大人", RG.Plan.adults, 0, 20) + RG.stepperHTML("pt-k", "子ども", RG.Plan.kids, 0, 20)
+      : '<label>大人 <input id="pt-a" type="number" min="0" max="20" value="' + RG.Plan.adults + '"></label><label>子ども <input id="pt-k" type="number" min="0" max="20" value="' + RG.Plan.kids + '"></label>') +
     '<span class="party__n">' + head2 + "人ぶんの合計も表示します</span></div>";
   var html = head + night + party + pareto(r) + sortBar +
     '<div class="opts">' + base.map(function (o) { return optCard(o, o.__i, ctx); }).join("") + "</div>" +
@@ -761,10 +763,13 @@ function showRoutes(destId) {
     "ポート位置は見ていません。前提の数字はすべて <code>data/config.js</code> にあります。" +
     "移動前に各事業者の公式情報で必ず確認してください。</div>";
   var m = modal("移動手段をくらべる", html);
-  $("#pt-a", m).addEventListener("change", function () {
-    RG.Plan.adults = Math.max(0, +this.value || 0); showRoutes(destId); });
-  $("#pt-k", m).addEventListener("change", function () {
-    RG.Plan.kids = Math.max(0, +this.value || 0); showRoutes(destId); });
+  var ptT = null;   // v88: ステッパー。連打しても描き直しは少し待ってから 1 回
+  function partyChanged() { if (RG.savePlan) RG.savePlan(); clearTimeout(ptT); ptT = setTimeout(function () { showRoutes(destId); }, 350); }
+  if (RG.stepperBind) { RG.stepperBind(m, "pt-a", function (v) { RG.Plan.adults = v; partyChanged(); }); RG.stepperBind(m, "pt-k", function (v) { RG.Plan.kids = v; partyChanged(); }); }
+  else {
+    $("#pt-a", m).addEventListener("change", function () { RG.Plan.adults = Math.max(0, +this.value || 0); showRoutes(destId); });
+    $("#pt-k", m).addEventListener("change", function () { RG.Plan.kids = Math.max(0, +this.value || 0); showRoutes(destId); });
+  }
   $$("[data-nav]", m).forEach(function (b) {
     b.addEventListener("click", function () {
       RG.Nav.destId = s.id;

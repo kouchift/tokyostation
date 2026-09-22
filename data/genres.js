@@ -4,6 +4,8 @@
    enabled:false は「データ源に到達できず未取得」。reason に理由を書いてUIに出す。
    ========================================================================= */
 RG.GENRES = [
+  { id: "levechi", e: "👑", label: "レベチなレストラン", c: "#B8860B", enabled: true,
+    desc: "制作者が実際に行って «レベルが違う» と感じた店。Google マイマップ（KML）から。専用の金の王冠の印" },
   { id: "bunkazai", e: "🏛️", label: "重要文化財",       c: "#A58000", enabled: true,
     desc: "国宝・重要文化財・国指定史跡・名勝など、国が指定した建造物と史跡" },
   { id: "history",  e: "🏯", label: "歴史的建築物",     c: "#8A5A2B", enabled: true,

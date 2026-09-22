@@ -111,10 +111,44 @@ function titleLayout(c, s) {
   }
   return { size: 40, lines: 2, wf: 0, wa: 0 };
 }
+/* v88: 移動手段の «透かし»。路線名から手段を判定し、乗る順に薄く大きく背景へ（1 つなら中央に大きく、複数なら左から順に → でつなぐ） */
+function modeOf(line) {
+  var n = String(line || "");
+  if (/新幹線/.test(n)) return "🚄";
+  if (/メトロ|都営|地下鉄|市営|市交|Subway|サブウェイ/.test(n)) return "🚇";
+  if (/モノレール|ゆりかもめ|ニュートラム|ポートライナー|六甲ライナー|舎人|シーサイドライン|新交通|AGT|アストラム|リニモ/.test(n)) return "🚝";
+  if (/バス|BRT/.test(n)) return "🚌";
+  if (/ケーブル|ロープウェ|索道|リフト/.test(n)) return "🚡";
+  if (/フェリー|航路|汽船|クルーズ|渡船/.test(n)) return "⛴️";
+  if (/都電|市電|路面|軌道|ライトレール|LRT|嵐電|阪堺|万葉線|とさでん|伊予鉄道市内|札幌市電/.test(n)) return "🚋";
+  if (/^JR|ＪＲ|山手線|中央線|総武線|京浜東北|埼京線|常磐線|東海道線|横須賀線|京葉線|武蔵野線|南武線|横浜線|根岸線|宇都宮線|高崎線|湘南新宿|上野東京|大阪環状線|東西線快速/.test(n)) return "🚆";   // JR は 🚆、私鉄は 🚃（乗り継ぎの順が見える）
+  return "🚃";
+}
+function modesOf(s) {
+  var out = [];
+  (s.lines || []).forEach(function (l) { var m = modeOf(l); if (out[out.length - 1] !== m) out.push(m); });
+  if (s.shinkansen && out.indexOf("🚄") < 0) out.push("🚄");
+  if (!out.length) out.push("🚃");
+  return out.slice(0, 6);
+}
+RG.cardModes = modesOf;
+function drawWatermark(c, s) {
+  var icons = modesOf(s), n = icons.length;
+  var size = n <= 1 ? 640 : n === 2 ? 470 : n === 3 ? 350 : n === 4 ? 270 : 220;
+  var gap = size * (n <= 2 ? 1.0 : 0.98), x0 = W / 2 - gap * (n - 1) / 2, y = H * 0.56;
+  c.save(); c.textAlign = "center"; c.textBaseline = "middle";
+  icons.forEach(function (ic, i) {
+    var x = x0 + gap * i;
+    c.globalAlpha = 0.085; font(c, size, 400); c.fillStyle = "#1A1A1A"; c.fillText(ic, x, y);
+    if (i < n - 1) { c.globalAlpha = 0.16; font(c, Math.round(size * 0.26), 700); c.fillStyle = "#1A1A1A"; c.fillText("→", x + gap / 2, y); }
+  });
+  c.restore();
+}
 function drawStage(c, s, stage, L) {
   var C = COND[s.cond] || COND[1];
   if (stage === 0) {
     c.fillStyle = "#FFFFFF"; c.fillRect(0, 0, W, H);
+    drawWatermark(c, s);
     c.textBaseline = "top"; font(c, 24, 400); c.fillStyle = "#999999"; c.fillText("東京ステーションガイド", M, M);
   }
   var y = M + 24 + 56, big = L.size;
@@ -148,7 +182,7 @@ function drawStage(c, s, stage, L) {
   }
 }
 var CACHE = {};
-function cacheKey(s) { return [s.from.id, s.to.id, s.cond, s.minutes, s.transfers, RG.cardTrim(s.comment)].join("|"); }
+function cacheKey(s) { return [s.from.id, s.to.id, s.cond, s.minutes, s.transfers, RG.cardTrim(s.comment), modesOf(s).join("")].join("|"); }
 function prepare(canvas) { canvas.width = W; canvas.height = H; var c = canvas.getContext("2d"); if (!c || !c.roundRect) throw new Error("canvas"); return c; }
 /* 段階描画。onStage(stage, canvas) を各段で呼び、最後に onDone(dataURL, cached) */
 RG.cardDraw = function (s, canvas, onStage, onDone, onFail) {
