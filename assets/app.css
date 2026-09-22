@@ -3555,7 +3555,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=88) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=89) format('woff2')}
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -3598,3 +3598,79 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 .sns--ob{background:#7c3aed;color:#fff;border-color:#7c3aed}
 .sns--yt{background:#ff0000;color:#fff;border-color:#ff0000}
 .mm__local{margin:6px 0 0;font-size:11.5px;line-height:1.6;color:#6b4e00;background:#fff7e0;border:1px solid #f1dd9c;border-radius:10px;padding:6px 10px}
+
+/* =========================================================================
+   v89: 初回 3 秒の入口 «東京駅から、どこへ行く？»（heroSearch）
+   ・地図は消さない。地図の上に重ねる（PC は左上、スマホは幅いっぱい・高さは 250px 以内）
+   ・旧ヘッダー検索（.hdr__search）は DOM に残して非表示。出発バーは «二次» の UI（ルート開始で通常表示）
+   ========================================================================= */
+.hdr__search{display:none}
+.hdr__brand{display:flex;align-items:center;gap:9px;min-width:0}
+.hdr__brand>span{display:flex;flex-direction:column;min-width:0}
+.hdr__brand strong{font-size:16px;font-weight:800;letter-spacing:-.01em;color:var(--text);white-space:nowrap;line-height:1.15}
+.hdr__brand small{font-size:10px;color:var(--label);font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.hdr__brandIcon{width:34px;height:34px;border-radius:50%;background:var(--lb600);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--sh-xs);flex:0 0 auto}
+.hdr__actions{display:flex;align-items:center;gap:4px;margin-left:auto;flex:0 0 auto}
+@media (max-width:720px){ .hdr__mark.hdr__brand>span{display:flex} .hdr__brand strong{font-size:14.5px} .hdr__brand small{display:none} }
+@media (max-width:360px){ .hdr__brand strong{font-size:13px} }
+
+.heroSearch{position:absolute;left:16px;top:16px;z-index:15;width:min(430px,calc(100vw - 32px));box-sizing:border-box;
+  background:rgba(255,255,255,.96);border:1px solid var(--grid);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.14);padding:14px;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.heroSearch__eyebrow{font-size:10px;color:var(--highlight);font-weight:800;letter-spacing:.08em}
+.heroSearch__eyebrow span{color:var(--label);font-weight:600;letter-spacing:.02em}
+.heroSearch h1{margin:3px 0 4px;font-size:24px;line-height:1.3;letter-spacing:-.03em;font-weight:800;color:var(--text)}
+.heroSearch__lead{margin:0 0 10px;font-size:11.5px;color:var(--label)}
+.mobileOnly{display:none}
+.heroSearch__box{display:flex;align-items:center;height:52px;background:#fff;border:2px solid var(--lb900);border-radius:12px;padding:0 12px;box-sizing:border-box}
+.heroSearch__box .ms{color:var(--lb900);margin-right:8px;font-size:22px}
+.heroSearch__box input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:16px;font-family:inherit;color:var(--text);height:100%;padding:0}
+.heroSearch__box input::-webkit-search-cancel-button{display:none}
+.heroSearch__box:focus-within{box-shadow:0 0 0 3px rgba(0,122,201,.18)}
+#hero-q-clear{width:30px;height:30px;border:0;border-radius:50%;background:var(--control2);color:var(--text);font-size:16px;line-height:1;cursor:pointer;padding:0;min-height:0;flex:0 0 auto}
+.heroSearch__suggestions{margin-top:6px;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.16);max-height:42vh;overflow-y:auto;overscroll-behavior:contain}
+.heroSug{display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;padding:10px 12px;border:0;border-bottom:1px solid var(--grid);background:#fff;text-align:left;font:inherit;cursor:pointer;box-sizing:border-box;min-height:44px}
+.heroSug:last-child{border-bottom:0}
+.heroSug:hover,.heroSug:focus-visible{background:var(--lb50);outline:none}
+.heroSug b{font-size:14px;color:var(--text)}
+.heroSug small{color:var(--label);font-size:10px;align-self:center}
+.heroSug span{grid-column:1/-1;color:var(--label);font-size:9.5px}
+.heroSug--e{display:block;color:var(--label);font-size:12px;cursor:default}
+.heroSearch__actions{display:flex;gap:6px;margin-top:8px}
+.heroAction{flex:1;height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:12px;font-weight:700;font-family:inherit;color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:0 8px}
+.heroAction--primary{color:#fff;background:var(--lb900);border-color:var(--lb900)}
+.heroAction:hover{filter:brightness(.97)}
+.heroSearch__popular{display:flex;align-items:center;gap:5px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.heroSearch__popular::-webkit-scrollbar{display:none}
+.heroSearch__popular span{flex:0 0 auto;font-size:9.5px;color:var(--label)}
+.heroSearch__popular button{flex:0 0 auto;border:1px solid var(--grid);border-radius:999px;background:#fff;padding:5px 9px;font-size:10.5px;font-family:inherit;font-weight:700;color:var(--text);cursor:pointer;min-height:0}
+.heroSearch__popular button:hover{background:var(--lb50)}
+@media (pointer:coarse){ .heroAction{min-height:44px} .heroSearch__popular button{min-height:40px;padding:6px 12px} #hero-q-clear{width:36px;height:36px} }
+/* PC: hero が左上にいるので «地図の設定» とヒントはその右へ */
+@media (min-width:721px){
+  .quickbar.mini{left:calc(min(430px,calc(100vw - 32px)) + 24px)}
+  .hint{left:calc(min(430px,calc(100vw - 32px)) + 32px)}
+}
+/* スマホ: hero は幅いっぱい・高さは中身ぶん。«地図の設定»・ヒント・天気チップは hero の下に */
+@media (max-width:720px){
+  .heroSearch{left:8px;right:8px;width:auto;top:8px}
+  .quickbar.mini{top:calc(var(--hero-h,230px) + 12px)}
+  .hint{top:calc(var(--hero-h,230px) + 64px)}
+  .wxchip{top:calc(var(--hero-h,230px) + 14px)}
+}
+@media (max-width:560px){ .mobileOnly{display:inline} }
+@media (max-width:420px){
+  .heroSearch{padding:12px;border-radius:14px}
+  .heroSearch h1{font-size:21px}
+  .heroSearch__lead{display:none}
+  .heroSearch__box{height:50px}
+  .heroSearch__popular{gap:4px}
+  .heroSearch__popular button{padding:6px 8px;font-size:10.5px}
+}
+/* 出発バーは初回は二次 UI。ルート検索を始めたら通常表示 */
+.topbar{background:#fff;border-bottom:1px solid var(--grid)}
+.tripbar{max-height:var(--tripbar-h)}   /* overflow は既存のまま（横スクロールを壊さない） */
+body:not(.route-active) .tripbar{opacity:.72}
+body.route-active .tripbar{max-height:none;opacity:1}
+body.route-active .heroSearch{opacity:.92}
+body.route-active .heroSearch:hover,body.route-active .heroSearch:focus-within{opacity:1}
