@@ -40,7 +40,7 @@ RG.TIP = {
   memoForm: { action: "", fields: { st: "", name: "", nick: "", text: "", vid: "", t: "", quiet: "", step: "", xfer: "", night: "", toilet: "", elev: "", kind: "", pref: "", la: "", lo: "" } },
   memoCsv: "",
   /* みんなのコメント（v106）: Google Apps Script のウェブアプリ URL（tools/comments_api.gs。README「コメント管理者向け設定」）。空ならスポットカードは従来の «行った人の声» */
-  commentsApi: "",
+  commentsApi: "https://script.google.com/macros/s/AKfycbyi63uR0JRfDrOleNr033rBp6QkSe7Alz9IHAUwAdDXj9Wtttkw2NIFMh7HDha01fc/exec",
   /* イイね！（v85）: 別の Google フォーム（列: id,vid,t,name）。id は «投稿者の印:投稿時刻» で投稿と結びつく。likeCsv はその回答シートの CSV */
   likeForm: { action: "", fields: { id: "", vid: "", t: "", name: "" } },
   likeCsv: "",
