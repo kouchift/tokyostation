@@ -3,6 +3,32 @@
 > **v64（2026-09-06）— 描画速度の全面改訂。** 初回表示が 4G回線・低スペック端末の想定で **約51秒 → 約2秒** になりました。
 > 詳しくは下の「v64 で変えたこと」を参照。以後、プログラムを直したら `node tools/build_bundle.js` を実行してください。
 
+## v104: 検索エンジン向けの整備（SEO の土台）
+
+### ページを足す・直したときの手順
+
+```
+node tools/build_intent_pages.js --no-og   # guide/*.html と station/<slug>/ を作り直す（OG 画像も作るなら --no-og を外す）
+node tools/build_sitemap.js                # 全 HTML を走査して sitemap.xml を作る（手で書かない）
+node tools/seo_check.js                    # 点検。FAIL が 0 であることを確かめてから公開
+node tools/seo_check.js --live             # 公開後: 実際の URL（ステータス・canonical・404）を点検
+```
+
+- サイトの URL は `tools/site.json` の `siteUrl`（`https://kouchift.github.io/tokyostation/`）だけに書く。`https://kouchift.github.io/` はサイトのルートではない
+- 新しい駅ページ: `tools/site.json` の `stations` に `{ "id": "<アプリの駅ID>", "slug": "<英小文字>", "name": "…", "published": true }` を 1 行足す → 上の 3 本。URL は `station/<slug>/`（id と slug は別。駅名が変わっても slug は変えない）
+- 将来の URL の型: `station/{slug}/`・`plan/{駅slug}/{30min|1hour|2hours}/`・`spot/{slug}/`（site.json の `urlPolicy`）。既存の `guide/*.html` は URL を変えない
+- sitemap に載る条件: noindex でない・`<link rel="canonical">` が自分自身の URL。管理画面・点検ページ・404 は noindex
+- インデックスさせないもの: 検索結果・個人の比較結果（`?from=&to=`・`?st=` はトップの canonical に集約）、今後の AI 生成プラン（原則 noindex）
+
+### 公開後の Search Console 確認手順（人が行う）
+
+1. [Google Search Console](https://search.google.com/search-console) で URL プレフィックスのプロパティ `https://kouchift.github.io/tokyostation/` を開く（所有権は `googlec815dc96233352b9.html` で確認済み。このファイルは消さない）
+2. **サイトマップ** → `sitemap.xml` を送信（`/tokyostation/robots.txt` はクローラーに読まれないため、送信が発見の主な経路）
+3. **URL 検査** → トップ・`station/tokyo/`・`guide/` を検査し「公開 URL をテスト」→ 取得できること、ユーザー指定の canonical と Google 選択の canonical が一致すること、スクリーンショットで本文が出ていることを確認 → 「インデックス登録をリクエスト」
+4. 数日〜数週間後: **ページ（インデックス作成）** で「登録済み」の件数と、未登録の理由（「クロール済み - インデックス未登録」「重複」「404」など）を確認
+5. **設定 → クロールの統計情報** でエラー・404 の増減、**検索パフォーマンス** でクエリと表示回数を確認
+6. robots.txt・favicon・検索結果のサイト名を効かせたいとき: Google はこれらを «ホスト単位»（`kouchift.github.io`）でしか扱わない。必要ならユーザーサイト用リポジトリ `kouchift/kouchift.github.io` を作り、直下に `robots.txt`（このリポジトリの `robots.txt` をそのまま）・`favicon.ico`・トップページを置く
+
 ## v68–v70 で足したこと
 
 - 🎌 **一之宮** 106社（Wikidata）。どの引きぐあいでも必ず地図に出る特別枠

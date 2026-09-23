@@ -4054,3 +4054,7 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   body.slim .poicount{font-size:10.5px;padding:2px 8px}
   body.slim #lv-only{transform:scale(.92);transform-origin:left bottom}
 }
+
+/* v104: SEO — ヒーロー最下段の «無料・登録不要» にページ案内（通常の <a> リンク）を並べる */
+.heroSearch__links a{color:inherit;font-weight:700;text-decoration:none;border-bottom:1px dotted currentColor}
+.heroSearch__links a:hover{color:var(--tsg-primary,#0061a1)}

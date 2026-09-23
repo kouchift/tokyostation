@@ -1,6 +1,5 @@
 {
   "_comment": "v93: 検索意図ページの一覧。少数の «厚い» ページだけを作る（薄い大量生成はしない）。追加するときはここに 1 行足して node tools/build_intent_pages.js",
-  "site": "https://kouchift.github.io/tokyostation/",
   "from": "東京",
   "when": "2026-09-24T10:00:00+09:00",
   "aggr": 1,

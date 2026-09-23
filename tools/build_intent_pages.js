@@ -13,6 +13,8 @@
 const fs = require("fs"), path = require("path"), http = require("http");
 const ROOT = path.join(__dirname, "..");
 const CFG = JSON.parse(fs.readFileSync(path.join(__dirname, "intent_pages.json"), "utf8"));
+const SITE = JSON.parse(fs.readFileSync(path.join(__dirname, "site.json"), "utf8"));   // v104: URL は site.json に一元化
+CFG.site = SITE.siteUrl;
 const OUT = path.join(ROOT, "guide"), OG = path.join(OUT, "og");
 const NO_OG = process.argv.indexOf("--no-og") >= 0;
 let chromium; try { chromium = require("playwright").chromium; } catch (e) { console.error("playwright が必要です（npm i -D playwright）"); process.exit(1); }
@@ -39,10 +41,11 @@ function extractInPage(cfg) {
   const W = cfg.when.match(/(\d+)-(\d+)-(\d+)T(\d+):(\d+)/), when = new Date(+W[1], +W[2] - 1, +W[3], +W[4], +W[5]), from = byId[cfg.from];   // 日本時間の «時刻» として組み立てる（ブラウザの TZ に依らない）
   const BASE = { walk: 1, bike: 1, bus: 1, train: 1, taxi: 1, car: 1, moto: 1 };
   const glabel = {}; (RG.GENRES || []).forEach((g) => { glabel[g.id] = g.e + " " + g.label; });
+  const SKIPG = { buzz: 1, bunkazai: 1, civic: 1 };   // v104: 話題の集計・所蔵品（絵巻・茶碗など場所でないもの）・組織名は «行ける場所» ではないので除く
   function lines(st) { const seen = {}; return (st.ls || []).filter((l) => !/ : /.test(l)).filter((l) => (seen[l] ? false : (seen[l] = 1))); }
   function spots(st, n) {
     const seen = {};
-    return (RG.MAPPOI || []).filter((p) => p.g !== "buzz" && hav([st.la, st.lo], [p.la, p.lo]) <= 0.9)
+    return (RG.MAPPOI || []).filter((p) => SKIPG[p.g] !== 1 && p.n !== st.n + "駅" && hav([st.la, st.lo], [p.la, p.lo]) <= 0.9)
       .map((p) => ({ n: p.n, g: glabel[p.g] || p.g, gid: p.g, m: Math.round(hav([st.la, st.lo], [p.la, p.lo]) * 1000), ti: p.ti == null ? 9 : p.ti }))
       .sort((a, b) => a.ti - b.ti || a.m - b.m).filter((p) => (seen[p.n] ? false : (seen[p.n] = 1))).slice(0, n || 6);
   }
@@ -62,8 +65,20 @@ function extractInPage(cfg) {
       toLines: lines(to), fromLines: lines(from), spots: spots(to, 6), sk: RG.shinkansenOf ? !!RG.shinkansenOf(to.n) : false };
   }
   const T = RG.TOKYO_STATION || null;
-  const stationPages = (cfg.stations || []).map((s) => ({ slug: s.slug, kind: s.kind, intent: s.intent, tokyo: T, lines: lines(from), sk: RG.SHINKANSEN ? Object.keys(RG.SHINKANSEN.lines).filter((k) => RG.SHINKANSEN.lines[k].stations.indexOf("東京") >= 0).map((k) => ({ line: k, svcs: RG.SHINKANSEN.lines[k].svcs })) : [], spots: spots(from, 8) }));
-  return { routes: cfg.routes.map(route), stations: stationPages, nSt: RG.NET.stations.length, nLn: RG.NET.lines.length, version: RG.VERSION || "" };
+  const stationPages = (cfg.stations || []).map((s) => ({ slug: s.slug, kind: s.kind, intent: s.intent, tokyo: T, lines: lines(from).filter((l) => !/新幹線/.test(l)), sk: RG.SHINKANSEN ? Object.keys(RG.SHINKANSEN.lines).filter((k) => RG.SHINKANSEN.lines[k].stations.indexOf("東京") >= 0).map((k) => ({ line: k, svcs: RG.SHINKANSEN.lines[k].svcs })) : [], spots: spots(from, 8) }));
+  /* v104: 駅ハブ（station/<slug>/）の材料。site.json の stations（published:true）だけ */
+  function hub(s) {
+    const st = byId[s.id]; if (!st) return { slug: s.slug, error: "unknown station id " + s.id };
+    const seen = {}, perG = {}, near = (RG.MAPPOI || []).filter((p) => SKIPG[p.g] !== 1 && p.n && p.n !== st.n + "駅" && hav([st.la, st.lo], [p.la, p.lo]) <= 1.6)
+      .map((p) => ({ n: p.n, gid: p.g, g: glabel[p.g] || p.g, m: Math.round(hav([st.la, st.lo], [p.la, p.lo]) * 1000), ti: p.ti == null ? 9 : p.ti }))
+      .sort((a, b) => a.ti - b.ti || a.m - b.m).filter((p) => (seen[p.n] ? false : (seen[p.n] = 1)))
+      .filter((p) => (perG[p.gid] = (perG[p.gid] || 0) + 1) <= 5)   // 1 ジャンル 5 件まで（偏らせない）
+      .slice(0, 36).sort((a, b) => a.m - b.m);
+    const sk = RG.SHINKANSEN ? Object.keys(RG.SHINKANSEN.lines).filter((k) => RG.SHINKANSEN.lines[k].stations.indexOf(st.n) >= 0).map((k) => ({ line: k, svcs: RG.SHINKANSEN.lines[k].svcs })) : [];
+    return { id: s.id, slug: s.slug, name: st.n, la: st.la, lo: st.lo, lines: lines(st).filter((l) => !/新幹線/.test(l)), sk, near, tokyo: st.n === "東京" ? T : null };
+  }
+  const hubs = (cfg.siteStations || []).filter((s) => s.published).map(hub);
+  return { routes: cfg.routes.map(route), stations: stationPages, hubs, nSt: RG.NET.stations.length, nLn: RG.NET.lines.length, version: RG.VERSION || "" };
 }
 
 /* ---------- HTML の共通部品 ---------- */
@@ -94,8 +109,9 @@ ul.seg{list-style:none;padding:0;margin:0}ul.seg li{background:#fff;border:1px s
 footer{font-size:12px;color:var(--sub);margin-top:36px;border-top:1px solid var(--line);padding-top:12px}
 @media (max-width:480px){h1{font-size:20px}table{font-size:13px}th,td{padding:7px 5px}.hide-sp{display:none}}
 `;
+const pageUrl = (slug) => CFG.site + "guide/" + (slug === "index" ? "" : slug + ".html");   // v104: 一覧は guide/（末尾スラッシュ）が正規 URL
 function head(o) {
-  const url = CFG.site + "guide/" + o.slug + ".html", og = CFG.site + (o.og || "assets/og.jpg");
+  const url = pageUrl(o.slug), og = CFG.site + (o.og || "assets/og.jpg");
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -116,14 +132,17 @@ function head(o) {
 <meta name="twitter:title" content="${esc(o.title)}">
 <meta name="twitter:description" content="${esc(o.desc)}">
 <meta name="twitter:image" content="${og}">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<link rel="icon" href="../assets/favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="../assets/icon-192.png">
 <script type="application/ld+json">${JSON.stringify(o.ld)}</script>
 <style>${CSS}</style>
 </head>
 <body>
-<header class="top"><div class="wrap"><a href="../index.html">🚉 東京ステーションガイド</a><small>行き方ガイド</small></div></header>
+<header class="top"><div class="wrap"><a href="../">🚉 東京ステーションガイド</a><small>行き方ガイド</small></div></header>
 <main class="wrap">
-<nav class="bc" aria-label="パンくず"><a href="../index.html">トップ</a> › <a href="index.html">行き方ガイド</a> › ${esc(o.crumb)}</nav>
+<nav class="bc" aria-label="パンくず"><a href="../">トップ</a> › <a href="./">行き方ガイド</a> › ${esc(o.crumb)}</nav>
 `;
 }
 function foot(o) {
@@ -131,7 +150,7 @@ function foot(o) {
 <footer>
 <p>数字は東京ステーションガイドの推定エンジン（駅×路線のネットワーク探索・距離ベースの所要時間モデル）による<b>概算</b>です。時刻表・運休・道路状況・バスの系統は見ていません。運賃は距離から計算した目安で、特急料金・IC 運賃の差・乗換割引は含みません。出発前に各社の公式サイトでご確認ください。</p>
 <p>駅・路線データ: 国土数値情報（鉄道）ほか（<a href="../DATA_SOURCES.md">出典一覧</a>）。ページ作成: ${TODAY}（アプリ v${VER}）。${o.extra || ""}</p>
-<p><a href="index.html">行き方ガイド一覧</a> ／ <a href="../index.html">アプリのトップへ</a></p>
+<p><a href="./">行き方ガイド一覧</a> ／ <a href="../station/tokyo/">東京駅の案内</a> ／ <a href="../">アプリのトップへ</a></p>
 </footer>
 </main>
 </body>
@@ -139,8 +158,8 @@ function foot(o) {
 `;
 }
 function ld(o) {
-  const url = CFG.site + "guide/" + o.slug + ".html";
-  const items = [{ "@type": "ListItem", position: 1, name: "東京ステーションガイド", item: CFG.site }, { "@type": "ListItem", position: 2, name: "行き方ガイド", item: CFG.site + "guide/index.html" }, { "@type": "ListItem", position: 3, name: o.crumb, item: url }];
+  const url = pageUrl(o.slug);
+  const items = [{ "@type": "ListItem", position: 1, name: "東京ステーションガイド", item: CFG.site }, { "@type": "ListItem", position: 2, name: "行き方ガイド", item: CFG.site + "guide/" }, { "@type": "ListItem", position: 3, name: o.crumb, item: url }];
   const g = [{ "@type": "BreadcrumbList", itemListElement: items }, { "@type": "WebPage", "@id": url, url: url, name: o.title, description: o.desc, inLanguage: "ja", dateModified: TODAY, isPartOf: { "@type": "WebSite", name: "東京ステーションガイド", url: CFG.site } }];
   if (o.faq && o.faq.length) g.push({ "@type": "FAQPage", mainEntity: o.faq.map((f) => ({ "@type": "Question", name: f[0], acceptedAnswer: { "@type": "Answer", text: f[1] } })) });
   return { "@context": "https://schema.org", "@graph": g };
@@ -152,7 +171,7 @@ function routePage(r, all) {
   const title = `${r.from}駅から${r.to}駅への行き方｜所要時間・料金・乗り換え（${t ? "電車 約" + t.min + "分・" + yen(t.yen) : "約" + rec.min + "分"}）`;
   const desc = `${r.from}駅から${r.to}駅へは${t ? `電車で約${t.min}分・${yen(t.yen)}・乗り換え${t.transfers}回（${r.segs.map((s) => s.line).join("→") || "—"}）` : `${rec.label}で約${rec.min}分`}。徒歩・自転車・バス・タクシーとも比較。${r.why}。時刻表を見ない概算です。`;
   const crumb = `${r.from}駅 → ${r.to}駅`;
-  const appUrl = `../index.html?from=${encodeURIComponent(r.fromId)}&to=${encodeURIComponent(r.toId)}`;
+  const appUrl = `../?from=${encodeURIComponent(r.fromId)}&to=${encodeURIComponent(r.toId)}`;
   const faq = [];
   if (t) {
     faq.push([`${r.from}駅から${r.to}駅まで電車で何分かかりますか？`, `概算で約${t.min}分です（${r.segs.map((s) => s.line + "で" + s.from + "→" + s.to).join("、") || "経路は駅ごとに変わります"}）。時刻表は見ていないので、待ち時間や列車種別で前後します。`]);
@@ -165,7 +184,7 @@ function routePage(r, all) {
   let h = head({ slug: r.slug, title, desc, crumb, og: "guide/og/" + r.slug + ".jpg", ld: ld({ slug: r.slug, title, desc, crumb, faq }) });
   h += `<h1>${esc(r.from)}駅から${esc(r.to)}駅への行き方</h1>
 <p class="lead">${t ? `<b>🚃 電車で約 ${t.min} 分・${yen(t.yen)}・乗り換え ${t.transfers} 回</b>${r.segs.length ? "（" + esc(r.segs.map((s) => s.line).join(" → ")) + "）" : ""}。` : `<b>${esc(rec.emoji)} ${esc(rec.label)}で約 ${rec.min} 分・${yen(rec.yen)}</b>。`}直線距離 ${r.km} km。${esc(r.why)}。<br><small>平日 ${+CFG.when.slice(11, 13)} 時ごろ出発・${esc(["安全第一", "標準", "攻める", "子連れ"][CFG.aggr || 1])}の条件で計算した概算です（時刻表は見ていません）。</small></p>
-<div class="cta"><a class="btn" href="${appUrl}">🗺️ アプリで同じ条件を開く（出発地・行き先を復元）</a><a class="btn sec" href="../index.html">🚉 東京駅の使い方を見る</a></div>
+<div class="cta"><a class="btn" href="${appUrl}">🗺️ アプリで同じ条件を開く（出発地・行き先を復元）</a><a class="btn sec" href="../station/tokyo/">🚉 東京駅の案内を見る</a></div>
 <h2>手段ごとの比較</h2>
 <table><thead><tr><th>手段</th><th>所要</th><th>費用</th><th>乗換</th><th>徒歩</th><th class="hide-sp">メモ</th></tr></thead><tbody>`;
   r.opts.forEach((o) => {
@@ -206,7 +225,7 @@ function exitsPage(s, routes) {
   let h = head({ slug: s.slug, title, desc, crumb, og: "guide/og/" + s.slug + ".jpg", ld: ld({ slug: s.slug, title, desc, crumb, faq }) });
   h += `<h1>東京駅の出口ガイド</h1>
 <p class="lead"><b>皇居・大手町・KITTE なら丸の内側、一番街・大丸・高速バスなら八重洲側。</b>改札内は自由通路でつながっているので、逆側に出ても構内を通って戻れます。京葉線（舞浜方面）は地下ホームで、南口から 10 分前後。<br><small>${esc(T.src)}</small></p>
-<div class="cta"><a class="btn" href="../index.html">🚉 アプリで東京駅モードを開く（地図で位置を見る）</a></div>`;
+<div class="cta"><a class="btn" href="../">🚉 アプリで東京駅モードを開く（地図で位置を見る）</a><a class="btn sec" href="../station/tokyo/">東京駅の案内（路線・行き先・近くの見どころ）</a></div>`;
   ["m", "y"].forEach((side) => {
     const S = T.sides[side];
     h += `<h2>${esc(S.label)}</h2><p>${esc(S.desc)}</p><table><thead><tr><th>出入口</th><th>使いどころ</th></tr></thead><tbody>`;
@@ -229,11 +248,89 @@ function indexPage(routes, stations, meta) {
   let h = head({ slug: "index", title, desc, crumb: "一覧", ld: ld({ slug: "index", title, desc, crumb: "一覧", faq: [] }) });
   h += `<h1>東京駅からの行き方ガイド</h1>
 <p class="lead">目的地ごとに、<b>電車・徒歩・自転車・バス・タクシー</b>の所要時間と費用を並べています。数字はアプリと同じ推定エンジンによる概算（時刻表は見ていません）。</p>
-<div class="cta"><a class="btn" href="../index.html">🗺️ アプリで好きな行き先を検索する（全国 ${meta.nSt.toLocaleString("ja-JP")} 駅）</a></div>
+<div class="cta"><a class="btn" href="../">🗺️ アプリで好きな行き先を検索する（全国 ${meta.nSt.toLocaleString("ja-JP")} 駅）</a></div>
 <h2>行き先べつ</h2><ul class="rel">${routes.map((x) => `<li><a href="${x.slug}.html">${esc(x.from)}駅 → ${esc(x.to)}駅${x.train ? "<br><small>🚃 約" + x.train.min + "分・" + yen(x.train.yen) + "・乗換" + x.train.transfers + "回</small>" : ""}</a></li>`).join("")}</ul>
-<h2>東京駅そのもの</h2><ul class="rel">${stations.map((s) => `<li><a href="${s.slug}.html">東京駅の出口ガイド<br><small>丸の内・八重洲・日本橋口・京葉線</small></a></li>`).join("")}</ul>`;
+<h2>東京駅そのもの</h2><ul class="rel"><li><a href="../station/tokyo/">東京駅の案内<br><small>乗り入れ路線・行き先・徒歩圏の見どころ</small></a></li>${stations.map((s) => `<li><a href="${s.slug}.html">東京駅の出口ガイド<br><small>丸の内・八重洲・日本橋口・京葉線</small></a></li>`).join("")}</ul>`;
   h += foot({});
   return h;
+}
+
+/* ---------- v104: 駅ハブ station/<slug>/ ----------
+   ・将来の «駅 × 空き時間 × 寄り道» の親ページ。1 駅 1 ページ（ユーザー入力ごとの URL は作らない）
+   ・徒歩の分数は直線距離 ÷ 80m/分 の目安。営業時間・料金・評価は載せない（確かめていない情報を書かない） */
+function stationPage(h, routes, exitsSlug) {
+  const url = CFG.site + "station/" + h.slug + "/", P = "../../";
+  const title = `${h.name}駅の案内｜乗り入れ路線・行き方・徒歩圏の見どころ｜${SITE.siteName}`;
+  const myRoutes = routes.filter((r) => r.fromId === h.id);
+  const bands = [{ max: 400, label: "片道 5 分以内", note: "15〜30 分の空き時間でも往復しやすい" }, { max: 800, label: "片道 10 分以内", note: "30 分〜1 時間の空き時間向け" }, { max: 1600, label: "片道 20 分以内", note: "1〜2 時間あるとき" }];
+  const wmin = (m) => Math.max(1, Math.round(m / 80)), band = (m) => bands.findIndex((b) => wmin(m) <= b.max / 80);   // 表示する «約N分» と区分を一致させる
+  const desc = `${h.name}駅に乗り入れる${h.lines.length}路線${h.sk.length ? "・新幹線" + h.sk.length + "路線" : ""}、${myRoutes.length ? myRoutes.slice(0, 4).map((r) => r.to).join("・") + "などへの行き方、" : ""}駅から歩いて行ける見どころ${h.near.length}件を徒歩時間の目安つきで整理。空き時間の寄り道探しに。`;
+  const crumbs = [{ n: "トップ", u: CFG.site, h: P }, { n: `${h.name}駅`, u: url }];
+  const ldj = { "@context": "https://schema.org", "@graph": [
+    { "@type": "BreadcrumbList", itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.n, item: c.u })) },
+    { "@type": "WebPage", "@id": url, url, name: title, description: desc, inLanguage: "ja", dateModified: TODAY, isPartOf: { "@type": "WebSite", name: SITE.siteName, url: CFG.site },
+      about: { "@type": "TrainStation", name: `${h.name}駅`, geo: { "@type": "GeoCoordinates", latitude: +h.la.toFixed(5), longitude: +h.lo.toFixed(5) } } }
+  ] };
+  if (h.near.length) ldj["@graph"].push({ "@type": "ItemList", name: `${h.name}駅から歩いて行ける見どころ`, numberOfItems: h.near.length, itemListElement: h.near.map((x, i) => ({ "@type": "ListItem", position: i + 1, name: x.n })) });
+  let o = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${url}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${esc(SITE.siteName)}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${CFG.site}${SITE.ogImage}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(desc)}">
+<meta name="twitter:image" content="${CFG.site}${SITE.ogImage}">
+<link rel="icon" href="${P}favicon.ico" sizes="48x48">
+<link rel="icon" href="${P}assets/favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="${P}assets/icon-192.png">
+<script type="application/ld+json">${JSON.stringify(ldj)}</script>
+<style>${CSS}</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><a href="${P}">🚉 ${esc(SITE.siteName)}</a><small>駅の案内</small></div></header>
+<main class="wrap">
+<nav class="bc" aria-label="パンくず"><a href="${P}">トップ</a> › ${esc(h.name)}駅</nav>
+<h1>${esc(h.name)}駅の案内｜路線・行き方・歩いて行ける見どころ</h1>
+<p class="lead"><b>${esc(h.name)}駅には ${h.lines.length} 路線${h.sk.length ? "と新幹線 " + h.sk.length + " 路線" : ""}が乗り入れています。</b>このページでは、行き先ごとの行き方と、駅から歩いて行ける見どころを徒歩時間の目安つきでまとめています。次の予定までの空き時間に寄り道先を探すときにも使えます。</p>
+<div class="cta"><a class="btn" href="${P}?st=${encodeURIComponent(h.id)}">🗺️ アプリで${esc(h.name)}駅を開く</a>${exitsSlug ? `<a class="btn sec" href="${P}guide/${exitsSlug}.html">出口ガイド</a>` : ""}</div>`;
+  if (h.tokyo) {
+    const T = h.tokyo;
+    o += `<h2>丸の内側と八重洲側</h2><table><thead><tr><th>側</th><th>こんなときに</th></tr></thead><tbody>${["m", "y"].map((k) => `<tr><td><b>${esc(T.sides[k].label)}</b></td><td>${esc(T.sides[k].desc)}</td></tr>`).join("")}</tbody></table>`;
+    if (exitsSlug) o += `<p><a href="${P}guide/${exitsSlug}.html">→ 出入口ごとの使いどころ（丸の内北口・中央口・南口、八重洲口、日本橋口、京葉線ホーム）</a></p>`;
+  }
+  if (myRoutes.length) o += `<h2>${esc(h.name)}駅からの行き方</h2><ul class="rel">${myRoutes.map((x) => `<li><a href="${P}guide/${x.slug}.html">${esc(x.to)}駅へ${x.train ? "<br><small>🚃 約" + x.train.min + "分・" + yen(x.train.yen) + "・乗換" + x.train.transfers + "回</small>" : ""}</a></li>`).join("")}</ul><p><a href="${P}guide/">行き方ガイドの一覧</a></p>`;
+  o += `<h2>乗り入れ路線</h2>`;
+  if (h.sk.length) o += `<h3>新幹線（${h.sk.length}）</h3><div class="chips">${h.sk.map((k) => "<span>🚄 " + esc(k.line) + " <small>" + esc(k.svcs.join("・")) + "</small></span>").join("")}</div>`;
+  o += `<h3>在来線・地下鉄（${h.lines.length}）</h3><div class="chips">${h.lines.map((l) => "<span>" + esc(l) + "</span>").join("")}</div>`;
+  if (h.near.length) {
+    o += `<h2>${esc(h.name)}駅から歩いて行ける見どころ</h2><p>駅からの直線距離をもとにした徒歩時間の目安（分速 80m）で分けています。実際の道のりや改札・出口の位置によって長くなることがあります。営業時間や料金は各施設の公式情報で確かめてください。</p>`;
+    bands.forEach((b, bi) => {
+      const xs = h.near.filter((x) => band(x.m) === bi); if (!xs.length) return;
+      o += `<h3>${b.label}<small style="font-weight:400;color:var(--sub)">　${b.note}</small></h3><table><thead><tr><th>見どころ</th><th>種類</th><th>徒歩の目安</th></tr></thead><tbody>${xs.map((x) => `<tr><td>${esc(x.n)}</td><td>${esc(x.g)}</td><td class="num">約${wmin(x.m)}分（${x.m}m）</td></tr>`).join("")}</tbody></table>`;
+    });
+  }
+  o += `<footer>
+<p>路線・見どころの位置: 国土数値情報（鉄道）・OpenStreetMap ほか（<a href="${P}DATA_SOURCES.md">出典一覧</a>）。徒歩時間は直線距離から出した目安です。ページ作成: ${TODAY}（アプリ v${VER}）。</p>
+<p><a href="${P}">アプリのトップへ</a> ／ <a href="${P}guide/">行き方ガイド</a></p>
+</footer>
+</main>
+</body>
+</html>
+`;
+  return o;
 }
 
 /* ---------- OG 画像（1200×630）: ページの要約を 1 枚の絵に ---------- */
@@ -253,7 +350,8 @@ body{margin:0;width:1200px;height:630px;font-family:system-ui,-apple-system,"Seg
   pg.on("pageerror", (e) => console.error("page error:", e.message));
   await pg.goto(`http://127.0.0.1:${port}/index.html?nosw=1`);
   await pg.waitForFunction(() => window.RG && RG.byId && RG.Planner && RG.TOKYO_STATION && RG.SHINKANSEN && RG.MAPPOI && RG.MAPPOI.length > 100, null, { timeout: 60000 });
-  await pg.waitForTimeout(1500);
+  await pg.waitForTimeout(8000);   // v104: 美術館・劇場・史跡などのスポットは地図が出たあと順に届く。届く前に取り出すと «レストランだけ» に偏った
+  CFG.siteStations = SITE.stations;
   const data = await pg.evaluate(extractInPage, CFG);
   fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(OG, { recursive: true });
   const routes = data.routes.filter((r) => { if (r.error) console.error("skip", r.slug, r.error); return !r.error; });
@@ -269,7 +367,14 @@ body{margin:0;width:1200px;height:630px;font-family:system-ui,-apple-system,"Seg
     fs.writeFileSync(path.join(OUT, s.slug + ".html"), html); urls.push("guide/" + s.slug + ".html");
     console.log(`${s.slug}: 出入口${s.tokyo.exits.length} 駅ビル${s.tokyo.bldg.length} 新幹線${s.sk.length} 路線${s.lines.length}`);
   }
-  fs.writeFileSync(path.join(OUT, "index.html"), indexPage(routes, data.stations, data)); urls.unshift("guide/index.html");
+  fs.writeFileSync(path.join(OUT, "index.html"), indexPage(routes, data.stations, data)); urls.unshift("guide/");
+  const exitsSlug = (data.stations.filter((s) => s.kind === "exits")[0] || {}).slug || null;
+  for (const hb of data.hubs || []) {
+    if (hb.error) { console.error("skip station", hb.slug, hb.error); continue; }
+    const dir = path.join(ROOT, "station", hb.slug); fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), stationPage(hb, routes, hb.name === "東京" ? exitsSlug : null)); urls.push("station/" + hb.slug + "/");
+    console.log(`station/${hb.slug}/: 路線${hb.lines.length} 新幹線${hb.sk.length} 見どころ${hb.near.length}`);
+  }
   if (!NO_OG) {
     const og = await b.newPage({ viewport: { width: 1200, height: 630 } });
     async function shot(file, o) { await og.setContent(ogHtml(o)); await og.waitForTimeout(150); await og.screenshot({ path: file, type: "jpeg", quality: 82 }); }
@@ -278,10 +383,8 @@ body{margin:0;width:1200px;height:630px;font-family:system-ui,-apple-system,"Seg
     await shot(path.join(ROOT, "assets", "og.jpg"), { kicker: "路線図から、いちばん良い移動手段へ", title: "東京駅から、どこへ行く？", chips: [`全国 ${data.nSt.toLocaleString("ja-JP")} 駅`, `${data.nLn} 路線`, "電車・徒歩・バス・タクシーを比較"], foot: "kouchift.github.io/tokyostation" });
     await og.close();
   }
-  /* sitemap.xml（トップ＋ガイド） */
-  const sm = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    [{ u: "", p: "1.0" }].concat(urls.map((u) => ({ u, p: u.endsWith("index.html") ? "0.8" : "0.7" }))).map((x) => `  <url><loc>${CFG.site}${x.u}</loc><lastmod>${TODAY}</lastmod><priority>${x.p}</priority></url>`).join("\n") + "\n</urlset>\n";
-  fs.writeFileSync(path.join(ROOT, "sitemap.xml"), sm);
-  console.log(`\n${routes.length} ルート + ${data.stations.length} 駅ページ + 一覧 → guide/　sitemap.xml ${urls.length + 1} URL${NO_OG ? "" : "　OG 画像 " + (routes.length + data.stations.length + 1) + " 枚"}`);
+  /* v104: sitemap.xml は tools/build_sitemap.js が全ページを走査して作る（ここでは書かない） */
+  urls.unshift("");
+  console.log(`\n${routes.length} ルート + ${data.stations.length} 駅ページ + 一覧 → guide/（sitemap は node tools/build_sitemap.js）${NO_OG ? "" : "　OG 画像 " + (routes.length + data.stations.length + 1) + " 枚"}`);
   await b.close(); srv.close();
 })().catch((e) => { console.error(e); process.exit(1); });
