@@ -1,129 +1,252 @@
-/* =========================================================================
-   v106: スポットの «みんなのコメント»（投稿 → Google スプレッドシート → 管理者が公開 → 表示）
-   ・受け皿は Google Apps Script の Web アプリ（tools/comments_api.gs）。URL は data/support.js の RG.TIP.commentsApi
-   ・投稿はいったん status=pending。管理者がシートで published に変えたものだけ表示する（rejected は表示しない）
-   ・spot_id はスポット名に依らない（種類 + 座標から作る RG.spotId）。名前が変わっても結びつきは壊れない
-   ・コメント本文は必ずテキストとして描く（esc）。HTML として解釈しない
-   ・取得は «カードを開いたとき» だけ。10 分はメモリと sessionStorage に持つ。失敗してもカード本体は出る
-   ・受け皿が未設定なら、このセクションは «準備中» の 1 行だけ（従来の «行った人の声» を出す。plannerui.js 参照）
-   ========================================================================= */
+/**
+ * スポットコメント機能
+ * - ユーザーがスポット（駅・施設）にコメント・評価を投稿
+ * - 匿名可・300字・★1-5・訪問日記録・レート制限（60秒・1日10件）
+ *
+ * API: RG.COMMENTS = { endpoint: "https://..." }
+ */
+
 (function (RG) {
-"use strict";
-var esc = RG.esc;
-var MAX_COMMENT = 300, MAX_NICK = 20, PAGE = 5, FETCH = 30, TTL = 10 * 60 * 1000, MIN_GAP = 60 * 1000;
-var mem = {};   // spot_id → { t, items, total }
+  "use strict";
 
-function api() { return (RG.TIP && RG.TIP.commentsApi) || ""; }
-RG.commentsEnabled = function () { return !!api(); };
+  if (!RG) return;
 
-/* ---- spot_id: 種類 + 緯度経度（小数 4 桁 ≒ 11m）の短いハッシュ。名前に依存しない ---- */
-function h32(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36); }
-RG.spotId = function (p) {
-  if (!p) return "";
-  if (p.sid) return p.sid;
-  var g = String(p.g || "spot").replace(/[^a-z0-9_]/gi, "").toLowerCase() || "spot";
-  var la = (+p.la).toFixed(4), lo = (+p.lo).toFixed(4);
-  return g + "-" + h32(la + "," + lo);
-};
+  /**
+   * コメント投稿パネルの HTML を生成
+   */
+  RG.commentsHTML = function (spotName, spotId) {
+    if (!RG.COMMENTS || !RG.COMMENTS.endpoint) return "";
 
-/* ---- 端末の印（投稿の連続制限用。個人を特定しない） ---- */
-function vid() { try { var v = localStorage.getItem("tsg.vid"); if (!v) { v = "v" + Math.random().toString(36).slice(2, 10); localStorage.setItem("tsg.vid", v); } return v; } catch (e) { return "anon"; } }
-function lastNick() { try { return localStorage.getItem("tsg.cm.nick") || ""; } catch (e) { return ""; } }
-function rememberNick(n) { try { if (n) localStorage.setItem("tsg.cm.nick", n); } catch (e) {} }
-function lastPost() { try { return +localStorage.getItem("tsg.cm.last") || 0; } catch (e) { return 0; } }
-function markPost() { try { localStorage.setItem("tsg.cm.last", String(Date.now())); } catch (e) {} }
+    return '<section class="comments">' +
+      '<h3 class="comments__title">💬 みんなのコメント</h3>' +
+      '<div class="comments__list" data-spot="' + RG.esc(spotId) + '"></div>' +
+      '<form class="comments__form" data-spot="' + RG.esc(spotId) + '">' +
+        '<fieldset>' +
+          '<legend>コメントを投稿</legend>' +
+          '<div class="comments__field">' +
+            '<label>評価（1-5 ★）</label>' +
+            '<div class="comments__rating">' +
+              '<input type="radio" name="rating" value="1" id="r1"><label for="r1">★</label>' +
+              '<input type="radio" name="rating" value="2" id="r2"><label for="r2">★★</label>' +
+              '<input type="radio" name="rating" value="3" id="r3" checked><label for="r3">★★★</label>' +
+              '<input type="radio" name="rating" value="4" id="r4"><label for="r4">★★★★</label>' +
+              '<input type="radio" name="rating" value="5" id="r5"><label for="r5">★★★★★</label>' +
+            '</div>' +
+          '</div>' +
+          '<div class="comments__field">' +
+            '<label for="c-text">コメント（300字以内）</label>' +
+            '<textarea id="c-text" name="text" maxlength="300" placeholder="訪問の感想や情報をお願いします…" required></textarea>' +
+            '<span class="comments__counter"><span id="c-count">0</span>/300</span>' +
+          '</div>' +
+          '<div class="comments__field">' +
+            '<label for="c-visit">訪問日（任意）</label>' +
+            '<input type="date" id="c-visit" name="visitDate">' +
+          '</div>' +
+          '<div class="comments__field">' +
+            '<label for="c-name">投稿者名（匿名でもOK・30字以内）</label>' +
+            '<input type="text" id="c-name" name="name" maxlength="30" placeholder="匿名">' +
+          '</div>' +
+          '<div class="comments__honeypot">' +
+            '<input type="email" name="honeypot" style="display:none" tabindex="-1">' +
+          '</div>' +
+          '<button type="submit" class="comments__submit">投稿する</button>' +
+          '<div id="c-status" class="comments__status"></div>' +
+        '</fieldset>' +
+      '</form>' +
+    '</section>';
+  };
 
-/* ---- 取得（キャッシュつき） ---- */
-function cacheGet(id) {
-  var c = mem[id]; if (c && Date.now() - c.t < TTL) return c;
-  try { var s = sessionStorage.getItem("tsg.cm." + id); if (s) { c = JSON.parse(s); if (c && Date.now() - c.t < TTL) { mem[id] = c; return c; } } } catch (e) {}
-  return null;
-}
-function cacheSet(id, items, total) { var c = { t: Date.now(), items: items, total: total }; mem[id] = c; try { sessionStorage.setItem("tsg.cm." + id, JSON.stringify(c)); } catch (e) {} }
-function fetchComments(id, cb) {
-  var c = cacheGet(id); if (c) { cb(null, c); return; }
-  var u = api() + (api().indexOf("?") >= 0 ? "&" : "?") + "action=comments&spot_id=" + encodeURIComponent(id) + "&limit=" + FETCH;
-  var done = false, timer = setTimeout(function () { if (!done) { done = true; cb(new Error("timeout")); } }, 12000);
-  fetch(u, { method: "GET", credentials: "omit" }).then(function (r) { return r.json(); }).then(function (j) {
-    if (done) return; done = true; clearTimeout(timer);
-    if (!j || !j.ok || !Array.isArray(j.items)) { cb(new Error("bad")); return; }
-    cacheSet(id, j.items, j.total == null ? j.items.length : +j.total); cb(null, mem[id]);
-  }).catch(function (e) { if (done) return; done = true; clearTimeout(timer); cb(e); });
-}
-function postComment(body, cb) {
-  /* Content-Type を付けない（text/plain 扱い）＝ プリフライト無しで Apps Script に届く */
-  fetch(api(), { method: "POST", body: JSON.stringify(body), credentials: "omit", redirect: "follow" })
-    .then(function (r) { return r.json(); }).then(function (j) { cb(j && j.ok ? null : new Error((j && j.error) || "bad"), j); })
-    .catch(function (e) { cb(e); });
-}
+  /**
+   * スポットコメント欄をバインド
+   */
+  RG.commentsBind = function (root) {
+    if (!RG.COMMENTS || !RG.COMMENTS.endpoint) return;
 
-/* ---- 描画 ---- */
-function stars(n) { n = +n || 0; if (n < 1 || n > 5) return ""; var s = ""; for (var i = 1; i <= 5; i++) s += i <= n ? "★" : "☆"; return '<span class="cm__st" aria-label="評価 ' + n + '／5">' + s + "</span>"; }
-function dstr(s) { if (!s) return ""; var m = String(s).match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/); return m ? m[1] + "年" + (+m[2]) + "月" + (m[3] ? +m[3] + "日" : "") : ""; }
-function item(c) {
-  return '<li class="cm__i">' + stars(c.rating) +
-    '<p class="cm__tx">' + esc(c.comment || "") + "</p>" +
-    '<small class="cm__by">— ' + esc((c.nickname || "").trim() || "匿名") + "さん" + (c.visit_date ? "・" + esc(dstr(c.visit_date)) + "に訪問" : "") + "</small></li>";
-}
-function listHtml(c, shown) {
-  if (!c.items.length) return '<p class="mm__empty">まだコメントはありません。<br>最初の感想を投稿してみませんか？</p>';
-  var xs = c.items.slice(0, shown);
-  return '<ul class="cm__ls">' + xs.map(item).join("") + "</ul>" +
-    (c.items.length > shown ? '<button type="button" class="cm__more">もっと見る（あと ' + (c.items.length - shown) + " 件）</button>" : "");
-}
-RG.commentsHtml = function (p) {
-  var id = RG.spotId(p);
-  return '<section class="sec sec--memo sec--cm" data-cm="' + esc(id) + '"><h3>みんなのコメント <small class="cm__n"></small></h3>' +
-    '<div class="cm__list"><p class="mm__empty cm__loading">読み込んでいます…</p></div>' +
-    '<p class="cm__ask">このスポットに行ったことがありますか？</p>' +
-    '<button type="button" class="mm__open cm__open">感想を残す</button>' +
-    '<form class="mm__f cm__f" hidden autocomplete="off">' +
-      '<label class="mm__l">実際に行ってみた感想を教えてください<textarea class="mm__ta" name="comment" maxlength="' + MAX_COMMENT + '" rows="3" required placeholder="例：休日の夕方に行ったら意外と空いていました"></textarea><span class="mm__cnt">0/' + MAX_COMMENT + "</span></label>" +
-      '<div class="cm__row"><label class="mm__l">ニックネーム（任意）<input class="mm__in" name="nickname" maxlength="' + MAX_NICK + '" value="' + esc(lastNick()) + '" placeholder="匿名"></label>' +
-      '<label class="mm__l">評価（任意）<select class="mm__in" name="rating"><option value="">—</option><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></label>' +
-      '<label class="mm__l">訪問日（任意）<input class="mm__in" name="visit_date" type="month" max="2099-12"></label></div>' +
-      '<input class="cm__hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
-      '<button type="submit" class="mm__go">投稿する</button>' +
-      '<p class="src">電話番号・メールアドレス・住所などの個人情報は書かないでください。投稿は確認のうえ掲載します。</p></form>' +
-    '<p class="cm__thanks" hidden></p></section>';
-};
+    const forms = (root || document).querySelectorAll(".comments__form");
+    if (!forms.length) return;
 
-RG.commentsBind = function (root, p) {
-  var sec = root.querySelector(".sec--cm"); if (!sec) return;
-  var id = sec.dataset.cm, list = sec.querySelector(".cm__list"), n = sec.querySelector(".cm__n"), shown = PAGE;
-  function render(c) {
-    list.innerHTML = listHtml(c, shown); n.textContent = c.total ? c.total + " 件" : "";
-    var more = list.querySelector(".cm__more"); if (more) more.addEventListener("click", function () { shown += PAGE; render(c); });
-  }
-  function load() {
-    fetchComments(id, function (err, c) {
-      if (err) { list.innerHTML = '<p class="mm__empty">現在、コメントを読み込めません。<br>しばらくしてからもう一度お試しください。</p>'; return; }
-      render(c);
+    forms.forEach(function (form) {
+      const spotId = form.getAttribute("data-spot");
+      if (!spotId) return;
+
+      // テキストカウンタ
+      const textarea = form.querySelector('textarea[name="text"]');
+      const counter = form.querySelector("#c-count");
+      if (textarea && counter) {
+        textarea.addEventListener("input", function () {
+          counter.textContent = this.value.length;
+        });
+      }
+
+      // フォーム送信
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        RG.submitComment(spotId, form);
+      });
+
+      // コメント一覧を読み込み
+      RG.loadComments(spotId, root);
+    });
+  };
+
+  /**
+   * 訪問者ID (端末固有の識別子)
+   */
+  RG.getVid = function () {
+    if (!window.localStorage) return "";
+    let vid = localStorage.getItem("tsg.vid");
+    if (!vid) {
+      vid = "v" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36);
+      try {
+        localStorage.setItem("tsg.vid", vid);
+      } catch (e) {
+        // storage quota exceeded または privacy mode
+      }
+    }
+    return vid;
+  };
+
+  /**
+   * コメント一覧を読み込み
+   */
+  RG.loadComments = function (spotId, root) {
+    if (!RG.COMMENTS || !RG.COMMENTS.endpoint) return;
+
+    const listEl = (root || document).querySelector('.comments__list[data-spot="' + RG.esc(spotId) + '"]');
+    if (!listEl) return;
+
+    const url = RG.COMMENTS.endpoint + "?spotId=" + encodeURIComponent(spotId) + "&limit=20";
+
+    fetch(url, { mode: "cors" })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          listEl.innerHTML = '<p class="comments__empty">コメント読み込みエラー</p>';
+          return;
+        }
+
+        const comments = data.comments || [];
+        if (comments.length === 0) {
+          listEl.innerHTML = '<p class="comments__empty">コメントはまだありません</p>';
+          return;
+        }
+
+        const html = comments.map(c => RG.commentItemHTML(c)).join("");
+        listEl.innerHTML = html;
+      })
+      .catch(err => {
+        listEl.innerHTML = '<p class="comments__empty">読み込めませんでした</p>';
+        console.error("Comments load error:", err);
+      });
+  };
+
+  /**
+   * コメント1件の HTML
+   */
+  RG.commentItemHTML = function (comment) {
+    const stars = "★".repeat(comment.rating) + "☆".repeat(5 - comment.rating);
+    const date = comment.visitDate ? "（" + comment.visitDate + "訪問）" : "";
+    const ts = comment.timestamp ? new Date(comment.timestamp).toLocaleDateString("ja-JP") : "";
+
+    return '<article class="comments__item">' +
+      '<div class="comments__head">' +
+        '<span class="comments__name">' + RG.esc(comment.name || "匿名") + '</span>' +
+        '<span class="comments__rating">' + stars + '</span>' +
+        '<time class="comments__date">' + ts + date + '</time>' +
+      '</div>' +
+      '<p class="comments__text">' + RG.esc(comment.text).replace(/\n/g, "<br>") + '</p>' +
+    '</article>';
+  };
+
+  /**
+   * コメント送信
+   */
+  RG.submitComment = function (spotId, form) {
+    if (!RG.COMMENTS || !RG.COMMENTS.endpoint) return;
+
+    const statusEl = form.querySelector("#c-status");
+    const submitBtn = form.querySelector("button[type='submit']");
+
+    const text = form.querySelector('textarea[name="text"]').value.trim();
+    const rating = parseInt(form.querySelector('input[name="rating"]:checked').value) || 3;
+    const visitDate = form.querySelector('input[name="visitDate"]').value || "";
+    const name = form.querySelector('input[name="name"]').value.trim() || "匿名";
+    const honeypot = form.querySelector('input[name="honeypot"]').value;
+
+    // バリデーション
+    if (!text) {
+      RG.showCommentStatus(statusEl, "コメントを入力してください", "error");
+      return;
+    }
+
+    if (honeypot) {
+      RG.showCommentStatus(statusEl, "スパム対策により送信できません", "error");
+      return;
+    }
+
+    // 送信開始
+    submitBtn.disabled = true;
+    RG.showCommentStatus(statusEl, "送信中…", "loading");
+
+    const payload = {
+      spotId: spotId,
+      rating: rating,
+      text: text,
+      visitDate: visitDate,
+      name: name,
+      vid: RG.getVid()
+    };
+
+    fetch(RG.COMMENTS.endpoint, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        RG.showCommentStatus(statusEl, data.error, "error");
+        submitBtn.disabled = false;
+        return;
+      }
+
+      RG.showCommentStatus(statusEl, "投稿しました！ありがとうございます。", "ok");
+      form.reset();
+      form.querySelector("#c-count").textContent = "0";
+
+      // 2秒後にコメント一覧を再読み込み
+      setTimeout(function () {
+        RG.loadComments(spotId, form.parentElement);
+        submitBtn.disabled = false;
+      }, 2000);
+    })
+    .catch(err => {
+      console.error("Comment submit error:", err);
+      RG.showCommentStatus(statusEl, "送信に失敗しました: " + err.message, "error");
+      submitBtn.disabled = false;
+    });
+  };
+
+  /**
+   * ステータスメッセージ表示
+   */
+  RG.showCommentStatus = function (statusEl, message, type) {
+    statusEl.textContent = message;
+    statusEl.className = "comments__status comments__status--" + type;
+    if (type === "ok" || type === "error") {
+      setTimeout(function () {
+        statusEl.textContent = "";
+        statusEl.className = "comments__status";
+      }, 4000);
+    }
+  };
+
+  // グローバル初期化
+  if (RG.on) {
+    RG.on("mount", function () {
+      RG.commentsBind();
     });
   }
-  load();   // このセクションは RG.TIP.commentsApi があるときだけ描かれる（plannerui.js）
 
-  var ob = sec.querySelector(".cm__open"), f = sec.querySelector(".cm__f"), ta = f.querySelector(".mm__ta"), cnt = f.querySelector(".mm__cnt"), th = sec.querySelector(".cm__thanks");
-  ob.addEventListener("click", function () { f.hidden = !f.hidden; ob.textContent = f.hidden ? "感想を残す" : "閉じる"; if (!f.hidden) ta.focus(); });
-  ta.addEventListener("input", function () { cnt.textContent = ta.value.length + "/" + MAX_COMMENT; });
-  f.addEventListener("submit", function (ev) {
-    ev.preventDefault();
-    var comment = ta.value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, MAX_COMMENT);
-    var nick = (f.querySelector('[name="nickname"]').value || "").trim().slice(0, MAX_NICK);
-    var rating = f.querySelector('[name="rating"]').value || "", visit = f.querySelector('[name="visit_date"]').value || "";
-    if (!comment) { RG.tripStatus && RG.tripStatus("感想を書いてください", "warn", 3000); ta.focus(); return; }
-    if ((comment.match(/https?:\/\//g) || []).length > 1) { RG.tripStatus && RG.tripStatus("URL は 1 つまでにしてください", "warn", 3000); return; }
-    if (f.querySelector(".cm__hp").value) return;                                            // ボット除け（人には見えない欄）
-    var gap = Date.now() - lastPost(); if (gap < MIN_GAP) { RG.tripStatus && RG.tripStatus("続けて投稿するには " + Math.ceil((MIN_GAP - gap) / 1000) + " 秒お待ちください", "warn", 3000); return; }
-    var go = f.querySelector(".mm__go"); go.disabled = true; go.textContent = "送信中…";
-    postComment({ spot_id: id, spot_name: String(p.n || "").slice(0, 80), nickname: nick, comment: comment, rating: rating, visit_date: visit, vid: vid(), site: location.pathname }, function (err) {
-      go.disabled = false; go.textContent = "投稿する";
-      if (err) { RG.tripStatus && RG.tripStatus("送信できませんでした。通信状態を確かめて、もう一度お試しください。", "warn", 4000); return; }
-      markPost(); rememberNick(nick); f.reset(); cnt.textContent = "0/" + MAX_COMMENT; f.hidden = true; ob.textContent = "感想を残す";
-      th.hidden = false; th.innerHTML = "<b>ありがとうございます！</b>投稿内容を確認後、サイトに掲載します。<br><small>あなたの感想が、次にこの場所へ行く人の役に立ちます。</small>";
-      RG.tripStatus && RG.tripStatus("投稿を受け付けました", "ok", 2000);
-      if (RG.stat) { try { RG.stat("comment_post", p.n); } catch (e) {} }
-    });
-  });
-};
 })(window.RG);

@@ -8,25 +8,20 @@
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="駅ガイド">
-<title>東京ステーションガイド｜駅からの行き方を電車・徒歩・バス・タクシーで比較</title>
+<title>東京ステーションガイド｜路線図から、いちばん良い移動手段へ</title>
 <meta name="description" content="東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーなどで比較。全国8,000駅以上の路線図から、目的地までの移動方法を探せます。">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="東京ステーションガイド">
-<meta property="og:title" content="東京ステーションガイド｜駅からの行き方を電車・徒歩・バス・タクシーで比較">
+<meta property="og:title" content="東京ステーションガイド">
 <meta property="og:description" content="東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーで比較。全国8,000駅以上の路線図から、目的地までの移動方法を探せます。">
 <meta property="og:url" content="https://kouchift.github.io/tokyostation/">
 <meta property="og:image" content="https://kouchift.github.io/tokyostation/assets/og.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <link rel="canonical" href="https://kouchift.github.io/tokyostation/">
-<meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="東京ステーションガイド｜駅からの行き方を電車・徒歩・バス・タクシーで比較">
-<meta name="twitter:description" content="東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーで比較。全国8,000駅以上の路線図から探せます。">
 <meta name="twitter:image" content="https://kouchift.github.io/tokyostation/assets/og.jpg">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kouchift.github.io/tokyostation/","url":"https://kouchift.github.io/tokyostation/","name":"東京ステーションガイド","description":"東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーで比較。全国8,000駅以上の路線図。","inLanguage":"ja"},{"@type":"WebApplication","name":"東京ステーションガイド","url":"https://kouchift.github.io/tokyostation/","applicationCategory":"TravelApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}]}</script>
-<link rel="icon" href="favicon.ico" sizes="48x48">
-<link rel="icon" href="assets/favicon-96.png" type="image/png" sizes="96x96">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
 <!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
 <link rel="preload" href="data/net.json?v=107" as="fetch" crossorigin="anonymous">
 <link rel="preload" href="assets/app.bundle.js?v=107" as="script">
@@ -82,7 +77,7 @@
 
   <div id="loadbar" class="loadbar"></div>
   <div id="groupbar" class="groupbar"></div>
-  <noscript><div class="booterr" style="display:block"><b>JavaScript が無効です</b><p>路線図と比較の機能には JavaScript が必要です。行き方だけなら静的ページをどうぞ: <a href="guide/">東京駅からの行き方ガイド</a>・<a href="station/tokyo/">東京駅の案内</a>（<a href="guide/tokyo-to-shinjuku.html">新宿</a>・<a href="guide/tokyo-to-shibuya.html">渋谷</a>・<a href="guide/tokyo-to-haneda.html">羽田空港</a>・<a href="guide/tokyo-station-exits.html">東京駅の出口</a>）</p></div></noscript>
+  <noscript><div class="booterr" style="display:block"><b>JavaScript が無効です</b><p>路線図と比較の機能には JavaScript が必要です。行き方だけなら静的ページをどうぞ: <a href="guide/index.html">東京駅からの行き方ガイド</a>（<a href="guide/tokyo-to-shinjuku.html">新宿</a>・<a href="guide/tokyo-to-shibuya.html">渋谷</a>・<a href="guide/tokyo-to-haneda.html">羽田空港</a>・<a href="guide/tokyo-station-exits.html">東京駅の出口</a>）</p></div></noscript>
 <div id="boot-error" class="booterr" hidden>
     <b>データを読み込めませんでした</b>
     <p>通信が不安定か、ファイルが見つかりません。ページを再読み込みしてみてください。</p>
@@ -94,7 +89,7 @@
     <div id="skel" class="skel" aria-hidden="true"><i></i><span>路線図を用意しています…</span></div>
     <!-- v89: 最初の 3 秒で «東京駅から、どこへ行く？» が分かる入口。既存の検索索引・ルート比較にそのままつなぐ -->
     <section id="hero" class="heroSearch" aria-label="目的地を検索">
-      <div class="heroSearch__eyebrow">東京ステーションガイド <a class="heroSearch__guide" href="guide/" title="東京駅から新宿・渋谷・羽田空港などへの行き方（静的ページ）">📖 行き方ガイド</a></div>
+      <div class="heroSearch__eyebrow">東京ステーションガイド <a class="heroSearch__guide" href="guide/index.html" title="東京駅から新宿・渋谷・羽田空港などへの行き方（静的ページ）">📖 行き方ガイド</a></div>
       <p class="heroSearch__sub">全国 <span id="hero-stat">8,381 駅</span>の路線図から、移動手段を比べられます。</p>
       <hr>
       <h1>東京駅から、<br class="mobileOnly">どこへ行く？</h1>
@@ -116,7 +111,7 @@
         <button type="button" data-quick-dest="渋谷">渋谷</button>
         <button type="button" data-quick-dest="羽田空港">羽田空港</button>
       </div>
-      <nav class="heroSearch__free heroSearch__links" aria-label="ページ案内">無料・登録不要 ・ <a href="station/tokyo/">東京駅の案内</a> ・ <a href="guide/">行き方ガイド</a> ・ <a href="guide/tokyo-station-exits.html">出口</a> ・ <a href="plan/tokyo/30min/">空き時間</a></nav>
+      <div class="heroSearch__free">無料・登録不要</div>
     </section>
     <div class="hint">駅をタップで詳細。ドラッグで移動、ピンチで拡大。<span id="zlevel">全体</span></div>
     <div class="zoombar">
@@ -154,6 +149,14 @@ try{if(document.fonts&&document.fonts.load){document.fonts.load('20px "Material 
 setTimeout(ok,4000);})();
 </script>
 <script src="assets/app.bundle.js?v=107" defer></script>
+<script src="assets/comments.js?v=107" defer></script>
+<script>
+/* v106: コメント機能の設定を RG.COMMENTS に入れる。endpoint が空なら表示しない */
+(function() {
+  try { RG.COMMENTS = { endpoint: (RG.TIP && RG.TIP.commentsApi) || "" }; }
+  catch (e) {}
+})();
+</script>
 <script>
 /* 起動。
    ・data/net.json（駅・路線）は bundle と並列で取りに行く
@@ -180,7 +183,7 @@ setTimeout(ok,4000);})();
       panic("読み込みが終わりませんでした。通信状態をご確認のうえ、再読み込みしてください。");
     }, 30000);
   }
-  var sc = document.querySelector('script[src="assets/app.bundle.js?v=107"]');
+  var sc = document.querySelector('script[src="assets/app.bundle.js?v=106"]');
   if (window.RG && window.RG.startApp) go();
   else if (sc) { sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); }); }
   // 地図の最初の駅が出たら骨組みを消す

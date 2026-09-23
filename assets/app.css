@@ -3555,7 +3555,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=103) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=106) format('woff2')}
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -4055,15 +4055,90 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   body.slim #lv-only{transform:scale(.92);transform-origin:left bottom}
 }
 
-/* v104: SEO — ヒーロー最下段の «無料・登録不要» にページ案内（通常の <a> リンク）を並べる */
-.heroSearch__links a{color:inherit;font-weight:700;text-decoration:none;border-bottom:1px dotted currentColor}
-.heroSearch__links a:hover{color:var(--tsg-primary,#0061a1)}
+/* =========================================================================
+   v104: ライブカメラを «HOT» に — 公式 YouTube 配信の点を赤い LIVE 印で区別
+   ・camera ジャンル（全国の公開ライブカメラ）は «いま見られる映像» なので、
+     印を赤く縁取り＋右上に赤い点（ゆっくり明滅）。静的なスポットと一目で違う
+   ・映像は各配信元が YouTube で公開しているもの。カードで公式プレイヤーのまま再生（＝配信元の広告が出る）
+   ========================================================================= */
+.poi--live .poi__c{stroke:#E5006E !important}
+.poi--live.visited .poi__c{stroke:#E5006E !important}
+.poi__live{fill:#E5006E;stroke:#fff;stroke-width:calc(1 * var(--poiscale,1));pointer-events:none}
+.poi--live .poi__halo{fill:#E5006E;fill-opacity:.18;animation:tsgLive 1.9s ease-in-out infinite}
+.poi--live .poi__live{animation:tsgLiveDot 1.9s ease-in-out infinite}
+@keyframes tsgLive{0%,100%{fill-opacity:.10}50%{fill-opacity:.30}}
+@keyframes tsgLiveDot{0%,100%{fill:#E5006E}50%{fill:#ff4d94}}
+.poi--live:hover .poi__c,.poi--live:focus .poi__c{fill:#FFF0F6}
+@media (prefers-reduced-motion:reduce){ .poi--live .poi__halo,.poi--live .poi__live{animation:none} .poi--live .poi__halo{fill-opacity:.2} }
+/* 凡例・カードの LIVE 表示はそのまま（cam__live） */
 
-/* v106: みんなのコメント（スポットカード） */
-.cm__ls{list-style:none;padding:0;margin:6px 0}.cm__i{padding:8px 0;border-bottom:1px dashed #e8ebee}.cm__i:last-child{border-bottom:0}
-.cm__st{color:#e0a800;font-size:13px;letter-spacing:1px}.cm__tx{margin:2px 0 4px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.cm__by{color:#777;font-size:11px}.cm__ask{margin:10px 0 0;font-size:13px;font-weight:700}
-.cm__row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}@media (max-width:480px){.cm__row{grid-template-columns:1fr 1fr}.cm__row .mm__l:first-child{grid-column:1/-1}}
-.cm__hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-.cm__more{display:block;width:100%;border:1px solid var(--grid,#ddd);background:#fff;border-radius:999px;padding:8px;font-size:12.5px;font-family:inherit;cursor:pointer;margin:4px 0}
-.cm__thanks{background:var(--tsg-tint,#e8f1fb);border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
+/* =========================================================================
+   v106: みんなのコメント — スポット詳細パネルに投稿フォーム＋コメント一覧
+   ========================================================================= */
+.comments{padding:12px 0;border-top:1px solid var(--grid)}
+.comments__title{
+  margin:0 12px 12px;padding:0;font-size:15px;font-weight:600;color:var(--text);
+  display:flex;align-items:center;gap:6px;letter-spacing:.02em
+}
+.comments__list{margin:0 0 12px;padding:0 12px;min-height:40px}
+.comments__empty{
+  margin:0;padding:8px;text-align:center;color:var(--label);font-size:13px;
+  background:var(--control);border-radius:var(--r)
+}
+.comments__item{
+  margin:0 0 10px;padding:10px;background:var(--control);border-radius:var(--r);
+  border-left:3px solid var(--lb600)
+}
+.comments__head{
+  display:flex;align-items:baseline;gap:8px;margin-bottom:6px;font-size:12px
+}
+.comments__name{font-weight:600;color:var(--text);flex-shrink:0;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comments__rating{color:#E5A500;font-weight:700;white-space:nowrap;flex-shrink:0}
+.comments__date{color:var(--label);font-size:11px;margin-left:auto;flex-shrink:0}
+.comments__text{
+  margin:0;padding:0;font-size:13px;line-height:1.5;color:var(--text);
+  word-break:break-word;white-space:pre-wrap
+}
+.comments__form{margin:0 12px;padding:12px;background:var(--lb50);border-radius:var(--r)}
+.comments__form fieldset{border:none;margin:0;padding:0}
+.comments__form legend{display:none}
+.comments__field{margin-bottom:12px}
+.comments__field label{
+  display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;
+  letter-spacing:.02em
+}
+.comments__field input[type="text"],
+.comments__field input[type="date"],
+.comments__field textarea{
+  width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--r);
+  font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);
+  -webkit-appearance:none;appearance:none
+}
+.comments__field textarea{resize:vertical;min-height:60px;line-height:1.5}
+.comments__field input[type="text"]:focus,
+.comments__field input[type="date"]:focus,
+.comments__field textarea:focus{outline:none;border-color:var(--lb600);box-shadow:0 0 0 2px var(--lb200)}
+.comments__rating{display:flex;gap:12px;margin:8px 0}
+.comments__rating input{display:none}
+.comments__rating label{
+  display:inline-block;cursor:pointer;font-size:18px;color:#CCC;transition:color .2s;
+  padding:4px;margin:0;font-weight:400
+}
+.comments__rating input:checked + label,
+.comments__rating label:hover{color:#E5A500}
+.comments__counter{
+  display:block;font-size:11px;color:var(--label);text-align:right;margin-top:4px
+}
+.comments__submit{
+  width:100%;padding:10px;background:var(--lb600);color:#fff;border:none;border-radius:var(--r);
+  font-size:14px;font-weight:600;cursor:pointer;transition:background .2s
+}
+.comments__submit:hover:not(:disabled){background:var(--lb900)}
+.comments__submit:disabled{opacity:.6;cursor:not-allowed}
+.comments__status{
+  display:block;margin-top:8px;padding:8px;border-radius:var(--r);
+  font-size:12px;text-align:center;min-height:20px
+}
+.comments__status--loading{color:#0055AD;background:var(--lb200)}
+.comments__status--ok{color:#197A4B;background:#D8F6E8}
+.comments__status--error{color:#C41E3A;background:#FFD8D8}

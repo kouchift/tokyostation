@@ -1,0 +1,101 @@
+confidence	id1	name1	by1	yt1	id2	name2	by2	yt2	coord	processing_action
+medium	2012	39K湯原温泉国道313号	39K	-	2494	プチホテルゆばらリゾート足湯	プチホテルゆばらリゾート	-	(35.2, 133.73)	check_manually
+high	452	3rdHOUSE稲村ケ崎西棟ルーフ稲村ケ崎ビュー	湘南ライブカメラ	T2dB77dObao	608	3rdHOUSE稲村ケ崎西棟ルーフ江ノ島ビュー	湘南ライブカメラ	_ddxDN0eMnA	(35.3, 139.52)	check_manually
+high	792	805たんば福知山	たんばコミュニティネットワーク(805たんば)	3j6miXBKLjw	869	805たんば高谷山	たんばコミュニティネットワーク(805たんば)	u2gJXEAjdRc	(35.23, 135.14)	check_manually
+medium	838	AAB秋田空港	秋田朝日放送(AAB)	ERpPxOLDlqI	1043	ABS秋田空港	秋田放送(ABS)	vMyKRCq3HMI	(39.61, 140.22)	check_manually
+medium	168	ABC岸和田だんじり祭	朝日放送テレビ(ABCテレビニュース)	EoV-smCn-D4	362	朝日新聞岸和田だんじり祭	朝日新聞社(朝日新聞デジタル)	yVWxMvxfAs4	(34.42, 135.34)	check_manually
+medium	110	AkibaTVファイバリオン	AkibaTV	cSSUj7ipCrg	393	アキバガジェット秋葉原駅前第1	アキバガジェット	99Hvm_d7qWY	(35.7, 139.77)	check_manually
+medium	110	AkibaTVファイバリオン	AkibaTV	cSSUj7ipCrg	592	神田明神神田祭	神田明神	ZhcQ1QdQ49g	(35.7, 139.77)	check_manually
+medium	110	AkibaTVファイバリオン	AkibaTV	cSSUj7ipCrg	1312	オノデンJR秋葉原駅電気街口方向	オノデンch	JGvyEjmTi0Y	(35.7, 139.77)	check_manually
+medium	110	AkibaTVファイバリオン	AkibaTV	cSSUj7ipCrg	1415	アキバガジェット秋葉原駅前第2	アキバガジェット	-	(35.7, 139.77)	check_manually
+high	1107	BANTV琵琶湖	BANTV	iBWy_HERzek	1321	BANTV琵琶湖リモート地蔵	BANTV	jyJ9W-nqbk8	(35.08, 135.79)	check_manually
+high	1107	BANTV琵琶湖	BANTV	iBWy_HERzek	2392	BANTVゴールデンハムスター	BANTV	-	(35.08, 135.79)	check_manually
+high	1321	BANTV琵琶湖リモート地蔵	BANTV	jyJ9W-nqbk8	2392	BANTVゴールデンハムスター	BANTV	-	(35.08, 135.79)	check_manually
+high	372	Baycom大和川	ベイ・コミュニケーションズ	umKdv57mIn8	373	Baycom猪名川	ベイ・コミュニケーションズ	opSitozh4OY	(34.66, 135.09)	check_manually
+medium	90	Bayshore東京東雲第1	Bayshore	32r2UY8gH-4	580	テイケイ東京ビッグサイト	テイケイ	4T-ARSiV53g	(35.64, 139.8)	check_manually
+medium	127	BordercollieSarah伊吹山	Bordercollie Sarah(ふつおじ)	KNoinnSu6UM	422	伊吹山5合目	米原市役所	n996gl1UU6U	(35.42, 136.4)	check_manually
+medium	127	BordercollieSarah伊吹山	Bordercollie Sarah(ふつおじ)	KNoinnSu6UM	1175	伊吹山3合目	米原市役所	KOaB6A5eWBo	(35.42, 136.4)	check_manually
+high	1497	COCO志布志南側	COCO志布志	-	1498	COCO志布志西側	COCO志布志	-	(31.47, 131.1)	check_manually
+high	240	CVK南アルプス市内	峡西CATV	R9HdMjbAa_w	241	CVK櫛形山	峡西CATV	1mRb_buPZ6E	(35.66, 138.26)	check_manually
+medium	988	Crossing京都新聞スタジオ	agataJapan	ny4Bzk50SiM	1985	京都新聞社前烏丸通	京都新聞社	-	(35.01, 135.76)	check_manually
+medium	988	Crossing京都新聞スタジオ	agataJapan	ny4Bzk50SiM	2279	京都新聞社烏丸御池交差点	京都新聞社	-	(35.01, 135.76)	check_manually
+medium	988	Crossing京都新聞スタジオ	agataJapan	ny4Bzk50SiM	2448	薫習館烏丸通	香老舗松栄堂薫習館	-	(35.01, 135.76)	check_manually
+medium	988	Crossing京都新聞スタジオ	agataJapan	ny4Bzk50SiM	2462	祇園祭山鉾巡行	KBS京都テレビ	-	(35.01, 135.76)	check_manually
+high	308	D-Wash中環南茨木第2	大和ハウスパーキング	6rOTseHalOY	322	D-Wash中環南茨木第1	大和ハウスパーキング	TelZCQEJ4gA	(34.8, 135.56)	check_manually
+high	624	DTC新御堂筋箕面の滝方面	DTC技術部	3XhjpRBdULY	625	DTC新御堂筋大阪市方面	DTC技術部	8Pr3xHazf0k	(34.82, 135.48)	check_manually
+medium	1097	ENDAIBAお台場有明側	EN DAIBA	q8CKL80CHsk	1103	FineScape東京お台場	Fine Scape	n3B8fp-Henc	(35.63, 139.77)	check_manually
+medium	1097	ENDAIBAお台場有明側	EN DAIBA	q8CKL80CHsk	1118	ちんあなレインボーブリッジズームアップ	ちんあなゴルフ	nPhS67ElC14	(35.63, 139.77)	check_manually
+medium	1097	ENDAIBAお台場有明側	EN DAIBA	q8CKL80CHsk	2406	白鷺電気工業国道57号阿蘇方向	白鷺電気工業	-	(35.63, 139.77)	check_manually
+medium	1097	ENDAIBAお台場有明側	EN DAIBA	q8CKL80CHsk	2430	ちんあなレインボーブリッジ東京タワー	ちんあなゴルフ	-	(35.63, 139.77)	check_manually
+medium	933	FBC福井駅東口付近	福井放送	tHMEnSTnFd4	1130	FCTV福井駅西口	福井ケーブルテレビ	IrXQ8JID0Gs	(36.06, 136.22)	check_manually
+medium	933	FBC福井駅東口付近	福井放送	tHMEnSTnFd4	1842	福井ハピリンク	まちづくり福井	-	(36.06, 136.22)	check_manually
+medium	933	FBC福井駅東口付近	福井放送	tHMEnSTnFd4	1925	サカエパーキング入口前	サカエパーキング	-	(36.06, 136.22)	check_manually
+medium	1130	FCTV福井駅西口	福井ケーブルテレビ	IrXQ8JID0Gs	1842	福井ハピリンク	まちづくり福井	-	(36.06, 136.22)	check_manually
+medium	1130	FCTV福井駅西口	福井ケーブルテレビ	IrXQ8JID0Gs	1925	サカエパーキング入口前	サカエパーキング	-	(36.06, 136.22)	check_manually
+medium	1030	FNN渋谷スクランブル交差点	FNNプライムオンライン	dfVK7ld38Ys	1226	渋谷神南一丁目交差点	公園通り渋谷	Dgh9_TCj6po	(35.66, 139.7)	check_manually
+medium	1030	FNN渋谷スクランブル交差点	FNNプライムオンライン	dfVK7ld38Ys	1227	大外ビル渋谷公園通り商店街	公園通り渋谷	DPtIH3unwDY	(35.66, 139.7)	check_manually
+medium	1030	FNN渋谷スクランブル交差点	FNNプライムオンライン	dfVK7ld38Ys	1916	スタジオエイメイ渋谷山手線第2	スタジオエイメイ	-	(35.66, 139.7)	check_manually
+medium	1030	FNN渋谷スクランブル交差点	FNNプライムオンライン	dfVK7ld38Ys	2273	渋谷スカイ渋谷スクランブル交差点	SHIBUYA SKY	-	(35.66, 139.7)	check_manually
+medium	1030	FNN渋谷スクランブル交差点	FNNプライムオンライン	dfVK7ld38Ys	2340	スクランブルホール渋谷スクランブル交差点	SHIBUYA QWS(渋谷キューズ)	-	(35.66, 139.7)	check_manually
+medium	796	FSTNET大阪北新地	F.S.T.NET	1na-ORGC1P8	1826	ビリヤードリンズ	ビリヤードリンズ(ビリヤードLin's)	-	(34.7, 135.5)	check_manually
+medium	1103	FineScape東京お台場	Fine Scape	n3B8fp-Henc	1118	ちんあなレインボーブリッジズームアップ	ちんあなゴルフ	nPhS67ElC14	(35.63, 139.77)	check_manually
+medium	1103	FineScape東京お台場	Fine Scape	n3B8fp-Henc	2406	白鷺電気工業国道57号阿蘇方向	白鷺電気工業	-	(35.63, 139.77)	check_manually
+medium	1103	FineScape東京お台場	Fine Scape	n3B8fp-Henc	2430	ちんあなレインボーブリッジ東京タワー	ちんあなゴルフ	-	(35.63, 139.77)	check_manually
+medium	378	FlyingSuika材木座海岸	Flying Suika	hxKBnoLH0uk	1167	湘南ビーチFM	逗子葉山コミュニティ	h9oNCve4WNo	(35.3, 139.55)	check_manually
+medium	378	FlyingSuika材木座海岸	Flying Suika	hxKBnoLH0uk	1309	リビエラ逗子マリーナ	リビエラリゾート	fl0YqYWGvd8	(35.3, 139.55)	check_manually
+high	753	FlyingSuika江の島片瀬海岸東浜	Flying Suika	ywXRfMLuw78	754	FlyingSuika腰越海岸	Flying Suika	ESsZ9iB7tz0	(35.31, 139.48)	check_manually
+high	753	FlyingSuika江の島片瀬海岸東浜	Flying Suika	ywXRfMLuw78	2106	FlyingSuika江の島片瀬海岸東浜PTZ	Flying Suika	-	(35.31, 139.48)	check_manually
+high	754	FlyingSuika腰越海岸	Flying Suika	ESsZ9iB7tz0	2106	FlyingSuika江の島片瀬海岸東浜PTZ	Flying Suika	-	(35.31, 139.48)	check_manually
+high	132	ForestNotes知床360°	Forest Notes	QkJ8KoMPYTQ	1005	ForestNotes知床	Forest Notes	CcgT5MFiL6Q	(44.09, 145.02)	check_manually
+high	151	Goolight須坂長野東インターチェンジ付近	グーライブ(Goolight)	hlKxhMVdE_0	152	Goolightイオンモール須坂正面口	グーライブ(Goolight)	RzbrBOXhNsw	(36.64, 138.27)	check_manually
+medium	470	HAL財団大通公園	HAL財団	pGwD7cV49SI	1855	STVラジオ	札幌テレビ放送(STV)	-	(43.06, 141.34)	check_manually
+high	470	HAL財団大通公園	HAL財団	pGwD7cV49SI	2517	HAL財団東西線西11丁目駅	HAL財団	-	(43.06, 141.34)	check_manually
+medium	2393	HBCラジオ第1スタジオ	北海道放送	-	2417	TVH札幌上空天気	テレビ北海道(TVH)	-	(43.06, 141.35)	check_manually
+medium	1274	HTB札幌	北海道テレビ放送(HTB)	gaNLXSEUVRw	2393	HBCラジオ第1スタジオ	北海道放送	-	(43.06, 141.35)	check_manually
+medium	1274	HTB札幌	北海道テレビ放送(HTB)	gaNLXSEUVRw	2417	TVH札幌上空天気	テレビ北海道(TVH)	-	(43.06, 141.35)	check_manually
+medium	204	HTV広島電鉄駅前大橋線	広島テレビ放送	4IYYByR29A0	536	RCC広島駅前	RCC NEWS DIG Powered by JNN	2-sN0A1nF9M	(34.4, 132.47)	check_manually
+medium	204	HTV広島電鉄駅前大橋線	広島テレビ放送	4IYYByR29A0	2018	ミオバイドッツ広島電鉄路面電車駅前大橋ルート	DoTS	-	(34.4, 132.47)	check_manually
+medium	204	HTV広島電鉄駅前大橋線	広島テレビ放送	4IYYByR29A0	2452	ポケットTSS広島上空天気	テレビ新広島(TSS CHANNEL)	-	(34.4, 132.47)	check_manually
+medium	4	HeartPiano片瀬東浜海岸	Heart Piano	FDFzGTdbuuQ	753	FlyingSuika江の島片瀬海岸東浜	Flying Suika	ywXRfMLuw78	(35.31, 139.48)	check_manually
+medium	4	HeartPiano片瀬東浜海岸	Heart Piano	FDFzGTdbuuQ	754	FlyingSuika腰越海岸	Flying Suika	ESsZ9iB7tz0	(35.31, 139.48)	check_manually
+medium	4	HeartPiano片瀬東浜海岸	Heart Piano	FDFzGTdbuuQ	2106	FlyingSuika江の島片瀬海岸東浜PTZ	Flying Suika	-	(35.31, 139.48)	check_manually
+high	858	ICTVリニア中央新幹線長野県駅	飯田ケーブルテレビ	ep8VtHI_iuU	903	ICTV野底川	飯田ケーブルテレビ	w1Hr63VPB6Q	(35.45, 137.78)	check_manually
+medium	858	ICTVリニア中央新幹線長野県駅	飯田ケーブルテレビ	ep8VtHI_iuU	1808	飯田ケーブルテレビ飯田市内20ヶ所巡回	飯田ケーブルテレビ(ICTV)	-	(35.45, 137.78)	check_manually
+medium	637	ICTVヴィスタパレス屋上	飯田ケーブルテレビ(ICTV)	29ImiCvl6Q0	1348	ICTV飯田合同庁舎南側	飯田ケーブルテレビ	yzRM325bbHs	(35.51, 137.83)	check_manually
+medium	637	ICTVヴィスタパレス屋上	飯田ケーブルテレビ(ICTV)	29ImiCvl6Q0	1349	ICTV飯田合同庁舎北側	飯田ケーブルテレビ	inBGRhQRih0	(35.51, 137.83)	check_manually
+medium	637	ICTVヴィスタパレス屋上	飯田ケーブルテレビ(ICTV)	29ImiCvl6Q0	1882	ICTV飯田美術博物館安富桜	飯田ケーブルテレビ	-	(35.51, 137.83)	check_manually
+medium	903	ICTV野底川	飯田ケーブルテレビ	w1Hr63VPB6Q	1808	飯田ケーブルテレビ飯田市内20ヶ所巡回	飯田ケーブルテレビ(ICTV)	-	(35.45, 137.78)	check_manually
+medium	1258	ICTV飯田りんご並木	飯田ケーブルテレビ(ICTV)	_krYOEqGGlQ	1260	ICTV飯田市立動物園ペンギンの丘	飯田ケーブルテレビ	831QJ5DMU3M	(35.51, 137.82)	check_manually
+high	1349	ICTV飯田合同庁舎北側	飯田ケーブルテレビ	inBGRhQRih0	1882	ICTV飯田美術博物館安富桜	飯田ケーブルテレビ	-	(35.51, 137.83)	check_manually
+high	1348	ICTV飯田合同庁舎南側	飯田ケーブルテレビ	yzRM325bbHs	1349	ICTV飯田合同庁舎北側	飯田ケーブルテレビ	inBGRhQRih0	(35.51, 137.83)	check_manually
+high	1348	ICTV飯田合同庁舎南側	飯田ケーブルテレビ	yzRM325bbHs	1882	ICTV飯田美術博物館安富桜	飯田ケーブルテレビ	-	(35.51, 137.83)	check_manually
+medium	902	ICTV龍江川路	飯田ケーブルテレビ	N_ZawPigcvo	1566	龍江川路駅方面	龍江ちゃんねる	-	(35.44, 137.82)	check_manually
+medium	902	ICTV龍江川路	飯田ケーブルテレビ	N_ZawPigcvo	1642	龍江地域づくり委員会天竜川	龍江地域づくり委員会	-	(35.44, 137.82)	check_manually
+medium	217	ITC珠洲市内	石川テレビ放送(ITC)	jQeNg25kdYg	476	MRO能登珠洲	北陸放送(MRO)	CgmxirNHFgI	(37.44, 137.26)	check_manually
+medium	276	JASWEレインボーブリッジ	日本ソーシャルワーク教育学校連盟(JASWE)	77c-Wja6qWc	428	東京風景東京タワー	東京風景	jIjsSNlgflM	(35.63, 139.75)	check_manually
+medium	276	JASWEレインボーブリッジ	日本ソーシャルワーク教育学校連盟(JASWE)	77c-Wja6qWc	486	東京風景レインボーブリッジ	東京風景	_k-5U7IeK8g	(35.63, 139.75)	check_manually
+medium	276	JASWEレインボーブリッジ	日本ソーシャルワーク教育学校連盟(JASWE)	77c-Wja6qWc	921	高浜水門外水側	東京都高潮防災チャンネル	l4gg-8R3Owg	(35.63, 139.75)	check_manually
+medium	448	JCOM横浜開港祭	JCOM	cSokUjjQaCw	2197	神奈川大学みなとみらいキャンパス	神奈川大学生活協同組合	-	(35.46, 139.63)	check_manually
+medium	2128	JCVいもり池	JCV上越ケーブルビジョン	-	2528	池の平温泉スキー場	荒井アンドアソシエイツ	-	(36.87, 138.17)	check_manually
+medium	377	JRT阿波おどり	四国放送(JRT)	JeqYU2X4tWY	739	阿波おどり	阿波おどり未来へつなぐ実行委員会	h8h0F1ZUCpY	(34.04, 134.46)	check_manually
+high	1028	JR中条駅東口	中条駅観光交流室	pufHCGNHZFg	2209	JR中条駅東口タクシー乗場	中条駅観光交流室	-	(38.05, 139.4)	check_manually
+high	587	JR中条駅西口タクシー乗場	中条駅観光交流室	29eq1ui_BiU	1028	JR中条駅東口	中条駅観光交流室	pufHCGNHZFg	(38.05, 139.4)	check_manually
+high	587	JR中条駅西口タクシー乗場	中条駅観光交流室	29eq1ui_BiU	2209	JR中条駅東口タクシー乗場	中条駅観光交流室	-	(38.05, 139.4)	check_manually
+high	504	JR新大阪駅タクシー乗場第1	大阪タクシーセンター	YRuBQ3136D0	505	JR新大阪駅タクシー乗場第2	大阪タクシーセンター	vxRaY0mXBbU	(34.73, 135.5)	check_manually
+medium	504	JR新大阪駅タクシー乗場第1	大阪タクシーセンター	YRuBQ3136D0	2461	BGVCam新大阪	BGVCam	-	(34.73, 135.5)	check_manually
+medium	505	JR新大阪駅タクシー乗場第2	大阪タクシーセンター	vxRaY0mXBbU	2461	BGVCam新大阪	BGVCam	-	(34.73, 135.5)	check_manually
+high	329	JR本八幡駅北口	千葉県タクシー協会京葉支部	oQVfclB6nvY	330	JR本八幡駅北口タクシー乗り場	千葉県タクシー協会京葉支部	WhNoqKDlx8Y	(35.72, 139.92)	check_manually
+high	329	JR本八幡駅北口	千葉県タクシー協会京葉支部	oQVfclB6nvY	331	JR本八幡駅南口	千葉県タクシー協会京葉支部	g_00CDso3AI	(35.72, 139.92)	check_manually
+high	330	JR本八幡駅北口タクシー乗り場	千葉県タクシー協会京葉支部	WhNoqKDlx8Y	331	JR本八幡駅南口	千葉県タクシー協会京葉支部	g_00CDso3AI	(35.72, 139.92)	check_manually
+medium	2233	JR苗穂工場	dd51ミスター54	-	2243	JR苗穂駅	DF200ミスター54	-	(43.07, 141.37)	check_manually
+high	128	JR鶴見駅	神奈川県タクシー協会	g8NXxgs79Jo	129	JR鶴見駅バス乗り場	神奈川県タクシー協会	RUUsBgQe1eI	(35.51, 139.68)	check_manually
+high	128	JR鶴見駅	神奈川県タクシー協会	g8NXxgs79Jo	130	JR鶴見駅タクシープール	神奈川県タクシー協会	-XeFBi9ge_8	(35.51, 139.68)	check_manually
+high	129	JR鶴見駅バス乗り場	神奈川県タクシー協会	RUUsBgQe1eI	130	JR鶴見駅タクシープール	神奈川県タクシー協会	-XeFBi9ge_8	(35.51, 139.68)	check_manually
+medium	2274	JapanesePod101赤坂	JapanesePod101	-	2296	弁慶橋ボート場	弁慶橋ボート場	-	(35.68, 139.73)	check_manually
+medium	1340	KBC博多駅前	九州朝日放送(KBC)	8RyR0J8zbbU	2287	博多駅山陽新幹線第1	博多駅山陽新幹線第1ライブカメラ	-	(33.59, 130.42)	check_manually
+high	457	KCT下轡田第2	上婦負ケーブルテレビ	Kf0S73QlREA	458	KCT下轡田第1	上婦負ケーブルテレビ	aAwmC-yX6sg	(36.66, 137.17)	check_manually
+medium	265	KFB福島空港	福島放送(ときまるTV)	CVp0bl7ROSM	966	FCT福島空港	福島中央テレビ	b8Pwk-Syo5A	(37.23, 140.43)	check_manually
+medium	1014	KHB仙台駅前	東日本放送(KHB)	AinAZQgQp_s	1337	河北新報仙台東二番丁通り	河北新報社	9UNpXYB8rCQ	(38.26, 140.88)	check_manually
+medium	832	KKTサクラマチクマモト	熊本県民テレビ(KKT)	gtLrD-Xz6Go	1716	クリスマスマーケット熊本	クリスマスマーケット熊本実行委員会	-	(32.8, 130.7)	check_manually
+medium	833	KKT熊本市内	熊本県民テレビ(KKT)	MAs18xtaP4M	2010	KAB熊本市白川	熊本朝日放送(KAB)	-	(32.79, 130.69)	check_manually
+medium	654	KNB富山駅北	北日本放送	brLYHa4JzPM	1797	富山市役所展望塔立山連峰南側	富山市役所	-	(36.7, 137.21)	check_manually
