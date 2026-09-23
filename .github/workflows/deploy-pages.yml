@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'tokyo-station-guide/**'
+      - 'index.html'
   workflow_dispatch:
 
 permissions:
