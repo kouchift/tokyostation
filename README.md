@@ -7387,3 +7387,22 @@ RG.MAPSIZE = {
 - ことら送金: ゆうちょ通帳アプリ（または対応行のアプリ）で **メールアドレスの受取設定** が済んでいること。未了なら `services.cotra.registered = false` に
 - PayPal.Me を作ったら `services.paypal.paypalMe` に名前（例 "tonbo7"）。楽天ペイ・d払い・au PAY は固定リンク／QR／番号ができたらそれぞれの欄に
 - FamiPay 残高の個人間送金が公式に確認できたら `services.famipay.enabled = true`
+
+## v101 デザイン刷新（Figma Make → 実装）— 2026-09-23
+
+Figma Make で描いた 6 画面（入口・比較・駅カード・現地モード・地図の印・投げ銭）と 80 ジャンルのアイコンシートを、既存の部品に載せ替えた。元データと対応表は `design/figma-make-v101/`（tokens.json・SPEC.md・icons_cells.json）。
+
+### 入れたもの
+- **ジャンルアイコン**: `assets/icons.svg`（80 種 × ui 24px／map 16px、モノライン、currentColor。`tools/build_icons.py` が Figma の SVG から生成、64KB／gzip 12KB）。起動時に 1 回だけ取りに行き（`assets/icons.js`）、地図の印（`<use>`・白い丸＋ジャンル色 14% の塗り＋濃紺の線画）、ジャンルの札・選択中のタグ、スポットカード、ふきだし、現地モードの一覧と種類チップに使う。届かない環境・スプライトに無いジャンル（hc・kara・manga・locker・water・dog・adult・smoke・food_top）は絵文字のまま。ロゴ（チェーン店）・自分のピン・レベチの王冠は今までどおり
+- **配色・角丸・影**: `--tsg-*`（濃紺 #00224A／薄青 #F7F9FF／#0055AD／#008BF2／罫線 #E8ECF2／カード 16px／入力 12px／チップ 28px 14px／影 0 4 12 rgba(0,34,74,.06)）を app.css の末尾ブロックに置き、既存の `--bg／--text／--grid／--highlight` を上書き。入口カードは題・副（駅数・路線数）・罫線・h1・入力・主ボタン・チップ・「無料・登録不要」の構成。比較の手段カード、下から出るシート（上 16px）、現地モードの種類チップ、投げ銭の金額カードと主ボタンも同じトークンに
+- **ジャンル id の整理**: 駐輪場を `cycle` → `cycle_park` に改名（シェアサイクル `cycle` と重なっていた）。`data/tokyo_od.js` の "cycle" キーは app.js の読み替え表で cycle_park に。groups.js の «移動する» にも追加
+
+### Figma とのちがい・後回し
+- Figma Make のシートは、こちらが渡した 80 の id と一部ちがう id・ジャンルで描かれていた（onsen_sento・view_spot・share_cycle・hospital…、居酒屋・パン屋・ホテルなど 17 種はサイトに無い）。`assets/icons.js` の ALIAS で読み替え、近い意味のものは流用（camspot→camera、net→wifi、elec→ev、cloth→shopping、life→discount、food→family_rest、postbox→post、corp_gone・meeting→company）
+- shopping と parking は map 版が描かれていなかったので ui 版を縮小して使用
+- 後回し（v102 案）: 駅カード上部（駅名 28px・主ボタン 2 つ）、比較画面の要約チップ、地図のまとまり（濃紺のピル）、desktop 専用レイアウト（左パネル）
+
+### 確かめた結果（Pixel 7・PC、Playwright）
+- 起動: `data-build="101"`、スプライト 160 symbol、`RG.hasIcon("cvs")`（→ g-convenience）、cycle_park あり・cycle の重複なし、本文の色 #00224A・背景 #F7F9FF
+- 地図: 表示中の印がすべて `<use>`（`.poi--ic`）、スプライトを止めると `<image>`（絵文字）に戻りエラー 0
+- ジャンルの札 20 個が SVG（hc だけ絵文字）、選択中のタグ・現地モードの行 12・種類チップ 6・スポットカードのバッジが SVG。比較（東京駅→新宿）カード 4 枚・投げ銭の画面ともエラー 0

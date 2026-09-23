@@ -1100,8 +1100,11 @@ var Map = (function () {
       var logo = (z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
       if (t.g === "levechi" && RG.LEVECHI_ICON) { logo = RG.LEVECHI_ICON; esz = Math.max(esz * 1.5, 14); }   // v87: レベチは専用の印（どのズームでも）
       else if (logo) { esz = Math.max(esz * 1.35, 11); }
-      setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
+      /* v101: ロゴ・自分のピン・レベチの王冠以外は、Figma 由来のモノラインアイコン（<use>）。無ければ絵文字のまま */
+      var ic = (!logo && !myPins.length && RG.setIcon) ? RG.setIcon(e0, t.g, t.x, t.y, esz * 1.05 * uu) : null;
+      if (!ic) setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
       n.classList.toggle("poi--logo", !!logo);
+      n.classList.toggle("poi--ic", !!ic);
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
       h0.style.setProperty("r", (14 * uu).toFixed(3) + "px", "important");
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
@@ -2056,7 +2059,7 @@ function mergeExtraPois(key) {
   function once(k, fn) { if (mergedKeys[k]) return; mergedKeys[k] = 1; fn(); }
   if (!key || key === "od" || key === "od2") {
     if (RG.OD) once("od", function () {
-      var A = { museum2: "museum", park2: "park" };
+      var A = { museum2: "museum", park2: "park", cycle: "cycle_park" };   // v101: 駐輪場は cycle_park（シェアサイクル cycle と id が重なっていた）
       Object.keys(RG.OD).forEach(function (gid) {
         var g2 = A[gid] || gid;
         var label = (RG.GENRES.filter(function (x) { return x.id === g2; })[0] || {}).label || g2;
@@ -2310,7 +2313,7 @@ RG.initHeroSearch = function () {
   if (RG.tokyoHeroInit) RG.tokyoHeroInit();
   if (RG.setOrigin && !RG.setOrigin.__hero) { var so = RG.setOrigin; RG.setOrigin = function () { var r = so.apply(this, arguments); if (RG.heroSyncOrigin) RG.heroSyncOrigin(); return r; }; RG.setOrigin.__hero = 1; }
   // 駅数を小さく（«全国の路線図の上に東京駅の入口» という構造が分かるように）
-  var hs = $("#hero-stat"); if (hs && RG.NET) hs.textContent = "・ " + RG.NET.stations.length.toLocaleString("ja-JP") + " 駅 / " + RG.NET.lines.length + " 路線";
+  var hs = $("#hero-stat"); if (hs && RG.NET) hs.textContent = RG.NET.stations.length.toLocaleString("ja-JP") + " 駅・" + RG.NET.lines.length + " 路線";   // v101: 「全国 8,381 駅・60 路線の路線図から…」
   // 高さを CSS 変数に（スマホでは «地図の設定»・ヒント・天気チップを hero の下に置くため）
   function measure() { if (hero) document.documentElement.style.setProperty("--hero-h", hero.offsetHeight + "px"); }
   measure();
@@ -2394,6 +2397,11 @@ RG.boot = function () {
   if (!RG.MAPPOI) RG.MAPPOI = [];
 
   // ---- ここから下は «地図が出るまで» に必要なもの ----
+  step("ジャンルアイコン", function () {   // v101: スプライトを取りに行く（届いたら印を描き直す。届かなければ絵文字のまま）
+    if (!RG.iconsInit) return;
+    document.addEventListener("rg:icons", function (e) { if (e.detail && e.detail.n && RG.Map && RG.Map.poiLOD) RG.Map.poiLOD(); if (RG.buildGroupBar) try { RG.buildGroupBar(); } catch (err) {} });
+    RG.iconsInit();
+  });
   step("スポットの取り込み", function () { mergeExtraPois(); });
   step("検索の索引", function () { buildIndex(); });
   step("駅カード", function () { Card.init(); });

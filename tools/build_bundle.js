@@ -6,7 +6,7 @@
      ※ terser が無ければ「まとめるだけ」（縮小なし）で出力する。 */
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..');
-const ORDER = ['app', 'score', 'planner', 'plannerui', 'lines_ui', 'basemap', 'three', 'wikicard',
+const ORDER = ['app', 'icons', 'score', 'planner', 'plannerui', 'lines_ui', 'basemap', 'three', 'wikicard',
   'corp', 'smoking', 'adult', 'edu', 'hensachi', 'pins', 'groups', 'koyomi2', 'koyomi', 'search',
   'nav', 'plan', 'logbook', 'geohelp', 'tiles', 'geo', 'zipcode', 'enrich', 'focus', 'buzz', 'qr', 'inro', 'tip', 'shinkansen', 'share', 'nature', 'history', 'places', 'yt', 'air', 'pv', 'card', 'roads', 'quake', 'memo', 'weather', 'sns', 'levechi', 'poifilter', 'cvsfilter', 'tokyo', 'favs', 'onsite', 'flow', 'stats', 'loader'];
 let src = ORDER.map(n => {

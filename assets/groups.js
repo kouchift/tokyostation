@@ -19,7 +19,7 @@ var GROUPS = [
     ids: ["levechi", "cvs", "cafe", "burger", "gyudon", "curry", "sushi", "noodle", "family", "chuka", "other", "pizza",
           "food", "super", "drug", "hc", "elec", "cloth", "disc", "life", "shopping"] },
   { id: "move",  e: "🚶", label: "移動する",     c: "#0079C2",
-    ids: ["airport", "fuel", "cycle", "locker", "bike", "camspot"] },
+    ids: ["airport", "fuel", "cycle", "cycle_park", "locker", "bike", "camspot"] },
   { id: "money", e: "💰", label: "お金・手続き", c: "#00897B",
     ids: ["atm", "post", "postbox", "corp", "corp_gone"] },
   { id: "study", e: "🎓", label: "学ぶ",         c: "#5E35B1",
@@ -65,7 +65,7 @@ RG.buildGroupBar = function () {
         if (!g) return "";
         return '<button class="sel__c" type="button" data-unsel="' + esc(id) +
           '" style="--lc:' + g.c + '" title="' + esc(g.label) + " をやめる\">" +
-          '<span class="sel__e">' + g.e + "</span>" +
+          (RG.gIconHtml ? RG.gIconHtml(id, g.e, "sel__e") : '<span class="sel__e">' + g.e + "</span>") +   // v101
           '<span class="sel__n">' + esc(g.label) + "</span>" +
           '<span class="sel__k">' + countOf(id) + "</span>" +
           '<span class="sel__x">✕</span></button>';
@@ -111,7 +111,7 @@ RG.buildGroupBar = function () {
       if (!g) return "";
       return '<button class="sel__c" type="button" data-unsel="' + esc(id) +
         '" style="--lc:' + g.c + '">' +
-        '<span class="sel__e">' + g.e + "</span>" +
+        (RG.gIconHtml ? RG.gIconHtml(id, g.e, "sel__e") : '<span class="sel__e">' + g.e + "</span>") +   // v101
         '<span class="sel__n">' + esc(g.label) + "</span>" +
         '<span class="sel__k">' + countOf(id) + "</span>" +
         '<span class="sel__x">✕</span></button>';
@@ -182,7 +182,7 @@ function groupPanel(gid) {
       return '<button class="gi' + (on ? " on" : "") + (g.enabled ? "" : " off") +
         '" type="button" data-gid="' + esc(id) + '" style="--lc:' + g.c +
         '" data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '">' +
-        '<span class="gi__e">' + g.e + "</span>" +
+        (RG.gIconHtml ? RG.gIconHtml(id, g.e, "gi__e") : '<span class="gi__e">' + g.e + "</span>") +   // v101
         '<span class="gi__l">' + esc(g.label) + "</span>" +
         '<span class="gi__n">' + (g.enabled ? (n ? n : (g.optIn ? "▶" : "—")) : "—") + "</span>" +
         "</button>";

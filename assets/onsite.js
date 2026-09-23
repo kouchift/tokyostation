@@ -95,7 +95,7 @@ function listHtml(cat) {
   var cvsQ = cat.id === "cvs" && RG.cvsFilterHtml ? RG.cvsFilterHtml("cvsf--os") : "";   // v99: 7／F／L（地図と同じ状態）
   return destQ + cvsQ + L.map(function (x, i) {
     return '<button class="os__row" type="button" data-os-i="' + i + '">' +
-      '<span class="os__e2">' + esc(x.e) + "</span>" +
+      (RG.gIconHtml && x.poi && !x.poi.e && RG.hasIcon(x.poi.g) ? RG.gIconHtml(x.poi.g, x.e, "os__e2") : '<span class="os__e2">' + esc(x.e) + "</span>") +   // v101
       '<span class="os__nm"><b>' + (x.brand ? brandMark(x.brand) : "") + esc(x.n) + "</b><small>" + esc(x.sub || "") + "</small></span>" +
       '<span class="os__d"><b>' + esc(dir(O.anchor, [x.la, x.lo])) + "</b><small>" + m(x.km) + "・徒歩" + walkMin(x.km) + "分</small></span></button>";
   }).join("");
@@ -118,7 +118,7 @@ function render() {
       '<button class="os__x" type="button" data-os-close="1" aria-label="現地モードを閉じる">×</button>' +
     "</div>" +
     '<div class="os__cats" role="tablist" aria-label="種類">' + CATS.map(function (c) {
-      return '<button class="os__cat' + (c.id === O.cat ? " on" : "") + '" type="button" role="tab" aria-selected="' + (c.id === O.cat) + '" data-os-cat="' + c.id + '">' + c.e + " " + c.label + "</button>";
+      return '<button class="os__cat' + (c.id === O.cat ? " on" : "") + '" type="button" role="tab" aria-selected="' + (c.id === O.cat) + '" data-os-cat="' + c.id + '">' + (RG.hasIcon && RG.hasIcon(c.id) ? RG.gIconHtml(c.id, c.e, "os__ce") : c.e) + " " + c.label + "</button>";   // v101
     }).join("") + "</div>" +
     '<div class="os__list">' + listHtml(cat) + "</div>";
   bind(el, cat);

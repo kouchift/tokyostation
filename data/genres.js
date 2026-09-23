@@ -70,7 +70,7 @@ RG.GENRES = [
     desc: "授乳・おむつ替えができる場所（赤ちゃん・ふらっと等）" },
   { id: "wifi",    e: "📶", label: "無料Wi-Fi",      c: "#0079C2", enabled: true, od: true,
     desc: "自治体が公開している無料Wi-Fiスポット（駅に近い順に700件）" },
-  { id: "cycle",   e: "🅿️", label: "駐輪場",         c: "#8A5A2B", enabled: true, od: true,
+  { id: "cycle_park", e: "🅿️", label: "駐輪場",      c: "#8A5A2B", enabled: true, od: true,   // v101: cycle → cycle_park（シェアサイクルと重複していた）
     desc: "公営の自転車駐車場" },
   { id: "sento",   e: "🛁", label: "銭湯",             c: "#C81432", enabled: true,
     desc: "東京都公衆浴場業生活衛生同業組合の組合員銭湯。東京都・各区の入浴支援や" +

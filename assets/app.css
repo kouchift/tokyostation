@@ -3555,7 +3555,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=100) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=101) format('woff2')}
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -3878,3 +3878,99 @@ body.onsite-on .cvsbar{display:none}
 .sv__qr{margin-top:8px}.sv__qr img{border:1px solid var(--grid);border-radius:8px;background:#fff}
 .sv__foot{font-size:10.5px;color:var(--label);margin:4px 0 0}
 @media (pointer:coarse){ .sv .tj__cp{min-height:40px;padding:6px 12px} .sv .tj__lnk{min-height:40px} }
+
+/* =========================================================================
+   v101: Figma Make デザイン刷新（design/figma-make-v101/ の tokens.json・SPEC.md）
+   ・トークンは --tsg-* に置き、既存の --bg／--text／--grid… を上書き（古い部品も自然に新しい配色になる）
+   ・ジャンルアイコンは assets/icons.svg（80 種・モノライン・currentColor）。.gic が共通クラス、地図の印は .poi--ic
+   ・絵文字フォールバック（.gic--e）は同じ枠に入る
+   ========================================================================= */
+:root{
+  --tsg-bg:#F7F9FF; --tsg-surface:#FFFFFF; --tsg-ink:#00224A; --tsg-ink2:#626264; --tsg-ink3:#97979B;
+  --tsg-line:#E8ECF2; --tsg-line2:rgba(0,34,74,.2); --tsg-primary:#0055AD; --tsg-accent:#008BF2; --tsg-tint:#EBF3FF;
+  --tsg-danger:#F62E2E; --tsg-ok:#008000; --tsg-orange:#FF5F00;
+  --tsg-r-card:16px; --tsg-r-input:12px; --tsg-r-chip:14px; --tsg-r-badge:4px;
+  --tsg-shadow:0 4px 12px rgba(0,34,74,.06); --tsg-shadow-lg:0 4px 12px rgba(0,34,74,.06),0 16px 40px rgba(0,34,74,.10);
+  --bg:var(--tsg-bg); --surface:var(--tsg-surface); --text:var(--tsg-ink); --label:var(--tsg-ink2);
+  --grid:var(--tsg-line); --border:#D9DFE8; --highlight:var(--tsg-primary); --lb900:var(--tsg-primary); --lb600:var(--tsg-accent);
+}
+body{background:var(--tsg-bg);color:var(--tsg-ink)}
+/* ---- ジャンルアイコン（共通） ---- */
+.gic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;color:currentColor;flex:0 0 auto;line-height:1}
+.gic--e{font-style:normal;text-align:center;line-height:1;width:auto;height:auto;vertical-align:baseline}
+svg.gic use{pointer-events:none}
+.gi__e.gic{width:22px;height:22px;color:var(--tsg-ink)} .gi.on .gi__e.gic{color:#fff}
+.sel__e.gic{width:16px;height:16px;color:var(--lc,var(--tsg-ink))} .sel__c:hover .sel__e.gic{color:#fff}
+.pp__e.gic{width:18px;height:18px;color:var(--tsg-ink)}
+.spotcard__phe.gic{width:48px;height:48px;color:var(--tsg-ink)}
+.gbadge__ic{width:20px;height:20px;color:var(--tsg-ink)} .gbadge--b .gbadge__ic{width:22px;height:22px}
+.os__e2.gic{width:24px;height:24px;color:var(--tsg-ink);flex:0 0 auto}
+.os__ce{width:15px;height:15px;vertical-align:-3px;margin-right:1px}
+.os__cat.on .os__ce{color:#fff}
+/* ---- 地図の印: 白い丸＋ジャンル色の薄い塗り＋濃紺の線画（Figma の markers-mobile と同じ構図） ---- */
+.poi--ic .poi__c{fill:#fff;stroke:var(--pc,#888)}
+@supports (color:color-mix(in srgb,#000 10%,#fff)){ .poi--ic .poi__c{fill:color-mix(in srgb,var(--pc,#888) 14%,#fff)} }
+.poi--ic .poi__e{color:#0B1F3A;pointer-events:none}
+.poi--ic:hover .poi__c,.poi--ic:focus .poi__c{fill:#FFF3C4}
+.poi--ic.visited .poi__e{opacity:.55}
+/* ---- 入口（entry-mobile / entry-desktop）: 地図に浮く白いカード ---- */
+.heroSearch{background:#fff;border:0;border-radius:var(--tsg-r-card);box-shadow:var(--tsg-shadow-lg);padding:18px 22px 16px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.heroSearch__eyebrow{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:16px;font-weight:800;letter-spacing:0;color:var(--tsg-ink)}
+.heroSearch__eyebrow span{font-size:11px;font-weight:500;color:var(--tsg-ink2);letter-spacing:0}
+.heroSearch__guide{margin-left:auto;font-size:11px;font-weight:700;color:var(--tsg-primary);background:var(--tsg-tint);border-radius:999px;padding:4px 10px;text-decoration:none}
+.heroSearch__guide:hover{filter:brightness(.97)}
+.heroSearch__sub{margin:2px 0 0;font-size:12px;color:var(--tsg-ink2)}
+.heroSearch hr{border:0;border-top:1px solid var(--tsg-line);margin:12px 0 10px}
+.heroSearch h1{margin:0 0 10px;font-size:22px;line-height:1.35;letter-spacing:-.01em;font-weight:800;color:var(--tsg-ink)}
+.heroSearch__lead{margin:0 0 8px;font-size:11.5px;color:var(--tsg-ink2)}
+.heroSearch__box{height:48px;border:1.5px solid var(--tsg-ink);border-radius:var(--tsg-r-input);background:#fff;padding:0 12px}
+.heroSearch__box .ms{color:var(--tsg-ink);font-size:20px}
+.heroSearch__box input{font-size:15px;color:var(--tsg-ink)}
+.heroSearch__box input::placeholder{color:var(--tsg-ink3)}
+.heroSearch__box:focus-within{border-color:var(--tsg-accent);box-shadow:0 0 0 3px rgba(0,139,242,.18)}
+.heroSearch__suggestions{border-color:var(--tsg-line);border-radius:12px;box-shadow:var(--tsg-shadow-lg)}
+.heroSearch__actions{gap:8px;margin-top:10px}
+.heroAction{height:40px;border:1px solid var(--tsg-line2);border-radius:var(--tsg-r-input);color:var(--tsg-ink);font-weight:700}
+.heroAction--primary{background:var(--tsg-primary);border-color:var(--tsg-primary);color:#fff}
+.heroSearch__popular{margin-top:10px;gap:6px}
+.heroSearch__popular span{font-size:11px;color:var(--tsg-ink2)}
+.heroSearch__popular button{height:28px;padding:0 12px;border:1px solid var(--tsg-line2);border-radius:var(--tsg-r-chip);background:#fff;font-size:12px;font-weight:600;color:var(--tsg-ink)}
+.heroSearch__popular button:hover{background:var(--tsg-tint);border-color:var(--tsg-accent)}
+.heroSearch__free{margin:10px auto 0;width:max-content;font-size:10.5px;color:var(--tsg-ink2);background:var(--tsg-bg);border-radius:var(--tsg-r-badge);padding:3px 10px}
+@media (max-width:420px){ .heroSearch{padding:14px 16px 12px} .heroSearch h1{font-size:20px} .heroSearch__lead{display:none} .heroSearch__sub{display:none} .heroSearch hr{margin:8px 0} }
+/* ---- 地図まわりの操作 ---- */
+.zoombar{background:rgba(255,255,255,.96);box-shadow:var(--tsg-shadow-lg);border:1px solid var(--tsg-line)}
+.zoombar button{color:var(--tsg-ink)} .zoombar button.zb--home{background:var(--tsg-tint);color:var(--tsg-primary)}
+.hint{color:var(--tsg-ink2);box-shadow:var(--tsg-shadow)}
+.chips{background:rgba(247,249,255,.96);border-top:1px solid var(--tsg-line)}
+.chip{height:32px;border:1px solid var(--tsg-line2);background:#fff;color:var(--tsg-ink);font-weight:600;border-radius:999px}
+.chip[aria-pressed=true]{background:var(--tsg-accent);border-color:var(--tsg-accent);color:#fff}
+/* ---- 下から出るシート・モーダル（station / local / donate: 上の角 16px・つまみ 40×4） ---- */
+.sheet{border-radius:16px 16px 0 0;background:#fff;box-shadow:0 -4px 12px rgba(0,34,74,.06),0 -16px 40px rgba(0,34,74,.10)}
+.modal__box{border-radius:16px 16px 0 0;box-shadow:0 -4px 12px rgba(0,34,74,.06),0 -16px 40px rgba(0,34,74,.10)}
+.modal{background:rgba(0,34,74,.45)}
+/* ---- 行き先の比較（compare）: 手段ごとのカード ---- */
+.rs__c{border:1px solid var(--tsg-line);border-top:3px solid var(--c,var(--tsg-line));border-radius:12px;padding:10px 12px;background:#fff;box-shadow:var(--tsg-shadow)}
+.rs__t{color:var(--tsg-ink)}
+.rs__big{font-family:var(--font);font-size:22px;letter-spacing:-.01em}
+.rs__c--rec{border:1.5px solid var(--tsg-accent)}
+.rs__sub{color:var(--tsg-ink2)}
+/* ---- ジャンルの選択（groups）: 一覧の札 ---- */
+.gi{border-radius:12px;border-color:var(--tsg-line);background:#fff;color:var(--tsg-ink)}
+.gb__g{border-radius:12px}
+.sel__c{border-radius:999px}
+/* ---- 現地モード（local）: 種類チップ ---- */
+.os__cat{height:32px;min-height:32px;border:1px solid var(--tsg-line2);border-radius:999px;background:#fff;color:var(--tsg-ink);font-weight:700;font-size:12.5px}
+.os__cat.on{background:var(--tsg-accent);border-color:var(--tsg-accent);color:#fff}
+/* ---- 投げ銭（donate）: 金額カードと主ボタン ---- */
+.tq__amt{border:1px solid var(--tsg-line);background:#fff;border-radius:12px;color:var(--tsg-ink);box-shadow:none;font-size:20px}
+.tq__amt span{font-size:26px}
+.tq__amt.on{border:2px solid var(--tsg-accent);background:#fff;color:var(--tsg-accent)}
+.tq__one{background:var(--tsg-primary);border-radius:12px;box-shadow:none;font-size:18px}
+.tq__one:active{transform:scale(.985);box-shadow:none}
+.tq__app.on{border-color:var(--tsg-accent);background:var(--tsg-tint)}
+.tq__pc{background:var(--tsg-tint);border-color:transparent;border-radius:var(--tsg-r-card)}
+/* ---- 共通の小物 ---- */
+.gbadge{border-radius:10px;background:#fff}
+.spotcard__ph{border-radius:var(--tsg-r-card)}
+:focus-visible{outline-color:var(--tsg-accent)}

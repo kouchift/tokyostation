@@ -211,7 +211,7 @@ RG.spotTip = function (p, P, isOwn) {
       ? '<img class="pp__i" src="' + esc(RG.cimg(p.img, 320)) + '" alt="" loading="lazy">'
       : '<div class="pp__ph" style="--lc:' + (p.bc || g.c || "#888") + '">' +
         (p.be || g.e || p.e || "📍") + "</div>") +
-    '<div class="pp__h"><span class="pp__e">' + (p.be || p.e || g.e) + "</span>" +
+    '<div class="pp__h">' + (RG.gIconHtml && !p.e && RG.hasIcon(p.g) ? RG.gIconHtml(p.g, g.e, "pp__e") : '<span class="pp__e">' + (p.be || p.e || g.e) + "</span>") +   // v101
     "<b>" + esc(p.n) + "</b></div>" +
     '<div class="pp__b">' + esc(g.label) +
       (p.t && p.t !== g.label && p.t !== p.n ? " ・ " + esc(p.t) : "") + "</div>" +
@@ -379,13 +379,13 @@ RG.showSpot = function (p) {
         '<span class="spotcard__phn">' + esc(p.t || p.n) + "</span>" +
         '<span class="spotcard__pht">' + (RG.chainLogoOf && RG.chainLogoOf(p) ? "ロゴ・商標は各社に帰属します" : "ブランドカラーと絵文字で表しています") + "</span></div>"
       : '<div class="spotcard__ph" style="--lc:' + (g.c || "#888") + '">' +
-        '<span class="spotcard__phe">' + (p.be || p.e || g.e || "📍") + "</span>" +
+        (RG.gIconHtml && !p.e && RG.hasIcon(p.g) ? RG.gIconHtml(p.g, g.e || "📍", "spotcard__phe") : '<span class="spotcard__phe">' + (p.be || p.e || g.e || "📍") + "</span>") +   // v101
         '<span class="spotcard__phn">' + esc(p.n) + "</span>" +
         '<span class="spotcard__pht">' +
           (p.url ? "自由に使える写真がありません。公式ページでご覧ください"
                  : "自由に使える写真が見つかりませんでした") + "</span></div>") +
     '<div class="spotcard__hd"><button class="gbadge gbadge--b gbadge--tap" type="button" data-gonly="' + esc(p.g || "") + '" style="--lc:' + (p.bc || g.c) + '" title="このジャンルだけを地図に出す">' +
-      (p.be || g.e) + "</button>" +
+      (RG.gIconHtml && RG.hasIcon(p.g) ? RG.gIconHtml(p.g, g.e, "gbadge__ic") : (p.be || g.e)) + "</button>" +   // v101
       "<div><h3>" + esc(p.n) + "</h3>" +
       '<p class="spotcard__k"><button class="spotcard__g" type="button" data-gonly="' + esc(p.g || "") + '">' + esc(g.label) + ' <i>だけ表示</i></button>' +
         (p.t && p.t !== p.n ? " ・ " + esc(p.t) : "") + "</p></div></div>" +
