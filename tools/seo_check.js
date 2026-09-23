@@ -109,7 +109,7 @@ Object.keys(descs).forEach((t) => ok("meta description", descs[t].length === 1, 
 
 /* ---------- 4. 内部リンク（全 HTML）と孤立ページ ---------- */
 const linkedFrom = {};
-pages.forEach((p) => {
+pages.filter((p) => !(SITE.noindexDirs || []).some((d) => p.rel.startsWith(d))).forEach((p) => {   // 管理・道具・ユーザーサイトの雛形（tools/user_site）は対象外
   const h = stripScripts(read(p.rel));
   [...h.matchAll(/<(?:a|link)\b[^>]*\shref=["']([^"']+)["']/gi)].concat([...h.matchAll(/<(?:img|script|source)\b[^>]*\ssrc=["']([^"']+)["']/gi)]).forEach((m) => {
     const href = decode(m[1]);

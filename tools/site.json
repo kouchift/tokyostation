@@ -4,10 +4,25 @@
   "basePath": "/tokyostation/",
   "siteName": "東京ステーションガイド",
   "lang": "ja",
-  "favicon": { "ico": "favicon.ico", "png48": "assets/favicon-48.png", "png96": "assets/favicon-96.png" },
+  "favicon": {
+    "ico": "favicon.ico",
+    "png48": "assets/favicon-48.png",
+    "png96": "assets/favicon-96.png"
+  },
   "ogImage": "assets/og.jpg",
-  "noindexDirs": ["admin/", "tools/", "uploader/", "design/", "data/", "assets/"],
-  "noindexFiles": ["check.html", "404.html", "googlec815dc96233352b9.html"],
+  "noindexDirs": [
+    "admin/",
+    "tools/",
+    "uploader/",
+    "design/",
+    "data/",
+    "assets/"
+  ],
+  "noindexFiles": [
+    "check.html",
+    "404.html",
+    "googlec815dc96233352b9.html"
+  ],
   "urlPolicy": {
     "_comment": "新しいページは «ディレクトリ + 末尾スラッシュ» で作る（/station/tokyo/）。既存の guide/*.html は URL を変えない（外部リンク・既存のインデックスを壊さないため）。",
     "station": "station/{slug}/",
@@ -16,7 +31,43 @@
     "legacyGuide": "guide/{slug}.html"
   },
   "stations": [
-    { "_comment": "id はアプリの駅 ID（data/net.json・RG.byId のキー）、slug は URL。駅名が変わっても slug は変えない。published:false の駅はページを作らない。",
-      "id": "東京", "slug": "tokyo", "name": "東京", "published": true }
+    {
+      "_comment": "id はアプリの駅 ID（data/net.json・RG.byId のキー）、slug は URL。駅名が変わっても slug は変えない。published:false の駅はページを作らない。plans:true の駅だけ plan/<slug>/{30min,1hour,2hours}/ を作る",
+      "id": "東京",
+      "slug": "tokyo",
+      "name": "東京",
+      "published": true,
+      "plans": true
+    },
+    {
+      "id": "新宿_1",
+      "slug": "shinjuku",
+      "name": "新宿",
+      "published": true
+    },
+    {
+      "id": "渋谷",
+      "slug": "shibuya",
+      "name": "渋谷",
+      "published": true
+    },
+    {
+      "id": "池袋",
+      "slug": "ikebukuro",
+      "name": "池袋",
+      "published": true
+    },
+    {
+      "id": "品川",
+      "slug": "shinagawa",
+      "name": "品川",
+      "published": true
+    },
+    {
+      "id": "上野",
+      "slug": "ueno",
+      "name": "上野",
+      "published": true
+    }
   ]
 }

@@ -3,6 +3,12 @@
 > **v64（2026-09-06）— 描画速度の全面改訂。** 初回表示が 4G回線・低スペック端末の想定で **約51秒 → 約2秒** になりました。
 > 詳しくは下の「v64 で変えたこと」を参照。以後、プログラムを直したら `node tools/build_bundle.js` を実行してください。
 
+## v105: 検索からの入口を増やす
+
+- 行き方ガイド 22 ルート（`tools/intent_pages.json`。`from` を書けば東京駅以外が出発地のルートも作れる）
+- 駅の案内 `station/<slug>/` 6 駅（`tools/site.json` の `stations`）。東京駅だけ `plans: true` → `plan/tokyo/{30min,1hour,2hours}/`
+- ホスト直下 `kouchift.github.io`（robots.txt・favicon・入口ページ・404）: `py tools\make_user_site.py --go`。中身は `tools/user_site/`
+
 ## v104: 検索エンジン向けの整備（SEO の土台）
 
 ### ページを足す・直したときの手順
