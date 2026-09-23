@@ -1,0 +1,9 @@
+# kouchift.github.io — ホスト直下の robots.txt（クローラーが読むのはこのファイル）
+# サイト本体は /tokyostation/。描画に要る CSS・JS・画像・data/ はブロックしない。
+User-agent: *
+Allow: /
+Disallow: /tokyostation/uploader/
+Disallow: /tokyostation/tools/
+Disallow: /tokyostation/admin/
+
+Sitemap: https://kouchift.github.io/tokyostation/sitemap.xml

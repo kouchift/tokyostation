@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- tools/build_sitemap.js が自動生成（手で編集しない）。載せる条件: noindex でない・canonical が自分自身 -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://kouchift.github.io/tokyostation/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/station/ikebukuro/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/station/shibuya/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/station/shinagawa/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/station/shinjuku/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/station/tokyo/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/station/ueno/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/haneda-to-tokyo.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/narita-to-tokyo.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/shibuya-to-tokyo.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/shinjuku-to-tokyo.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-station-exits.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-akihabara.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-asakusa.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-ginza.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-haneda.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-ikebukuro.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-kawasaki.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-kichijoji.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-maihama.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-narita.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-odaiba.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-roppongi.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-shibuya.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-shinagawa.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-shinjuku.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-skytree.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-ueno.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-yokohama.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/guide/yokohama-to-tokyo.html</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/1hour/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/2hours/</loc><lastmod>2026-09-23</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/30min/</loc><lastmod>2026-09-23</lastmod></url>
+</urlset>

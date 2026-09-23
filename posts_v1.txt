@@ -1,0 +1,38 @@
+■ 投稿1（card1_中村橋_新宿.png）
+子連れで中村橋から新宿まで。
+ベビーカーでも乗り換えが比較的マシなルートを整理した。
+
+所要約29分 / 乗換1回
+
+地図で確認 → https://kouchift.github.io/tokyostation/
+
+■ 投稿2（card2_石神井公園_池袋.png）
+池袋方面、混雑を少しでも避けたい人向け。
+比較的静かに移動できるルート。
+
+所要約24分 / 乗換0回
+
+地図で確認 → https://kouchift.github.io/tokyostation/
+
+■ 投稿3（card3_中村橋_東京.png）
+夜遅くに東京駅方面へ行くとき。
+人通りと明るさを優先したルート。
+
+所要約40分 / 乗換1回
+
+地図で確認 → https://kouchift.github.io/tokyostation/
+
+■ 投稿4（card4_大泉学園_品川.png）
+大泉学園から品川まで。
+乗換を1回に抑えて疲れにくいルートを選んだ。
+
+所要約61分 / 乗換2回
+
+地図で確認 → https://kouchift.github.io/tokyostation/
+
+■ 投稿5（card5_練馬_渋谷.png）
+練馬から渋谷、少し急いでも安全に着きたいときの参考。
+
+所要約33分 / 乗換1回
+
+地図で確認 → https://kouchift.github.io/tokyostation/
