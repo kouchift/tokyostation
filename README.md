@@ -7406,3 +7406,23 @@ Figma Make で描いた 6 画面（入口・比較・駅カード・現地モー
 - 起動: `data-build="101"`、スプライト 160 symbol、`RG.hasIcon("cvs")`（→ g-convenience）、cycle_park あり・cycle の重複なし、本文の色 #00224A・背景 #F7F9FF
 - 地図: 表示中の印がすべて `<use>`（`.poi--ic`）、スプライトを止めると `<image>`（絵文字）に戻りエラー 0
 - ジャンルの札 20 個が SVG（hc だけ絵文字）、選択中のタグ・現地モードの行 12・種類チップ 6・スポットカードのバッジが SVG。比較（東京駅→新宿）カード 4 枚・投げ銭の画面ともエラー 0
+
+## v102 地図ファースト — 入口カードの折りたたみと「地図を広く」（2026-09-23）
+
+「東京駅から、どこへ行く？」のカードがスマホで地図をふさぐ、という指摘への対応。**カードは地図を触ったら 1 行にたたまれ、必要なときだけ戻る**。さらに、地図だけの画面（⛶）を用意した。
+
+### 入れたもの（`assets/mapfocus.js`・app.css 末尾の v102 ブロック）
+- **入口カードの 2 状態**: full（いつものカード）／mini（46px の 1 行ピル「🔍 東京駅から、どこへ行く？ ▾」。行き先を入れていればその名前）。ピルを押すと戻る（PC は検索欄にフォーカス）
+  - **自動でたたむ**（既定）: 地図をドラッグ・ピンチ・ホイールで動かしたとき、ルート比較を始めたとき、スマホで駅カード・スポット・現地モードを開いたとき
+  - カード右上の **▴** でたたむと「いつも小さく」を覚える（`RG.settings.heroFold = "mini"`）。設定 → 🗺️ 地図ファースト で 自動／いつも小さく／いつも表示 の 3 択
+  - «地図の設定»・ヒント・天気チップは `--hero-h` に追従して上に詰まる
+- **地図を広く**（`body.mapfocus`）: 右下ズームバーの ⛶（`#zfocus`、aria-pressed）または設定のチェック。ヘッダー・出発バー・スポット帯・下のチップ・ヒント・件数・天気・レベチ札を隠し、地図＋ピル＋ズームバー＋探索だけに。Esc か ⛶ で戻る。`RG.settings.mapFocus` に保存し次回も同じ。切り替え時は `RG.syncAspect()` で viewBox の縦横比を合わせ直す（タップ位置がずれない）
+- ヒント「駅をタップで詳細…」は、タッチ端末では地図を使い始めたら文が消えてズーム段だけ残る（`body.map-used`）
+- アイコン字体に expand_less／expand_more／fullscreen／fullscreen_exit を追加（`tools/fetch_icons.py`、`assets/fonts/msymbols.woff2?v=102`、56 個 64KB）
+- API: `RG.heroFold(why)`／`RG.heroExpand(focus)`／`RG.heroToggle()`／`RG.heroMode()`、`RG.setMapFocus(on)`／`RG.mapFocus()`、イベント `rg:heromode`・`rg:mapfocus`
+
+### 確かめた結果（Pixel 7・PC、Playwright）
+- 起動 full（スマホの `--hero-h` 318px）→ ドラッグで mini（46px）→ ピルで full → ▴ で mini と設定 "mini" が保存され、再読み込みでも mini。設定を「いつも表示」にするとドラッグしてもたたまれない
+- 東京駅→新宿 の比較で mini（ピルは「新宿」）。スマホで駅カードを開いても mini
+- ⛶ でヘッダー・出発バー・スポット帯・チップ・ヒント・件数が display:none、地図の高さ 675px → 839px（Pixel 7）、viewBox の縦横比一致（2.036）。再読み込みでも維持、Esc で戻る。エラー 0
+- たたむボタン 44px・ピル 46px、aria-expanded／aria-pressed／radiogroup

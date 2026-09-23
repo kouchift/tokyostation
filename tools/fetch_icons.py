@@ -14,7 +14,7 @@ import sys, re, os, io, urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "assets", "fonts", "msymbols.woff2")
 ICONS = ("ac_unit,add,arrow_back,bookmark,calendar_month,chat_bubble,check_circle,chevron_right,close,cloud,contactless,"
-         "directions_subway,directions_walk,download,event,explore,favorite,foggy,forum,groups,info,layers,list,"
+         "directions_subway,directions_walk,download,event,expand_less,expand_more,explore,favorite,foggy,forum,fullscreen,fullscreen_exit,groups,info,layers,list,"
          "local_fire_department,luggage,map,markunread_mailbox,mic,my_location,navigation,near_me,nightlight,"
          "partly_cloudy_day,person,place,rainy,remove,route,schedule,search,settings,share,star,storefront,thunderstorm,"
          "timer,tips_and_updates,train,tune,warning,wb_sunny,zoom_out_map")

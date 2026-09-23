@@ -3555,7 +3555,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=101) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=102) format('woff2')}
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -3974,3 +3974,52 @@ svg.gic use{pointer-events:none}
 .gbadge{border-radius:10px;background:#fff}
 .spotcard__ph{border-radius:var(--tsg-r-card)}
 :focus-visible{outline-color:var(--tsg-accent)}
+
+/* =========================================================================
+   v102: 地図ファースト — 入口カードの折りたたみ（.hero-mini）と «地図を広く»（body.mapfocus）
+   ========================================================================= */
+/* たたむボタン（カード見出しの右端） */
+.heroSearch__eyebrow{align-items:center}
+.heroSearch__eyebrow .heroSearch__guide{margin-left:auto}
+.heroSearch__fold{flex:0 0 auto;width:44px;height:44px;margin:-8px -12px -8px 0;border:0;border-radius:50%;background:transparent;color:var(--tsg-ink2);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.heroSearch__fold:hover{background:var(--tsg-bg);color:var(--tsg-ink)}
+.heroSearch__fold .ms{font-size:22px}
+/* 1 行のピル（mini のときだけ） */
+.heroSearch__pill{display:none;width:100%;min-height:46px;border:0;border-radius:999px;background:#fff;box-shadow:var(--tsg-shadow-lg);padding:0 5px 0 14px;font:inherit;color:var(--tsg-ink);align-items:center;gap:8px;text-align:left;cursor:pointer}
+.heroSearch__pill>.ms{font-size:20px;color:var(--tsg-primary);flex:0 0 auto}
+.heroSearch__pill b{flex:1 1 auto;min-width:0;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heroSearch__pill>i.ms{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:var(--tsg-primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:22px}
+.heroSearch__pill:hover i{filter:brightness(1.08)}
+body.hero-mini .heroSearch{padding:0;background:transparent;box-shadow:none;border-radius:999px;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.hero-mini .heroSearch>*:not(.heroSearch__pill){display:none !important}
+body.hero-mini .heroSearch__pill{display:flex}
+body.hero-mini.route-active .heroSearch{opacity:1}
+/* ヒントの文は使い始めたら消す（タッチ端末）。ズーム段は残す */
+@media (hover:none){ body.map-used .hint .hint__t{display:none} body.map-used .hint{padding:4px 10px} body.map-used .hint #zlevel{margin-left:0} }
+/* «地図を広く»: 地図＋ピル＋ズーム＋探索だけ */
+body.mapfocus{--header-h:0px;--tripbar-h:0px;--chips-h:0px}
+body.mapfocus .hdr,body.mapfocus .topbar,body.mapfocus #t-status,body.mapfocus #loadbar,body.mapfocus #groupbar,body.mapfocus #navbar,
+body.mapfocus .chips,body.mapfocus .linerail,body.mapfocus .hint,body.mapfocus .poicount,body.mapfocus .wxchip,body.mapfocus #quickbar,
+body.mapfocus .cvsbar,body.mapfocus .heatlegend,body.mapfocus #lv-only{display:none !important}
+body.mapfocus .app{grid-template-rows:1fr}
+body.mapfocus .app>.mapwrap{flex:1 1 auto;height:100dvh;min-height:0}
+body.mapfocus .heroSearch{top:calc(8px + env(safe-area-inset-top,0px))}
+body.mapfocus .attrib{opacity:.85}
+body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.zoombar button#zfocus[aria-pressed=true]{background:var(--tsg-ink);color:#fff}
+/* スマホ: mini のときはピルを細く、地図の設定ボタンは 1 段上へ */
+@media (max-width:720px){
+  body.hero-mini .heroSearch{left:8px;right:56px;width:auto}
+  body.hero-mini .quickbar.mini{top:calc(var(--hero-h,46px) + 10px)}
+  body.hero-mini .hint{top:calc(var(--hero-h,46px) + 58px)}
+  body.hero-mini .wxchip{top:calc(var(--hero-h,46px) + 12px)}
+  body.mapfocus.hero-mini .heroSearch{right:8px}
+}
+/* 設定パネル: 3 択 */
+.set__seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 8px}
+.set__segi{display:flex;flex-direction:column;gap:2px;border:1px solid var(--tsg-line);border-radius:12px;padding:8px 10px;cursor:pointer;min-height:56px;position:relative}
+.set__segi input{position:absolute;opacity:0;pointer-events:none}
+.set__segi b{font-size:12.5px}.set__segi small{font-size:10.5px;color:var(--tsg-ink2);line-height:1.4}
+.set__segi:has(input:checked){border:2px solid var(--tsg-accent);background:var(--tsg-tint)}
+.set__segi:has(input:focus-visible){outline:3px solid var(--tsg-accent);outline-offset:2px}
+@media (max-width:420px){ .set__seg{grid-template-columns:1fr 1fr 1fr;gap:4px} .set__segi{padding:7px 6px} }

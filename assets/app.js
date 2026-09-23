@@ -2415,6 +2415,7 @@ RG.boot = function () {
   step("現地モード", function () { if (RG.onsite) RG.onsite.init(); });   // v95: 下のパネル（押したときだけ位置情報）
   step("コンビニの絞り込み", function () { if (RG.cvsFilterInit) RG.cvsFilterInit(); });   // v99: 7／F／L
   step("流れの統合", function () { if (RG.flowInit) RG.flowInit(); });   // v96: 戻るボタン・Esc・現在地→近く
+  step("地図ファースト", function () { if (RG.mapFocusInit) RG.mapFocusInit(); });   // v102: 入口カードの折りたたみ・地図を広く
   step("利用状況", function () { if (RG.statsInit) setTimeout(RG.statsInit, 1500); });   // v98: 起動が落ち着いてから（DOM は作らない）
   step("フィルタ", function () { initChips(); });
   step("シートの操作", function () { initSheetDrag(); });

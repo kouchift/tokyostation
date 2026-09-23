@@ -711,6 +711,7 @@ function openSettings() {
       "× 鉄道会社のロゴ・シンボルマーク・キャラクター画像は<b>同梱していません</b>。" +
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
+    (RG.mapFocusSwitchHTML ? RG.mapFocusSwitchHTML() : "") +   // v102
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
     (RG.favs ? RG.favs.settingsHTML() : "") +
     (RG.statsSwitchHTML ? RG.statsSwitchHTML() : "") +
@@ -725,6 +726,7 @@ function openSettings() {
   var m = RG.openModal("設定", html);
   var sst = $("#set-state", m); if (sst) sst.addEventListener("click", function () { if (RG.showState) RG.showState(); });
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
+  if (RG.mapFocusSwitchBind) RG.mapFocusSwitchBind(m);   // v102
   if (RG.geoSwitchBind) RG.geoSwitchBind(m);
   if (RG.weatherSwitchBind) RG.weatherSwitchBind(m);
   if (RG.voiceSwitchBind) RG.voiceSwitchBind(m);
