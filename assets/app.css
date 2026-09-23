@@ -4058,3 +4058,12 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 /* v104: SEO — ヒーロー最下段の «無料・登録不要» にページ案内（通常の <a> リンク）を並べる */
 .heroSearch__links a{color:inherit;font-weight:700;text-decoration:none;border-bottom:1px dotted currentColor}
 .heroSearch__links a:hover{color:var(--tsg-primary,#0061a1)}
+
+/* v106: みんなのコメント（スポットカード） */
+.cm__ls{list-style:none;padding:0;margin:6px 0}.cm__i{padding:8px 0;border-bottom:1px dashed #e8ebee}.cm__i:last-child{border-bottom:0}
+.cm__st{color:#e0a800;font-size:13px;letter-spacing:1px}.cm__tx{margin:2px 0 4px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.cm__by{color:#777;font-size:11px}.cm__ask{margin:10px 0 0;font-size:13px;font-weight:700}
+.cm__row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}@media (max-width:480px){.cm__row{grid-template-columns:1fr 1fr}.cm__row .mm__l:first-child{grid-column:1/-1}}
+.cm__hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.cm__more{display:block;width:100%;border:1px solid var(--grid,#ddd);background:#fff;border-radius:999px;padding:8px;font-size:12.5px;font-family:inherit;cursor:pointer;margin:4px 0}
+.cm__thanks{background:var(--tsg-tint,#e8f1fb);border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
