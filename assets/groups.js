@@ -74,6 +74,7 @@ RG.buildGroupBar = function () {
     $("#gb-open", host).addEventListener("click", function () {
       RG.__grpShow = true; RG.buildGroupBar();
     });
+    if (RG.slimSpotSync) RG.slimSpotSync();   // v103: 地図の上の «📍 スポット» の数字
     var off = $("#gb-off", host);
     if (off) off.addEventListener("click", function () { setGenres([]); RG.buildGroupBar(); });
     // 札の ✕ を押すと、そのジャンルだけをやめる

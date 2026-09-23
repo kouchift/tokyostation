@@ -265,6 +265,7 @@ RG.jpAdmLOD = function () {
 
 RG.applyBasemap = apply;
 RG.saveBase = save;
+RG.renderQuick = quickBar;   // v103: 画面幅が変わったとき（細身化の切り替え）に描き直す
 
 /* 色分けだけを変える軽い経路。
    apply() は地形・行政区・3D・バーの作り直しまで走るため 120ms かかっていた。
@@ -346,7 +347,8 @@ function quickBar() {
   // たたんだ状態：小さなボタン1つだけ
   if (B.qbMini) {
     q.className = "quickbar mini";
-    q.innerHTML = '<button class="qb__open" type="button" id="qb-open">🗺️ 地図の設定</button>' +
+    q.innerHTML = (RG.slimSpotHtml ? RG.slimSpotHtml() : "") +   // v103: スマホでは «📍 スポット» をここに（帯はやめた）
+      '<button class="qb__open" type="button" id="qb-open">🗺️ 地図の設定</button>' +
       (cur ? '<button class="qb__open qb__open--h" type="button" id="qb-open2">' +
         cur.e + " " + esc(cur.label) + "</button>" : "");
     return;

@@ -8,6 +8,10 @@
      地図＋ピル＋ズームボタン＋探索だけにする。ズームバーの ⛶ で出入り（Esc でも戻る）。RG.settings.mapFocus に保存
    ・ヒント「駅をタップで詳細…」は、いちど地図を動かしたら文を消してズーム段だけ残す（タッチ端末）
    ・44px・aria-expanded／aria-pressed・キーボード対応
+   v103 細身化（スマホ ≤720px・body.slim）:
+   ・ヘッダー 60→44px、出発バーはルート比較を始めるまで出さない（設定で «いつも表示» にもできる）、
+     «📍 スポットをさがす» の帯はやめて地図の上の小さなボタンに（選んでいる数を出す）、ズームボタンを小さく
+   ・地図の高さが変わったら（バーの出入り・パネルの開閉）viewBox の縦横比を合わせ直す（ResizeObserver）
    ========================================================================= */
 (function (RG) {
 "use strict";
@@ -83,7 +87,8 @@ RG.mapFocusSwitchHTML = function () {
         var a = s.split("|");
         return '<label class="set__segi"><input type="radio" name="gs-herofold" value="' + a[0] + '"' + (p === a[0] ? " checked" : "") + "><b>" + a[1] + "</b><small>" + a[2] + "</small></label>";
       }).join("") + "</div>" +
-    '<label class="set__sw"><input id="gs-mapfocus" type="checkbox"' + (RG.mapFocus() ? " checked" : "") + "> ⛶ 地図を広く（ヘッダー・出発バー・下のチップを隠す。右下の ⛶ でも切り替え）</label></div>";
+    '<label class="set__sw"><input id="gs-mapfocus" type="checkbox"' + (RG.mapFocus() ? " checked" : "") + "> ⛶ 地図を広く（ヘッダー・出発バー・下のチップを隠す。右下の ⛶ でも切り替え）</label>" +
+    '<label class="set__sw"><input id="gs-tripalways" type="checkbox"' + (RG.settings && RG.settings.tripAlways ? " checked" : "") + "> 🧭 出発バー（出発地・時刻・攻めかた）をスマホでもいつも出す（既定: ルート比較を始めたら出る）</label></div>";
 };
 RG.mapFocusSwitchBind = function (root) {
   Array.prototype.forEach.call(root.querySelectorAll('input[name="gs-herofold"]'), function (r) {
@@ -94,6 +99,26 @@ RG.mapFocusSwitchBind = function (root) {
     });
   });
   var f = $("#gs-mapfocus", root); if (f) f.addEventListener("change", function () { RG.setMapFocus(f.checked); });
+  var t = $("#gs-tripalways", root); if (t) t.addEventListener("change", function () { if (RG.settings) { RG.settings.tripAlways = t.checked; save(); } RG.slimApply(); });
+};
+
+/* ---- v103: 細身化（スマホ） ---- */
+var slimMQ = window.matchMedia ? window.matchMedia("(max-width:720px)") : null;
+RG.slimApply = function () {
+  var on = !!(slimMQ && slimMQ.matches);
+  document.body.classList.toggle("slim", on);
+  document.body.classList.toggle("trip-always", !!(RG.settings && RG.settings.tripAlways));
+};
+RG.slimSpotHtml = function () {
+  if (!(slimMQ && slimMQ.matches)) return "";
+  var n = ((RG.settings && RG.settings.genres) || []).filter(function (x) { return x !== "__none__"; }).length;
+  return '<button class="qb__open qb__spot" type="button" id="qb-spot" aria-label="スポットをさがす（ジャンルをえらぶ）"' + (n ? ' data-n="' + n + '"' : "") + ">📍 スポット" + (n ? '<b class="qb__n">' + n + "</b>" : "") + "</button>";
+};
+RG.slimSpotSync = function () {
+  var b = $("#qb-spot"); if (!b) return;
+  var n = ((RG.settings && RG.settings.genres) || []).filter(function (x) { return x !== "__none__"; }).length;
+  var old = b.querySelector(".qb__n"); if (old) old.remove();
+  if (n) { var k = document.createElement("b"); k.className = "qb__n"; k.textContent = n; b.appendChild(k); b.setAttribute("data-n", n); } else b.removeAttribute("data-n");
 };
 
 /* ---- 起動 ---- */
@@ -157,6 +182,16 @@ RG.mapFocusInit = function () {
     if (document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
     RG.setMapFocus(false);
   });
+  // v103: 細身化（スマホ）。浮きボタン «📍 スポット» はジャンル一覧を開く
+  RG.slimApply();
+  if (slimMQ && slimMQ.addEventListener) slimMQ.addEventListener("change", function () { RG.slimApply(); if (RG.renderQuick) RG.renderQuick(); });
+  document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest && e.target.closest("#qb-spot"); if (!b) return;
+    e.preventDefault(); RG.__grpShow = !RG.__grpShow; if (RG.buildGroupBar) RG.buildGroupBar();
+    var gb = $("#groupbar"); if (gb && RG.__grpShow) try { gb.scrollIntoView({ block: "nearest" }); } catch (err) {}
+  });
+  // 地図の高さが変わったら viewBox の縦横比を合わせ直す（バーの出入り・パネルの開閉。タップ位置がずれないように）
+  if (wrap && window.ResizeObserver) { var rt = null; new ResizeObserver(function () { clearTimeout(rt); rt = setTimeout(function () { if (RG.syncAspect) RG.syncAspect(); }, 60); }).observe(wrap); }
   // 起動時の状態
   var p = pref();
   if (RG.settings && RG.settings.mapFocus) { paintFocus(true); apply("mini", "focus"); }

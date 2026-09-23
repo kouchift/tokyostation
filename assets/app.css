@@ -3555,7 +3555,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=102) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=103) format('woff2')}
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -4023,3 +4023,34 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .set__segi:has(input:checked){border:2px solid var(--tsg-accent);background:var(--tsg-tint)}
 .set__segi:has(input:focus-visible){outline:3px solid var(--tsg-accent);outline-offset:2px}
 @media (max-width:420px){ .set__seg{grid-template-columns:1fr 1fr 1fr;gap:4px} .set__segi{padding:7px 6px} }
+
+/* =========================================================================
+   v103: 細身化（スマホ ≤720px・body.slim）— 地図の上の帯を 164px → 44px に
+   ========================================================================= */
+@media (max-width:720px){
+  body.slim{--header-h:44px}
+  body.slim .hdr{padding:0 6px 0 10px;gap:4px}
+  body.slim .hdr__brandIcon{width:30px;height:30px;font-size:17px}
+  body.slim .hdr__mark{font-size:14.5px;gap:6px}
+  body.slim .hdr__mark small{display:none}
+  body.slim .hdr__ic{width:40px;height:40px}
+  /* 出発バーはルート比較を始めるまで出さない（設定 «いつも出す» なら出す） */
+  body.slim:not(.route-active):not(.trip-always){--tripbar-h:0px}
+  body.slim:not(.route-active):not(.trip-always) .topbar{display:none}
+  body.slim.route-active,body.slim.trip-always{--tripbar-h:44px}
+  body.slim .topbar .tripbar{padding:3px 8px}
+  body.slim .tb__btn{min-height:36px}
+  /* «📍 スポットをさがす» の帯はやめ、地図の上の小さなボタンに（開いた一覧はいままでどおり上に出る） */
+  body.slim #groupbar.mini{display:none}
+  body.slim .quickbar.mini{display:flex;flex-wrap:wrap;gap:6px;padding:8px}
+  body.slim .qb__spot{position:relative}
+  body.slim .qb__spot[data-n]{border-color:var(--tsg-accent);color:var(--tsg-primary);font-weight:800}
+  .qb__n{margin-left:5px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--tsg-accent);color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+  /* ズームボタンを小さく（8 個で 310px） */
+  body.slim .zoombar{padding:3px;gap:0;right:8px}
+  body.slim .zoombar button{width:38px;height:38px}
+  body.slim .zoombar button .ms{font-size:20px}
+  /* 件数・レベチ札・出典は小さく */
+  body.slim .poicount{font-size:10.5px;padding:2px 8px}
+  body.slim #lv-only{transform:scale(.92);transform-origin:left bottom}
+}
