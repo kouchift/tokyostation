@@ -53,7 +53,7 @@ RG.TIP = {
   leaderboardCsv: "",
   /* みんなのコメント（v106〜）: Google Apps Script の Comments API URL。空なら表示しない */
   commentsApi: "", // 例: "https://script.google.com/macros/d/XXXXXX/usercopy?v=1"
-  postsApi: "",    // v108: «みんなの写真と声» の受け皿（tools/posts_api.gs をウェブアプリとして公開した …/exec の URL）。空なら出さない
+  postsApi: "https://script.google.com/macros/s/AKfycby_ZcBcm3HtW23_Gr4yCQORAyY0U3AaRVHCKYpT0LTZRISSU6taAxvBPboW5k8E6p0PAA/exec",    // v108: «みんなの写真と声» の受け皿（tools/posts_api.gs をウェブアプリとして公開した …/exec の URL）。空なら出さない
   amounts: [100, 500, 1000, 3000],
   /* v100: 受取先の設定（公開してよい識別子だけ。パスワード・認証コード・口座番号・電話番号は絶対に書かない）
      ・link / qr が空のサービスは «準備待ち» として表示し、架空の URL は作らない。期限つきの受け取りリンク（楽天ペイ 3 日・請求リンク 2 週間など）は貼らない
