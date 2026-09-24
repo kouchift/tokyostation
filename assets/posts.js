@@ -5,7 +5,7 @@
    ・写真は端末の中で長辺 1600px の JPEG に縮めてから送る（大きすぎる写真もそのまま選んでよい）
    ・撮影位置（EXIF の GPS）をスポットと照らす: 1km 以内 OK ／ 1〜10km は警告（本人の確認があれば «位置アンマッチ»）／ 10km 超は送れない
      位置情報の無い写真も送れるが «位置情報なし»。この 2 つは右上に目立つラベルを必ず焼き込み、表示は後ろ・50 枚を超えたら先に外れる
-   ・右下に小さくクレジット（©@tokyostation）を入れるかは投稿のたびに選べる（既定は入れる）
+   ・右下に小さくクレジット（[渇]@tokyostation）を入れるかは投稿のたびに選べる（既定は入れる）
    ・写真ごとにコメントを付けられる。投稿するときに名前（表示名）を入れる。名前は端末に覚えておく
    ・投稿者の名前を押すと、その人の投稿一覧（新しい順／古い順・都道府県で絞る・地図にピンで出す）
    ・投稿者は «端末ごとの印（uid）» で見分ける。同じ名前の別人と混ざらない（名前の後ろに #xxxx）
@@ -73,72 +73,134 @@ function loadSpot(k, force) {
   });
 }
 
-/* ---- v108: 撮影位置（EXIF の GPS）の確認 ----
-   ・写真の中の «Exif\0\0 + TIFF» を探して GPS（緯度・経度）を読む。JPEG の APP1・HEIC の Exif 項目・WebP の EXIF チャンクのどれでも同じ形
-   ・スポットから NEAR_KM 以内 = ok（優先度 高）／ NEAR_KM〜BLOCK_KM = far（警告・本人が確認したときだけ送る・優先度 最低）
-     BLOCK_KM 超 = 送れない ／ GPS が無い = none（送れるが優先度 中。スマホの設定で位置情報を消している場合など）
-   ・位置そのものはサーバーへ送らない（距離の判定だけに使う）。縮めた画像は canvas で作り直すので EXIF は残らない */
+/* ---- v108: 撮影位置の確認（EXIF の GPS ＋ 現在地）と、管理人だけが見る撮影データの記録 ----
+   ・写真の中の TIFF（EXIF の本体）を探して読む。JPEG の APP1 と HEIC は «Exif\0\0 + TIFF»、
+     WebP は «EXIF» チャンク、PNG は «eXIf» チャンク、AVIF などは «0 + TIFF» の形
+   ・区分（loc）: ok   … EXIF の撮影位置がスポットから NEAR_KM 以内（右上のラベルなし・表示の順 1 番）
+                 here … EXIF に位置が無いが、投稿するときの現在地（ブラウザの位置情報）がスポットから NEAR_KM 以内（ラベル «位置情報なし・現地で確認»・2 番）
+                        Android の Chrome などは写真を選んだ時点で位置情報を消すので、その代わりの立証
+                 none … 位置を確かめられない（ラベル «位置情報なし»・3 番）
+                 far  … EXIF の位置が NEAR_KM〜BLOCK_KM 離れていて、本人が確認した（ラベル «位置アンマッチ»・4 番）
+                 BLOCK_KM を超えるものは送れない
+   ・公開する写真は端末で縮めて作り直すので、EXIF（位置・撮影日時・機種）は残らない。
+     元写真の撮影データ（EXIF の主な項目・ファイル名・大きさ・現在地を使ったときはその値）は «不正防止の記録» として
+     受け皿の非公開シート（ExifLog）にだけ保存し、管理人だけが管理ページから見る。サイトには出さない */
 var NEAR_KM = 1, BLOCK_KM = 10;
-var CREDIT = "©@tokyostation";                                   // 右下のクレジット（任意・既定は入れる）
-var LOC_LABEL = { none: "位置情報なし", far: "位置アンマッチ" };  // 右上のラベル（位置が確かめられない写真には必ず入れる）
-RG.readExifGps = function (buf) {
+var CREDIT = "[渇]@tokyostation";                                // 右下のクレジット（任意・既定は入れる）。«[渇]» は制作者の意図した表記（喉の渇きを潤す）。変えないこと
+var LOC_LABEL = { here: "位置情報なし・現地で確認", none: "位置情報なし", far: "位置アンマッチ" };  // 右上のラベル（EXIF の位置で確かめられない写真には必ず入れる）
+var EXIF_TAGS = {                                                  // 記録する主な項目（MakerNote・サムネイルなどの大きなものは持たない）
+  0: { 0x010F: "Make", 0x0110: "Model", 0x0112: "Orientation", 0x0131: "Software", 0x0132: "DateTime", 0x013B: "Artist", 0x8298: "Copyright" },
+  1: { 0x9003: "DateTimeOriginal", 0x9004: "DateTimeDigitized", 0x9010: "OffsetTime", 0x9011: "OffsetTimeOriginal", 0xA002: "PixelXDimension", 0xA003: "PixelYDimension",
+       0x829A: "ExposureTime", 0x829D: "FNumber", 0x8827: "ISO", 0x920A: "FocalLength", 0xA433: "LensMake", 0xA434: "LensModel", 0xA420: "ImageUniqueID" },
+  2: { 0: "GPSVersionID", 1: "GPSLatitudeRef", 2: "GPSLatitude", 3: "GPSLongitudeRef", 4: "GPSLongitude", 5: "GPSAltitudeRef", 6: "GPSAltitude", 7: "GPSTimeStamp",
+       0x10: "GPSImgDirectionRef", 0x11: "GPSImgDirection", 0x12: "GPSMapDatum", 0x1D: "GPSDateStamp", 0x1F: "GPSHPositioningError" }
+};
+/* EXIF を読む → { exif: 有無, gps: {la,lo}|null, tags: { 名前: 値 } } */
+RG.readExif = function (buf) {
   var u = new Uint8Array(buf), dv = new DataView(buf), n = u.length, t = -1;
   var bmff = n > 12 && u[4] === 0x66 && u[5] === 0x74 && u[6] === 0x79 && u[7] === 0x70;   // "ftyp" = HEIF / HEIC / AVIF
   function tiffAt(o) { return o + 4 <= n && ((u[o] === 0x49 && u[o + 1] === 0x49 && u[o + 2] === 0x2A && u[o + 3] === 0) || (u[o] === 0x4D && u[o + 1] === 0x4D && u[o + 2] === 0 && u[o + 3] === 0x2A)); }
   for (var i = 0; i + 10 < n; i++) {
     if (u[i] === 0x65 && u[i + 1] === 0x58 && u[i + 2] === 0x49 && u[i + 3] === 0x66 && tiffAt(i + 4)) { t = i + 4; break; }   // PNG: "eXIf" チャンク = そのまま TIFF
     if (bmff && u[i] === 0 && u[i + 1] === 0 && u[i + 2] === 0 && u[i + 3] === 0 && tiffAt(i + 4)) { t = i + 4; break; }       // HEIF/AVIF: 前置き 0 のあとに TIFF
-    if (u[i] === 0x45 && u[i + 1] === 0x78 && u[i + 2] === 0x69 && u[i + 3] === 0x66 && u[i + 4] === 0 && u[i + 5] === 0 &&
-        ((u[i + 6] === 0x49 && u[i + 7] === 0x49 && u[i + 8] === 0x2A && u[i + 9] === 0) || (u[i + 6] === 0x4D && u[i + 7] === 0x4D && u[i + 8] === 0 && u[i + 9] === 0x2A))) { t = i + 6; break; }
-    if (u[i] === 0x45 && u[i + 1] === 0x58 && u[i + 2] === 0x49 && u[i + 3] === 0x46 && i + 12 < n &&            // WebP: "EXIF" + 大きさ(4) + TIFF
-        ((u[i + 8] === 0x49 && u[i + 9] === 0x49 && u[i + 10] === 0x2A) || (u[i + 8] === 0x4D && u[i + 9] === 0x4D && u[i + 11] === 0x2A))) { t = i + 8; break; }
+    if (u[i] === 0x45 && u[i + 1] === 0x78 && u[i + 2] === 0x69 && u[i + 3] === 0x66 && u[i + 4] === 0 && u[i + 5] === 0 && tiffAt(i + 6)) { t = i + 6; break; }
+    if (u[i] === 0x45 && u[i + 1] === 0x58 && u[i + 2] === 0x49 && u[i + 3] === 0x46 && i + 12 < n && tiffAt(i + 8)) { t = i + 8; break; }   // WebP: "EXIF" + 大きさ(4) + TIFF
   }
-  if (t < 0) return { exif: false, gps: null };
-  var le = u[t] === 0x49;
-  function u16(o) { return o + 2 <= n ? dv.getUint16(o, le) : 0; }
-  function u32(o) { return o + 4 <= n ? dv.getUint32(o, le) : 0; }
-  function ifd(off, want) {                                        // IFD の中から欲しい tag の «値の場所» を返す
-    var out = {}, base = t + off, cnt = u16(base);
-    if (!off || base + 2 + cnt * 12 > n || cnt > 500) return out;
+  if (t < 0) return { exif: false, gps: null, tags: {} };
+  var le = u[t] === 0x49, tags = {};
+  function u16(o) { return o >= 0 && o + 2 <= n ? dv.getUint16(o, le) : 0; }
+  function u32(o) { return o >= 0 && o + 4 <= n ? dv.getUint32(o, le) : 0; }
+  function s32(o) { return o >= 0 && o + 4 <= n ? dv.getInt32(o, le) : 0; }
+  var SIZE = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
+  function val(e) {                                                // 1 つの項目の値（文字・数・分数の並び）
+    var type = u16(e + 2), cnt = u32(e + 4), sz = SIZE[type];
+    if (!sz || cnt > 4096) return null;
+    var at = cnt * sz <= 4 ? e + 8 : t + u32(e + 8);
+    if (at < 0 || at + cnt * sz > n) return null;
+    if (type === 2) { var s = ""; for (var j = 0; j < Math.min(cnt, 128); j++) { var c = u[at + j]; if (!c) break; s += String.fromCharCode(c); } return s.trim(); }
+    var out = [];
+    for (var k = 0; k < Math.min(cnt, 16); k++) {
+      var o = at + k * sz;
+      if (type === 1 || type === 7) out.push(u[o]);
+      else if (type === 3) out.push(u16(o));
+      else if (type === 4) out.push(u32(o));
+      else if (type === 9) out.push(s32(o));
+      else if (type === 5) { var b = u32(o + 4); out.push(b ? u32(o) / b : 0); }
+      else if (type === 10) { var b2 = s32(o + 4); out.push(b2 ? s32(o) / b2 : 0); }
+    }
+    return out.length === 1 ? out[0] : out;
+  }
+  function ifd(off, map) {                                         // IFD を読んで、名前の分かる項目を tags に入れる。子の IFD の場所を返す
+    var base = t + off, cnt = u16(base), ptr = {};
+    if (!off || base + 2 + cnt * 12 > n || cnt > 500) return ptr;
     for (var j = 0; j < cnt; j++) {
       var e = base + 2 + j * 12, tag = u16(e);
-      if (want.indexOf(tag) >= 0) out[tag] = { type: u16(e + 2), count: u32(e + 4), at: e + 8 };
+      if (tag === 0x8769 || tag === 0x8825) { ptr[tag] = u32(e + 8); continue; }
+      if (map[tag]) { var v = val(e); if (v !== null && v !== "") tags[map[tag]] = v; }
     }
-    return out;
+    return ptr;
   }
-  function rat3(ent) {                                             // 度・分・秒（RATIONAL × 3）→ 10 進の度
-    if (!ent || ent.type !== 5 || ent.count < 3) return null;
-    var o = t + u32(ent.at), v = [];
-    for (var k = 0; k < 3; k++) { var a = u32(o + k * 8), b = u32(o + k * 8 + 4); v.push(b ? a / b : 0); }
-    return v[0] + v[1] / 60 + v[2] / 3600;
+  var p0 = ifd(u32(t + 4), EXIF_TAGS[0]);
+  if (p0[0x8769]) ifd(p0[0x8769], EXIF_TAGS[1]);
+  if (p0[0x8825]) ifd(p0[0x8825], EXIF_TAGS[2]);
+  function deg(v) { return Array.isArray(v) && v.length >= 3 ? v[0] + v[1] / 60 + v[2] / 3600 : typeof v === "number" ? v : null; }
+  var la = deg(tags.GPSLatitude), lo = deg(tags.GPSLongitude), gps = null;
+  // Android は写真を選ぶときに位置の «値» を 0 で塗りつぶす（項目は残る・N/S/E/W も壊れる）→ «位置情報なし» として扱う
+  var refOk = /^[NS]$/.test(tags.GPSLatitudeRef || "") && /^[EW]$/.test(tags.GPSLongitudeRef || "");
+  if (refOk && la != null && lo != null && !(la === 0 && lo === 0) && la <= 90 && lo <= 180 && isFinite(la) && isFinite(lo)) {
+    if (tags.GPSLatitudeRef === "S") la = -la;
+    if (tags.GPSLongitudeRef === "W") lo = -lo;
+    gps = { la: la, lo: lo };
   }
-  function ref(ent) { return ent ? String.fromCharCode(u[ent.at]) : ""; }
-  var ifd0 = ifd(u32(t + 4), [0x8825]);
-  if (!ifd0[0x8825]) return { exif: true, gps: null };
-  var g = ifd(u32(ifd0[0x8825].at), [1, 2, 3, 4]);
-  var la = rat3(g[2]), lo = rat3(g[4]);
-  if (la == null || lo == null || (la === 0 && lo === 0) || la > 90 || lo > 180) return { exif: true, gps: null };
-  if (ref(g[1]) === "S") la = -la;
-  if (ref(g[3]) === "W") lo = -lo;
-  return { exif: true, gps: { la: la, lo: lo } };
+  return { exif: true, gps: gps, tags: tags };
 };
+RG.readExifGps = function (buf) { var r = RG.readExif(buf); return { exif: r.exif, gps: r.gps }; };   // 前の版と同じ呼び方
+function fmtKm(km) { return km == null ? "" : km < 1 ? Math.round(km * 1000) + "m" : km.toFixed(1) + "km"; }
 function kmBetween(a, b) {
   var R = 6371, r = Math.PI / 180, dla = (b.la - a.la) * r, dlo = (b.lo - a.lo) * r;
   var x = Math.sin(dla / 2) * Math.sin(dla / 2) + Math.cos(a.la * r) * Math.cos(b.la * r) * Math.sin(dlo / 2) * Math.sin(dlo / 2);
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
 }
-/* 写真 1 枚の位置を確かめる → { loc: "ok"|"far"|"block"|"none", km } */
+/* 写真 1 枚の位置を確かめる → { loc: "ok"|"far"|"block"|"none", km, meta: 管理人向けの記録 } */
 function checkLoc(file, p) {
-  return file.arrayBuffer().then(function (buf) {
-    var r = RG.readExifGps(buf);
-    if (!r.gps) return { loc: "none", km: null, exif: r.exif };
+  var fileInfo = { name: String(file.name || "").slice(0, 120), size: file.size || 0, type: file.type || "", lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : "" };
+  var read;
+  try { read = file.arrayBuffer ? file.arrayBuffer() : new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res(fr.result); }; fr.onerror = rej; fr.readAsArrayBuffer(file); }); }
+  catch (e) { read = Promise.reject(e); }
+  return read.then(function (buf) {
+    var r = RG.readExif(buf), meta = { file: fileInfo, exif: r.tags, gps: r.gps };
+    if (!r.gps) return { loc: "none", km: null, exif: r.exif, meta: meta };
     var km = kmBetween(r.gps, { la: +p.la, lo: +p.lo });
-    return { loc: km <= NEAR_KM ? "ok" : km <= BLOCK_KM ? "far" : "block", km: km, exif: true };
-  }).catch(function () { return { loc: "none", km: null, exif: false }; });
+    return { loc: km <= NEAR_KM ? "ok" : km <= BLOCK_KM ? "far" : "block", km: km, exif: true, meta: meta };
+  }).catch(function () { return { loc: "none", km: null, exif: false, meta: { file: fileInfo, exif: {}, gps: null, readError: 1 } }; });
 }
 RG.postsCheckLoc = checkLoc;
-var LOC_RANK = { ok: 0, none: 1, far: 2 };                         // 表示の順（小さいほど先）。50 枚を超えたら大きい方から外す
-function rankOf(x) { return LOC_RANK[x.loc] != null ? LOC_RANK[x.loc] : 1; }
+/* «現地で確認» にしてよい写真か: 撮りたて（EXIF の撮影日時が FRESH_DAYS 日以内。撮影日時が無いものは «その場で撮る» で撮った写真だけ）
+   スポットにいる人が、昔の関係ない写真を «現地で確認» で上げられないように。
+   ファイルの更新日時は、写真を選ぶときにスマホが作り直すことがあるので証拠にしない
+   iPhone のカメラ（«その場で撮る»）の写真は «image.jpg»・EXIF なしになる */
+var FRESH_DAYS = 3, GEO_ACC_MAX = 250;                             // 現在地の誤差がこれより大きい（«おおよその位置»）ときは確認に使わない
+function exifTime(s) { var m = /^(\d{4}):(\d\d):(\d\d)[ T](\d\d):(\d\d)/.exec(String(s || "")); return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0; }
+function freshEnough(r, cam) {
+  var t = exifTime(r.meta && r.meta.exif && (r.meta.exif.DateTimeOriginal || r.meta.exif.DateTime));
+  if (t) return Date.now() - t < FRESH_DAYS * 864e5 && t < Date.now() + 864e5;
+  var lm = r.meta && r.meta.file && r.meta.file.lastModified ? new Date(r.meta.file.lastModified).getTime() : 0;
+  return !!cam && !!lm && Math.abs(Date.now() - lm) < 30 * 60e3;   // その場で撮った写真（ファイルも 30 分以内に作られた）
+}
+function hasDate(r) { return !!exifTime(r.meta && r.meta.exif && (r.meta.exif.DateTimeOriginal || r.meta.exif.DateTime)); }
+/* ブラウザの現在地（投稿するときに 1 回だけ）→ { la, lo, acc, at } */
+function whereAmI() {
+  return new Promise(function (res, rej) {
+    if (!navigator.geolocation) return rej(new Error("この端末では現在地を使えません"));
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      res({ la: pos.coords.latitude, lo: pos.coords.longitude, acc: Math.round(pos.coords.accuracy || 0), at: new Date(pos.timestamp || Date.now()).toISOString() });
+    }, function (e) {
+      rej(new Error(e && e.code === 1 ? "位置情報の利用が許可されませんでした（ブラウザの設定で許可してください）" : "現在地を取得できませんでした（屋外で、もう一度お試しください）"));
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });   // 立証に使うので毎回取り直す
+  });
+}
+var LOC_RANK = { ok: 0, here: 1, none: 2, far: 3 };               // 表示の順（小さいほど先）。50 枚を超えたら大きい方から外す
+function rankOf(x) { return Object.prototype.hasOwnProperty.call(LOC_RANK, x.loc) ? LOC_RANK[x.loc] : 2; }
 function byPriority(a, b) { return rankOf(a) - rankOf(b) || (a.ts < b.ts ? 1 : -1); }
 
 /* ---- 画像を縮める（向きは EXIF どおり・長辺 MAX_EDGE px・JPEG）＋ 透かし ----
@@ -186,6 +248,7 @@ RG.postsHtml = function (p) {
     '<div class="pst__grid" data-pst-grid><p class="pst__ld">読み込んでいます…</p></div>' +
     '<div class="pst__up">' +
       '<label class="pst__btn"><input type="file" accept="image/*" multiple hidden data-pst-file>📷 写真を投稿する（まとめて選べます）</label>' +
+      '<label class="pst__btn pst__btn--cam"><input type="file" accept="image/*" capture="environment" hidden data-pst-cam>📸 その場で撮る（現在地で確認）</label>' +
       '<p class="pst__note">大きな写真は自動で縮めて送ります（長辺 ' + MAX_EDGE + 'px）。1 スポット ' + MAX_PER_SPOT + ' 枚まで。ご自身で撮った写真だけにしてください。人の顔・車のナンバーが写るものは避けてください。</p>' +
       '<div class="pst__queue" data-pst-queue hidden></div>' +
     "</div>" +
@@ -207,7 +270,7 @@ function renderSpot(root, p, d) {
   n.textContent = ph.length ? "（写真 " + ph.length + "／" + MAX_PER_SPOT + "）" : "";
   grid.innerHTML = ph.length ? ph.map(function (x, i) {
     var nc = d.comments.filter(function (c) { return c.pid === x.pid; }).length;
-    return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (x.loc || "none")) + '" data-ph="' + i + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy">' +
+    return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy">' +
       (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み">📍</b>' : "") + (nc ? "<i>💬" + nc + "</i>" : "") + "</button>";
   }).join("") : '<p class="pst__ld">まだ写真がありません。最初の 1 枚をどうぞ。</p>';
   var sc = d.comments.filter(function (c) { return !c.pid; }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
@@ -257,8 +320,13 @@ RG.postsBind = function (m, p) {
   if (UP[k]) {
     var q0 = root.querySelector("[data-pst-queue]");
     q0.hidden = false;
-    q0.innerHTML = '<p class="pst__ld">このスポットに写真を送っています（あと ' + UP[k].left + ' 枚）… <button type="button" class="pst__cancel" data-q-stop>止める</button></p>';
+    q0.innerHTML = '<p class="pst__ld">このスポットに写真を送っています（あと <b data-q-left>' + UP[k].left + '</b> 枚）… <button type="button" class="pst__cancel" data-q-stop>止める</button></p>';
     q0.querySelector("[data-q-stop]").addEventListener("click", function () { if (UP[k]) UP[k].cancelled = true; this.disabled = true; this.textContent = "止めています…"; });
+    UP[k].views.push(function (left, done) {
+      if (!document.body.contains(q0)) return;
+      if (done) { q0.hidden = true; q0.innerHTML = ""; refresh(true); return; }
+      var b = q0.querySelector("[data-q-left]"); if (b) b.textContent = left;
+    });
   }
   function refresh(force) {
     loadSpot(k, force).then(function (d) { if (document.body.contains(root)) renderSpot(root, p, d); })
@@ -267,7 +335,8 @@ RG.postsBind = function (m, p) {
   refresh(false);
 
   // 写真を選んだら: 撮影位置（EXIF）を確かめる → 名前・クレジットを確認 → 1 枚ずつ縮めて（透かしを入れて）送る
-  root.querySelector("[data-pst-file]").addEventListener("change", function (ev) {
+  function onPick(ev) {
+    var cam = ev.target.hasAttribute("data-pst-cam");                // その場で撮った写真: 撮ってすぐ現在地を確かめる
     var picked = Array.prototype.slice.call(ev.target.files || []);
     ev.target.value = "";
     var files = picked.filter(function (f) { return /^image\//.test(f.type) || /\.(heic|heif)$/i.test(f.name); });
@@ -281,6 +350,7 @@ RG.postsBind = function (m, p) {
     // 位置の確認は 1 枚ずつ（大きな写真を 50 枚まとめてメモリに載せない）
     var res = [], seq = Promise.resolve();
     files.forEach(function (f) { seq = seq.then(function () { return checkLoc(f, p).then(function (r) { res.push(r); }); }); });
+    seq.catch(function () { if (document.body.contains(q) && root.__batch === batch) q.innerHTML = '<p class="pst__ld">写真を読み込めませんでした。選び直してください。</p>'; });
     seq.then(function () {
       if (!document.body.contains(q) || root.__batch !== batch) return;
       var have = (mem[k] && mem[k].photos.length) || 0;
@@ -289,6 +359,7 @@ RG.postsBind = function (m, p) {
       function row(f, i) {
         var r = res[i], st;
         if (r.loc === "ok") st = '<i class="pst__lc pst__lc--ok">✅ 撮影位置OK（スポットから ' + (r.km < 1 ? Math.round(r.km * 1000) + "m" : r.km.toFixed(1) + "km") + "）</i>";
+        else if (r.loc === "here") st = '<i class="pst__lc pst__lc--here">📍 位置情報なし → 現在地で確認済み（スポットから ' + fmtKm(r.hereKm) + '・右上に «' + LOC_LABEL.here + '»）</i>';
         else if (r.loc === "none") st = '<i class="pst__lc pst__lc--none">📍? 位置情報なし（右上に «' + LOC_LABEL.none + '» が入り、表示の順番が後ろになります）</i>';
         else if (r.loc === "far") st = '<i class="pst__lc pst__lc--far">⚠️ 撮影位置がスポットから約 ' + r.km.toFixed(1) + " km 離れています</i>" +
           '<label class="pst__okfar"><input type="checkbox" data-far="' + i + '"> それでもこのスポットの写真です（右上に «' + LOC_LABEL.far + '» が入り、いちばん後ろに表示）</label>';
@@ -296,8 +367,15 @@ RG.postsBind = function (m, p) {
         return '<li data-qi="' + i + '" class="' + (r.loc === "block" ? "ng" : "") + '"><span>' + esc(f.name) + '</span><em>' + (f.size / 1048576).toFixed(1) + "MB</em><b>" + (r.loc === "block" ? "対象外" : "待機中") + "</b>" + st + "</li>";
       }
       q.innerHTML = '<div class="pst__qh"><b>' + files.length + " 枚を選びました</b>" + (picked.length > files.length ? "（1 回に " + MAX_PER_SPOT + " 枚まで）" : "") +
-          '<span class="pst__sum">✅ ' + nOk + " ・ 📍? " + nNone + " ・ ⚠️ " + nFar + " ・ ⛔ " + nBlock + "</span></div>" +
-        '<p class="pst__note">写真の位置情報（EXIF）でスポットで撮った写真かを確かめます。' + NEAR_KM + ' km 以内なら OK。撮影地点の緯度・経度はサーバーへ送りません（記録するのはスポットからの距離だけ・縮めた写真にも位置情報は残りません）。</p>' +
+          '<span class="pst__sum" data-q-sum></span></div>' +
+        '<p class="pst__note">写真の位置情報（EXIF）で、スポットで撮った写真かを確かめます（' + NEAR_KM + ' km 以内なら OK）。' +
+          '公開する写真は縮めて作り直すので、位置・撮影日時・機種などの撮影データは残りません。撮影データは不正な投稿を防ぐため、管理人だけが見られる記録に保存します（公開しません）。' +
+          '«現在地で確かめる» を使ったときは、確認できた写真についてだけ現在地（緯度経度・誤差）も同じ記録に保存します。</p>' +
+        (nNone ? '<div class="pst__geo" data-q-geo><p>📍 位置情報のない写真が <b>' + nNone + ' 枚</b>あります（スマホによっては、写真を選ぶときに位置情報が消されます。' +
+            'iPhone は写真を選ぶ画面の左下 «オプション» で «位置情報» をオンにすると残せます。«その場で撮る» の写真には位置情報が入らないので、現在地で確かめます）。' +
+            'いまスポットの近く（' + NEAR_KM + ' km 以内）にいれば、撮りたての写真（' + FRESH_DAYS + ' 日以内）は<b>現在地</b>で確かめられます。' +
+            '現在地は、確認できた写真についてだけ管理人向けの記録に残します（公開しません）。</p>' +
+            '<button type="button" class="pst__send pst__send--geo" data-q-here>📍 現在地で確かめる</button> <span class="pst__st" data-q-geost></span></div>' : "") +
         (have >= MAX_PER_SPOT ? '<p class="pst__note pst__note--warn">このスポットは ' + MAX_PER_SPOT + ' 枚に達しています。' +
           (fits("ok") ? "撮影位置OKの写真は、位置情報なし・アンマッチの写真を表示枠の外へ押し出して載ります（押し出された写真は消えず、枠が空けば戻ります）。" : "撮影位置OKの写真だけで満杯のため、新しい写真は載せられません。") + "</p>" : "") +
         '<ol class="pst__ql">' + files.map(row).join("") + "</ol>" +
@@ -306,14 +384,60 @@ RG.postsBind = function (m, p) {
         '<label class="pst__credit-opt"><input type="checkbox" data-q-credit checked> 写真の右下に小さくクレジット（' + esc(CREDIT) + '）を入れる</label>' +
         '<button type="button" class="pst__send" data-q-go>⬆️ 送る</button> <button type="button" class="pst__cancel" data-q-x>やめる</button>';
       var goBtn = q.querySelector("[data-q-go]");
-      function wanted(r, i) { return r.loc === "ok" || r.loc === "none" || (r.loc === "far" && (q.querySelector('[data-far="' + i + '"]') || {}).checked); }
+      function sum() {
+        var c = { ok: 0, here: 0, none: 0, far: 0, block: 0 }; res.forEach(function (r) { c[r.loc]++; });
+        q.querySelector("[data-q-sum]").textContent = "✅ " + c.ok + (c.here ? " ・ 📍現地 " + c.here : "") + " ・ 📍? " + c.none + " ・ ⚠️ " + c.far + " ・ ⛔ " + c.block;
+      }
+      sum();
+      // 現在地で確かめる（位置情報のない写真だけ «現地で確認» にする。現在地は管理人向けの記録にだけ残す）
+      var hereBtn = q.querySelector("[data-q-here]"), sent = false, checking = false;
+      function stale() { return sent || root.__batch !== batch || !document.body.contains(q); }
+      function checkHere() {
+        if (stale()) return;
+        var gs = q.querySelector("[data-q-geost]");
+        if (hereBtn) hereBtn.disabled = true;
+        if (gs) gs.textContent = "現在地を確かめています…";
+        checking = true; syncGo();
+        whereAmI().then(function (g) {
+          checking = false;
+          if (stale()) return;
+          var km = kmBetween(g, { la: +p.la, lo: +p.lo });
+          var geo = { la: g.la, lo: g.lo, acc: g.acc, at: g.at, km: Math.round(km * 1000) / 1000 };
+          if (g.acc > GEO_ACC_MAX) {
+            if (gs) gs.textContent = "現在地の誤差が大きい（±" + g.acc + "m）ため確かめられません。スマホの設定で «正確な位置情報» をオンにして、もう一度お試しください";
+            if (hereBtn) hereBtn.disabled = false;
+          } else if (km <= NEAR_KM) {
+            var nh = 0, nold = 0, nnd = 0;
+            res.forEach(function (r, i) {
+              if (r.loc !== "none") return;
+              if (!freshEnough(r, cam)) { if (hasDate(r)) nold++; else nnd++; r.meta.notFresh = 1; return; }
+              r.loc = "here"; r.hereKm = km; r.meta.geo = geo; nh++;
+              var li = q.querySelector('[data-qi="' + i + '"]'); if (li) li.outerHTML = row(files[i], i);
+            });
+            if (gs) gs.textContent = "✓ 現在地はスポットから " + fmtKm(km) + "（誤差 ±" + g.acc + "m）。" + [
+              nh ? nh + " 枚を «現地で確認» にしました" : "",
+              nold ? nold + " 枚は撮影日が " + FRESH_DAYS + " 日より前のため «位置情報なし» のままです" : "",
+              nnd ? nnd + " 枚は撮影日時の記録が無いため確かめられません" + (cam ? "（撮ったばかりの写真ではありません）" : "（«📸 その場で撮る» で撮ると確かめられます）") : ""
+            ].filter(Boolean).join("。");
+            if (hereBtn) hereBtn.hidden = true;
+          } else {
+            if (gs) gs.textContent = "現在地はスポットから約 " + fmtKm(km) + "（誤差 ±" + g.acc + "m）のため、現地での確認にはなりませんでした";
+            if (hereBtn) hereBtn.disabled = false;
+          }
+          sum(); syncGo();
+        }).catch(function (e) { checking = false; if (stale()) return; if (gs) gs.textContent = "✕ " + e.message; if (hereBtn) hereBtn.disabled = false; syncGo(); });
+      }
+      if (hereBtn) hereBtn.addEventListener("click", checkHere);
+      if (cam && hereBtn) checkHere();                            // その場で撮った写真は、すぐに現在地を確かめる
+      function wanted(r, i) { return r.loc === "ok" || r.loc === "here" || r.loc === "none" || (r.loc === "far" && (q.querySelector('[data-far="' + i + '"]') || {}).checked); }
       function sendable() {                                      // 位置の条件を満たし、満杯の判定でも入れる枚数（送る順に試算）
         var sim = [], n0 = 0, full = 0;
         res.forEach(function (r, i) { if (!wanted(r, i)) return; if (fits(r.loc, sim)) { sim.push(r.loc); n0++; } else full++; });
         return { n: n0, full: full };
       }
       function syncGo() {
-        if (UP[k]) return;
+        if (UP[k] || sent) return;
+        if (checking) { goBtn.disabled = true; goBtn.textContent = "現在地を確かめています…"; return; }
         var sd = sendable();
         goBtn.disabled = !sd.n;
         goBtn.textContent = sd.n ? "⬆️ " + sd.n + " 枚を送る" + (sd.full ? "（" + sd.full + " 枚は満杯で載せられません）" : "") : (sd.full ? "満杯のため送れません" : "送れる写真がありません");
@@ -333,7 +457,9 @@ RG.postsBind = function (m, p) {
         var cap = q.querySelector("[data-q-cap]").value.trim(), credit = q.querySelector("[data-q-credit]").checked, go = this;
         var okFar = {}; Array.prototype.forEach.call(q.querySelectorAll("[data-far]"), function (c) { if (c.checked) okFar[c.dataset.far] = 1; c.disabled = true; });
         go.disabled = true; go.textContent = "送っています…";
-        var st = UP[k] = { cancelled: false, left: 0 };
+        sent = true; if (hereBtn) { hereBtn.disabled = true; hereBtn.hidden = true; }   // 送り始めたら、この組は送り直せない（二重投稿を防ぐ）
+        var st = UP[k] = { cancelled: false, left: 0, views: [] };
+        function tell(done) { st.views.forEach(function (fn) { try { fn(st.left, done); } catch (e) {} }); }
         var chain = Promise.resolve(), ok = 0;
         files.forEach(function (f, i) {
           var r = res[i], li = q.querySelector('[data-qi="' + i + '"] b');
@@ -341,14 +467,17 @@ RG.postsBind = function (m, p) {
           if (r.loc === "far" && !okFar[i]) { li.textContent = "送らない（位置が離れている）"; li.parentNode.classList.add("ng"); return; }
           st.left++;
           chain = chain.then(function () {
-            st.left--;
+            st.left--; tell(false);
             if (st.cancelled) { li.textContent = "やめました"; li.parentNode.classList.add("ng"); return; }
             if (!fits(r.loc)) { li.textContent = fullMsg(r.loc); li.parentNode.classList.add("ng"); return; }
             li.textContent = "縮めています";
             return shrink(f, { credit: credit, loc: r.loc, km: r.km }).then(function (im) {
               li.textContent = (im.resized ? im.ow + "×" + im.oh + " → " : "") + im.w + "×" + im.h + " 送信中";
+              var meta = r.meta || {};                                   // 管理人だけが見る記録（公開しない）
+              meta.method = r.loc; meta.cam = cam ? 1 : 0; meta.orig = { w: im.ow, h: im.oh }; meta.ua = String(navigator.userAgent || "").slice(0, 200);
+              var km2 = r.loc === "here" ? r.hereKm : r.km;
               return post({ a: "photo", k: k, spot: spotOf(p), tok: tok(), name: nm, cap: cap, img: im.data, w: im.w, h: im.h,
-                            loc: r.loc, dist: r.km == null ? "" : Math.round(r.km * 1000), credit: credit ? 1 : 0, hp: "" });
+                            loc: r.loc, dist: km2 == null ? "" : Math.round(km2 * 1000), credit: credit ? 1 : 0, meta: meta, hp: "" });
             }).then(function (res2) {
               ok++; li.textContent = "✓ 完了" + (res2.dropped ? "（表示枠の都合で 1 枚が枠の外へ）" : ""); li.parentNode.classList.add("ok");
               if (res2.uid && !MYUID) MYUID = res2.uid;
@@ -360,7 +489,7 @@ RG.postsBind = function (m, p) {
           });
         });
         chain.then(function () {
-          delete UP[k];
+          delete UP[k]; tell(true);
           go.textContent = st.cancelled ? "途中でやめました（" + ok + " 枚 投稿）" : ok ? ok + " 枚 投稿しました" : "投稿できませんでした";
           xBtn.disabled = false; xBtn.textContent = "閉じる";
           if (document.body.contains(root)) refresh(true); else if (mem[k]) mem[k].t = 0;   // カードを閉じていたら、次に開いたとき取り直す
@@ -368,7 +497,9 @@ RG.postsBind = function (m, p) {
         });
       });
     });
-  });
+  }
+  root.querySelector("[data-pst-file]").addEventListener("change", onPick);
+  root.querySelector("[data-pst-cam]").addEventListener("change", onPick);
 
   // スポットへのコメント
   var form = root.querySelector("[data-pst-form]"), st = root.querySelector("[data-pst-st]");
@@ -396,8 +527,9 @@ function viewer(p, list, i) {
     box.innerHTML = '<div class="phv__in">' +
       '<div class="phv__img"><img src="' + esc(thumbUrl(x.f, MAX_EDGE)) + '" alt="' + esc(x.cap || p.n) + '"></div>' +
       '<div class="phv__side"><div class="phv__meta">' + nameBtn(x) + '<span class="pst__dt">' + fmtDate(x.ts) + "・" + (i + 1) + "／" + list.length + "</span></div>" +
-        '<p class="phv__loc phv__loc--' + (x.loc || "none") + '">' + (x.loc === "ok" ? "📍 撮影位置を確認済み（スポットから " + (x.dist != null && x.dist !== "" ? (x.dist < 1000 ? x.dist + "m" : (x.dist / 1000).toFixed(1) + "km") : "1km 以内") + "）" :
+        '<p class="phv__loc phv__loc--' + (x.loc === "ok" || LOC_LABEL[x.loc] ? x.loc : "none") + '">' + (x.loc === "ok" ? "📍 撮影位置を確認済み（スポットから " + (x.dist != null && x.dist !== "" ? (x.dist < 1000 ? x.dist + "m" : (x.dist / 1000).toFixed(1) + "km") : "1km 以内") + "）" :
           x.loc === "far" ? "⚠️ 撮影位置がスポットから離れています（約 " + ((+x.dist || 0) / 1000).toFixed(1) + " km）。投稿者が «このスポットの写真» と確認して載せたものです" :
+          x.loc === "here" ? "📍 写真に位置情報はありませんが、投稿者が現地（スポットから 1km 以内）で投稿したことを確認しています" :
           "📍? 写真に位置情報がありません（撮影場所を確かめられません）") + "</p>" +
         (x.cap ? '<p class="phv__cap">' + esc(x.cap) + "</p>" : "") +
         '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span><p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +

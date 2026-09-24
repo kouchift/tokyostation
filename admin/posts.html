@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>投稿の撮影データ｜管理ページ</title>
+<link rel="icon" href="../assets/icon-192.png">
+<style>
+:root{--ink:#1a2733;--sub:#5b6773;--line:#e1e6ec;--blue:#0B5394;--bg:#f4f6f9;--ok:#1b7f3b;--bad:#b91c1c}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+header{background:#00224A;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}header b{font-size:16px}header a{color:#fff}header small{color:#bcd0e8}
+main{padding:12px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+input{font:inherit;border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;min-height:38px;flex:1 1 220px;min-width:0}
+button{font:inherit;font-weight:800;border-radius:999px;border:1px solid var(--blue);background:var(--blue);color:#fff;padding:7px 14px;min-height:38px;cursor:pointer}button.sec{background:#fff;color:var(--blue)}
+.msg{font-size:13px;color:var(--sub);background:var(--bg);border-radius:10px;padding:8px 10px;margin:6px 0}.msg.bad{background:#fde8e8;color:var(--bad)}.msg.ok{background:#e6f4ea;color:var(--ok)}
+.wrap{overflow:auto;max-height:75vh;border:1px solid var(--line);border-radius:10px;background:#fff}
+table{border-collapse:collapse;font-size:12px;min-width:1600px}th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+th{position:sticky;top:0;background:#f8fafc;color:var(--sub);font-size:11px;z-index:1}
+td.w{white-space:normal;min-width:160px;max-width:320px}td img{width:56px;height:56px;object-fit:cover;border-radius:6px}
+tr.rej td{background:#fff7f7}.tag{display:inline-block;border-radius:6px;padding:0 6px;font-weight:700;font-size:11px}
+.t-ok{background:#e6f4ea;color:var(--ok)}.t-here{background:#e0f2f1;color:#00695c}.t-none{background:#fff8e1;color:#8a6d00}.t-far{background:#ffebee;color:var(--bad)}
+.tiny{font-size:11.5px;color:var(--sub)}
+details pre{white-space:pre-wrap;word-break:break-all;font-size:11px;max-width:420px;margin:4px 0}
+</style>
+</head>
+<body>
+<header><b>📷 投稿の撮影データ（管理人だけ）</b><small>元写真の EXIF・投稿時の現在地など。サイトには出ていない記録です（雑な一覧）</small><span style="flex:1"></span><a href="index.html">← 管理ページ</a></header>
+<main>
+<section class="card">
+  <div class="row"><input id="api" type="url" placeholder="受け皿の URL（…/exec）。空なら data/support.js の postsApi"><input id="key" type="password" placeholder="管理の鍵（tools/posts_deploy.bat が表示したもの）"><button id="go">読み込む</button></div>
+  <div class="row"><input id="q" type="text" placeholder="しぼりこみ（名前・スポット・機種・結果… 何でも）"><button class="sec" id="csv">CSV で保存</button><a id="sheet" class="tiny" target="_blank" rel="noopener" hidden>スプレッドシートを開く ↗</a></div>
+  <div id="msg" class="msg">鍵を入れて「読み込む」。鍵はこのブラウザにだけ保存します（共有 PC では使わない）。</div>
+</section>
+<div class="wrap"><table><thead><tr>
+  <th>日時</th><th>結果</th><th>写真</th><th>投稿者</th><th>スポット</th><th>区分</th><th>距離</th><th>方法</th>
+  <th>EXIF 位置</th><th>撮影日時</th><th>機種</th><th>ソフト</th><th>ファイル</th><th>元の大きさ</th><th>投稿時の現在地</th><th>ブラウザ</th><th>全部</th>
+</tr></thead><tbody id="tb"></tbody></table></div>
+</main>
+<script>window.RG = window.RG || {};</script>
+<script src="../data/support.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (id) { return document.getElementById(id); }, LOG = [], PH = {};
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ""; localStorage.setItem(k, v); } catch (e) { return ""; } }
+/* 鍵を送ってよい受け皿: サイトに書いてある URL（data/support.js）が最優先。まだ無いときだけ Apps Script の URL の形のものを使う。
+   «#api=» だけのリンク（鍵なし）は無視する（保存済みの鍵をよその URL へ送らせないため） */
+var SITE_API = (window.RG && RG.TIP && RG.TIP.postsApi) || "";
+function apiOk(u) { return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u) || /^http:\/\/127\.0\.0\.1:\d+\/exec$/.test(u); }
+var h = new URLSearchParams(location.hash.slice(1)), auto = false;   // tools/posts_deploy.bat が開く «#key=…&api=…»
+if (h.get("key") || h.get("api")) history.replaceState(null, "", location.pathname);
+if (h.get("key")) {
+  ls("tsg.admin.key", h.get("key")); auto = true;
+  if (!SITE_API && apiOk(h.get("api") || "")) ls("tsg.admin.api", h.get("api"));
+}
+var savedApi = ls("tsg.admin.api");
+$("key").value = ls("tsg.admin.key");
+$("api").value = SITE_API || (apiOk(savedApi) ? savedApi : "");
+if (SITE_API) $("api").readOnly = true;
+auto = auto || !!SITE_API;
+function num(v) { return v === "" || v == null || !isFinite(+v) ? null : +v; }
+function map(la, lo) { la = num(la); lo = num(lo); return la == null || lo == null ? "" : '<a target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + la.toFixed(6) + "," + lo.toFixed(6) + '">' + la.toFixed(5) + "," + lo.toFixed(5) + "</a>"; }
+function thumb(f) { return !f ? "" : /^https?:/.test(f) ? f : "https://drive.google.com/thumbnail?id=" + encodeURIComponent(f) + "&sz=w200"; }
+function draw() {
+  var q = $("q").value.trim().toLowerCase();
+  var rows = LOG.filter(function (r) { return !q || JSON.stringify(r).toLowerCase().indexOf(q) >= 0; });
+  $("tb").innerHTML = rows.map(function (r) {
+    var p = PH[r.pid] || {};
+    return '<tr class="' + (r.result === "ok" ? "" : "rej") + '"><td>' + esc(String(r.ts).replace("T", " ").slice(0, 19)) + "</td><td>" + esc(r.result) + (p.pid && !p.visible ? "<br><b>非表示</b>（通報 " + esc(p.reports) + "）" : "") + "</td>" +
+      "<td>" + (p.f ? '<a target="_blank" rel="noopener" href="' + esc(thumb(p.f).replace("sz=w200", "sz=w1600")) + '"><img src="' + esc(thumb(p.f)) + '" alt=""></a>' : esc(r.pid)) + "</td>" +
+      "<td>" + esc(r.name) + '<br><span class="tiny">' + esc(r.uid) + "</span></td><td class=w>" + esc(r.spot_n) + '<br><span class="tiny">' + map(r.spot_la, r.spot_lo) + "</span></td>" +
+      '<td><span class="tag t-' + esc(r.loc) + '">' + esc(r.loc) + "</span></td><td>" + (r.dist_m === "" ? "" : esc(r.dist_m) + "m") + "</td><td>" + esc(r.method) + (r.cam ? " 📸" : "") + "</td>" +
+      "<td>" + map(r.gps_la, r.gps_lo) + "</td><td>" + esc(r.datetime_original) + "</td><td>" + esc([r.make, r.model].filter(Boolean).join(" ")) + "</td><td>" + esc(r.software) + "</td>" +
+      "<td class=w>" + esc(r.file_name) + '<br><span class="tiny">' + (r.file_size ? (r.file_size / 1048576).toFixed(1) + "MB " : "") + esc(r.file_type) + " " + esc(r.file_modified) + "</span></td>" +
+      "<td>" + (r.orig_w ? esc(r.orig_w) + "×" + esc(r.orig_h) : "") + "</td>" +
+      "<td>" + map(r.geo_la, r.geo_lo) + (r.geo_acc_m !== "" && r.geo_acc_m != null ? '<br><span class="tiny">±' + esc(r.geo_acc_m) + "m ・ スポットから " + esc(r.geo_km) + "km ・ " + esc(r.geo_at) + "</span>" : "") + "</td>" +
+      '<td class="w tiny">' + esc(r.ua) + "</td><td><details><summary>表示</summary><pre>" + esc(r.meta_json) + "</pre></details></td></tr>";
+  }).join("");
+  $("msg").textContent = "記録 " + LOG.length + " 件（表示 " + rows.length + " 件）。新しい順。";
+  $("msg").className = "msg ok";
+}
+$("go").addEventListener("click", function () {
+  var api = $("api").value.trim(), key = $("key").value.trim();
+  if (!api || !key) { $("msg").textContent = "受け皿の URL と鍵を入れてください"; $("msg").className = "msg bad"; return; }
+  if (!apiOk(api)) { $("msg").textContent = "受け皿の URL は https://script.google.com/macros/s/…/exec の形だけ使えます"; $("msg").className = "msg bad"; return; }
+  ls("tsg.admin.api", api); ls("tsg.admin.key", key);
+  $("msg").textContent = "読み込んでいます…"; $("msg").className = "msg";
+  fetch(api + (api.indexOf("?") >= 0 ? "&" : "?") + "a=admin&n=1000&key=" + encodeURIComponent(key), { redirect: "follow" }).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d.ok) throw new Error(d.error || "読めませんでした");
+    LOG = d.log || []; PH = {}; (d.photos || []).forEach(function (p) { PH[p.pid] = p; });
+    if (d.sheet) { $("sheet").href = d.sheet; $("sheet").hidden = false; }
+    draw();
+  }).catch(function (e) { $("msg").textContent = "✕ " + e.message; $("msg").className = "msg bad"; });
+});
+$("q").addEventListener("input", draw);
+$("csv").addEventListener("click", function () {
+  if (!LOG.length) return;
+  var cols = Object.keys(LOG[0]);
+  var csv = "﻿" + [cols.join(",")].concat(LOG.map(function (r) { return cols.map(function (c) { var v = String(r[c] == null ? "" : r[c]); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }).join(","); })).join("\r\n");
+  var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "tsg_exiflog.csv"; a.click();
+});
+if (auto && $("key").value && $("api").value) $("go").click();   // 自動で読むのは、サイトの受け皿か、鍵と一緒に渡された URL のときだけ
+})();
+</script>
+</body>
+</html>

@@ -4228,3 +4228,10 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .pst__ok{position:absolute;left:4px;top:3px;font-size:12px;filter:drop-shadow(0 0 2px #fff)}
 .phv__loc{font-size:12.5px;margin:6px 0;padding:5px 8px;border-radius:8px}
 .phv__loc--ok{background:#E8F5E9;color:#1B5E20}.phv__loc--none{background:#FFF8E1;color:#6d5200}.phv__loc--far{background:#FFEBEE;color:#B71C1C}
+/* v108 現在地での確認・その場で撮る */
+.pst__btn--cam{background:#00796B;margin-left:6px}
+.pst__geo{margin:8px 0;padding:8px;border-radius:8px;background:#E0F2F1;font-size:12.5px}.pst__geo p{margin:0 0 6px}
+.pst__send--geo{background:#00796B}
+.pst__lc--here{color:#00695C}
+.pst__th--here::after{position:absolute;right:3px;top:3px;font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;background:#FFD600;color:#111;border:1px solid #D50000;content:"現地"}
+.phv__loc--here{background:#E0F2F1;color:#004D40}
