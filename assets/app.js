@@ -2490,7 +2490,28 @@ RG.boot = function () {
     var st = RG.getDefaultOriginStation && RG.getDefaultOriginStation();
     if (st) { Map.focus(st.id, isTouch() && innerWidth < 560 ? 360 : 520); if (Map.select) Map.select(st.id); }
     else Map.focus(RG.HUB, isTouch() && innerWidth < 560 ? 440 : 700);
+    firstViewHere();
   });
+  /* v110: 初回の地図は «現在地» のあたり。取れない（許可なし・時間切れ・日本の外・http）ときは東京駅のまま。
+     共有リンク（?st= ?from= など）で開いたとき・位置が届く前に地図を動かした／カードを開いたときは動かさない。出発地は変えない */
+  function firstViewHere() {
+    if (location.search || location.hash.length > 1 || !navigator.geolocation) return;
+    if (RG.secureOK && !RG.secureOK()) return;
+    var moved = false, w = isTouch() && innerWidth < 560 ? 360 : 520;
+    function mark() { moved = true; }
+    ["pointerdown", "wheel", "keydown"].forEach(function (t) { document.addEventListener(t, mark, { once: true, capture: true }); });
+    function ask() {
+      navigator.geolocation.getCurrentPosition(function (p) {
+        var la = p.coords.latitude, lo = p.coords.longitude;
+        if (moved || document.querySelector(".modal") || !(la > 20 && la < 46 && lo > 122 && lo < 154)) return;
+        Map.gotoLatLng(la, lo, w);
+        if (RG.tripStatus) RG.tripStatus("📍 現在地のあたりを表示しています", "info", 2600);
+      }, function () {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+    }
+    // 前に «許可しない» にした人には聞き直さない
+    if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: "geolocation" }).then(function (s) { if (s.state !== "denied") ask(); }, ask);
+    else ask();
+  }
 
   RG.bootFailed = failed;
   if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);
