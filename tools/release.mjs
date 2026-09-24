@@ -40,10 +40,20 @@ function ensureTerser() {
   if (r.status !== 0 || !fs.existsSync(mod)) say("   ※ terser を入れられませんでした。縮小せずにまとめます（動きは同じ・少し重い）");
 }
 
+/* ページを取る → { text, url }。Node の通信が会社のネットワーク（証明書の差し替え）で失敗したら、Windows の curl で取り直す */
+async function httpGet(u) {
+  try { const r = await fetch(u, { redirect: "follow", cache: "no-store" }); return { text: await r.text(), url: r.url }; }
+  catch (e) {
+    const c = spawnSync("curl", ["-sL", "--max-time", "30", "-w", "~~URL~~%{url_effective}", u], { encoding: "utf8" });
+    if (c.status !== 0 || !c.stdout) throw e;
+    const i = c.stdout.lastIndexOf("~~URL~~");
+    return { text: c.stdout.slice(0, i), url: c.stdout.slice(i + 7) };
+  }
+}
 async function live(nv) {                                          // GitHub Pages に出るまで 1〜3 分かかる
   for (let i = 0; i < 24; i++) {
     try {
-      const t = await (await fetch(SITE + "?_=" + Date.now(), { cache: "no-store" })).text();
+      const t = (await httpGet(SITE + "?_=" + Date.now())).text;
       const m = t.match(/data-build="(\d+)"/);
       if (m && +m[1] === nv) return true;
     } catch (e) {}

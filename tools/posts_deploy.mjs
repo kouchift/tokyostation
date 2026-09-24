@@ -168,11 +168,21 @@ async function main() {
   if (!URL_ONLY) say("   記録         : " + STATE);
 }
 
+/* ページを取る → { text, url }。Node の通信が会社のネットワーク（証明書の差し替え）で失敗したら、Windows の curl で取り直す */
+async function httpGet(u) {
+  try { const r = await fetch(u, { redirect: "follow", cache: "no-store" }); return { text: await r.text(), url: r.url }; }
+  catch (e) {
+    const c = spawnSync("curl", ["-sL", "--max-time", "30", "-w", "~~URL~~%{url_effective}", u], { encoding: "utf8" });
+    if (c.status !== 0 || !c.stdout) throw e;
+    const i = c.stdout.lastIndexOf("~~URL~~");
+    return { text: c.stdout.slice(0, i), url: c.stdout.slice(i + 7) };
+  }
+}
 /* 受け皿が答えるか → { ok, why, msg }  why: "auth"（許可がまだ）/ "login"（公開が «全員» でない）/ "error"（受け皿のエラー）/ "net"（つながらない） */
 async function ping(url) {
   try {
-    const r = await fetch(url + "?a=ping", { redirect: "follow" });
-    const t = await r.text();
+    const r = await httpGet(url + "?a=ping");
+    const t = r.text;
     if (/"ok"\s*:\s*true/.test(t)) return { ok: true };
     try { const j = JSON.parse(t); if (j && j.error) return { ok: false, why: "error", msg: String(j.error).slice(0, 300) }; } catch (e) {}
     if (/accounts\.google\.com/.test(r.url) || /ServiceLogin|identifier|ログイン/.test(t) && !/Authorization|承認/.test(t)) return { ok: false, why: "login" };
