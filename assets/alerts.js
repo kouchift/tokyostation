@@ -101,7 +101,8 @@ function paint() {
 function chip() {
   var el = document.getElementById("alertchip"), host = document.querySelector(".mapwrap");
   var nW = 0; Object.keys(ST.office).forEach(function (k) { nW += ST.office[k].items.length; });
-  var txt = (ST.tsunami ? "🌊 " + ST.tsunami.ttl + " " : "") + (nW ? "⚠️ 警報 " + nW + " 地域 " : "") + (ST.vol.length ? "🌋 " + ST.vol.length : "");
+  // 帯は «いま命にかかわる» 気象警報と津波だけ（火山はいつも十数か所あるので、帯にすると常に赤くなる → 地図の 🌋 だけ）
+  var txt = (ST.tsunami ? "🌊 " + ST.tsunami.ttl + " " : "") + (nW ? "⚠️ 警報 " + nW + " 地域 " : "") + (nW || ST.tsunami ? "（押すと一覧）" : "");
   if (!txt) { if (el) el.hidden = true; return; }
   if (!el && host) {
     el = document.createElement("button"); el.id = "alertchip"; el.type = "button"; el.className = "alertchip";

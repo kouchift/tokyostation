@@ -1,0 +1,142 @@
+/* ==========================================================================
+   東京ステーションガイド - design_v2.css（v117 Wayfinding Modern Upgrade）
+   ・app.css の «後ろ» に読み込む上書き。HTML と JavaScript は変えない
+   ・デザイン担当 AI の案（2026-09）を、サイトの実際のクラス名に合わせて当てはめたもの
+     案の «.hero・.bottom-sheet・svg text.station-name …» → 実際は «.heroSearch・#sheet／.modal__box・.st-lbl …»
+   ・次の 3 点は案から変えている
+     1) [class*="chip"] は警報の帯（.alertchip）や天気（.wxchip）まで薄くしてしまうので、チップのクラスを名指し
+     2) 44px の押しやすさは «指で操作する端末» の «ボタン» だけ（全部の a・input にかけるとチェックボックスが巨大・文中のリンクがずれる）
+     3) 地図の文字の太さ（stroke-width）は JavaScript がズームに合わせて決めているので、ここでは色と字の太さだけ
+   ========================================================================== */
+
+:root {
+  --tsg-navy: #00224A;
+  --tsg-blue: #0055AD;
+  --tsg-sky: #008BF2;
+  --tsg-bg: #F7F9FF;
+
+  --tsg-navy-rgb: 0, 34, 74;
+  --tsg-surface-glass: rgba(255, 255, 255, 0.90);
+  --tsg-surface-glass-dark: rgba(0, 34, 74, 0.92);
+  --tsg-border-subtle: rgba(0, 34, 74, 0.08);
+  --tsg-border-focus: rgba(0, 139, 242, 0.4);
+
+  --tsg-shadow-sm: 0 2px 8px rgba(0, 34, 74, 0.06);
+  --tsg-shadow-md: 0 6px 20px rgba(0, 34, 74, 0.12);
+  --tsg-shadow-lg: 0 12px 36px rgba(0, 34, 74, 0.16);
+
+  --tsg-font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", "Yu Gothic UI", "Noto Sans JP", sans-serif;
+  --tsg-radius-sm: 8px;
+  --tsg-radius-md: 14px;
+  --tsg-radius-lg: 20px;
+  --tsg-radius-pill: 9999px;
+  --tsg-min-touch: 44px;
+}
+
+body {
+  font-family: var(--tsg-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 押しやすさ: 指で操作する端末のボタンだけ 44px 以上 */
+@media (pointer: coarse) {
+  .heroAction, .cmini, .cact, .lchip, .chip, .os__cat, .os__anc, .os__x, .sh__b, .bz__b, .modal__x, .modal__ob,
+  .zoombar .sm, .alertchip, .os__tv, .os__gx, .pst__btn, .pst__send, .pst__cancel {
+    min-height: var(--tsg-min-touch);
+    touch-action: manipulation;
+  }
+  .modal__x, .os__x, .zoombar .sm { min-width: var(--tsg-min-touch); }
+}
+
+/* 検索カード（ヒーロー）: すりガラス */
+.heroSearch {
+  background: var(--tsg-surface-glass) !important;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: var(--tsg-shadow-md) !important;
+  border-radius: var(--tsg-radius-lg) !important;
+}
+
+/* 入力欄 */
+.heroSearch__box, .cardq__l, .os__qin {
+  border: 1.5px solid var(--tsg-border-subtle) !important;
+  border-radius: var(--tsg-radius-md) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.heroSearch__box input, .cardq__in, .os__qin { font-size: 15px !important; }
+.heroSearch__box:focus-within, .cardq__l:focus-within, .os__qin:focus {
+  border-color: var(--tsg-sky) !important;
+  box-shadow: 0 0 0 3px var(--tsg-border-focus) !important;
+  outline: none;
+}
+
+/* チップ・タグ（名指し。警報の帯・天気・路線の色のバッジは変えない） */
+.heroSearch__popular button, .heroSearch__tchips button, .chips .chip, .lchip, .mchips button, .vc__chip, .fvl__chips button, .cmini {
+  background: rgba(var(--tsg-navy-rgb), 0.05) !important;
+  border: 1px solid var(--tsg-border-subtle) !important;
+  border-radius: var(--tsg-radius-pill) !important;
+  font-weight: 600;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.heroSearch__popular button:active, .lchip:active, .cmini:active { transform: scale(.97); }
+
+/* 右の縦のボタン列 */
+.zoombar {
+  background: var(--tsg-surface-glass) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--tsg-border-subtle) !important;
+  border-radius: var(--tsg-radius-pill) !important;
+  box-shadow: var(--tsg-shadow-sm) !important;
+}
+
+/* 下から出るカード（駅カード・スポットカード・現地モード）: スマホは上の角だけ丸く */
+@media (max-width: 720px) {
+  #sheet, .modal__box, .onsite {
+    border-radius: 24px 24px 0 0 !important;
+    box-shadow: var(--tsg-shadow-lg) !important;
+    border-top: 1px solid var(--tsg-border-subtle);
+  }
+}
+.modal__box { background: #FFFFFF !important; }
+
+/* 地図の文字: 色と字の太さだけ（ふちの太さはズームに合わせて JavaScript が決める） */
+#map .st-lbl {
+  font-family: var(--tsg-font-sans);
+  font-weight: 700 !important;
+  fill: #111D2D !important;
+  paint-order: stroke fill;
+  stroke: #FFFFFF !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#map .poi__t {
+  font-family: var(--tsg-font-sans);
+  font-weight: 600 !important;
+  fill: #223246 !important;
+  paint-order: stroke fill;
+  stroke: rgba(255, 255, 255, 0.96) !important;
+  stroke-linejoin: round;
+}
+
+/* スポットの印の影（地図の単位ではなく画面の px で効く filter は、印の丸にだけ） */
+#map .poi__c {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22));
+}
+
+/* ---- v117: 路線に負けない «ソリッド» の印（デザイン担当 AI の案 1） ----
+   ジャンルの色でべた塗りした丸 ＋ 白い線のアイコン ＋ 白いふち（後ろの路線の色を遮る）。
+   新店・ライブ・一之宮・みんなの投稿・行ったことのある場所は、それぞれの見分けのための色のまま */
+#map .poi--ic:not(.poi--new):not(.poi--live):not(.poi--ichinomiya):not(.poi--userpost):not(.visited) .poi__c {
+  fill: var(--pc, #0055AD) !important;
+  stroke: #FFFFFF !important;
+}
+#map .poi--ic:not(.poi--new):not(.poi--live):not(.poi--ichinomiya):not(.poi--userpost):not(.visited) .poi__e {
+  color: #FFFFFF !important;
+}
+#map .poi:not(.poi--new):not(.poi--live):not(.poi--ichinomiya):not(.poi--userpost):not(.poi--alert) .poi__halo {
+  fill: #FFFFFF !important;
+  fill-opacity: 1 !important;
+}
+#map .poi--ic:hover .poi__c, #map .poi--ic:focus .poi__c { fill: var(--tsg-navy) !important; }

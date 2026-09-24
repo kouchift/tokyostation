@@ -4269,7 +4269,7 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .modal__ob{margin-left:auto;margin-right:6px;min-height:34px;border:1px solid var(--tsg-line2,rgba(0,34,74,.2));border-radius:999px;background:#fff;color:var(--tsg-ink,#00224A);font-weight:700;font-size:12px;padding:0 10px;white-space:nowrap}
 
 /* v115: 防災情報 — 画面上の帯・カード */
-.alertchip{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--tripbar-h,44px) + 64px);z-index:40;border:0;border-radius:999px;background:#C62828;color:#fff;font-weight:800;font-size:13px;min-height:36px;padding:0 14px;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alertchip{position:absolute;left:50%;transform:translateX(-50%);bottom:64px;z-index:40;border:0;border-radius:999px;background:#C62828;color:#fff;font-weight:800;font-size:13px;min-height:36px;padding:0 14px;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alertchip--tsu{background:#0D47A1;animation:alertPulse 1.6s ease-in-out infinite}
 @keyframes alertPulse{50%{box-shadow:0 0 0 8px rgba(13,71,161,.25)}}
 @media (prefers-reduced-motion:reduce){.alertchip--tsu{animation:none}}
