@@ -37,7 +37,8 @@ API = "https://api.github.com"
 # 上げないもの（作業用のファイル）
 SKIP = ["*.pyc", "__pycache__/*", ".git/*", "node_modules/*", "*.zip",
         "standalone.html", ".DS_Store", "Thumbs.db", "*.tmp", "*.log",
-        "uploader/*", "*.tgz", "*_prev.js.gz", "tools/__pycache__/*"]   # v93: アップローダー自身（トークン入り）と作業ファイルは上げない
+        "uploader/*", "*.tgz", "*_prev.js.gz", "tools/__pycache__/*",
+        "CLAUDE.md", ".claude/*", "CLAUDE.local.md"]   # v109: Claude 向けの作業メモは公開しない   # v93: アップローダー自身（トークン入り）と作業ファイルは上げない
 
 
 # ----------------------------------------------------------------- 設定
