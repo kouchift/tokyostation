@@ -2337,6 +2337,15 @@ RG.initHeroSearch = function () {
     if (q === last) return; last = q;
     var rows = RG.heroSearch(q, 8);
     sug.innerHTML = "";
+    var zq = RG.zipMode && RG.zipMode() && /^(\d{3})-?(\d{4})$/.exec(q.replace(/[\s\u3000〒]/g, "").replace(/[‐－ー―−]/g, "-"));   // v118: 郵便番号モード
+    if (zq && RG.zipLookup) RG.zipLookup(zq[1] + zq[2], function (hit) {
+      if (last !== q) return;
+      var e0 = sug.querySelector(".heroSug--e"); if (e0) e0.remove();
+      var zb = document.createElement("button"); zb.type = "button"; zb.className = "heroSug heroSug--area"; zb.setAttribute("role", "option");
+      zb.innerHTML = hit ? "<b>〒 " + zq[1] + "-" + zq[2] + "</b><small></small><span>" + esc(hit.town) + "</span>" : "<b>〒 " + zq[1] + "-" + zq[2] + "</b><small></small><span>この番号は見つかりませんでした</span>";
+      if (hit) zb.addEventListener("click", function () { input.value = "〒" + zq[1] + "-" + zq[2]; close(); if (RG.heroFold) RG.heroFold("user"); RG.Map.gotoLatLng(hit.la, hit.lo, 160); if (RG.tripStatus) RG.tripStatus("〒" + zq[1] + "-" + zq[2] + " " + hit.town + " のあたり", "ok", 3500); });
+      sug.insertBefore(zb, sug.firstChild); sug.hidden = false;
+    });
     if (!rows.length) { sug.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした。駅名・地名・建物名でお試しください。</div>'; sug.hidden = false; return; }
     rows.forEach(function (r) {
       var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");

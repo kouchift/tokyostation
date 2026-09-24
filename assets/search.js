@@ -59,7 +59,7 @@ RG.searchLocal = function (q, limit) {
   q = normalize(q);
   if (!q) return [];
   var terms = q.split(/[\s\u3000]+/).filter(Boolean);
-  var zipm = ZIP.exec(q.replace(/[\s\u3000]/g, ""));
+  var zipm = RG.zipMode && RG.zipMode() ? ZIP.exec(q.replace(/[\s\u3000]/g, "")) : null;   // v118: 郵便番号モードのときだけ
   var zip = zipm ? zipm[1] + "-" + zipm[2] : null;
   var out = [];
   for (var i = 0; i < IDX.length && out.length < 400; i++) {
@@ -164,7 +164,7 @@ RG.initSearchUI = function () {
     var loc = RG.searchLocal(v, 12);
     render(loc, [], true);                    // ローカルは同期・即時
     // 郵便番号：手元の索引（上3桁ごとのファイル）で即座に場所へ。外部サービスに頼らない
-    var zm = /^(\d{3})-?(\d{4})$/.exec(v.replace(/[\s\u3000〒]/g, "").replace(/[‐－ー―−]/g, "-"));
+    var zm = RG.zipMode && RG.zipMode() ? /^(\d{3})-?(\d{4})$/.exec(v.replace(/[\s\u3000〒]/g, "").replace(/[‐－ー―−]/g, "-")) : null;   // v118: 郵便番号モードのときだけ
     if (zm && RG.zipLookup) {
       RG.zipLookup(zm[1] + zm[2], function (hit, all) {
         if (input.value.trim() !== v) return;
@@ -180,7 +180,7 @@ RG.initSearchUI = function () {
       return;
     }
     // 郵便番号や「〜丁目/番地」など住所らしい入力で、ローカルに当たらないときは自動で地図検索
-    if (loc.length < 2 && /(^\d{3}-?\d{4}$)|丁目|番地|[0-9]-[0-9]/.test(v)) {
+    if (loc.length < 2 && ((RG.zipMode && RG.zipMode() && /^\d{3}-?\d{4}$/.test(v)) || /丁目|番地|[0-9]-[0-9]/.test(v))) {
       RG.searchRemote(v, function (rows) {
         if (input.value.trim() !== v) return;
         render(loc, rows, false);

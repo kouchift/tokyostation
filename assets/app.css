@@ -4288,3 +4288,10 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .modal__ob--2{margin-left:0}
 .stk__prev{background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/20px 20px;border-radius:12px;padding:12px;text-align:center}
 .stk__prev img{max-width:100%;max-height:46vh}
+
+/* v118: 郵便番号モード（〒 ボタンで ON のときだけ）。ON が一目で分かるように */
+.zipbar{position:absolute;top:calc(var(--tripbar-h,44px) + 8px);right:12px;z-index:41;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:0;border-radius:999px;background:#C62828;color:#fff;font-weight:800;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.zipbar b{background:#fff;color:#C62828;border-radius:6px;padding:1px 6px;font-size:12px}
+.zipbar span{font-weight:600;font-size:11px;opacity:.9}
+#zipbtn.on{background:#C62828 !important;color:#fff !important;box-shadow:0 0 0 3px rgba(198,40,40,.3)}
+body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2px}
