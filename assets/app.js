@@ -1378,6 +1378,7 @@ var Card = (function () {
         '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '">🔗 共有</button>' +
         '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
         (RG.favs ? '<button class="cmini" type="button" data-fav-open="1">⭐ お気に入り一覧</button>' : "") +
+        (RG.stickerStation ? '<button class="cmini" type="button" data-stk-st="' + esc(s.id) + '" title="SNS に貼る駅名標のステッカー（透明な PNG）">🏷️ ステッカー</button>' : "") +
         (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る">📝 Obsidian</button>' : "") +
       "</div>" +
       '<div class="cardq"><label class="cardq__l"><span class="ms">search</span><input class="cardq__in" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(s.n) + '駅から、どこへ？（駅名・地名）" aria-label="' + esc(s.n) + '駅からの行き先"></label><div class="cardq__sug" role="listbox" hidden></div></div>' +
@@ -1898,6 +1899,8 @@ var Card = (function () {
     // v94: 共有・お気に入り一覧・行き先検索・近くのスポット
     var sh = root.querySelector("[data-share-st]");
     if (sh) sh.addEventListener("click", function (e) { e.stopPropagation(); if (RG.shareStation) RG.shareStation(sh.dataset.shareSt); });
+    var sk = root.querySelector("[data-stk-st]");                  // v116: 駅名標ステッカー
+    if (sk) sk.addEventListener("click", function (e) { e.stopPropagation(); RG.stickerStation(sk.dataset.stkSt); });
     var ob = root.querySelector("[data-ob-st]");                  // v113: Obsidian へ駅のノート
     if (ob) ob.addEventListener("click", function (e) { e.stopPropagation(); RG.sendStationNote(ob.dataset.obSt); });
     var fo = root.querySelector("[data-fav-open]");

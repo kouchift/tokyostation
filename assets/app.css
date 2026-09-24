@@ -4282,3 +4282,9 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .alc__go small{color:#666;font-weight:500}
 .poi--alert .poi__c{stroke-width:calc(2.6 * var(--poiscale,1))}
 .poi--alert .poi__halo{fill:#FFCDD2;fill-opacity:.9}
+
+/* v116: 縦の PV（1080×1920）は縦長のまま小さく見せる */
+.pv__cv--v,.pv__v--v{width:auto !important;height:52vh;max-height:52vh;margin:0 auto;aspect-ratio:9/16}
+.modal__ob--2{margin-left:0}
+.stk__prev{background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/20px 20px;border-radius:12px;padding:12px;text-align:center}
+.stk__prev img{max-width:100%;max-height:46vh}

@@ -87,7 +87,7 @@ RG.sendStationNote = function (id) { var s = RG.byId[id]; if (s) send(RG.station
 function hook() {
   if (RG.openModal && !RG.openModal.__ob) {
     var om = RG.openModal;
-    RG.openModal = function () { var m = om.apply(this, arguments); var b = m && m.querySelector(".modal__ob"); if (b) b.remove(); return m; };
+    RG.openModal = function () { var m = om.apply(this, arguments); if (m) Array.prototype.forEach.call(m.querySelectorAll(".modal__ob"), function (b) { b.remove(); }); return m; };
     RG.openModal.__ob = 1;
   }
   if (RG.showSpot && !RG.showSpot.__ob) {
@@ -96,10 +96,16 @@ function hook() {
       var r = ss.apply(this, arguments);
       var m = document.querySelector(".modal.show"), hd = m && m.querySelector(".modal__hd");
       if (hd && p && p.n && p.la != null && !hd.querySelector(".modal__ob")) {
-        var b = document.createElement("button"); b.type = "button"; b.className = "modal__ob"; b.textContent = "📝 Obsidian";
+        var b = document.createElement("button"); b.type = "button"; b.className = "modal__ob"; b.textContent = "📝 ノート";
         b.setAttribute("aria-label", "Obsidian にノートを送る");
         b.addEventListener("click", function (e) { e.stopPropagation(); RG.sendSpotNote(p); });
         hd.insertBefore(b, hd.querySelector(".modal__x"));
+        if (RG.stickerSpot) {                                          // v116: SNS に貼るステッカー
+          var b2 = document.createElement("button"); b2.type = "button"; b2.className = "modal__ob modal__ob--2"; b2.textContent = "🏷️ シール";
+          b2.setAttribute("aria-label", "SNS に貼るステッカーを作る");
+          b2.addEventListener("click", function (e) { e.stopPropagation(); RG.stickerSpot(p); });
+          hd.insertBefore(b2, hd.querySelector(".modal__x"));
+        }
       }
       return r;
     };
