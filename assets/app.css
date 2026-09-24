@@ -4241,3 +4241,26 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
    字の大きさの数倍の隙間になっていた（«東 日 本 旅 客 鉄 道» のようにばらける）。
    :where で弱くしておき、区の名前などクラスで字間を決めているものはそちらを優先 */
 :where(#map) text{letter-spacing:0}
+
+/* v112: 現地モード «出口» — 降りてからの案内・いまの号車・みんなの «便利な号車» */
+.os__guide{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:10px 12px;border-radius:14px;background:var(--tsg-ink,#00224A);color:#fff}
+.os__garr{flex:0 0 44px;height:44px;border-radius:50%;background:#fff;color:var(--tsg-primary,#0055AD);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;transition:transform .3s ease}
+.os__gtx{flex:1;min-width:0;display:flex;flex-direction:column}
+.os__gtx b{font-size:16px}.os__gtx small{font-size:12px;opacity:.85}
+.os__gx{flex:0 0 auto;min-height:36px;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-weight:700;padding:0 12px}
+.os__car{margin:0 0 8px;padding:10px 12px;border:1px solid var(--tsg-line,#E8ECF2);border-radius:14px;background:var(--tsg-tint,#EBF3FF)}
+.os__carl{display:flex;align-items:center;gap:8px;font-weight:800}
+.os__carl select{min-height:36px;border-radius:10px;border:1px solid var(--border,#D9DFE8);padding:0 8px;font-weight:700;background:#fff}
+.os__car>small{display:block;font-size:11px;color:var(--tsg-ink2,#626264);margin:2px 0 6px}
+.os__tl{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.os__tl li{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff;border-radius:10px;padding:6px 8px;font-size:13px}
+.os__tl li.on{outline:2px solid var(--tsg-primary,#0055AD)}
+.os__tl li.on b::before{content:"★ "}
+.os__tl small{color:var(--tsg-ink2,#626264);font-size:11px}
+.os__tv{margin-left:auto;min-height:32px;border:1px solid var(--border,#D9DFE8);border-radius:999px;background:#fff;padding:0 10px}
+.os__tipf summary{cursor:pointer;font-weight:700;color:var(--tsg-primary,#0055AD);min-height:36px;display:flex;align-items:center}
+.os__tipf form{display:grid;gap:6px}
+.os__tipf input,.os__tipf select{min-height:40px;border:1px solid var(--border,#D9DFE8);border-radius:10px;padding:0 10px;font-size:14px;background:#fff}
+.os__tipr{display:grid;grid-template-columns:96px 1fr;gap:6px}
+.os__tipgo{min-height:40px;border:0;border-radius:999px;background:var(--tsg-primary,#0055AD);color:#fff;font-weight:800}
+.os__tipst{font-size:12px}

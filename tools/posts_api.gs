@@ -38,6 +38,9 @@
  *        {a:"photo",   k, spot:{n,la,lo,pf}, tok, name, cap, img:<base64 JPEG>, w, h, loc, dist, credit, hp}
  *        {a:"comment", k, spot:{n,la,lo,pf}, tok, name, text, pid, hp}      pid があれば写真へのコメント
  *        {a:"report",  id, tok}                                            id は写真の pid かコメントの cid
+ *        {a:"tip",     st, line, car, to, tok, name}                       v112: «この駅は ○号車が △ に近い»（みんなで貯める）
+ *        {a:"tipvote", id, tok}                                            v112: «合ってた»（1 人 1 回）
+ *   GET  ?a=tips&st=<駅名>                                                  v112: その駅の «便利な号車» 情報
  *   注意: loc（撮影位置の判定）とラベルの焼き込みは画面側で行う。改造した画面からは «ok» と偽れるので、
  *         ここでは 1 人・1 スポット・全体の数の上限で被害を小さくしている。
  */
@@ -53,6 +56,9 @@ var HIDE_AT_REPORTS = 3, PER_DAY_REPORTS = 20;
 var P_COLS = ["pid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "cap", "file_id", "w", "h", "ts", "hidden", "reports", "loc", "dist", "credit", "shared"];
 var C_COLS = ["cid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "text", "pid", "ts", "hidden", "reports"];
 var R_COLS = ["id", "uid", "ts"];
+var T_COLS = ["tid", "st", "line", "car", "to", "uid", "name", "ts", "votes", "hidden"];   // v112: 便利な号車
+var TV_COLS = ["tid", "uid", "ts"];
+var PER_DAY_TIPS = 20;
 var X_COLS = ["ts", "result", "pid", "uid", "name", "k", "spot_n", "spot_la", "spot_lo", "loc", "dist_m", "method", "cam",
               "gps_la", "gps_lo", "datetime_original", "make", "model", "software", "file_name", "file_size", "file_type", "file_modified",
               "orig_w", "orig_h", "geo_la", "geo_lo", "geo_acc_m", "geo_at", "geo_km", "ua", "meta_json"];
@@ -77,7 +83,7 @@ function setupCore_() {
   if (!ss) { ss = SpreadsheetApp.create("TSG 投稿"); ss.getActiveSheet().setName("Photos"); }
   if (!folder) folder = DriveApp.createFolder("TSG 投稿写真");
   PROP.setProperty("SS", ss.getId()); PROP.setProperty("FOLDER", folder.getId());
-  [["Photos", P_COLS], ["Comments", C_COLS], ["Reports", R_COLS], ["ExifLog", X_COLS]].forEach(function (d) {
+  [["Photos", P_COLS], ["Comments", C_COLS], ["Reports", R_COLS], ["ExifLog", X_COLS], ["Tips", T_COLS], ["TipVotes", TV_COLS]].forEach(function (d) {
     var sh = ss.getSheetByName(d[0]) || ss.insertSheet(d[0]);
     var head = sh.getLastColumn() ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0] : [];
     d[1].forEach(function (c, i) { if (head[i] !== c) sh.getRange(1, i + 1).setValue(c); });   // 列の見出しを揃える（後ろに足した列）
@@ -107,7 +113,7 @@ function syncHidden() {
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function sheet_(name) {
   var ss = SpreadsheetApp.openById(PROP.getProperty("SS")), sh = ss.getSheetByName(name);
-  var COLS = { Reports: R_COLS, ExifLog: X_COLS };
+  var COLS = { Reports: R_COLS, ExifLog: X_COLS, Tips: T_COLS, TipVotes: TV_COLS };
   if (!sh && COLS[name]) { sh = ss.insertSheet(name); sh.appendRow(COLS[name]); sh.setFrozenRows(1); }   // 古い setup で作ったシートにも足す
   return sh;
 }
@@ -289,6 +295,13 @@ function doGet(e) {
       return json_({ photos: rows_("Photos", P_COLS).filter(function (r) { return r.uid === u && visible_(r); }).map(photoOut_),
                      comments: rows_("Comments", C_COLS).filter(function (r) { return r.uid === u && visible_(r); }).map(commentOut_) });
     }
+    if (a === "tips") {                           // v112: 駅の «便利な号車»（非表示を除く・«合ってた» の多い順）
+      var stn = clean_(q.st, 20);
+      var TT = rows_("Tips", T_COLS).filter(function (r) { return r.st === stn && !(r.hidden === 1 || r.hidden === "1" || r.hidden === true); })
+        .map(function (r) { return { tid: r.tid, st: r.st, line: r.line, car: +r.car || 0, to: r.to, uid: r.uid, name: r.name, ts: iso_(r.ts), votes: +r.votes || 0 }; });
+      TT.sort(function (x, y) { return y.votes - x.votes || (x.ts < y.ts ? 1 : -1); });
+      return json_({ tips: TT.slice(0, 100) });
+    }
     if (a === "recent") {
       var n = Math.min(200, +q.n || 50);
       var ph = rows_("Photos", P_COLS).filter(visible_).map(photoOut_);
@@ -326,6 +339,31 @@ function doPost(e) {
       if (sh === "Photos" && nrep >= HIDE_AT_REPORTS && hit.file_id) {
         try { DriveApp.getFileById(hit.file_id).setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); sheet_("Photos").getRange(hit._row, P_COLS.indexOf("shared") + 1).setValue(0); } catch (e3) {}
       }
+      SpreadsheetApp.flush();
+      return json_({ ok: true });
+    }
+
+    if (b.a === "tip") {                          // v112: 便利な号車を教える
+      var stn2 = clean_(b.st, 20), line = clean_(b.line, 30), to = clean_(b.to, 40), car = Math.round(+b.car);
+      if (!stn2 || !line || !to || !(car >= 1 && car <= 20)) return json_({ error: "駅・路線・号車・何に近いかを入れてください" });
+      var MT = rows_("Tips", T_COLS).filter(function (r) { return r.uid === uid; });
+      if (MT.filter(function (r) { return day_(r.ts) === today; }).length >= PER_DAY_TIPS) return json_({ error: "今日の投稿の上限に達しました" });
+      if (MT.length && now - ms_(MT[MT.length - 1].ts) < MIN_GAP_MS) return json_({ error: "少し待ってから投稿してください" });
+      if (MT.some(function (r) { return r.st === stn2 && r.line === line && +r.car === car && r.to === to; })) return json_({ error: "同じ情報をもう教えてもらっています" });
+      var tid = "t" + Utilities.getUuid().replace(/-/g, "").slice(0, 16), tname = clean_(b.name, 20) || "匿名";
+      sheet_("Tips").appendRow([tid, txt_(stn2, 21), txt_(line, 31), car, txt_(to, 41), uid, txt_(tname, 21), now, 0, ""]);
+      SpreadsheetApp.flush();
+      return json_({ ok: true, tip: { tid: tid, st: stn2, line: line, car: car, to: to, uid: uid, name: tname, ts: iso_(now), votes: 0 } });
+    }
+    if (b.a === "tipvote") {                      // v112: «合ってた»（1 人 1 回）
+      var vid = String(b.id || "");
+      if (!/^t[0-9a-f]{16}$/.test(vid)) return json_({ error: "見つかりません" });
+      var th = rows_("Tips", T_COLS).filter(function (r) { return r.tid === vid; })[0];
+      if (!th) return json_({ error: "見つかりません" });
+      if (th.uid === uid) return json_({ ok: true, already: true });                     // 自分の情報には押せない
+      if (rows_("TipVotes", TV_COLS).some(function (r) { return r.tid === vid && r.uid === uid; })) return json_({ ok: true, already: true });
+      sheet_("TipVotes").appendRow([vid, uid, now]);
+      sheet_("Tips").getRange(th._row, T_COLS.indexOf("votes") + 1).setValue((+th.votes || 0) + 1);
       SpreadsheetApp.flush();
       return json_({ ok: true });
     }

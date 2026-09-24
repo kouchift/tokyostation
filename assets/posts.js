@@ -64,6 +64,10 @@ function post(body) {   // text/plain にしてプリフライト（OPTIONS）�
     .then(function (r) { return r.json(); })
     .then(function (d) { if (!d || d.error) throw new Error((d && d.error) || "送れませんでした"); return d; });
 }
+/* v112: ほかの部品（現地モードの «便利な号車»）からも同じ受け皿・同じ合いことばで使う */
+RG.postsApiGet = function (q) { return get(q); };
+RG.postsApiPost = function (body) { body.tok = tok(); return post(body); };
+RG.postsNick = function (n) { if (n) setNick(n); return nick(); };
 function loadSpot(k, force) {
   var c = mem[k];
   if (c && !force && Date.now() - c.t < TTL) return Promise.resolve(c);

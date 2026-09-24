@@ -37,6 +37,7 @@ var IDLE = [
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）
   { f: "data/tokyo_station.js", key: "tokyost", label: "東京駅の出入口" },      // v90: 東京駅モード（小さい）
+  { f: "data/station_exits.js", key: "stexits", label: "主要駅の出入口" },    // v112: 現地モードの «出口»（主要駅）
   { f: "data/shinkansen.js", key: "shinkansen", label: "新幹線の駅" },
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
   { f: "data/analytics.js", key: "analytics", label: "利用状況の設定" },        // v98: endpoint が空なら送らない
