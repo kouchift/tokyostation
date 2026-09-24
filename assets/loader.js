@@ -34,6 +34,7 @@ var IDLE = [
   { f: "data/landmarks.js", key: "landmarks", label: "ランドマーク" },
   { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮" },
   { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
+  { f: "data/jma_areas.js", key: "jmaareas", label: "気象庁の予報区" },          // v115: 防災情報（警報を置く場所）
   { f: "data/auto/buzz_auto.js", key: "buzzauto", label: "話題の場所（自動更新）" },   // v114: GitHub Actions が毎朝更新
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）

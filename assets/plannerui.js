@@ -326,6 +326,7 @@ RG.showSpot = function (p) {
   if (p.corp && RG.showCorp) { RG.showCorp(p.corp); return; }
   if (p.gone && RG.showCorpGone) { RG.showCorpGone(p.gone); return; }
   if (p.smoke && RG.showSmoke) { RG.showSmoke(p.smoke); return; }
+  if (p.alert && RG.showAlert) { RG.showAlert(p); return; }          // v115: 防災情報
   if (p.adult && RG.showAdult) { RG.showAdult(p.adult); return; }
   if (p.camspot && RG.showCamSpot) { RG.showCamSpot(p.camspot); return; }
   if (p.buzz && RG.showBuzz) { RG.showBuzz(p.buzz, "fresh"); return; }

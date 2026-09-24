@@ -1099,7 +1099,7 @@ var Map = (function () {
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
       // 一之宮・話題は数の上限・間引きの対象外（必ず出す）。レベチは «絞っているとき» か «寄ったとき» だけ全部出す（v89: 引いた地図で王冠が団子にならないように）
-      var special = q.g === "ichinomiya" || q.g === "buzz" || q.g === "userpost" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
+      var special = q.g === "alert" || q.g === "ichinomiya" || q.g === "buzz" || q.g === "userpost" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
       if (!special && show.length >= cap) continue;
       var key = airmode ? Math.round(q.x / cellA) + "," + Math.round(q.y / cellA) : Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key] && (!special || airmode)) continue;

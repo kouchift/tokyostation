@@ -118,6 +118,10 @@ RG.GENRES = [
   { id: "klm",     e: "🎡", label: "見どころ", c: "#E4007F", enabled: true, optIn: true, kanto: true,
     desc: "テーマパーク・城・神社・美術館・温泉・道の駅など4,109か所（日本全国）" },
 
+  /* v115: 防災情報（気象警報・噴火警報）。いま出ているときだけ地図に出る（assets/alerts.js が気象庁から取る） */
+  { id: "alert",    e: "⚠️", label: "防災情報（警報・火山）", c: "#C62828", enabled: true,
+    desc: "いま出ている気象警報（警報以上）と噴火警報。地震は «地震» の帯で" },
+
   /* v114: «はじめての土地» で探したくなるもの（全国・OpenStreetMap・GitHub Actions が毎月更新 → data/auto/travel.js） */
   { id: "tourinfo", e: "ℹ️", label: "観光案内所",      c: "#0277BD", enabled: true, optIn: true, travel: true,
     desc: "地図・パンフレット・宿や交通の相談。はじめての街ではまずここ" },
