@@ -4214,3 +4214,17 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .upbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .upbar button{flex:none;min-height:34px;border:0;border-radius:999px;padding:0 12px;background:#f3eef8;color:#7B1FA2;font-weight:700;cursor:pointer}
 .poi--userpost .poi__c{stroke:#7B1FA2 !important;fill:#F3E5F5 !important}.poi--userpost .poi__halo{fill:#CE93D8;fill-opacity:.8}
+/* v108 撮影位置（EXIF）の確認とクレジット */
+.pst__sum{margin-left:8px;font-size:12px;color:#555}
+.pst__note--warn{color:#8a5a00;background:#FFF8E1;border-radius:6px;padding:4px 6px}
+.pst__ql li{flex-wrap:wrap}
+.pst__lc{flex-basis:100%;font-style:normal;font-size:11.5px;padding-left:2px}
+.pst__lc--ok{color:#2E7D32}.pst__lc--none{color:#8a6d00}.pst__lc--far{color:#C62828;font-weight:700}.pst__lc--ng{color:#8E0000;font-weight:700}
+.pst__okfar{flex-basis:100%;display:flex;gap:6px;align-items:flex-start;font-size:12px;margin:2px 0 4px;color:#333}
+.pst__credit-opt{display:flex;gap:6px;align-items:center;font-size:12.5px;margin:6px 0}
+.pst__th--none,.pst__th--far{opacity:.9}
+.pst__th--none::after,.pst__th--far::after{position:absolute;right:3px;top:3px;font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;background:#FFD600;color:#111;border:1px solid #D50000}
+.pst__th--none::after{content:"位置?"}.pst__th--far::after{content:"位置✕"}
+.pst__ok{position:absolute;left:4px;top:3px;font-size:12px;filter:drop-shadow(0 0 2px #fff)}
+.phv__loc{font-size:12.5px;margin:6px 0;padding:5px 8px;border-radius:8px}
+.phv__loc--ok{background:#E8F5E9;color:#1B5E20}.phv__loc--none{background:#FFF8E1;color:#6d5200}.phv__loc--far{background:#FFEBEE;color:#B71C1C}
