@@ -47,9 +47,9 @@ RG.MAPSIZE = {
   strokeR:  0.30,   // 文字の白いふち（文字の大きさに対する割合）
   admR:     1.25,   // 区の名前は、駅名（大きい駅）の 125%
   jpadmR:   1.40,   // 全国の市区町村の地名は 140%
-  poiER:    1.15,   // スポットの絵文字（v74: 駅の丸を大きく・スポットを小さくして釣り合わせた）
-  poiEBigR: 1.35,   // 目立つスポットの絵文字
-  poiCR:    0.58,   // スポットの丸（半径）＝絵文字に対する割合
+  poiER:    1.40,   // スポットの絵文字（v74: 1.15 → v111: 1.40。スマホで «何の印か» が見分けられる大きさに）
+  poiEBigR: 1.60,   // 目立つスポットの絵文字（v111: 1.35 → 1.60）
+  poiCR:    0.62,   // スポットの丸（半径）＝絵文字に対する割合（v111: 0.58 → 0.62。線のアイコンが丸に窮屈に入らないように）
   poiTR:    0.90    // スポットの名前（駅名よりわずかに小さく）
 };
 
@@ -1051,7 +1051,7 @@ var Map = (function () {
     // 拡大するほどアイコンは小さく（画面が埋まらないように・描画も軽くなる）
     var shrink = z >= 12 ? 0.72 : z >= 6 ? 0.86 : 1;
     var eff = poiScale * shrink;
-    var cell = (22 * eff) * (vb.w / wpx);
+    var cell = (26 * eff) * (vb.w / wpx);                          // v111: 印を大きくしたぶん、間引きのマス目も広く（重ならないように）
     /* 画面に «無理なく置ける数» を見積もる。
        アイコン1つにおよそ 30×30px が要るとして、画面の18%まで。
        駅名と同じ考えかたで、混みすぎないようにする。 */
@@ -1091,13 +1091,14 @@ var Map = (function () {
       n.setAttribute("tabindex", t.ti === 0 ? "0" : "-1");
       var c0 = n.childNodes[1], e0 = n.childNodes[2], h0 = n.childNodes[3];
       var uu = vb.w / wpx;               // 画面の1px = 地図の何単位か
+      var tb = isTouch() ? 1.1 : 1;      // v111: 指で押すスマホは、印を 1 割大きく
       n.__halo.setAttribute("cx", t.x); n.__halo.setAttribute("cy", t.y);
-      n.__halo.style.setProperty("r", ((SZ2.poiC + 1.8) * uu).toFixed(3) + "px", "important");
+      n.__halo.style.setProperty("r", ((SZ2.poiC * tb + 2) * uu).toFixed(3) + "px", "important");
       c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y);
-      c0.style.setProperty("r", (SZ2.poiC * uu).toFixed(3) + "px", "important");
-      c0.style.setProperty("stroke-width", (1.6 * uu).toFixed(3) + "px", "important");
+      c0.style.setProperty("r", (SZ2.poiC * tb * uu).toFixed(3) + "px", "important");
+      c0.style.setProperty("stroke-width", (2 * uu).toFixed(3) + "px", "important");   // v111: 1.6 → 2（ジャンルの色の輪をはっきり）
       c0.style.setProperty("--pc", g.c);
-      var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15;
+      var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15 * tb;
       if (t.g === "buzz" || t.g === "ichinomiya") esz = Math.max(esz, 13);   // 都道府県単位の目印は、引いていても読める大きさに
       // v77: 寄ったとき（街〜詳細）だけ、企業・チェーンのロゴを極小で（識別目的。商標は各社に帰属）
       var logo = (!t.isNew && z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
@@ -2503,9 +2504,17 @@ RG.boot = function () {
     function ask() {
       navigator.geolocation.getCurrentPosition(function (p) {
         var la = p.coords.latitude, lo = p.coords.longitude;
-        if (moved || document.querySelector(".modal") || !(la > 20 && la < 46 && lo > 122 && lo < 154)) return;
+        if (!(la > 20 && la < 46 && lo > 122 && lo < 154)) return;
+        // v111: ルートの出発地も «現在地» に（利用者がもう別の出発地を選んでいたら変えない）
+        var T = RG.Trip || {}, def = RG.getDefaultOriginStation && RG.getDefaultOriginStation();
+        if (RG.setOrigin && (!T.origin || (def && T.id === def.id && !T.isGeo))) {
+          var c = [la, lo], best = null;
+          RG.NET.stations.forEach(function (s) { var km = RG.hav(c, [s.la, s.lo]); if (!best || km < best.km) best = { s: s, km: km }; });
+          RG.setOrigin(c, "現在地（" + best.s.n + "駅から約" + best.km.toFixed(1) + "km）", null, p.coords.accuracy);
+        }
+        if (moved || document.querySelector(".modal")) return;
         Map.gotoLatLng(la, lo, w);
-        if (RG.tripStatus) RG.tripStatus("📍 現在地のあたりを表示しています", "info", 2600);
+        if (RG.tripStatus) RG.tripStatus("📍 現在地のあたりを表示しています（ルートも現在地から）", "info", 2600);
       }, function () {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
     }
     // 前に «許可しない» にした人には聞き直さない

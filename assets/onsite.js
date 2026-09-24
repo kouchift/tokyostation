@@ -15,11 +15,21 @@ var CATS = [
   { id: "cafe",   e: "☕", label: "カフェ",   g: ["cafe", "manga", "net"], heavy: true },
   { id: "atm",    e: "🏧", label: "ATM",      g: ["atm", "post"], heavy: true },
   { id: "toilet", e: "🚻", label: "トイレ",   g: ["toilet"], heavy: true },
+  { id: "smoke",  e: "🚬", label: "喫煙所",   g: ["smoke"], heavy: true, ticket: true },   // v111: ヤニカスチケットを持っている人だけ
   { id: "locker", e: "🧳", label: "ロッカー", g: ["locker"], heavy: true },
   { id: "levechi", e: "👑", label: "レベチ",  g: ["levechi"] },
   { id: "see",    e: "🎡", label: "見どころ", g: ["park", "museum", "shopping", "leisure", "bunkazai", "history", "worship", "shrine_major", "temple_major", "klm"] },
   { id: "dest",   e: "🎯", label: "目的地",   kind: "dest" }
 ];
+/* v111: 出すタブ。🚬 はチケットを持っている人だけ、🚪 出口は出入口のデータがある東京駅の近く（1.5km）にいるときだけ */
+function nearTokyo() { var T = RG.TOKYO_STATION, tk = T && RG.byId[T.st]; return !!(O.anchor && tk && RG.hav(O.anchor, [tk.la, tk.lo]) <= 1.5); }
+function cats() {
+  return CATS.filter(function (c) {
+    if (c.ticket && !(RG.hasSmokeTicket && RG.hasSmokeTicket())) return false;
+    if (c.kind === "exit" && !nearTokyo()) return false;
+    return true;
+  });
+}
 var O = RG.onsite = { on: false, cat: "exit", anchor: null, anchorKind: "station", anchorName: "", watch: null, el: null, acc: null };
 var R = 0.7;                                                           // km: 一覧の半径（出口は 1.5km）
 var GBY = null; function gby() { if (!GBY && RG.GENRES) { GBY = {}; RG.GENRES.forEach(function (g) { GBY[g.id] = g; }); } return GBY || {}; }
@@ -58,6 +68,7 @@ function items(cat) {
     if (near && near.t && (!t || near.t.id !== t.id)) out.push({ n: near.t.n + "駅", sub: "いちばん近い駅 — 押すと駅カード", e: "🚉", la: near.t.la, lo: near.t.lo, km: near.km, station: near.t });
     return out;
   }
+  if (cat.id === "smoke" && RG.mergeSmoke) RG.mergeSmoke();       // チケットを持っていれば地図のデータに入れる（1 回だけ）
   var G = {}; (cat.g || []).forEach(function (g) { G[g] = 1; });
   var P = RG.MAPPOI || [], seen = {};
   for (var i = 0; i < P.length; i++) {
@@ -109,7 +120,8 @@ function host() {
   return el;
 }
 function render() {
-  var el = host(), cat = CATS.filter(function (c) { return c.id === O.cat; })[0] || CATS[0];
+  var CS = cats(), el = host(), cat = CS.filter(function (c) { return c.id === O.cat; })[0] || CS[0];
+  O.cat = cat.id;
   el.innerHTML =
     '<div class="os__hd">' +
       '<button class="os__anc' + (O.anchorKind === "geo" ? " on" : "") + '" type="button" data-os-geo="1" aria-pressed="' + (O.anchorKind === "geo") + '">📍 現在地' + (O.anchorKind === "geo" && O.acc ? " <small>±" + Math.round(O.acc) + "m</small>" : "") + "</button>" +
@@ -117,7 +129,7 @@ function render() {
       '<span class="os__sp"></span>' +
       '<button class="os__x" type="button" data-os-close="1" aria-label="現地モードを閉じる">×</button>' +
     "</div>" +
-    '<div class="os__cats" role="tablist" aria-label="種類">' + CATS.map(function (c) {
+    '<div class="os__cats" role="tablist" aria-label="種類">' + CS.map(function (c) {
       return '<button class="os__cat' + (c.id === O.cat ? " on" : "") + '" type="button" role="tab" aria-selected="' + (c.id === O.cat) + '" data-os-cat="' + c.id + '">' + (RG.hasIcon && RG.hasIcon(c.id) ? RG.gIconHtml(c.id, c.e, "os__ce") : c.e) + " " + c.label + "</button>";   // v101
     }).join("") + "</div>" +
     '<div class="os__list">' + listHtml(cat) + "</div>";

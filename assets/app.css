@@ -4235,3 +4235,9 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .pst__lc--here{color:#00695C}
 .pst__th--here::after{position:absolute;right:3px;top:3px;font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;background:#FFD600;color:#111;border:1px solid #D50000;content:"現地"}
 .phv__loc--here{background:#E0F2F1;color:#004D40}
+
+/* v111: 地図の文字は «駅名と同じ» 字間 0 に。
+   本文の letter-spacing（.005em）が SVG の文字に «16px のときの値» のまま受け継がれ、ズームで小さくした文字では
+   字の大きさの数倍の隙間になっていた（«東 日 本 旅 客 鉄 道» のようにばらける）。
+   :where で弱くしておき、区の名前などクラスで字間を決めているものはそちらを優先 */
+:where(#map) text{letter-spacing:0}
