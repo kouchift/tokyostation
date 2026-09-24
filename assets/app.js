@@ -167,6 +167,39 @@ function hav(a, b) {
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 RG.hav = hav;
+/* v113: 現在地（など）のまわりを «前後 2〜3 駅» が入る広さで見せる。
+   近い駅から 6 つ目までの距離を半径にして、画面の短い辺に収める（街中は狭く、郊外は広く）。1.2〜30km の間 */
+RG.viewAround = function (la, lo) {
+  var d = [];
+  (RG.NET && RG.NET.stations || []).forEach(function (s) { var k = hav([la, lo], [s.la, s.lo]); if (k < 40) d.push(k); });
+  d.sort(function (a, b) { return a - b; });
+  var r = d.length >= 6 ? d[5] : d.length ? d[d.length - 1] : 3;
+  var km = Math.max(1.2, Math.min(30, r * 2.3));                       // 直径 ＋ ふち
+  var wr = document.querySelector("#map") || document.body, rc = wr.getBoundingClientRect();
+  var portrait = rc.height > rc.width;                                   // 縦長（スマホ）は «横幅» が短い辺
+  var kmW = portrait ? km : km * (rc.width / Math.max(1, rc.height));
+  var P0 = RG.project(la, lo), P1 = RG.project(la, lo + kmW / (111.32 * Math.cos(la * Math.PI / 180)));
+  // スマホは上に検索（たたんだ帯）・下にボタンがあるので、見えている部分の真ん中に来るよう中心を少し北へ
+  var cla = portrait ? la + 0.05 * (kmW * rc.height / Math.max(1, rc.width)) / 111 : la;
+  if (portrait && innerWidth < 560 && RG.heroFold) RG.heroFold("here");          // 検索カードをたたんで、現在地を隠さない
+  RG.Map.gotoLatLng(cla, lo, Math.abs(P1.x - P0.x) / (RG.K || 1));          // gotoLatLng の幅は «23区版の単位»（中で RG.K 倍される）
+};
+/* v113: ◎ ボタン = 現在地へ（取れないときは東京駅へ）。出発地は変えない */
+RG.goHere = function () {
+  function tokyo() { var st = RG.getDefaultOriginStation && RG.getDefaultOriginStation(); RG.Map.focus(st ? st.id : RG.HUB, 300); }
+  if (!navigator.geolocation || (RG.secureOK && !RG.secureOK())) return tokyo();
+  if (RG.tripStatus) RG.tripStatus("📍 現在地を確かめています…", "info", 0);
+  navigator.geolocation.getCurrentPosition(function (p) {
+    var la = p.coords.latitude, lo = p.coords.longitude;
+    if (!(la > 20 && la < 46 && lo > 122 && lo < 154)) { if (RG.tripStatus) RG.tripStatus("現在地が日本の外なので、東京駅を表示します", "info", 3000); return tokyo(); }
+    if (RG.Map.paintMe) RG.Map.paintMe([la, lo], p.coords.accuracy);
+    RG.viewAround(la, lo);
+    if (RG.tripStatus) RG.tripStatus("📍 現在地のまわりを表示しています" + (p.coords.accuracy ? "（誤差 ±" + Math.round(p.coords.accuracy) + "m）" : ""), "ok", 2500);
+  }, function () {
+    if (RG.tripStatus) RG.tripStatus("現在地が取れないので、東京駅を表示します", "info", 3000);
+    tokyo();
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+};
 
 /* data/net.json（コンパクト版）を、これまでどおりの RG.NET の形に戻す */
 RG.decodeNet = function (j) {
@@ -1345,6 +1378,7 @@ var Card = (function () {
         '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '">🔗 共有</button>' +
         '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
         (RG.favs ? '<button class="cmini" type="button" data-fav-open="1">⭐ お気に入り一覧</button>' : "") +
+        (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る">📝 Obsidian</button>' : "") +
       "</div>" +
       '<div class="cardq"><label class="cardq__l"><span class="ms">search</span><input class="cardq__in" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(s.n) + '駅から、どこへ？（駅名・地名）" aria-label="' + esc(s.n) + '駅からの行き先"></label><div class="cardq__sug" role="listbox" hidden></div></div>' +
       "</div>";
@@ -1864,6 +1898,8 @@ var Card = (function () {
     // v94: 共有・お気に入り一覧・行き先検索・近くのスポット
     var sh = root.querySelector("[data-share-st]");
     if (sh) sh.addEventListener("click", function (e) { e.stopPropagation(); if (RG.shareStation) RG.shareStation(sh.dataset.shareSt); });
+    var ob = root.querySelector("[data-ob-st]");                  // v113: Obsidian へ駅のノート
+    if (ob) ob.addEventListener("click", function (e) { e.stopPropagation(); RG.sendStationNote(ob.dataset.obSt); });
     var fo = root.querySelector("[data-fav-open]");
     if (fo) fo.addEventListener("click", function (e) { e.stopPropagation(); if (RG.favs) RG.favs.openList(); });
     var qf = root.querySelector("[data-cardq-focus]"), qi = root.querySelector(".cardq__in");
@@ -2455,7 +2491,8 @@ RG.boot = function () {
     $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
     $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
     $("#zfit").addEventListener("click", Map.fitAll);
-    $("#zhub").addEventListener("click", function () { var st = RG.getDefaultOriginStation && RG.getDefaultOriginStation(); Map.focus(st ? st.id : RG.HUB, 300); });   // v89: «東京駅へ»
+    $("#zhub").addEventListener("click", function () { RG.goHere(); });   // v113: ◎ は «現在地へ»（取れないときは東京駅へ。v89 までは東京駅へ）
+    $("#zhub").setAttribute("aria-label", "現在地へ（取れないときは東京駅）"); $("#zhub").title = "現在地へ";
     var bh = $("#btn-hub");
     if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
   });
@@ -2513,7 +2550,8 @@ RG.boot = function () {
           RG.setOrigin(c, "現在地（" + best.s.n + "駅から約" + best.km.toFixed(1) + "km）", null, p.coords.accuracy);
         }
         if (moved || document.querySelector(".modal")) return;
-        Map.gotoLatLng(la, lo, w);
+        if (RG.Map.paintMe) RG.Map.paintMe([la, lo], p.coords.accuracy);
+        RG.viewAround(la, lo);                                             // v113: 前後 2〜3 駅が入る広さ
         if (RG.tripStatus) RG.tripStatus("📍 現在地のあたりを表示しています（ルートも現在地から）", "info", 2600);
       }, function () {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
     }

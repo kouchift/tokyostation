@@ -103,7 +103,7 @@ function useGeo(retry) {
     var acc = p.coords.accuracy ? "±" + Math.round(p.coords.accuracy) + "m" : "";
     setOrigin(c, "現在地（" + best.s.n + "駅から約" + best.km.toFixed(1) + "km" +
                  (acc ? " / 精度" + acc : "") + "）", null, p.coords.accuracy);
-    RG.Map.gotoLatLng(c[0], c[1], 340);
+    if (RG.viewAround) RG.viewAround(c[0], c[1]); else RG.Map.gotoLatLng(c[0], c[1], 340);   // v113: 前後 2〜3 駅が入る広さ
   }, function (e) {
     status("", "");
     if (RG.showGeoHelp) RG.showGeoHelp(e);

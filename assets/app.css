@@ -4264,3 +4264,6 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .os__tipr{display:grid;grid-template-columns:96px 1fr;gap:6px}
 .os__tipgo{min-height:40px;border:0;border-radius:999px;background:var(--tsg-primary,#0055AD);color:#fff;font-weight:800}
 .os__tipst{font-size:12px}
+
+/* v113: スポットカードの見出しの «📝 Obsidian» */
+.modal__ob{margin-left:auto;margin-right:6px;min-height:34px;border:1px solid var(--tsg-line2,rgba(0,34,74,.2));border-radius:999px;background:#fff;color:var(--tsg-ink,#00224A);font-weight:700;font-size:12px;padding:0 10px;white-space:nowrap}

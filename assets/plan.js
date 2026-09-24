@@ -283,6 +283,22 @@ function planMarkdown(Q) {
   Q = Q || P;
   var t = totals(Q), L = [];
   var title = planTitle(Q).replace(/^【おでかけプラン】/, "");
+  // v113: Obsidian 向けの前書き（日付・タグ・人数・予算・立ち寄り先と駅へのリンク・最初の場所の位置）
+  var sp = Q.items.filter(function (x) { return x.k === "spot"; }), rt = Q.items.filter(function (x) { return x.k === "route"; });
+  var stns = []; rt.forEach(function (x) { [x.from, x.to].forEach(function (n) { n = String(n || "").replace(/駅$/, ""); if (n && stns.indexOf(n) < 0) stns.push(n); }); });
+  var first = sp.filter(function (x) { return x.la != null; })[0];
+  var tg = ["おでかけプラン", "東京ステーションガイド"].concat(sp.map(function (x) { return String(x.genre || "").replace(/[\s・\/#,]/g, ""); })).filter(function (v, i, a) { return v && a.indexOf(v) === i; }).slice(0, 8);
+  L.push("---");
+  L.push("title: " + JSON.stringify(title));
+  L.push("date: " + new Date().toISOString().slice(0, 10));
+  L.push("tags: [" + tg.join(", ") + "]");
+  L.push("people: " + JSON.stringify("大人" + Q.adults + (Q.kids ? " 子ども" + Q.kids : "")));
+  L.push("budget_planned: " + Math.round(t.sum));
+  if (sp.length) L.push("spots: [" + sp.map(function (x) { return JSON.stringify("[[" + x.label + "]]"); }).join(", ") + "]");
+  if (stns.length) L.push("stations: [" + stns.map(function (n) { return JSON.stringify("[[" + n + "駅]]"); }).join(", ") + "]");
+  if (first) L.push("location: [" + (+first.la).toFixed(6) + ", " + (+first.lo).toFixed(6) + "]");
+  L.push("source: 東京ステーションガイド");
+  L.push("---"); L.push("");
   L.push("# " + title); L.push("");
   L.push("- 👥 大人 " + Q.adults + "人" + (Q.kids ? "・子ども " + Q.kids + "人（半額で計算）" : ""));
   var r0 = Q.items.filter(function (x) { return x.k === "route" && x.at; })[0];
@@ -291,7 +307,7 @@ function planMarkdown(Q) {
   L.push(""); L.push("## 行程"); L.push("");
   t.rows.forEach(function (r, i) {
     var it = r.it, g = gmapNamed(it);
-    L.push((i + 1) + ". " + (it.emoji || "・") + " **" + it.label + "**");
+    L.push((i + 1) + ". " + (it.emoji || "・") + " **" + (it.k === "spot" ? "[[" + it.label + "]]" : it.label) + "**");   // v113: 立ち寄り先はノートへのリンク
     if (it.k === "route") {
       L.push("   - 手段: " + it.mode + "／所要 約" + it.min + "分" + (it.transfers != null ? "／乗換 " + it.transfers + "回" : ""));
       if (it.lines && it.lines.length) L.push("   - 利用: " + it.lines.join(" → "));
