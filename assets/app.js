@@ -2151,6 +2151,17 @@ function mergeExtraPois(key) {
       });
     });
   });
+  /* v114: «はじめての土地» の 6 ジャンル（全国） */
+  if (RG.TRAVEL) once("travel", function () {
+    var M = RG.TRAVEL_META || {};
+    Object.keys(RG.TRAVEL).forEach(function (gid) {
+      var m = M[gid] || {};
+      RG.TRAVEL[gid].forEach(function (r, i) {
+        RG.MAPPOI.push({ i: gid + "t" + i, n: r.n || m.label, la: r.la, lo: r.lo, g: gid,
+                         s: 3.0, ti: 1, t: r.kind || m.label, be: m.e, bc: m.c, osm10: r, gid: gid, url: r.webs || null });
+      });
+    });
+  });
   if (RG.rebuildHensachi) RG.rebuildHensachi();
   // 関東の見どころ
   if (RG.KANTO_LM) once("klm", function () {

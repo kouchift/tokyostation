@@ -118,6 +118,20 @@ RG.GENRES = [
   { id: "klm",     e: "🎡", label: "見どころ", c: "#E4007F", enabled: true, optIn: true, kanto: true,
     desc: "テーマパーク・城・神社・美術館・温泉・道の駅など4,109か所（日本全国）" },
 
+  /* v114: «はじめての土地» で探したくなるもの（全国・OpenStreetMap・GitHub Actions が毎月更新 → data/auto/travel.js） */
+  { id: "tourinfo", e: "ℹ️", label: "観光案内所",      c: "#0277BD", enabled: true, optIn: true, travel: true,
+    desc: "地図・パンフレット・宿や交通の相談。はじめての街ではまずここ" },
+  { id: "stay",     e: "🏨", label: "宿（ホテル・旅館）", c: "#6A1B9A", enabled: true, optIn: true, travel: true,
+    desc: "ホテル・旅館・ホステル。空室や料金は各宿のサイトで" },
+  { id: "taxi",     e: "🚕", label: "タクシー乗り場",  c: "#F9A825", enabled: true, optIn: true, travel: true,
+    desc: "駅前や繁華街の乗り場" },
+  { id: "busterm",  e: "🚌", label: "バスターミナル",  c: "#2E7D32", enabled: true, optIn: true, travel: true,
+    desc: "高速バス・路線バスのターミナル" },
+  { id: "laundry",  e: "🧺", label: "コインランドリー", c: "#00838F", enabled: true, optIn: true, travel: true,
+    desc: "長旅の洗濯に" },
+  { id: "rentacar", e: "🚗", label: "レンタカー",      c: "#455A64", enabled: true, optIn: true, travel: true,
+    desc: "駅から先の足に" },
+
   { id: "police",  e: "🚓", label: "交番・警察",   c: "#1565C0", enabled: true, optIn: true, osm10: true,
     desc: "落とし物や道を聞きたいときに。関東ぜんぶで3,595か所" },
 

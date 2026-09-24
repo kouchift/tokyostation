@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-主要駅の出入口（v112）→ data/station_exits.js
+主要駅の出入口（v112）→ data/auto/station_exits.js（GitHub Actions が毎月作り直す）
 
 ・主要駅（MAJOR・約 70 駅）のまわりの出入口を OpenStreetMap から集める
   railway=subway_entrance ／ railway=train_station_entrance ／ entrance=* かつ名前が «〜口» «出口» のもの
@@ -26,6 +26,13 @@ MAJOR = ("新宿 渋谷 池袋 横浜 北千住 品川 新橋 大宮 秋葉原 �
 def overpass(q, EP):
     # 会社のネットワークでも通るよう、Windows の curl で取る（Python の証明書で失敗することがある）
     for attempt in range(2):
+        if os.name != "nt":                                   # GitHub Actions（Linux）は Python の通信で取る
+            import urllib.request
+            try:
+                req = urllib.request.Request(EP, data=urllib.parse.urlencode({"data": q}).encode(), headers={"User-Agent": UA})
+                return json.loads(urllib.request.urlopen(req, timeout=180).read().decode("utf-8"))
+            except Exception:
+                time.sleep(20 * (attempt + 1)); continue
         r = subprocess.run(["curl", "-s", "-m", "120", "-A", UA, EP, "--data-urlencode", "data=" + q], capture_output=True)
         try:
             return json.loads(r.stdout.decode("utf-8"))
@@ -103,8 +110,9 @@ def main():
           "   出典: © OpenStreetMap contributors（ODbL 1.0）。位置は目安。現地の案内表示を優先してください\n"
           "   駅ごと: { n: 駅名, la, lo, pax: 1 日の利用者数, x: [[表示名, 補足, 緯度, 経度, 種類 m=地下鉄/j=駅, 車いす可 1/0], …] } */\n"
           "RG.STATION_EXITS = %s;\n") % (time.strftime("%Y-%m-%d"), json.dumps(out, ensure_ascii=False, separators=(",", ":")))
-    open(os.path.join(ROOT, "data", "station_exits.js"), "w", encoding="utf-8").write(js)
-    print("→ data/station_exits.js  %d 駅 / 出入口 %d" % (len(out), sum(len(o["x"]) for o in out)))
+    os.makedirs(os.path.join(ROOT, "data", "auto"), exist_ok=True)
+    open(os.path.join(ROOT, "data", "auto", "station_exits.js"), "w", encoding="utf-8").write(js)
+    print("→ data/auto/station_exits.js  %d 駅 / 出入口 %d" % (len(out), sum(len(o["x"]) for o in out)))
 
 
 if __name__ == "__main__":

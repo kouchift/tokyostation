@@ -1,0 +1,30 @@
+# 毎朝 5 時（日本時間）に «話題の場所» を自動更新する → data/auto/buzz_auto.js（v114）
+# 手で動かす: GitHub の Actions タブ → daily-buzz → Run workflow
+name: daily-buzz
+on:
+  schedule:
+    - cron: "0 20 * * *"          # 20:00 UTC = 翌 5:00 JST
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency: { group: auto-data, cancel-in-progress: false }
+jobs:
+  buzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python tools/auto_buzz.py
+      - name: 変わっていれば記録して公開
+        run: |
+          git config user.name "tsg-bot"
+          git config user.email "tsg-bot@users.noreply.github.com"
+          git add data/auto
+          if git diff --cached --quiet; then echo "変化なし"; exit 0; fi
+          git commit -m "自動更新: 話題の場所 $(TZ=Asia/Tokyo date +%F)"
+          git pull --rebase origin ${{ github.ref_name }} && git push
+          curl -s -X POST -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true

@@ -8,8 +8,8 @@
      このアプリは、すでに «あとから少しずつ読む» 作りになっています（段階読み込み）。
      さらに一歩進めて、ここでは «一度読んだら二度目は通信しない» を足しています。
    ========================================================================= */
-var CACHE = "tsg-v113";
-var V = "?v=113";     // index.html の data-build と合わせる
+var CACHE = "tsg-v114";
+var V = "?v=114";     // index.html の data-build と合わせる
 
 /* 入れておくと効果の大きいもの（最初の1回で必ず要るもの） */
 var CORE = [
@@ -44,7 +44,7 @@ self.addEventListener("fetch", function (e) {
   if (url.origin !== self.location.origin) return;   // よそのサイトには手を出さない
 
   // index.html と data/support.js（受け皿の URL など。版を変えずに書き換えることがある）は «新しいものがあれば新しいほう»
-  if (url.pathname.endsWith("/") || url.pathname.endsWith(".html") || /\/data\/support\.js$/.test(url.pathname)) {
+  if (url.pathname.endsWith("/") || url.pathname.endsWith(".html") || /\/data\/support\.js$/.test(url.pathname) || /\/data\/auto\//.test(url.pathname)) {
     e.respondWith(
       fetch(req).then(function (r) {
         var copy = r.clone();
