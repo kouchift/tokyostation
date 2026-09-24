@@ -1009,9 +1009,11 @@ var Map = (function () {
     var pad = vb.w * 0.06, cand = [];
     var list = RG.MAPPOI || [];
     var airmode = svg.classList.contains("airmode");                  // v82: 航空路モードは空港だけ（ズームに関係なく）
+    var upf = RG.userPostFilter;                                        // v108: «この人の投稿» だけを出しているとき
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
       if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }   // あとから足されたものは、ここで座標を出す
+      if (upf) { if (p.upUid !== upf) continue; if (p.x < vb.x - pad || p.x > vb.x + vb.w + pad || p.y < vb.y - pad || p.y > vb.y + vb.h + pad) continue; cand.push(p); continue; }
       if (airmode) { if (p.g !== "airport") continue; if (p.x < vb.x - pad || p.x > vb.x + vb.w + pad || p.y < vb.y - pad || p.y > vb.y + vb.h + pad) continue; cand.push(p); continue; }
       // ピンで絞っているときは «自分が付けたもの» なので、ズームに関係なく必ず出す
       var pinned = RG.pinFilter != null;
@@ -1064,7 +1066,7 @@ var Map = (function () {
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
       // 一之宮・話題は数の上限・間引きの対象外（必ず出す）。レベチは «絞っているとき» か «寄ったとき» だけ全部出す（v89: 引いた地図で王冠が団子にならないように）
-      var special = q.g === "ichinomiya" || q.g === "buzz" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
+      var special = q.g === "ichinomiya" || q.g === "buzz" || q.g === "userpost" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
       if (!special && show.length >= cap) continue;
       var key = airmode ? Math.round(q.x / cellA) + "," + Math.round(q.y / cellA) : Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key] && (!special || airmode)) continue;
@@ -1083,7 +1085,8 @@ var Map = (function () {
       }
       n.__p = t; n.style.display = "";
       n.setAttribute("class", "poi poi--t" + t.ti + " poi--" + t.g +
-        (RG.visitCount && RG.visitCount(t.n) > 0 ? " visited" : ""));
+        (RG.visitCount && RG.visitCount(t.n) > 0 ? " visited" : "") + (t.isNew ? " poi--new" : ""));
+      if (t.isNew && !myPins.length) g = { e: "🆕", c: "#E0A800" };   // v108: 開店 90 日以内のコンビニ
       n.setAttribute("aria-label", t.n);
       n.setAttribute("tabindex", t.ti === 0 ? "0" : "-1");
       var c0 = n.childNodes[1], e0 = n.childNodes[2], h0 = n.childNodes[3];
@@ -1097,11 +1100,11 @@ var Map = (function () {
       var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15;
       if (t.g === "buzz" || t.g === "ichinomiya") esz = Math.max(esz, 13);   // 都道府県単位の目印は、引いていても読める大きさに
       // v77: 寄ったとき（街〜詳細）だけ、企業・チェーンのロゴを極小で（識別目的。商標は各社に帰属）
-      var logo = (z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
+      var logo = (!t.isNew && z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
       if (t.g === "levechi" && RG.LEVECHI_ICON) { logo = RG.LEVECHI_ICON; esz = Math.max(esz * 1.5, 14); }   // v87: レベチは専用の印（どのズームでも）
       else if (logo) { esz = Math.max(esz * 1.35, 11); }
       /* v101: ロゴ・自分のピン・レベチの王冠以外は、Figma 由来のモノラインアイコン（<use>）。無ければ絵文字のまま */
-      var ic = (!logo && !myPins.length && RG.setIcon) ? RG.setIcon(e0, t.g, t.x, t.y, esz * 1.05 * uu) : null;
+      var ic = (!logo && !myPins.length && !t.isNew && RG.setIcon) ? RG.setIcon(e0, t.g, t.x, t.y, esz * 1.05 * uu) : null;
       if (!ic) setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
       n.classList.toggle("poi--logo", !!logo);
       n.classList.toggle("poi--ic", !!ic);
@@ -2087,13 +2090,17 @@ function mergeExtraPois(key) {
     var BR = {}, CT = {};
     (RG.CHAIN_BRANDS || []).forEach(function (b) { BR[b.i] = b; });
     (RG.CHAIN_CATS || []).forEach(function (c) { CT[c.id] = c; });
+    var newLim = RG.cvsNewLimit();
     RG.CHAIN_ROWS.forEach(function (r, i) {
       var b = BR[r[0]];
       if (!b) return;
       var c = CT[b.cat] || {};
-      RG.MAPPOI.push({ i: "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
-                       s: 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
-                       brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null });
+      /* v108: 大手コンビニは公式の店舗検索から（r[6]=開店日 YYYYMMDD・r[7]=公式の店番）。開店から 90 日以内は «新店» */
+      var op = r[6] || 0;
+      RG.MAPPOI.push({ i: r[7] ? "cv" + r[0] + "_" + r[7] : "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
+                       s: op >= newLim ? 3.4 : 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
+                       brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null,
+                       open: op || null, shop: r[7] || null, isNew: op >= newLim });   // 店番は shop（p.sid はコメントの spotId に使われるので使わない）
     });
   });
 
@@ -2116,17 +2123,33 @@ function mergeExtraPois(key) {
                        t: r.t, be: r.e, bc: r.c, sl: r.sl, klm: r });
     });
   });
+  /* v108: 一之宮は独立ジャンル。«主な神社» と同じ社（Wikidata ID が同じ）は一之宮だけに出す（どちらが先に届いても） */
+  var ICHI_KIND = { 1: "諸国一宮", 2: "一の宮会の一宮", 3: "新一の宮", 4: "北海道の一宮", 5: "一宮（論社・称する社）" };
+  function ichiQ() { var s = {}; (RG.ICHINOMIYA || []).forEach(function (r) { if (r.q) s[r.q] = 1; }); return s; }
   if (RG.ICHINOMIYA) once("ichinomiya", function () {
+    var seenId = {};
     RG.ICHINOMIYA.forEach(function (r, i) {
-      RG.MAPPOI.push({ i: "ich" + i, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya", s: 4.8, ti: 0,
-                       t: "一之宮", be: "🎌", bc: "#8B0000", sl: 20, url: r.wp || null,
-                       srcNote: "一之宮: Wikidata（CC0）の「一宮」に結びつく神社。参拝時間・行事は各社の公式で確認。" });
+      var k = r.kind || 1, id = "ich" + (r.q || i);
+      if (seenId[id]) id += "_" + seenId[id];   // 1記事に2社（都々古別神社の馬場・八槻、若狭彦・若狭姫）
+      seenId["ich" + (r.q || i)] = (seenId["ich" + (r.q || i)] || 0) + 1;
+      RG.MAPPOI.push({ i: id, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya",
+                       s: k === 1 ? (r.hist === 0 ? 4.6 : 4.9) : k <= 3 ? 4.5 : 4.0, ti: k === 1 || k === 3 ? 0 : 1,
+                       t: (r.kuni ? r.kuni + " " : "") + ICHI_KIND[k], be: "🎌", bc: "#8B0000", sl: 20,
+                       url: r.web || null, wp: r.wp || null, q: r.q || null, ad: r.ad || r.pf || "", ichi: r,
+                       srcNote: "一之宮: Wikipedia 日本語版「一宮」と各社の記事（CC BY-SA 4.0）・Wikidata（CC0）・一の宮巡拝会（最寄り駅・御神徳）。参拝時間・行事は各社の公式で確認。" });
     });
+    var iq = ichiQ();
+    for (var j = RG.MAPPOI.length - 1; j >= 0; j--) {
+      var p0 = RG.MAPPOI[j];
+      if (p0.g === "shrine_major" && p0.q && iq[p0.q]) RG.MAPPOI.splice(j, 1);
+    }
   });
   if (RG.SHRINE_MAJOR) once("shrines_jp", function () {
+    var iq = ichiQ();
     RG.SHRINE_MAJOR.forEach(function (r, i) {
+      if (r.q && iq[r.q]) return;
       RG.MAPPOI.push({ i: "shm" + i, n: r.n, la: r.la, lo: r.lo, g: "shrine_major", s: 4.2, ti: 1,
-                       t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null,
+                       t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null, q: r.q || null,
                        srcNote: "主な神社: Wikidata（CC0）の別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" });
     });
     (RG.TEMPLE_MAJOR || []).forEach(function (r, i) {
@@ -2146,6 +2169,7 @@ function mergeExtraPois(key) {
   if (RG.mergeBuzz) RG.mergeBuzz();
   if (RG.mergeViews) RG.mergeViews();
   if (RG.mergeOnsen) RG.mergeOnsen();
+  if (RG.mergeSento) RG.mergeSento();   // v108: 全国の銭湯
   if (RG.mergeLevechi) { RG.mergeLevechi(); if (RG.levechiInit) RG.levechiInit(); }
   if (RG.mergeNearSpecial) RG.mergeNearSpecial();
   if (RG.mergeMountains) RG.mergeMountains();

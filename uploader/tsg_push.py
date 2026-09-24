@@ -35,8 +35,13 @@ def main():
     head_sha, tree_sha = gh.head()
     remote, _ = gh.remote_files(tree_sha)
     print("   %d 個" % len(remote))
+    only = None
+    if "--only" in sys.argv:   # v108: 月次の自動更新では、作業中のほかのファイルを巻き込まない
+        only = set(x.strip().replace("\\", "/") for x in sys.argv[sys.argv.index("--only") + 1].split(",") if x.strip())
+        print("■ 対象をしぼります:", ", ".join(sorted(only)))
     add, upd, same = [], [], 0
     for rel, data in local.items():
+        if only is not None and rel not in only: continue
         sha = git_blob_sha(data)
         if rel not in remote: add.append(rel)
         elif remote[rel] != sha: upd.append(rel)
@@ -69,7 +74,7 @@ def main():
                 if attempt == 3: raise
                 print("   （もう一度ためします: %s）" % str(ex)[:60]); time.sleep(5 * (attempt + 1))
         print("   反映 %d / %d" % (min(i + CH, len(entries)), len(entries)))
-    msg = "アップローダーから反映（＋%d 変更%d）" % (len(add), len(upd))
+    msg = ("月次の自動更新（%s）" % ", ".join(sorted(only))) if only else "アップローダーから反映（＋%d 変更%d）" % (len(add), len(upd))
     c = gh.commit(msg, base, head_sha)
     gh.move_branch(c)
     print("✓ 完了しました。コミット: %s" % c[:8])

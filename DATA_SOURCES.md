@@ -14,8 +14,14 @@
 | 写真 | 約2,000 | [Wikimedia Commons](https://commons.wikimedia.org) | ファイルごとに異なる | **個別に表示** |
 | 公衆トイレ・AED・避難場所・Wi-Fi・駐輪場・赤ちゃんの駅・図書館・博物館・公園 | 6,672 | [東京都オープンデータカタログ](https://portal.data.metro.tokyo.lg.jp/) | **CC BY 4.0** | **出典表示** |
 | 河川監視・海面ライブカメラ | 94 | 東京都建設局・港湾局 | 東京都のオープンデータ | **出典表示** |
+| 一之宮（旧国・社格・一の宮会・主祭神・創建・例祭・由緒の概要） | 129 社 | [Wikipedia「一宮」](https://ja.wikipedia.org/wiki/%E4%B8%80%E5%AE%AE)と各社の記事 ／ 座標・公式サイトは Wikidata | **CC BY-SA 4.0**（概要は抜粋）／ CC0 | **出典＋リンク＋継承**（カードに記事リンクを表示） |
+| 一之宮の最寄り駅・御神徳 | 107 社 | [一の宮巡拝会「全国の一の宮」](http://ichinomiya-junpai.jp/alllist/) | 公開情報（事実データのみ利用。写真・文章は転載しない） | **出典表示**（カードに巡拝会ページへのリンク） |
+| みんなの写真と声（利用者の投稿） | 投稿しだい | 利用者が投稿（受け皿: 運営者の Google ドライブ／スプレッドシート・`tools/posts_api.gs`） | 著作権は投稿者に帰属。本サイトでの表示に使う | 投稿者名を表示。通報 3 件で自動非表示・運営者がシートで非表示にできる |
+| 銭湯（東京以外・組合加入） | `data/SENTO_COVERAGE.md` 参照 | 各都道府県の公衆浴場業生活衛生同業組合のサイト（[加盟組合一覧](https://www.zenyoku.1010.or.jp/union/)）。座標は国土地理院の住所検索・OpenStreetMap | 公開情報（事実データのみ利用。写真・紹介文は使わない） | **出典表示**（カードに組合ページへのリンク） |
+| スーパー銭湯・共同浴場・組合外の «〜湯» | 同上 | [OpenStreetMap](https://www.openstreetmap.org/)（amenity=public_bath） | **ODbL 1.0** | **出典表示＋継承** |
 | 銭湯・温泉銭湯 | 283 | [東京銭湯マップ](https://www.1010.or.jp/map/)（東京都公衆浴場業生活衛生同業組合） | 公開情報（事実データのみ利用） | **出典表示** |
 | チェーン店 | 10,143 / 21ブランド | [OpenStreetMap](https://www.openstreetmap.org/) | **ODbL 1.0** | **出典表示＋継承** |
+| コンビニ大手3社（店舗・開店日・営業時間・サービス） | 約 5.2 万店 | 各社の公式店舗検索（[セブン-イレブン](https://seven-eleven.areamarker.com/711map/top)・[ファミリーマート](https://store.family.co.jp/)・[ローソン](https://www.areamarker.com/lawson/top)）。`tools/fetch_cvs_official.py` で毎月 | 公開情報（店舗の事実情報のみ。写真・文章は使わない） | **出典表示**（カードに公式の店舗ページへのリンク） |
 | 住所・建物名の検索 | 都度 | OpenStreetMap Nominatim | **ODbL 1.0** | **出典表示** |
 | 行政区域ポリゴン | 45自治体 | [国土数値情報 N03](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-v3_1.html)（国土交通省） | 出典明示で利用可 | **出典表示** |
 | 公示地価 | 2,560地点 | 国土数値情報 L01（国土交通省） | 出典明示で利用可 | **出典表示** |
