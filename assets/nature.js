@@ -19,42 +19,6 @@ RG.mergeViews = function () {
                      view: r, ad: (r.pf || "") + (r.mu || ""), srcNote: "絶景: Wikidata (CC0)・Wikipedia (CC BY-SA)。写真は Wikimedia Commons（各ファイルのライセンス）。" });
   });
 };
-/* ---- v108: 全国の銭湯（data/sento_jp.js）。組合加入の銭湯は «銭湯»、それ以外は «スーパー銭湯・共同浴場»（混ぜない） ---- */
-var SENTO_SUB = { 1: ["銭湯", "🛁", "#C81432"], 2: ["銭湯（組合外・未確認）", "🛁", "#9E6B72"], 3: ["共同浴場・日帰り温泉", "♨️", "#EC6E00"], 4: ["スーパー銭湯・サウナ", "🧖", "#8E24AA"] };
-RG.mergeSento = function () {
-  if (!RG.SENTO_JP || RG.__sentoMerged) return; RG.__sentoMerged = 1;
-  RG.MAPPOI = RG.MAPPOI || [];
-  // 東京は東京銭湯マップの最新に置き換える（data/mappois.js の古い 283 件＝閉業した店を含む を外す）
-  if (RG.SENTO_JP.some(function (r) { return r.pf === "東京都" && r.sub === 1; }))
-    for (var j = RG.MAPPOI.length - 1; j >= 0; j--) { var q = RG.MAPPOI[j]; if ((q.g === "sento" || q.g === "onsen") && !q.sento && /1010\.or\.jp\/map/.test(q.url || "")) RG.MAPPOI.splice(j, 1); }
-  RG.SENTO_JP.forEach(function (r, i) {
-    var S = SENTO_SUB[r.sub] || SENTO_SUB[2];
-    RG.MAPPOI.push({ i: "sj" + i, n: r.n, la: r.la, lo: r.lo, g: r.sub === 1 ? (r.onsen ? "onsen" : "sento") : "bath_x", s: r.sub === 1 ? 3.5 : 3.0, ti: 1,
-                     t: (r.onsen ? "天然温泉の銭湯" : S[0]) + (r.sauna ? "・サウナあり" : ""), be: r.onsen ? "♨️" : S[1], bc: r.onsen ? "#EC6E00" : S[2], ad: r.ad || r.pf || "", url: r.web || (r.pf === "東京都" && r.v ? r.src : null), sento: r,
-                     srcNote: r.v ? "銭湯: " + r.pf + "の公衆浴場業生活衛生同業組合のサイト（組合加入の銭湯）。営業時間・料金・定休日は変わることがあります。" :
-                       "公衆浴場: © OpenStreetMap contributors（ODbL）。浴場組合の名簿では確かめていません。営業の有無は現地・公式でご確認ください。" });
-  });
-};
-RG.sentoBlock = function (p) {
-  var r = p.sento; if (!r) return "";
-  var S = SENTO_SUB[r.sub] || SENTO_SUB[2], facts = [];
-  if (r.hours) facts.push(["営業時間", r.hours]);
-  if (r.off) facts.push(["定休日", r.off]);
-  if (r.park) facts.push(["駐車場", r.park]);
-  if (r.tel) facts.push(["電話", r.tel]);
-  var q = encodeURIComponent(r.n + " " + (r.ad || r.pf || ""));
-  return '<div class="nat"><div class="nat__tags"><span class="nat__tag nat__tag--k" style="background:' + S[2] + ";border-color:" + S[2] + '">' + S[1] + " " + esc(S[0]) + "</span>" +
-      (r.v ? '<span class="nat__tag">✔ 浴場組合の名簿に掲載</span>' : '<span class="nat__tag">未確認（地図データのみ）</span>') +
-      (r.sauna ? '<span class="nat__tag nat__tag--sauna">🧖 サウナ</span>' : "") + "</div>" +
-    (facts.length ? '<div class="nat__facts">' + facts.map(function (f) { return '<div class="nat__f"><span>' + esc(f[0]) + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("") + "</div>" : "") +
-    (r.ad ? '<p class="nat__d">🏠 ' + esc(r.ad) + "</p>" : "") +
-    '<div class="nat__lnks">' +
-      (r.src ? '<a class="lnk lnk--k" href="' + esc(r.src) + '" target="_blank" rel="noopener"><span>' + (r.v ? "🛁" : "🗺️") + "</span>" + (r.v ? "浴場組合のページ" : "OpenStreetMap") + "</a>" : "") +
-      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span>🌐</span>公式サイト</a>' : "") +
-      '<a class="lnk" href="https://www.google.com/maps/search/' + q + '" target="_blank" rel="noopener"><span>🗺️</span>地図アプリで見る</a>' +
-    "</div>" +
-    '<p class="mini">' + (r.sub === 1 ? "銭湯の入浴料は都道府県ごとに決まっています（大人の料金は各県の組合・県のページで確認）。" : "料金・営業時間は施設ごとに違います。公式・現地でご確認ください。") + "写真は組合・お店のページでご覧ください。" + (r.cc === "gsi" ? "位置は住所から求めたおおよその地点です。" : "") + "</p></div>";
-};
 RG.mergeOnsen = function () {
   if (!RG.ONSEN_JP || RG.__onsenMerged) return; RG.__onsenMerged = 1;
   RG.MAPPOI = RG.MAPPOI || [];

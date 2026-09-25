@@ -51,9 +51,13 @@ RG.TIP = {
   bank: { bankName: "ゆうちょ銀行", bankKana: "ﾕｳﾁﾖ", code: "9900", symbol: "", branch: "", branchName: "", branchKana: "", type: "1", number: "", holder: "", holderKana: "" },
   /* みんなの番付：公開スプレッドシートの CSV（列: name,total,count,gedatsu）。空なら端末内の番付だけ */
   leaderboardCsv: "",
-  /* みんなのコメント（v106〜）: Google Apps Script の Comments API URL。空なら表示しない */
+  /* みんなのコメント（v106〜）: Google Apps Script の Comments API URL。空なら表示しない
+     v108: Firestore + Cloud Storage 対応。以下の設定を Google Apps Script に指定：
+     ・Firebase Project ID: tokyostation
+     ・Firestore API Key: (Apps Script のスクリプトプロパティ FIREBASE_API_KEY に設定)
+     ・Cloud Storage Bucket: tokyostation-images
+     本設定は Google Apps Script のデプロイ後に記入してください */
   commentsApi: "", // 例: "https://script.google.com/macros/d/XXXXXX/usercopy?v=1"
-  postsApi: "https://script.google.com/macros/s/AKfycby_ZcBcm3HtW23_Gr4yCQORAyY0U3AaRVHCKYpT0LTZRISSU6taAxvBPboW5k8E6p0PAA/exec",    // v108: «みんなの写真と声» の受け皿（tools/posts_api.gs をウェブアプリとして公開した …/exec の URL）。空なら出さない
   amounts: [100, 500, 1000, 3000],
   /* v100: 受取先の設定（公開してよい識別子だけ。パスワード・認証コード・口座番号・電話番号は絶対に書かない）
      ・link / qr が空のサービスは «準備待ち» として表示し、架空の URL は作らない。期限つきの受け取りリンク（楽天ペイ 3 日・請求リンク 2 週間など）は貼らない

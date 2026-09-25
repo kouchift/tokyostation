@@ -58,15 +58,9 @@ function chainAttrs(a) {
   var parts = a.split("|"), f = parts[0], pay = (parts[1] || "").split(",").filter(Boolean);
   var o = { wifi: f.indexOf("W") >= 0 ? "free" : f.indexOf("w") >= 0 ? "paid" : null,
             smoke: f.indexOf("S") >= 0 ? "yes" : f.indexOf("s") >= 0 ? "no" : f.indexOf("x") >= 0 ? "sep" : null,
-            drive: f.indexOf("D") >= 0, take: f.indexOf("T") >= 0, deliv: f.indexOf("V") >= 0, wheel: f.indexOf("A") >= 0, h24: f.indexOf("24") >= 0, pay: pay,
-            // v108: 公式の店舗検索から（コンビニ大手3社）
-            atm: f.indexOf("K") >= 0, park: f.indexOf("P") >= 0, eat: f.indexOf("E") >= 0, copy: f.indexOf("C") >= 0, sake: f.indexOf("L") >= 0, tabaco: f.indexOf("G") >= 0, med: f.indexOf("H") >= 0 };
+            drive: f.indexOf("D") >= 0, take: f.indexOf("T") >= 0, deliv: f.indexOf("V") >= 0, wheel: f.indexOf("A") >= 0, h24: f.indexOf("24") >= 0, pay: pay };
   return o;
 }
-/* v108: 新店の境目（今日から 90 日前の YYYYMMDD の数） */
-RG.cvsNewLimit = function () { var d = new Date(Date.now() - 90 * 864e5); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); };
-function ymdStr(n) { n = String(n); return n.slice(0, 4) + "/" + n.slice(4, 6) + "/" + n.slice(6, 8); }
-var OFFICIAL_URL = { 0: "https://seven-eleven.areamarker.com/711map/info/", 1: "https://store.family.co.jp/points/", 2: "https://www.areamarker.com/lawson/info/", 6: "https://www.areamarker.com/lawson/info/", 12: "https://www.areamarker.com/lawson/info/" };
 RG.chainBlock = function (p) {
   if (!p.chain || p.brand == null || !RG.CHAIN_BRANDS) return "";
   var b = RG.CHAIN_BRANDS.filter(function (x) { return x.i === p.brand; })[0]; if (!b) return "";
@@ -80,26 +74,15 @@ RG.chainBlock = function (p) {
     if (a.take) tags.push('<span class="nat__tag">🥡 テイクアウト</span>');
     if (a.deliv) tags.push('<span class="nat__tag">🛵 デリバリー</span>');
     if (a.wheel) tags.push('<span class="nat__tag">♿ 車いす可</span>');
-    if (a.atm) tags.push('<span class="nat__tag">🏧 ATM</span>');
-    if (a.park) tags.push('<span class="nat__tag">🅿️ 駐車場</span>');
-    if (a.eat) tags.push('<span class="nat__tag">🍴 イートイン</span>');
-    if (a.copy) tags.push('<span class="nat__tag">🖨️ マルチコピー</span>');
-    if (a.sake) tags.push('<span class="nat__tag">🍶 お酒</span>');
-    if (a.tabaco) tags.push('<span class="nat__tag">🚬 たばこ販売</span>');
-    if (a.med) tags.push('<span class="nat__tag">💊 くすり</span>');
     a.pay.forEach(function (k) { tags.push('<span class="nat__tag nat__tag--pay">' + esc(PAY[k] || k) + "</span>"); });
   }
-  var off = b.src === "official" && p.shop;
   return '<div class="nat chb">' + (b.logo ? '<img class="chb__logo" src="' + esc(RG.cimg(b.logo, 240)) + '" alt="" loading="lazy">' : "") +
-    (p.open ? '<p class="nat__d">' + (p.isNew ? '<b class="chb__new">🆕 新店</b> ' : "") + "開店 " + ymdStr(p.open) + (p.isNew ? "（開店から " + Math.max(0, Math.round((Date.now() - new Date(ymdStr(p.open)).getTime()) / 864e5)) + " 日）" : "") + "</p>" : "") +
     (tags.length ? '<div class="nat__tags">' + tags.join("") + "</div>" : '<p class="nat__d nat__d--dim">Wi-Fi・喫煙・決済の情報は OpenStreetMap にこの店の登録がありません（登録されている店だけ出ます）。</p>') +
     (p.hours ? '<p class="nat__d">🕒 ' + esc(p.hours) + "</p>" : "") +
-    '<div class="nat__lnks">' + (off && OFFICIAL_URL[p.brand] ? '<a class="lnk lnk--k" href="' + esc(OFFICIAL_URL[p.brand] + p.shop) + '" target="_blank" rel="noopener"><span>🏪</span>この店の公式ページ（営業時間・サービス）</a>' : "") +
-    (b.web ? '<a class="lnk' + (off ? "" : " lnk--k") + '" href="' + esc(b.web) + '" target="_blank" rel="noopener"><span>🔗</span>' + esc(b.n) + " 公式サイト</a>" : "") +
+    '<div class="nat__lnks">' + (b.web ? '<a class="lnk lnk--k" href="' + esc(b.web) + '" target="_blank" rel="noopener"><span>🔗</span>' + esc(b.n) + " 公式サイト</a>" : "") +
     (b.camp ? '<a class="lnk" href="' + esc(b.camp) + '" target="_blank" rel="noopener"><span>🎁</span>キャンペーン・期間限定メニュー</a>' : "") +
     (b.web && !b.camp ? '<a class="lnk" href="' + esc(b.web) + '" target="_blank" rel="noopener"><span>🎁</span>キャンペーンは公式サイトで</a>' : "") + "</div>" +
-    (off ? '<p class="src">店舗・営業時間・サービスは ' + esc(b.n) + " の公式店舗検索（" + esc(b.built || "") + " 取得・毎月更新）。開店 90 日以内の店は地図に 🆕 で出ます。最新の情報は店の公式ページでご確認ください。" :
-    '<p class="src">Wi-Fi・喫煙・決済・営業時間は OpenStreetMap の登録内容（' + (a ? "この店は登録あり" : "この店は未登録") + "）で、古いことがあります。キャンペーン内容は公式サイトでご確認ください。") + (b.logo ? "ロゴ・商標は各社に帰属し、店舗位置の識別のためだけに表示しています。" : "") + "</p></div>";
+    '<p class="src">Wi-Fi・喫煙・決済・営業時間は OpenStreetMap の登録内容（' + (a ? "この店は登録あり" : "この店は未登録") + "）で、古いことがあります。キャンペーン内容は公式サイトでご確認ください。" + (b.logo ? "ロゴ・商標は各社に帰属し、店舗位置の識別のためだけに表示しています。" : "") + "</p></div>";
 };
 RG.fuelBlock = function (p) {
   if (!p.fuel) return "";

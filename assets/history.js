@@ -42,57 +42,7 @@ RG.castleBlock = function (p) {
       (rank ? '<button class="mtb__rk" type="button" data-hanrank="1">石高 全国 ' + rank + " 位 ▸ 藩ランキング</button>" : "") + "</div>" : "") +
     (r.x ? '<p class="nat__d">' + esc(r.x) + "</p>" : r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") + "</div>";
 };
-/* ---- 一之宮（v108）: data/ichinomiya.js の詳細。写真は持たず、公式・巡拝会へのリンクだけ ---- */
-var ICHI_KIND = { 1: "諸国一宮", 2: "全国一の宮会の一宮", 3: "新一の宮", 4: "北海道内の一宮", 5: "一宮を称する社・論社" };
-RG.ichiBlock = function (p) {
-  var r = p.ichi; if (!r) return "";
-  var tags = [];
-  if (r.kuni) tags.push([r.kuni + (r.reg ? "（" + r.reg + "）" : ""), 1]);
-  tags.push([ICHI_KIND[r.kind || 1], r.kind === 1]);
-  if (r.kind === 1) tags.push([r.hist === 0 ? "言及・二次史料の一宮" : "史料に一宮と見える", 0]);
-  if (r.shiki) tags.push(["式内社 " + ({ "名神大": "名神大社", "大": "大社", "小": "小社" }[r.shiki] || r.shiki), 0]);
-  if (r.kin) tags.push(["旧 " + ({ "官大": "官幣大社", "官中": "官幣中社", "官小": "官幣小社", "国大": "国幣大社", "国中": "国幣中社", "国小": "国幣小社" }[r.kin] || r.kin), 0]);
-  if (r.bep) tags.push([r.bep === "別表" ? "別表神社" : r.bep + "神社", 0]);
-  if (r.oth) r.oth.split("・").forEach(function (x) { if (x) tags.push([x, 0]); });
-  if (r.kai) tags.push(["全国一の宮会 " + r.kai.replace(/他$/, "（同国に他の加盟社あり）"), 0]);
-  var facts = [];
-  if (r.sai) facts.push(["主祭神", r.sai]);
-  if (r.toku) facts.push(["御神徳", r.toku]);
-  if (r.sou) facts.push(["創建", r.sou]);
-  if (r.yo) facts.push(["本殿の様式", r.yo]);
-  if (r.rei) facts.push(["例祭", r.rei]);
-  if (r.st) facts.push(["最寄り駅", r.st]);
-  if (r.ni) facts.push(["同じ国の二宮以下", r.ni]);
-  var paras = (r.x || "").split(/\n+/).filter(Boolean);
-  var lead = paras.slice(0, 2), rest = paras.slice(2);
-  return '<div class="nat ichb"><div class="nat__tags">' + tags.map(function (t) { return '<span class="nat__tag' + (t[1] ? " nat__tag--k" : "") + '">' + esc(t[0]) + "</span>"; }).join("") + "</div>" +
-    (facts.length ? '<div class="nat__facts">' + facts.map(function (f) { return '<div class="nat__f"><span>' + esc(f[0]) + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("") + "</div>" : "") +
-    (lead.length ? '<div class="ichb__x">' + lead.map(function (s) { return '<p class="nat__d">' + esc(s) + "</p>"; }).join("") +
-      (rest.length ? '<details class="ichb__more"><summary>由緒・歴史をもっと読む</summary>' + rest.map(function (s) { return '<p class="nat__d">' + esc(s) + "</p>"; }).join("") + "</details>" : "") +
-      '<p class="mini">概要の出典: <a href="' + esc(r.wp || "https://ja.wikipedia.org/wiki/" + encodeURIComponent(p.n)) + '" target="_blank" rel="noopener">Wikipedia「' + esc(p.n) + "」</a>（CC BY-SA 4.0・抜粋）</p></div>" : "") +
-    '<div class="nat__lnks">' +
-      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span>🌐</span>公式サイト（写真・参拝案内）</a>' : "") +
-      (r.jp ? '<a class="lnk" href="' + esc(r.jp) + '" target="_blank" rel="noopener"><span>🎌</span>一の宮巡拝会のページ</a>' : "") +
-      '<button class="lnk" type="button" data-ichinear="1"><span>🗾</span>' + esc(r.pf || "") + "の一之宮</button>" +
-    "</div>" +
-    '<p class="mini">写真は各社の公式サイト・一の宮巡拝会でご覧ください（本サイトでは転載しません）。参拝時間・行事・御朱印は公式で確認を。' +
-      (r.cc === "gsi" ? "位置は住所から求めたおおよその地点です。" : "") + "</p></div>";
-};
 RG.historyBind = function (root, p) {
-  var ib = root.querySelector("[data-ichinear]");
-  if (ib) ib.addEventListener("click", function () {
-    var pf = p.ichi && p.ichi.pf;
-    var list = (RG.MAPPOI || []).filter(function (q) { return q.g === "ichinomiya" && q.ichi && q.ichi.pf === pf; });
-    if (!list.length || !RG.showSpot) return;
-    var box = document.createElement("div");
-    box.className = "ichb__list";
-    box.innerHTML = list.map(function (q) { return '<button class="lnk" type="button" data-ichi="' + esc(q.i) + '"><span>🎌</span>' + esc(q.n) + (q.i === p.i ? "（いま見ている社）" : "") + "</button>"; }).join("");
-    ib.parentNode.after(box); ib.remove();
-    box.querySelectorAll("[data-ichi]").forEach(function (b) { b.addEventListener("click", function () {
-      var q = list.filter(function (x) { return x.i === b.dataset.ichi; })[0];
-      if (q && q.i !== p.i) { if (RG.Map && RG.Map.gotoLatLng) RG.Map.gotoLatLng(q.la, q.lo, 180); RG.showSpot(q); }
-    }); });
-  });
   var b = root.querySelector("[data-hanrank]");
   if (b) b.addEventListener("click", function () { RG.showHanRank(p.castle && p.castle.pf); });
 };

@@ -15,11 +15,7 @@
 "use strict";
 var $ = RG.$, esc = RG.esc;
 var META = function () { return RG.BUZZ_META || { FRESH_DAYS: 21, EVERGREEN_MIN: 4, FRESH_SHOW: 24, EVER_SHOW: 12, TOP: "練馬区" }; };
-var PL = { x: { e: "𝕏", n: "X" }, tiktok: { e: "🎵", n: "TikTok" }, ig: { e: "📸", n: "Instagram" }, news: { e: "📰", n: "ニュース" } };
-/* v114: 毎朝の自動更新（data/auto/buzz_auto.js・Google の急上昇ワードとニュース）を、手で集めた SNS の話題に足す（1 回だけ） */
-function withAuto() {
-  if (RG.BUZZ_AUTO && RG.BUZZ && !RG.__buzzAuto) { RG.__buzzAuto = 1; var have = {}; RG.BUZZ.forEach(function (b) { have[b.id] = 1; }); RG.BUZZ = RG.BUZZ.concat(RG.BUZZ_AUTO.filter(function (b) { return !have[b.id]; })); }
-}
+var PL = { x: { e: "𝕏", n: "X" }, tiktok: { e: "🎵", n: "TikTok" }, ig: { e: "📸", n: "Instagram" } };
 
 /* 種つきの乱数（同じ種なら同じ並び） */
 function rng(seed) { var t = seed >>> 0; return function () { t += 0x6D2B79F5; var r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; }
@@ -36,7 +32,6 @@ function centerOf(b) {
 
 /* いま見せる2枠を計算する（毎回計算しても軽い） */
 RG.buzzLists = function () {
-  withAuto();
   var M = META(), all = RG.BUZZ || [], fresh = [], ever = [];
   all.forEach(function (b) {
     var age = ageDays(b.d);
@@ -82,10 +77,10 @@ function row(b, showArea) {
     (showArea ? '<span class="bz__a">' + esc(areaOf(b)) + "</span>" : "") +
     '<span class="bz__imp" title="インパクト">' + "🔥".repeat(Math.max(1, Math.min(5, b.imp || 1))) + "</span></div>" +
     '<div class="bz__n">' + esc(b.n) + "</div>" +
-    (b.by ? '<div class="bz__by">' + (b.pl === "news" ? "記事: " : "投稿: ") + esc(b.by) + "</div>" : "") +
+    (b.by ? '<div class="bz__by">投稿: ' + esc(b.by) + "</div>" : "") +
     (b.ev ? '<div class="bz__ev">話題の根拠: ' + esc(b.ev) + (b.src ? ' <a href="' + esc(b.src) + '" target="_blank" rel="noopener">出典</a>' : "") + "</div>" : "") +
     '<div class="bz__act"><button class="bz__b" type="button" data-go="' + esc(b.id) + '">📍 地図で見る</button>' +
-    (b.pl === "news" ? "" : '<button class="bz__b" type="button" data-emb="' + esc(b.id) + '">👀 投稿を見る</button>') +
+    '<button class="bz__b" type="button" data-emb="' + esc(b.id) + '">👀 投稿を見る</button>' +
     '<a class="bz__b bz__b--l" href="' + esc(b.url) + '" target="_blank" rel="noopener">↗ ' + p.n + ' で開く</a></div>' +
     '<div class="bz__emb" hidden></div></div></li>';
 }
@@ -103,7 +98,7 @@ RG.showBuzz = function (area, tab) {
   var pool = tab === "fresh" ? L.fresh.concat(L.borrow) : tab === "ever" ? L.ever : L.all.slice().sort(function (a, b) { return a.d < b.d ? 1 : -1; });
   var list = area ? pool.filter(function (b) { return areaOf(b) === area; }) : pool;
   var html = '<div class="bz">' +
-    '<p class="bz__lead">X・TikTok・Instagram で話題になった投稿と、<b>毎朝自動で拾う</b> «Google の急上昇ワード・ニュースに出た場所»（📰）を、<b>土地ごと</b>に追えます。' +
+    '<p class="bz__lead">X・TikTok・Instagram で話題になった投稿を、<b>土地ごと</b>に追えます。' +
     "鮮度枠は " + M.FRESH_DAYS + " 日で自動的に入れ替わり、インパクトの高いものだけ殿堂に残ります。並びは日替わり／週替わり。</p>" +
     '<div class="bz__tabs">' +
       ['fresh|🆕 いま話題 ' + (L.fresh.length + L.borrow.length), 'ever|🏆 殿堂 ' + L.ever.length, 'all|📚 すべて ' + L.all.length].map(function (s) {

@@ -155,10 +155,8 @@ RG.initZip = function () {
   var zb = document.querySelector(".zoombar");
   if (zb) {
     var b = el("button", { id: "zipbtn", class: "sm", type: "button", "aria-label": "郵便番号を調べる", title: "郵便番号：地図をタップすると、その場所の郵便番号が出ます", text: "〒" });
-    b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () {
       touchMode = !touchMode; b.classList.toggle("on", touchMode);
-      setMode(touchMode);
       if (touchMode) {
         if (!zoomOk()) { RG.tripStatus && RG.tripStatus("〒 郵便番号は、地図をもう少し寄せると出せます（7km幅より狭く）", "info", 3200); }
         else RG.tripStatus && RG.tripStatus("〒 地図をタップすると、その場所の郵便番号が出ます", "info", 2600);
@@ -167,31 +165,11 @@ RG.initZip = function () {
     });
     zb.appendChild(b);
   }
-  /* v118: 郵便番号モード。ON のときだけ: 地図をタップで郵便番号・検索欄で 7 桁の番号を探せる。画面の上に «〒 郵便番号モード» の帯 */
-  function setMode(on) {
-    b.setAttribute("aria-pressed", on ? "true" : "false");
-    document.body.classList.toggle("zipmode", on);
-    Array.prototype.forEach.call(document.querySelectorAll("#hero-q, #q, .cardq__in"), function (inp) {
-      if (inp.dataset.ph0 == null) inp.dataset.ph0 = inp.placeholder || "";
-      inp.placeholder = on ? "〒 郵便番号（7 桁）で探す　例: 176-0021" : inp.dataset.ph0;
-    });
-    var bar = document.getElementById("zipbar");
-    if (on && !bar) {
-      bar = document.createElement("button"); bar.id = "zipbar"; bar.type = "button"; bar.className = "zipbar";
-      bar.innerHTML = "〒 郵便番号モード <b>ON</b><span>押すと OFF</span>";
-      bar.addEventListener("click", function () { b.click(); });
-      (document.querySelector(".mapwrap") || document.body).appendChild(bar);
-    }
-    if (bar) bar.hidden = !on;
-    try { document.dispatchEvent(new CustomEvent("rg:zipmode", { detail: { on: on } })); } catch (e) {}
-  }
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
 };
 
 /* 地図が動いたら：見えている升目を読む（lod から呼ばれる） */
 RG.zipOnMove = function (bbox) { if (zoomOk()) RG.zipLoadFor(bbox); else if (chip && !chip.classList.contains("sticky")) hide(); };
-
-RG.zipMode = function () { return touchMode; };                        // v118: 郵便番号モードが ON か（検索が使う）
 
 /* ---- 検索：郵便番号 → 場所 ---- */
 var idxCache = {};

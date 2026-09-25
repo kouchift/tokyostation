@@ -19,7 +19,6 @@ if (RG.PoiFilters) RG.PoiFilters.register({
   initial: initial,
   test: function (p, st) {
     st = st && typeof st === "object" ? st : initial();
-    if (st.newOnly && !p.isNew) return false;            // v108: 🆕 新店だけ（開店 90 日以内）
     var k = RG.brandKey(p);
     if (k === "other") return allOn(st);
     return st[k] !== false;
@@ -29,7 +28,6 @@ RG.cvsFilterState = state;
 RG.cvsFilterSet = function (st) { RG.PoiFilters.set(ID, st); };
 RG.cvsFilterToggle = function (k) { var st = state(); st[k] = !st[k]; RG.cvsFilterSet(st); return st[k]; };
 RG.cvsFilterReset = function () { RG.cvsFilterSet(initial()); };
-RG.cvsFilterNew = function () { var st = state(); st.newOnly = !st.newOnly; RG.cvsFilterSet(st); return st.newOnly; };
 
 /* HTML（同じ部品を地図と現地モードで使う） */
 RG.cvsFilterHtml = function (cls) {
@@ -39,17 +37,14 @@ RG.cvsFilterHtml = function (cls) {
       var on = st[b.k] !== false;
       return '<button type="button" class="cvsf__b' + (on ? " on" : "") + '" data-cvs="' + b.k + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + esc(b.label) + (on ? "（表示中）" : "（非表示）") + '" title="' + esc(b.label) + '" style="--bc:' + b.c + '"><i>' + esc(b.mark) + "</i><span>" + esc(b.label.replace("ファミリーマート", "ファミマ").replace("セブン-イレブン", "セブン")) + "</span></button>";
     }).join("") +
-    '<button type="button" class="cvsf__all' + (all ? " on" : "") + '" data-cvs-all="1" aria-pressed="' + (all ? "true" : "false") + '" title="3 社と、その他のコンビニもすべて表示">' + (all ? "すべて表示中" : "すべて") + "</button>" +
-    '<button type="button" class="cvsf__new' + (st.newOnly ? " on" : "") + '" data-cvs-new="1" aria-pressed="' + (st.newOnly ? "true" : "false") + '" title="開店から 90 日以内の店だけ（セブン・ファミマ・ローソン）">🆕 新店だけ</button></div>';
+    '<button type="button" class="cvsf__all' + (all ? " on" : "") + '" data-cvs-all="1" aria-pressed="' + (all ? "true" : "false") + '" title="3 社と、その他のコンビニもすべて表示">' + (all ? "すべて表示中" : "すべて") + "</button></div>";
 };
 RG.cvsFilterBind = function (root) {
   Array.prototype.forEach.call(root.querySelectorAll("[data-cvs]"), function (b) {
     b.addEventListener("click", function (e) { e.stopPropagation(); RG.cvsFilterToggle(b.dataset.cvs); });
   });
   var all = root.querySelector("[data-cvs-all]");
-  if (all) all.addEventListener("click", function (e) { e.stopPropagation(); var nw = state().newOnly; RG.cvsFilterReset(); if (nw) RG.cvsFilterNew(); });
-  var nb = root.querySelector("[data-cvs-new]");
-  if (nb) nb.addEventListener("click", function (e) { e.stopPropagation(); RG.cvsFilterNew(); });
+  if (all) all.addEventListener("click", function (e) { e.stopPropagation(); RG.cvsFilterReset(); });
 };
 /* 地図の左下の小さな帯（コンビニのジャンルを選んでいるときだけ） */
 var bar = null;
@@ -62,10 +57,9 @@ function renderBar() {
   var on = genreOn();
   bar.hidden = !on;
   if (!on) return;
-  var st = state(), n = { seven_eleven: 0, familymart: 0, lawson: 0, other: 0, shown: 0, nw: 0 };
-  (RG.MAPPOI || []).forEach(function (p) { if (p.g !== "cvs") return; var k = RG.brandKey(p); n[k] = (n[k] || 0) + 1; if (p.isNew) n.nw++; if (RG.poiFilterPass(p)) n.shown++; });
-  bar.innerHTML = '<span class="cvsbar__l">🏪 コンビニ <b>' + n.shown.toLocaleString("ja-JP") + "</b>" + (allOn(st) ? "" : " <small>／その他 " + n.other.toLocaleString("ja-JP") + " は非表示</small>") +
-    (n.nw ? ' <small>／🆕 新店 ' + n.nw.toLocaleString("ja-JP") + "</small>" : "") + "</span>" + RG.cvsFilterHtml("cvsf--map");
+  var st = state(), n = { seven_eleven: 0, familymart: 0, lawson: 0, other: 0, shown: 0 };
+  (RG.MAPPOI || []).forEach(function (p) { if (p.g !== "cvs") return; var k = RG.brandKey(p); n[k] = (n[k] || 0) + 1; if (RG.poiFilterPass(p)) n.shown++; });
+  bar.innerHTML = '<span class="cvsbar__l">🏪 コンビニ <b>' + n.shown.toLocaleString("ja-JP") + "</b>" + (allOn(st) ? "" : " <small>／その他 " + n.other.toLocaleString("ja-JP") + " は非表示</small>") + "</span>" + RG.cvsFilterHtml("cvsf--map");
   RG.cvsFilterBind(bar);
 }
 RG.cvsFilterInit = function () {

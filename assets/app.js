@@ -47,9 +47,9 @@ RG.MAPSIZE = {
   strokeR:  0.30,   // 文字の白いふち（文字の大きさに対する割合）
   admR:     1.25,   // 区の名前は、駅名（大きい駅）の 125%
   jpadmR:   1.40,   // 全国の市区町村の地名は 140%
-  poiER:    1.40,   // スポットの絵文字（v74: 1.15 → v111: 1.40。スマホで «何の印か» が見分けられる大きさに）
-  poiEBigR: 1.60,   // 目立つスポットの絵文字（v111: 1.35 → 1.60）
-  poiCR:    0.62,   // スポットの丸（半径）＝絵文字に対する割合（v111: 0.58 → 0.62。線のアイコンが丸に窮屈に入らないように）
+  poiER:    1.15,   // スポットの絵文字（v74: 駅の丸を大きく・スポットを小さくして釣り合わせた）
+  poiEBigR: 1.35,   // 目立つスポットの絵文字
+  poiCR:    0.58,   // スポットの丸（半径）＝絵文字に対する割合
   poiTR:    0.90    // スポットの名前（駅名よりわずかに小さく）
 };
 
@@ -167,39 +167,6 @@ function hav(a, b) {
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 RG.hav = hav;
-/* v113: 現在地（など）のまわりを «前後 2〜3 駅» が入る広さで見せる。
-   近い駅から 6 つ目までの距離を半径にして、画面の短い辺に収める（街中は狭く、郊外は広く）。1.2〜30km の間 */
-RG.viewAround = function (la, lo) {
-  var d = [];
-  (RG.NET && RG.NET.stations || []).forEach(function (s) { var k = hav([la, lo], [s.la, s.lo]); if (k < 40) d.push(k); });
-  d.sort(function (a, b) { return a - b; });
-  var r = d.length >= 6 ? d[5] : d.length ? d[d.length - 1] : 3;
-  var km = Math.max(1.2, Math.min(30, r * 2.3));                       // 直径 ＋ ふち
-  var wr = document.querySelector("#map") || document.body, rc = wr.getBoundingClientRect();
-  var portrait = rc.height > rc.width;                                   // 縦長（スマホ）は «横幅» が短い辺
-  var kmW = portrait ? km : km * (rc.width / Math.max(1, rc.height));
-  var P0 = RG.project(la, lo), P1 = RG.project(la, lo + kmW / (111.32 * Math.cos(la * Math.PI / 180)));
-  // スマホは上に検索（たたんだ帯）・下にボタンがあるので、見えている部分の真ん中に来るよう中心を少し北へ
-  var cla = portrait ? la + 0.05 * (kmW * rc.height / Math.max(1, rc.width)) / 111 : la;
-  if (portrait && innerWidth < 560 && RG.heroFold) RG.heroFold("here");          // 検索カードをたたんで、現在地を隠さない
-  RG.Map.gotoLatLng(cla, lo, Math.abs(P1.x - P0.x) / (RG.K || 1));          // gotoLatLng の幅は «23区版の単位»（中で RG.K 倍される）
-};
-/* v113: ◎ ボタン = 現在地へ（取れないときは東京駅へ）。出発地は変えない */
-RG.goHere = function () {
-  function tokyo() { var st = RG.getDefaultOriginStation && RG.getDefaultOriginStation(); RG.Map.focus(st ? st.id : RG.HUB, 300); }
-  if (!navigator.geolocation || (RG.secureOK && !RG.secureOK())) return tokyo();
-  if (RG.tripStatus) RG.tripStatus("📍 現在地を確かめています…", "info", 0);
-  navigator.geolocation.getCurrentPosition(function (p) {
-    var la = p.coords.latitude, lo = p.coords.longitude;
-    if (!(la > 20 && la < 46 && lo > 122 && lo < 154)) { if (RG.tripStatus) RG.tripStatus("現在地が日本の外なので、東京駅を表示します", "info", 3000); return tokyo(); }
-    if (RG.Map.paintMe) RG.Map.paintMe([la, lo], p.coords.accuracy);
-    RG.viewAround(la, lo);
-    if (RG.tripStatus) RG.tripStatus("📍 現在地のまわりを表示しています" + (p.coords.accuracy ? "（誤差 ±" + Math.round(p.coords.accuracy) + "m）" : ""), "ok", 2500);
-  }, function () {
-    if (RG.tripStatus) RG.tripStatus("現在地が取れないので、東京駅を表示します", "info", 3000);
-    tokyo();
-  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
-};
 
 /* data/net.json（コンパクト版）を、これまでどおりの RG.NET の形に戻す */
 RG.decodeNet = function (j) {
@@ -1007,6 +974,8 @@ var Map = (function () {
     n.appendChild(el("circle", { class: "poi__hit", r: 10 }));
     // 名前。寄ったときだけ出す（poiLOD が決める）
     n.appendChild(el("text", { class: "poi__t", "text-anchor": "middle" }));
+    // v104: ライブカメラの «🔴 LIVE» の点（camera ジャンルのときだけ出す。ふだんは隠す）
+    n.__live = el("circle", { class: "poi__live" }); n.__live.style.display = "none"; n.appendChild(n.__live);
     n.addEventListener("click", function (ev) { ev.stopPropagation(); if (n.__p) RG.showSpot(n.__p); });
     // ホバーのふきだしはマウス／ペンだけ。指のタップでは出さない（タップは click → カードを開く。
     // v74: Android で指の下にふきだしが出て click を横取りし、0.5秒で消える不具合の修正）
@@ -1042,11 +1011,9 @@ var Map = (function () {
     var pad = vb.w * 0.06, cand = [];
     var list = RG.MAPPOI || [];
     var airmode = svg.classList.contains("airmode");                  // v82: 航空路モードは空港だけ（ズームに関係なく）
-    var upf = RG.userPostFilter;                                        // v108: «この人の投稿» だけを出しているとき
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
       if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }   // あとから足されたものは、ここで座標を出す
-      if (upf) { if (p.upUid !== upf) continue; if (p.x < vb.x - pad || p.x > vb.x + vb.w + pad || p.y < vb.y - pad || p.y > vb.y + vb.h + pad) continue; cand.push(p); continue; }
       if (airmode) { if (p.g !== "airport") continue; if (p.x < vb.x - pad || p.x > vb.x + vb.w + pad || p.y < vb.y - pad || p.y > vb.y + vb.h + pad) continue; cand.push(p); continue; }
       // ピンで絞っているときは «自分が付けたもの» なので、ズームに関係なく必ず出す
       var pinned = RG.pinFilter != null;
@@ -1084,7 +1051,7 @@ var Map = (function () {
     // 拡大するほどアイコンは小さく（画面が埋まらないように・描画も軽くなる）
     var shrink = z >= 12 ? 0.72 : z >= 6 ? 0.86 : 1;
     var eff = poiScale * shrink;
-    var cell = (26 * eff) * (vb.w / wpx);                          // v111: 印を大きくしたぶん、間引きのマス目も広く（重ならないように）
+    var cell = (22 * eff) * (vb.w / wpx);
     /* 画面に «無理なく置ける数» を見積もる。
        アイコン1つにおよそ 30×30px が要るとして、画面の18%まで。
        駅名と同じ考えかたで、混みすぎないようにする。 */
@@ -1099,7 +1066,7 @@ var Map = (function () {
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
       // 一之宮・話題は数の上限・間引きの対象外（必ず出す）。レベチは «絞っているとき» か «寄ったとき» だけ全部出す（v89: 引いた地図で王冠が団子にならないように）
-      var special = q.g === "alert" || q.g === "ichinomiya" || q.g === "buzz" || q.g === "userpost" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
+      var special = q.g === "ichinomiya" || q.g === "buzz" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
       if (!special && show.length >= cap) continue;
       var key = airmode ? Math.round(q.x / cellA) + "," + Math.round(q.y / cellA) : Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key] && (!special || airmode)) continue;
@@ -1118,30 +1085,40 @@ var Map = (function () {
       }
       n.__p = t; n.style.display = "";
       n.setAttribute("class", "poi poi--t" + t.ti + " poi--" + t.g +
-        (RG.visitCount && RG.visitCount(t.n) > 0 ? " visited" : "") + (t.isNew ? " poi--new" : ""));
-      if (t.isNew && !myPins.length) g = { e: "🆕", c: "#E0A800" };   // v108: 開店 90 日以内のコンビニ
+        (RG.visitCount && RG.visitCount(t.n) > 0 ? " visited" : ""));
       n.setAttribute("aria-label", t.n);
       n.setAttribute("tabindex", t.ti === 0 ? "0" : "-1");
       var c0 = n.childNodes[1], e0 = n.childNodes[2], h0 = n.childNodes[3];
       var uu = vb.w / wpx;               // 画面の1px = 地図の何単位か
-      var tb = isTouch() ? 1.1 : 1;      // v111: 指で押すスマホは、印を 1 割大きく
       n.__halo.setAttribute("cx", t.x); n.__halo.setAttribute("cy", t.y);
-      n.__halo.style.setProperty("r", ((SZ2.poiC * tb + 2) * uu).toFixed(3) + "px", "important");
+      n.__halo.style.setProperty("r", ((SZ2.poiC + 1.8) * uu).toFixed(3) + "px", "important");
       c0.setAttribute("cx", t.x); c0.setAttribute("cy", t.y);
-      c0.style.setProperty("r", (SZ2.poiC * tb * uu).toFixed(3) + "px", "important");
-      c0.style.setProperty("stroke-width", (2 * uu).toFixed(3) + "px", "important");   // v111: 1.6 → 2（ジャンルの色の輪をはっきり）
+      c0.style.setProperty("r", (SZ2.poiC * uu).toFixed(3) + "px", "important");
+      c0.style.setProperty("stroke-width", (1.6 * uu).toFixed(3) + "px", "important");
       c0.style.setProperty("--pc", g.c);
-      var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15 * tb;
+      var esz = (t.ti === 0 ? SZ2.poiEBig : SZ2.poiE) * 1.15;
       if (t.g === "buzz" || t.g === "ichinomiya") esz = Math.max(esz, 13);   // 都道府県単位の目印は、引いていても読める大きさに
       // v77: 寄ったとき（街〜詳細）だけ、企業・チェーンのロゴを極小で（識別目的。商標は各社に帰属）
-      var logo = (!t.isNew && z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
+      var logo = (z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
       if (t.g === "levechi" && RG.LEVECHI_ICON) { logo = RG.LEVECHI_ICON; esz = Math.max(esz * 1.5, 14); }   // v87: レベチは専用の印（どのズームでも）
       else if (logo) { esz = Math.max(esz * 1.35, 11); }
       /* v101: ロゴ・自分のピン・レベチの王冠以外は、Figma 由来のモノラインアイコン（<use>）。無ければ絵文字のまま */
-      var ic = (!logo && !myPins.length && !t.isNew && RG.setIcon) ? RG.setIcon(e0, t.g, t.x, t.y, esz * 1.05 * uu) : null;
+      var ic = (!logo && !myPins.length && RG.setIcon) ? RG.setIcon(e0, t.g, t.x, t.y, esz * 1.05 * uu) : null;
       if (!ic) setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
       n.classList.toggle("poi--logo", !!logo);
       n.classList.toggle("poi--ic", !!ic);
+      /* v104: ライブカメラ（YouTube 公式配信）は «いま見られる映像» なので、赤い LIVE の点で目立たせる（HOT）。
+         点の位置は印の右上。他ジャンルでは隠す（node は使い回すので毎回 display を決める） */
+      var live = t.g === "camera" && !myPins.length;
+      n.classList.toggle("poi--live", live);
+      if (n.__live) {
+        if (live) {
+          var rr = SZ2.poiC * uu, off = rr * 0.82;
+          n.__live.setAttribute("cx", (t.x + off).toFixed(2)); n.__live.setAttribute("cy", (t.y - off).toFixed(2));
+          n.__live.style.setProperty("r", (rr * 0.5).toFixed(3) + "px", "important");
+          n.__live.style.display = "";
+        } else n.__live.style.display = "none";
+      }
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
       h0.style.setProperty("r", (14 * uu).toFixed(3) + "px", "important");
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
@@ -1378,8 +1355,6 @@ var Card = (function () {
         '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '">🔗 共有</button>' +
         '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
         (RG.favs ? '<button class="cmini" type="button" data-fav-open="1">⭐ お気に入り一覧</button>' : "") +
-        (RG.stickerStation ? '<button class="cmini" type="button" data-stk-st="' + esc(s.id) + '" title="SNS に貼る駅名標のステッカー（透明な PNG）">🏷️ ステッカー</button>' : "") +
-        (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る">📝 Obsidian</button>' : "") +
       "</div>" +
       '<div class="cardq"><label class="cardq__l"><span class="ms">search</span><input class="cardq__in" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(s.n) + '駅から、どこへ？（駅名・地名）" aria-label="' + esc(s.n) + '駅からの行き先"></label><div class="cardq__sug" role="listbox" hidden></div></div>' +
       "</div>";
@@ -1899,10 +1874,6 @@ var Card = (function () {
     // v94: 共有・お気に入り一覧・行き先検索・近くのスポット
     var sh = root.querySelector("[data-share-st]");
     if (sh) sh.addEventListener("click", function (e) { e.stopPropagation(); if (RG.shareStation) RG.shareStation(sh.dataset.shareSt); });
-    var sk = root.querySelector("[data-stk-st]");                  // v116: 駅名標ステッカー
-    if (sk) sk.addEventListener("click", function (e) { e.stopPropagation(); RG.stickerStation(sk.dataset.stkSt); });
-    var ob = root.querySelector("[data-ob-st]");                  // v113: Obsidian へ駅のノート
-    if (ob) ob.addEventListener("click", function (e) { e.stopPropagation(); RG.sendStationNote(ob.dataset.obSt); });
     var fo = root.querySelector("[data-fav-open]");
     if (fo) fo.addEventListener("click", function (e) { e.stopPropagation(); if (RG.favs) RG.favs.openList(); });
     var qf = root.querySelector("[data-cardq-focus]"), qi = root.querySelector(".cardq__in");
@@ -2130,17 +2101,13 @@ function mergeExtraPois(key) {
     var BR = {}, CT = {};
     (RG.CHAIN_BRANDS || []).forEach(function (b) { BR[b.i] = b; });
     (RG.CHAIN_CATS || []).forEach(function (c) { CT[c.id] = c; });
-    var newLim = RG.cvsNewLimit();
     RG.CHAIN_ROWS.forEach(function (r, i) {
       var b = BR[r[0]];
       if (!b) return;
       var c = CT[b.cat] || {};
-      /* v108: 大手コンビニは公式の店舗検索から（r[6]=開店日 YYYYMMDD・r[7]=公式の店番）。開店から 90 日以内は «新店» */
-      var op = r[6] || 0;
-      RG.MAPPOI.push({ i: r[7] ? "cv" + r[0] + "_" + r[7] : "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
-                       s: op >= newLim ? 3.4 : 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
-                       brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null,
-                       open: op || null, shop: r[7] || null, isNew: op >= newLim });   // 店番は shop（p.sid はコメントの spotId に使われるので使わない）
+      RG.MAPPOI.push({ i: "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
+                       s: 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
+                       brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null });
     });
   });
 
@@ -2154,17 +2121,6 @@ function mergeExtraPois(key) {
       });
     });
   });
-  /* v114: «はじめての土地» の 6 ジャンル（全国） */
-  if (RG.TRAVEL) once("travel", function () {
-    var M = RG.TRAVEL_META || {};
-    Object.keys(RG.TRAVEL).forEach(function (gid) {
-      var m = M[gid] || {};
-      RG.TRAVEL[gid].forEach(function (r, i) {
-        RG.MAPPOI.push({ i: gid + "t" + i, n: r.n || m.label, la: r.la, lo: r.lo, g: gid,
-                         s: 3.0, ti: 1, t: r.kind || m.label, be: m.e, bc: m.c, osm10: r, gid: gid, url: r.webs || null });
-      });
-    });
-  });
   if (RG.rebuildHensachi) RG.rebuildHensachi();
   // 関東の見どころ
   if (RG.KANTO_LM) once("klm", function () {
@@ -2174,33 +2130,17 @@ function mergeExtraPois(key) {
                        t: r.t, be: r.e, bc: r.c, sl: r.sl, klm: r });
     });
   });
-  /* v108: 一之宮は独立ジャンル。«主な神社» と同じ社（Wikidata ID が同じ）は一之宮だけに出す（どちらが先に届いても） */
-  var ICHI_KIND = { 1: "諸国一宮", 2: "一の宮会の一宮", 3: "新一の宮", 4: "北海道の一宮", 5: "一宮（論社・称する社）" };
-  function ichiQ() { var s = {}; (RG.ICHINOMIYA || []).forEach(function (r) { if (r.q) s[r.q] = 1; }); return s; }
   if (RG.ICHINOMIYA) once("ichinomiya", function () {
-    var seenId = {};
     RG.ICHINOMIYA.forEach(function (r, i) {
-      var k = r.kind || 1, id = "ich" + (r.q || i);
-      if (seenId[id]) id += "_" + seenId[id];   // 1記事に2社（都々古別神社の馬場・八槻、若狭彦・若狭姫）
-      seenId["ich" + (r.q || i)] = (seenId["ich" + (r.q || i)] || 0) + 1;
-      RG.MAPPOI.push({ i: id, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya",
-                       s: k === 1 ? (r.hist === 0 ? 4.6 : 4.9) : k <= 3 ? 4.5 : 4.0, ti: k === 1 || k === 3 ? 0 : 1,
-                       t: (r.kuni ? r.kuni + " " : "") + ICHI_KIND[k], be: "🎌", bc: "#8B0000", sl: 20,
-                       url: r.web || null, wp: r.wp || null, q: r.q || null, ad: r.ad || r.pf || "", ichi: r,
-                       srcNote: "一之宮: Wikipedia 日本語版「一宮」と各社の記事（CC BY-SA 4.0）・Wikidata（CC0）・一の宮巡拝会（最寄り駅・御神徳）。参拝時間・行事は各社の公式で確認。" });
+      RG.MAPPOI.push({ i: "ich" + i, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya", s: 4.8, ti: 0,
+                       t: "一之宮", be: "🎌", bc: "#8B0000", sl: 20, url: r.wp || null,
+                       srcNote: "一之宮: Wikidata（CC0）の「一宮」に結びつく神社。参拝時間・行事は各社の公式で確認。" });
     });
-    var iq = ichiQ();
-    for (var j = RG.MAPPOI.length - 1; j >= 0; j--) {
-      var p0 = RG.MAPPOI[j];
-      if (p0.g === "shrine_major" && p0.q && iq[p0.q]) RG.MAPPOI.splice(j, 1);
-    }
   });
   if (RG.SHRINE_MAJOR) once("shrines_jp", function () {
-    var iq = ichiQ();
     RG.SHRINE_MAJOR.forEach(function (r, i) {
-      if (r.q && iq[r.q]) return;
       RG.MAPPOI.push({ i: "shm" + i, n: r.n, la: r.la, lo: r.lo, g: "shrine_major", s: 4.2, ti: 1,
-                       t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null, q: r.q || null,
+                       t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null,
                        srcNote: "主な神社: Wikidata（CC0）の別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" });
     });
     (RG.TEMPLE_MAJOR || []).forEach(function (r, i) {
@@ -2212,7 +2152,7 @@ function mergeExtraPois(key) {
   if (RG.CAMS_JP) once("cams_jp", function () {
     RG.CAMS_JP.forEach(function (r, i) {
       RG.MAPPOI.push({ i: "cj" + i, n: r.n, la: r.la, lo: r.lo, g: "camera", s: 3.8, ti: 1,
-                       t: (r.k || "ライブ") + "カメラ", be: "📹", bc: "#5A6472", url: r.url || null,
+                       t: (r.k || "ライブ") + "カメラ", url: r.url || null,   // v104: 色は genre（赤 LIVE）・印はカメラのスプライトに任せる
                        yt: r.yt || null, ch: r.ch || null, by: r.by || null, kind: r.k || null,
                        srcNote: "全国のライブカメラ: 配信元 " + (r.by || "不明") + "（YouTube）。位置はおおよそ。配信は止まる/変わることがあります。" });
     });
@@ -2220,7 +2160,6 @@ function mergeExtraPois(key) {
   if (RG.mergeBuzz) RG.mergeBuzz();
   if (RG.mergeViews) RG.mergeViews();
   if (RG.mergeOnsen) RG.mergeOnsen();
-  if (RG.mergeSento) RG.mergeSento();   // v108: 全国の銭湯
   if (RG.mergeLevechi) { RG.mergeLevechi(); if (RG.levechiInit) RG.levechiInit(); }
   if (RG.mergeNearSpecial) RG.mergeNearSpecial();
   if (RG.mergeMountains) RG.mergeMountains();
@@ -2337,15 +2276,6 @@ RG.initHeroSearch = function () {
     if (q === last) return; last = q;
     var rows = RG.heroSearch(q, 8);
     sug.innerHTML = "";
-    var zq = RG.zipMode && RG.zipMode() && /^(\d{3})-?(\d{4})$/.exec(q.replace(/[\s\u3000〒]/g, "").replace(/[‐－ー―−]/g, "-"));   // v118: 郵便番号モード
-    if (zq && RG.zipLookup) RG.zipLookup(zq[1] + zq[2], function (hit) {
-      if (last !== q) return;
-      var e0 = sug.querySelector(".heroSug--e"); if (e0) e0.remove();
-      var zb = document.createElement("button"); zb.type = "button"; zb.className = "heroSug heroSug--area"; zb.setAttribute("role", "option");
-      zb.innerHTML = hit ? "<b>〒 " + zq[1] + "-" + zq[2] + "</b><small></small><span>" + esc(hit.town) + "</span>" : "<b>〒 " + zq[1] + "-" + zq[2] + "</b><small></small><span>この番号は見つかりませんでした</span>";
-      if (hit) zb.addEventListener("click", function () { input.value = "〒" + zq[1] + "-" + zq[2]; close(); if (RG.heroFold) RG.heroFold("user"); RG.Map.gotoLatLng(hit.la, hit.lo, 160); if (RG.tripStatus) RG.tripStatus("〒" + zq[1] + "-" + zq[2] + " " + hit.town + " のあたり", "ok", 3500); });
-      sug.insertBefore(zb, sug.firstChild); sug.hidden = false;
-    });
     if (!rows.length) { sug.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした。駅名・地名・建物名でお試しください。</div>'; sug.hidden = false; return; }
     rows.forEach(function (r) {
       var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");
@@ -2514,8 +2444,7 @@ RG.boot = function () {
     $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
     $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
     $("#zfit").addEventListener("click", Map.fitAll);
-    $("#zhub").addEventListener("click", function () { RG.goHere(); });   // v113: ◎ は «現在地へ»（取れないときは東京駅へ。v89 までは東京駅へ）
-    $("#zhub").setAttribute("aria-label", "現在地へ（取れないときは東京駅）"); $("#zhub").title = "現在地へ";
+    $("#zhub").addEventListener("click", function () { var st = RG.getDefaultOriginStation && RG.getDefaultOriginStation(); Map.focus(st ? st.id : RG.HUB, 300); });   // v89: «東京駅へ»
     var bh = $("#btn-hub");
     if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
   });
@@ -2551,37 +2480,7 @@ RG.boot = function () {
     var st = RG.getDefaultOriginStation && RG.getDefaultOriginStation();
     if (st) { Map.focus(st.id, isTouch() && innerWidth < 560 ? 360 : 520); if (Map.select) Map.select(st.id); }
     else Map.focus(RG.HUB, isTouch() && innerWidth < 560 ? 440 : 700);
-    firstViewHere();
   });
-  /* v110: 初回の地図は «現在地» のあたり。取れない（許可なし・時間切れ・日本の外・http）ときは東京駅のまま。
-     共有リンク（?st= ?from= など）で開いたとき・位置が届く前に地図を動かした／カードを開いたときは動かさない。出発地は変えない */
-  function firstViewHere() {
-    if (location.search || location.hash.length > 1 || !navigator.geolocation) return;
-    if (RG.secureOK && !RG.secureOK()) return;
-    var moved = false, w = isTouch() && innerWidth < 560 ? 360 : 520;
-    function mark() { moved = true; }
-    ["pointerdown", "wheel", "keydown"].forEach(function (t) { document.addEventListener(t, mark, { once: true, capture: true }); });
-    function ask() {
-      navigator.geolocation.getCurrentPosition(function (p) {
-        var la = p.coords.latitude, lo = p.coords.longitude;
-        if (!(la > 20 && la < 46 && lo > 122 && lo < 154)) return;
-        // v111: ルートの出発地も «現在地» に（利用者がもう別の出発地を選んでいたら変えない）
-        var T = RG.Trip || {}, def = RG.getDefaultOriginStation && RG.getDefaultOriginStation();
-        if (RG.setOrigin && (!T.origin || (def && T.id === def.id && !T.isGeo))) {
-          var c = [la, lo], best = null;
-          RG.NET.stations.forEach(function (s) { var km = RG.hav(c, [s.la, s.lo]); if (!best || km < best.km) best = { s: s, km: km }; });
-          RG.setOrigin(c, "現在地（" + best.s.n + "駅から約" + best.km.toFixed(1) + "km）", null, p.coords.accuracy);
-        }
-        if (moved || document.querySelector(".modal")) return;
-        if (RG.Map.paintMe) RG.Map.paintMe([la, lo], p.coords.accuracy);
-        RG.viewAround(la, lo);                                             // v113: 前後 2〜3 駅が入る広さ
-        if (RG.tripStatus) RG.tripStatus("📍 現在地のあたりを表示しています（ルートも現在地から）", "info", 2600);
-      }, function () {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
-    }
-    // 前に «許可しない» にした人には聞き直さない
-    if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: "geolocation" }).then(function (s) { if (s.state !== "denied") ask(); }, ask);
-    else ask();
-  }
 
   RG.bootFailed = failed;
   if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);

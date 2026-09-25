@@ -34,12 +34,9 @@ var IDLE = [
   { f: "data/landmarks.js", key: "landmarks", label: "ランドマーク" },
   { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮" },
   { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
-  { f: "data/jma_areas.js", key: "jmaareas", label: "気象庁の予報区" },          // v115: 防災情報（警報を置く場所）
-  { f: "data/auto/buzz_auto.js", key: "buzzauto", label: "話題の場所（自動更新）" },   // v114: GitHub Actions が毎朝更新
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）
   { f: "data/tokyo_station.js", key: "tokyost", label: "東京駅の出入口" },      // v90: 東京駅モード（小さい）
-  { f: "data/auto/station_exits.js", key: "stexits", label: "主要駅の出入口" },   // v114: GitHub Actions が毎月更新    // v112: 現地モードの «出口»（主要駅）
   { f: "data/shinkansen.js", key: "shinkansen", label: "新幹線の駅" },
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
   { f: "data/analytics.js", key: "analytics", label: "利用状況の設定" },        // v98: endpoint が空なら送らない
@@ -75,12 +72,10 @@ var ONDEMAND = [
   { f: "data/corp.js",      key: "corp",     label: "上場企業",           group: "spots" },
   { f: "data/corp_gone.js", key: "corpgone", label: "消えた会社",         group: "spots" },
   { f: "data/smoking.js",   key: "smoke",    label: "喫煙できる場所",     group: "spots" },
-  { f: "data/auto/travel.js", key: "travel", label: "観光案内所・宿・タクシーほか", group: "spots" },   // v114: GitHub Actions が毎月更新
   { f: "data/camadult.js",  key: "camadult", label: "カメラほか",         group: "spots" },
   { f: "data/cams_jp.js",   key: "cams_jp",  label: "全国ライブカメラ",   group: "spots" },
   { f: "data/views_jp.js",  key: "views_jp", label: "全国の絶景",         group: "spots" },
   { f: "data/onsen_jp.js",  key: "onsen_jp", label: "全国の温泉",         group: "spots" },
-  { f: "data/sento_jp.js",  key: "sentojp",  label: "全国の銭湯",         group: "spots" },   // v108
   { f: "data/near_special.js", key: "nearsp", label: "SPECIAL圏内",     group: "spots" },
   { f: "data/mountains.js", key: "mountains", label: "山と山脈",         group: "spots" },
   { f: "data/water.js",     key: "water",    label: "川・海・海流",       group: "spots" },
@@ -140,7 +135,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, travel: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, sentojp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
+                 smoke: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;
