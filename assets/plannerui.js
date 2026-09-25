@@ -103,7 +103,7 @@ function useGeo(retry) {
     var acc = p.coords.accuracy ? "±" + Math.round(p.coords.accuracy) + "m" : "";
     setOrigin(c, "現在地（" + best.s.n + "駅から約" + best.km.toFixed(1) + "km" +
                  (acc ? " / 精度" + acc : "") + "）", null, p.coords.accuracy);
-    RG.Map.gotoLatLng(c[0], c[1], 340);
+    if (RG.viewAround) RG.viewAround(c[0], c[1]); else RG.Map.gotoLatLng(c[0], c[1], 340);   // v113: 前後 2〜3 駅が入る広さ
   }, function (e) {
     status("", "");
     if (RG.showGeoHelp) RG.showGeoHelp(e);
@@ -321,10 +321,12 @@ function sameGenre(p) {
 }
 
 RG.showSpot = function (p) {
+  if (p && p.upKey && RG.postsResolve) p = RG.postsResolve(p);   // v108: «この人の投稿» のピン → 本物のスポット
   RG.spotTip(null);
   if (p.corp && RG.showCorp) { RG.showCorp(p.corp); return; }
   if (p.gone && RG.showCorpGone) { RG.showCorpGone(p.gone); return; }
   if (p.smoke && RG.showSmoke) { RG.showSmoke(p.smoke); return; }
+  if (p.alert && RG.showAlert) { RG.showAlert(p); return; }          // v115: 防災情報
   if (p.adult && RG.showAdult) { RG.showAdult(p.adult); return; }
   if (p.camspot && RG.showCamSpot) { RG.showCamSpot(p.camspot); return; }
   if (p.buzz && RG.showBuzz) { RG.showBuzz(p.buzz, "fresh"); return; }
@@ -394,8 +396,8 @@ RG.showSpot = function (p) {
       (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
     (RG.pinRow ? RG.pinRow(p) : "") +
     (RG.focusHtml ? RG.focusHtml(p.n) : "") +
-    (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") +
-    (RG.mountainBlock ? RG.mountainBlock(p) : "") + (RG.riverBlock ? RG.riverBlock(p) : "") + (RG.castleBlock ? RG.castleBlock(p) : "") +
+    (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") + (RG.sentoBlock ? RG.sentoBlock(p) : "") +
+    (RG.mountainBlock ? RG.mountainBlock(p) : "") + (RG.riverBlock ? RG.riverBlock(p) : "") + (RG.castleBlock ? RG.castleBlock(p) : "") + (RG.ichiBlock ? RG.ichiBlock(p) : "") +
     (RG.levechiBlock ? RG.levechiBlock(p) : "") +
     (RG.chainBlock ? RG.chainBlock(p) : "") + (RG.fuelBlock ? RG.fuelBlock(p) : "") + (RG.koshinBlock ? RG.koshinBlock(p) : "") + (RG.zooBlock ? RG.zooBlock(p) : "") +
     (RG.ytBlock ? RG.ytBlock(p) : "") + (RG.airportBlock ? RG.airportBlock(p) : "") + (RG.shukubaBlock ? RG.shukubaBlock(p) : "") +
@@ -431,7 +433,7 @@ RG.showSpot = function (p) {
       '<button class="lnk" type="button" data-plan="1"><span>🧳</span>立ち寄る（リストに追加）</button>' +
     "</div>" +
     RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "出発地からの道順") +
-    (p.chain ? '<p class="src od">出典: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">' +
+    (p.chain && !p.shop ? '<p class="src od">出典: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">' +
        "© OpenStreetMap contributors</a>（ODbL 1.0）<br>" +
        "OSM の登録状況によるため、実際の全店舗を網羅しているわけではありません。" +
        "営業時間や営業の有無は各社の公式情報でご確認ください。</p>" : "") +
@@ -439,16 +441,16 @@ RG.showSpot = function (p) {
        "東京都オープンデータカタログサイト</a>（" + esc(p.org || "") + "）／ライセンス CC BY 4.0<br>" +
        "更新のタイミングは団体ごとに異なります。最新情報は各自治体の公開データでご確認ください。</p>" : "") +
     (p.srcNote ? '<p class="src">' + esc(p.srcNote) + "</p>" : "") +
-    (RG.memoSpotHtml ? RG.memoSpotHtml(p) : "") +
+    (RG.postsEnabled && RG.postsEnabled() ? RG.postsHtml(p) : RG.commentsEnabled && RG.commentsEnabled() ? RG.commentsHtml(p) : (RG.memoSpotHtml ? RG.memoSpotHtml(p) : "")) +   // v108: 写真と声   // v106: 受け皿があれば «みんなのコメント»
     (RG.reqHtml ? RG.reqHtml("spot", p.n) : "") +
     '<p class="src">☆は「行く価値のめやす」です。文化財は指定の格（国宝5.0／重要文化財4.5／史跡4.5／登録有形3.5…）、' +
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
     "<b>レビューサイトの評価点ではありません。</b><br>出典: Wikidata (CC0 1.0) / 画像: Wikimedia Commons</p></div>";
   var m = modal(g.e + " " + p.n, html);
-  if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), q: p.q || null,
+  if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), noExtract: !!p.ichi, q: p.q || null,
                                                                         wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
   if (RG.reqBind) RG.reqBind(m);
-  if (RG.memoSpotBind) RG.memoSpotBind(m, p);          // v85: スポットにも «行った人の声»
+  if (RG.postsEnabled && RG.postsEnabled()) RG.postsBind(m, p); else if (RG.commentsEnabled && RG.commentsEnabled()) RG.commentsBind(m, p); else if (RG.memoSpotBind) RG.memoSpotBind(m, p);          // v85: スポットにも «行った人の声»／v106: みんなのコメント
   if (RG.focusBind) RG.focusBind(m);
   if (RG.natureBind) RG.natureBind(m, p);
   if (RG.terraBind) RG.terraBind(m, p);

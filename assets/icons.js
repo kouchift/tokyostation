@@ -13,7 +13,9 @@ var ALIAS = {
   cvs: "convenience", super: "supermarket", disc: "discount", corp: "company", corp_gone: "company", noodle: "ramen",
   family: "family_rest", other: "yakiniku", chuka: "chinese", fuel: "gas", high: "school", univ: "university",
   klm: "landmark", camspot: "camera", food: "family_rest", life: "discount", meeting: "company", net: "wifi",
-  elec: "ev", cloth: "shopping", postbox: "post"
+  elec: "ev", cloth: "shopping", postbox: "post",
+  // v117: はじめての土地の 6 ジャンル（v114）と、追加したアイコン
+  stay: "hotel", busterm: "bus", laundry: "coin_laundry", rentacar: "rental_car", smoke: "smoking", bath_x: "sauna"
 };
 var ready = false, failed = false, have = {};
 function symId(gid, map) { var s = ALIAS[gid] || gid; return "g-" + s + (map ? "-map" : ""); }

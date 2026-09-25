@@ -8,13 +8,13 @@
      このアプリは、すでに «あとから少しずつ読む» 作りになっています（段階読み込み）。
      さらに一歩進めて、ここでは «一度読んだら二度目は通信しない» を足しています。
    ========================================================================= */
-var CACHE = "tsg-v109";
-var V = "?v=109";     // index.html の data-build と合わせる
+var CACHE = "tsg-v119";
+var V = "?v=119";     // index.html の data-build と合わせる
 
 /* 入れておくと効果の大きいもの（最初の1回で必ず要るもの） */
 var CORE = [
   "./", "./index.html", "./assets/app.css" + V,
-  "./assets/app.bundle.js" + V, "./assets/comments-v109.js" + V,
+  "./assets/app.bundle.js" + V, "./assets/comments.js" + V,
   "./data/version.js" + V, "./data/net.json" + V, "./data/config.js" + V,
   "./assets/worker.js", "./assets/icons.svg" + V, "./manifest.webmanifest", "./assets/icon-192.png", "./assets/fonts/msymbols.woff2" + V, "./data/lines_meta.js" + V, "./data/genres.js" + V, "./data/score.js" + V, "./data/areas.js" + V, "./data/focus.js" + V
 ];
@@ -43,8 +43,8 @@ self.addEventListener("fetch", function (e) {
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;   // よそのサイトには手を出さない
 
-  // index.html は «新しいものがあれば新しいほう» （差し替えにすぐ気づけるように）
-  if (url.pathname.endsWith("/") || url.pathname.endsWith(".html")) {
+  // index.html と data/support.js（受け皿の URL など。版を変えずに書き換えることがある）は «新しいものがあれば新しいほう»
+  if (url.pathname.endsWith("/") || url.pathname.endsWith(".html") || /\/data\/support\.js$/.test(url.pathname) || /\/data\/auto\//.test(url.pathname)) {
     e.respondWith(
       fetch(req).then(function (r) {
         var copy = r.clone();

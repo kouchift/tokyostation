@@ -2615,6 +2615,14 @@ html,body{max-width:100vw;overflow-x:hidden}
 /* v69: 一之宮は特別な印（濃い赤の丸・二重のふち） */
 .poi--ichinomiya .poi__c{stroke:#8B0000 !important;fill:#FFF3F3 !important}
 .poi--ichinomiya .poi__halo{fill:#F6D3D3;fill-opacity:.95}
+/* v108: 開店 90 日以内のコンビニ（🆕・金色のふち） */
+.poi--new .poi__c{stroke:#E0A800 !important;fill:#FFF8DC !important}
+.poi--new .poi__halo{fill:#FFD54F;fill-opacity:.9;animation:poiNew 2.4s ease-in-out infinite}
+@keyframes poiNew{50%{fill-opacity:.35}}
+@media (prefers-reduced-motion:reduce){.poi--new .poi__halo{animation:none}}
+.chb__new{color:#9A6B00;background:#FFF3C4;border-radius:6px;padding:1px 6px}
+.cvsf__new{border:1px solid #E0A800;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;min-height:32px;cursor:pointer}
+.cvsf__new.on{background:#FFD54F;font-weight:700}
 /* v71 全国ライブカメラ：チャンネル埋め込み（サムネ無し）の置き場 */
 .cam__th--ph{display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,#2b3540,#5A6472);color:#fff;opacity:1}
 /* v71 SNSで話題（buzz） */
@@ -2825,6 +2833,12 @@ button,.lr__i,.tq__amt,.tj__amt{touch-action:manipulation}
 /* v75 絶景・温泉 */
 .nat{background:#f6fbfa;border:1px solid #cfe7e3;border-radius:12px;padding:8px 10px;margin:8px 0}
 .nat--on{background:#fff7f0;border-color:#f3d5bd}
+/* v108 一之宮のカード（濃い赤で «一之宮» の印とそろえる） */
+.ichb{background:#fff8f8;border-color:#f0d0d0}
+.ichb .nat__tag--k{background:#8B0000;border-color:#8B0000;color:#fff}
+.ichb .nat__f{flex:1 1 140px;max-width:100%}.ichb .nat__f b{font-size:13px;font-weight:600;line-height:1.45;display:block}
+.ichb__more summary{cursor:pointer;font-size:12.5px;color:#8B0000;margin:4px 0}
+.ichb__list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .nat__tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
 .nat__tag{font-size:11px;background:#fff;border:1px solid #ccc;border-radius:999px;padding:2px 8px}
 .nat__tag--k{background:#0E7C7B;color:#fff;border-color:#0E7C7B}
@@ -4140,149 +4154,144 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   font-size:12px;text-align:center;min-height:20px
 }
 .comments__status--loading{color:#0055AD;background:var(--lb200)}
-.comments__status--success{color:#197A4B;background:#D8F6E8}
+.comments__status--ok{color:#197A4B;background:#D8F6E8}
 .comments__status--error{color:#C41E3A;background:#FFD8D8}
+/* ===== v108 «みんなの写真と声»（assets/posts.js） ===== */
+.pst{margin:12px 0;padding:10px 12px;border:1px solid #e3d7ef;border-radius:12px;background:#fbf8ff}
+.pst__h{font-size:15px;margin:0 0 8px}.pst__n{font-size:12px;color:#666;font-weight:400}
+.pst__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px}
+.pst__th{position:relative;padding:0;border:0;border-radius:8px;overflow:hidden;aspect-ratio:1;background:#eee;cursor:pointer}
+.pst__th img{width:100%;height:100%;object-fit:cover;display:block}
+.pst__th i{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.6);color:#fff;font-style:normal;font-size:11px;border-radius:8px;padding:0 5px}
+.pst__ld{font-size:12.5px;color:#777;margin:4px 0;grid-column:1/-1}
+.pst__up{margin:10px 0 4px}
+.pst__btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;border-radius:999px;background:#7B1FA2;color:#fff;font-weight:700;font-size:13.5px;cursor:pointer}
+.pst__note{font-size:11px;color:#777;margin:6px 0 0;line-height:1.5}
+.pst__queue{margin-top:8px;padding:8px;border-radius:10px;background:#fff;border:1px dashed #c9b3dd}
+.pst__qh{font-size:13px;margin-bottom:6px}
+.pst__ql{margin:6px 0;padding-left:20px;font-size:12px;max-height:180px;overflow:auto}
+.pst__ql li{display:flex;gap:6px;align-items:baseline}.pst__ql li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pst__ql li em{color:#888;font-style:normal}.pst__ql li b{font-weight:600;color:#7B1FA2}
+.pst__ql li.ok b{color:#2E7D32}.pst__ql li.ng b{color:#C62828}
+.pst__name,.pst__cap,.pst__form textarea{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:7px 9px;font:inherit;font-size:14px;margin:3px 0}
+.pst__form{margin-top:8px}.pst__hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.pst__send{min-height:38px;padding:6px 14px;border:0;border-radius:999px;background:#0055AD;color:#fff;font-weight:700;cursor:pointer}
+.pst__send:disabled{opacity:.6}.pst__cancel{min-height:38px;padding:6px 12px;border:1px solid #ccc;border-radius:999px;background:#fff;cursor:pointer}
+.pst__st{font-size:12px;margin-left:8px;color:#555}.pst__err{color:#C62828;font-size:13px}
+.pst__list{list-style:none;margin:8px 0 0;padding:0}
+.pst__list li{padding:6px 0;border-top:1px solid #eee;font-size:13.5px}.pst__list li p{margin:3px 0 0;white-space:pre-wrap;word-break:break-word}
+.pst__who{border:0;background:none;padding:0;color:#7B1FA2;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-size:13px}
+.pst__who i{font-style:normal;font-weight:400;color:#999;margin-left:2px;font-size:11px}
+.pst__dt{font-size:11px;color:#888;margin-left:8px}
+.pst__cta{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);min-height:40px;padding:6px 16px;border:0;border-radius:999px;background:#7B1FA2;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap}
+.spotcard__ph{position:relative}
+.spotcard__ph--user{padding:0;cursor:zoom-in;overflow:hidden}.spotcard__ph--user .spotcard__i{width:100%;height:100%;object-fit:cover}
+.pst__credit{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;border-radius:8px;padding:2px 8px}
+.phv{position:fixed;inset:0;z-index:1200;background:rgba(10,10,20,.88);display:flex;align-items:center;justify-content:center;padding:12px}
+.phv__in{display:flex;gap:12px;max-width:1100px;width:100%;max-height:100%;background:#fff;border-radius:12px;overflow:hidden}
+.phv__img{flex:2;background:#111;display:flex;align-items:center;justify-content:center;min-height:240px}
+.phv__img img{max-width:100%;max-height:82vh;object-fit:contain;display:block}
+.phv__side{flex:1;min-width:260px;padding:12px;overflow:auto;max-height:86vh}
+.phv__cap{font-size:14px;margin:6px 0}
+.phv__x{position:fixed;top:10px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:#fff;font-size:18px;cursor:pointer}
+.phv__n{position:fixed;top:50%;width:44px;height:60px;border:0;border-radius:10px;background:rgba(255,255,255,.85);font-size:28px;cursor:pointer;transform:translateY(-50%)}
+.phv__n--p{left:8px}.phv__n--n{right:8px}
+.phv__rep{margin-top:10px;border:0;background:none;color:#999;font-size:12px;cursor:pointer}
+@media (max-width:720px){.phv{padding:0}.phv__in{flex-direction:column;border-radius:0;height:100%}.phv__img img{max-height:52vh}.phv__side{max-height:none;min-width:0}}
+.usr__hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin-bottom:8px}.usr__hd b{font-size:18px}.usr__hd i{color:#999;font-style:normal}
+.usr__hd span{font-size:12.5px;color:#666}.usr__me{font-style:normal;font-size:11px;background:#E8F5E9;color:#2E7D32;border-radius:8px;padding:1px 6px}
+.usr__ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.usr__ctl .seg{display:inline-flex;border:1px solid #ccc;border-radius:999px;overflow:hidden}
+.usr__ctl .seg button{border:0;background:#fff;padding:6px 12px;min-height:36px;cursor:pointer}.usr__ctl .seg button.on{background:#0055AD;color:#fff;font-weight:700}
+.usr__ctl select{min-height:36px;border-radius:8px;border:1px solid #ccc;padding:0 8px;font:inherit}
+.usr__list{list-style:none;margin:0;padding:0}
+.usr__it{display:flex;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid #eee;background:none;padding:8px 2px;cursor:pointer;align-items:center}
+.usr__it img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex:none}
+.usr__ic{width:64px;height:64px;flex:none;display:flex;align-items:center;justify-content:center;background:#f3eef8;border-radius:8px;font-size:24px}
+.usr__tx{display:flex;flex-direction:column;min-width:0}.usr__tx small{color:#888;font-size:11.5px}
+.usr__tx em{font-style:normal;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.upbar{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:30;display:flex;gap:8px;align-items:center;max-width:calc(100% - 32px);background:#fff;border:2px solid #7B1FA2;border-radius:999px;padding:4px 6px 4px 14px;box-shadow:0 2px 10px rgba(0,0,0,.18);font-size:13px}
+.upbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upbar button{flex:none;min-height:34px;border:0;border-radius:999px;padding:0 12px;background:#f3eef8;color:#7B1FA2;font-weight:700;cursor:pointer}
+.poi--userpost .poi__c{stroke:#7B1FA2 !important;fill:#F3E5F5 !important}.poi--userpost .poi__halo{fill:#CE93D8;fill-opacity:.8}
+/* v108 撮影位置（EXIF）の確認とクレジット */
+.pst__sum{margin-left:8px;font-size:12px;color:#555}
+.pst__note--warn{color:#8a5a00;background:#FFF8E1;border-radius:6px;padding:4px 6px}
+.pst__ql li{flex-wrap:wrap}
+.pst__lc{flex-basis:100%;font-style:normal;font-size:11.5px;padding-left:2px}
+.pst__lc--ok{color:#2E7D32}.pst__lc--none{color:#8a6d00}.pst__lc--far{color:#C62828;font-weight:700}.pst__lc--ng{color:#8E0000;font-weight:700}
+.pst__okfar{flex-basis:100%;display:flex;gap:6px;align-items:flex-start;font-size:12px;margin:2px 0 4px;color:#333}
+.pst__credit-opt{display:flex;gap:6px;align-items:center;font-size:12.5px;margin:6px 0}
+.pst__th--none,.pst__th--far{opacity:.9}
+.pst__th--none::after,.pst__th--far::after{position:absolute;right:3px;top:3px;font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;background:#FFD600;color:#111;border:1px solid #D50000}
+.pst__th--none::after{content:"位置?"}.pst__th--far::after{content:"位置✕"}
+.pst__ok{position:absolute;left:4px;top:3px;font-size:12px;filter:drop-shadow(0 0 2px #fff)}
+.phv__loc{font-size:12.5px;margin:6px 0;padding:5px 8px;border-radius:8px}
+.phv__loc--ok{background:#E8F5E9;color:#1B5E20}.phv__loc--none{background:#FFF8E1;color:#6d5200}.phv__loc--far{background:#FFEBEE;color:#B71C1C}
+/* v108 現在地での確認・その場で撮る */
+.pst__btn--cam{background:#00796B;margin-left:6px}
+.pst__geo{margin:8px 0;padding:8px;border-radius:8px;background:#E0F2F1;font-size:12.5px}.pst__geo p{margin:0 0 6px}
+.pst__send--geo{background:#00796B}
+.pst__lc--here{color:#00695C}
+.pst__th--here::after{position:absolute;right:3px;top:3px;font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;background:#FFD600;color:#111;border:1px solid #D50000;content:"現地"}
+.phv__loc--here{background:#E0F2F1;color:#004D40}
 
-/* v108: Image upload preview */
-.comments__preview-container{
-  margin-top:8px;padding:8px;background:var(--control);border-radius:var(--r);
-  text-align:center
-}
-.comments__preview{max-width:100%;max-height:200px;border-radius:8px}
+/* v111: 地図の文字は «駅名と同じ» 字間 0 に。
+   本文の letter-spacing（.005em）が SVG の文字に «16px のときの値» のまま受け継がれ、ズームで小さくした文字では
+   字の大きさの数倍の隙間になっていた（«東 日 本 旅 客 鉄 道» のようにばらける）。
+   :where で弱くしておき、区の名前などクラスで字間を決めているものはそちらを優先 */
+:where(#map) text{letter-spacing:0}
 
-/* v108: Comments list */
-.comments__list{padding:12px}
-.comments__empty{
-  padding:16px;text-align:center;color:var(--label);font-size:13px;
-  background:var(--control);border-radius:var(--r)
-}
-.comments__error{
-  padding:12px;background:#FFD8D8;color:#C41E3A;border-radius:var(--r);
-  font-size:12px;text-align:center
-}
-.comments__loading{
-  padding:16px;text-align:center;color:var(--label);font-size:13px
-}
+/* v112: 現地モード «出口» — 降りてからの案内・いまの号車・みんなの «便利な号車» */
+.os__guide{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:10px 12px;border-radius:14px;background:var(--tsg-ink,#00224A);color:#fff}
+.os__garr{flex:0 0 44px;height:44px;border-radius:50%;background:#fff;color:var(--tsg-primary,#0055AD);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;transition:transform .3s ease}
+.os__gtx{flex:1;min-width:0;display:flex;flex-direction:column}
+.os__gtx b{font-size:16px}.os__gtx small{font-size:12px;opacity:.85}
+.os__gx{flex:0 0 auto;min-height:36px;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-weight:700;padding:0 12px}
+.os__car{margin:0 0 8px;padding:10px 12px;border:1px solid var(--tsg-line,#E8ECF2);border-radius:14px;background:var(--tsg-tint,#EBF3FF)}
+.os__carl{display:flex;align-items:center;gap:8px;font-weight:800}
+.os__carl select{min-height:36px;border-radius:10px;border:1px solid var(--border,#D9DFE8);padding:0 8px;font-weight:700;background:#fff}
+.os__car>small{display:block;font-size:11px;color:var(--tsg-ink2,#626264);margin:2px 0 6px}
+.os__tl{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.os__tl li{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff;border-radius:10px;padding:6px 8px;font-size:13px}
+.os__tl li.on{outline:2px solid var(--tsg-primary,#0055AD)}
+.os__tl li.on b::before{content:"★ "}
+.os__tl small{color:var(--tsg-ink2,#626264);font-size:11px}
+.os__tv{margin-left:auto;min-height:32px;border:1px solid var(--border,#D9DFE8);border-radius:999px;background:#fff;padding:0 10px}
+.os__tipf summary{cursor:pointer;font-weight:700;color:var(--tsg-primary,#0055AD);min-height:36px;display:flex;align-items:center}
+.os__tipf form{display:grid;gap:6px}
+.os__tipf input,.os__tipf select{min-height:40px;border:1px solid var(--border,#D9DFE8);border-radius:10px;padding:0 10px;font-size:14px;background:#fff}
+.os__tipr{display:grid;grid-template-columns:96px 1fr;gap:6px}
+.os__tipgo{min-height:40px;border:0;border-radius:999px;background:var(--tsg-primary,#0055AD);color:#fff;font-weight:800}
+.os__tipst{font-size:12px}
 
-/* v108: Individual comment item */
-.comments__item{
-  margin-bottom:12px;padding:12px;background:var(--surface);border:1px solid var(--grid);
-  border-radius:var(--r)
-}
-.comments__item-header{
-  display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap
-}
-.comments__item-name{
-  font-weight:600;font-size:13px;color:var(--text)
-}
-.comments__item-rating{
-  font-size:12px;color:#E5A500
-}
-.comments__item-date{
-  font-size:11px;color:var(--label);margin-left:auto
-}
-.comments__item-image{
-  margin:8px 0;border-radius:8px;overflow:hidden;max-width:100%
-}
-.comments__item-image img{
-  display:block;width:100%;height:auto;max-width:200px
-}
-.comments__item-text{
-  font-size:13px;line-height:1.6;color:var(--text);margin:8px 0;
-  word-break:break-word;white-space:pre-wrap
-}
-.comments__item-footer{
-  margin-top:8px;display:flex;gap:6px
-}
+/* v113: スポットカードの見出しの «📝 Obsidian» */
+.modal__ob{margin-left:auto;margin-right:6px;min-height:34px;border:1px solid var(--tsg-line2,rgba(0,34,74,.2));border-radius:999px;background:#fff;color:var(--tsg-ink,#00224A);font-weight:700;font-size:12px;padding:0 10px;white-space:nowrap}
 
-/* v108: Like button */
-.comments__like-btn{
-  padding:6px 10px;background:var(--control);border:1px solid var(--grid);
-  border-radius:20px;font-size:12px;cursor:pointer;transition:background .2s,border-color .2s;
-  white-space:nowrap;color:var(--text)
-}
-.comments__like-btn:hover{background:var(--lb50);border-color:var(--lb400)}
-.comments__like-btn:disabled{opacity:.6;cursor:not-allowed}
+/* v115: 防災情報 — 画面上の帯・カード */
+.alertchip{position:absolute;left:50%;transform:translateX(-50%);bottom:64px;z-index:40;border:0;border-radius:999px;background:#C62828;color:#fff;font-weight:800;font-size:13px;min-height:36px;padding:0 14px;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alertchip--tsu{background:#0D47A1;animation:alertPulse 1.6s ease-in-out infinite}
+@keyframes alertPulse{50%{box-shadow:0 0 0 8px rgba(13,71,161,.25)}}
+@media (prefers-reduced-motion:reduce){.alertchip--tsu{animation:none}}
+.alc__l{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:6px}
+.alc__k{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#FFF3E0;border-left:5px solid #E65100}
+.alc__k--2{background:#FFEBEE;border-left-color:#C62828}.alc__k--3{background:#F3E5F5;border-left-color:#6A1B9A}
+.alc__k small{color:#555}
+.alc__lv{font-size:18px;font-weight:800;margin:0 0 4px}.alc__t{font-weight:700;margin:4px 0}.alc__d{font-size:13px;line-height:1.6;margin:6px 0}
+.alc__go{width:100%;text-align:left;min-height:40px;border:1px solid var(--border,#D9DFE8);border-radius:10px;background:#fff;padding:6px 10px;font-weight:700}
+.alc__go small{color:#666;font-weight:500}
+.poi--alert .poi__c{stroke-width:calc(2.6 * var(--poiscale,1))}
+.poi--alert .poi__halo{fill:#FFCDD2;fill-opacity:.9}
 
-/* v109: Like button liked state */
-.comments__like-btn--liked{background:#FFE0E0;border-color:#FF6B6B;color:#C41E3A}
-.comments__like-btn--liked:hover{background:#FFD0D0}
+/* v116: 縦の PV（1080×1920）は縦長のまま小さく見せる */
+.pv__cv--v,.pv__v--v{width:auto !important;height:52vh;max-height:52vh;margin:0 auto;aspect-ratio:9/16}
+.modal__ob--2{margin-left:0}
+.stk__prev{background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/20px 20px;border-radius:12px;padding:12px;text-align:center}
+.stk__prev img{max-width:100%;max-height:46vh}
 
-/* v109: Sort UI */
-.comments__sort{
-  display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap
-}
-.comments__sort-btn{
-  padding:6px 10px;background:var(--control);border:1px solid var(--grid);
-  border-radius:20px;font-size:11px;cursor:pointer;transition:all .2s;
-  white-space:nowrap;color:var(--text)
-}
-.comments__sort-btn:hover{background:var(--lb50);border-color:var(--lb400)}
-.comments__sort-btn--active{background:var(--lb600);color:#fff;border-color:var(--lb600)}
-.comments__sort-btn--active:hover{background:var(--lb900)}
-
-/* v109: URL links */
-.comments__url-link{
-  display:inline-block;padding:2px 6px;background:var(--lb50);border:1px solid var(--lb400);
-  border-radius:4px;font-size:11px;color:var(--link);text-decoration:none;margin:0 2px;
-  transition:background .2s
-}
-.comments__url-link:hover{background:var(--lb200);text-decoration:underline}
-
-/* v109: Profile link (clickable comment author) */
-.comments__profile-link{
-  cursor:pointer;text-decoration:underline;color:var(--link);transition:color .2s
-}
-.comments__profile-link:hover{color:var(--lb900)}
-
-/* v109: Profile modal */
-.comments__profile-modal{
-  position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;display:flex;
-  align-items:flex-end;justify-content:center
-}
-.comments__profile-overlay{
-  position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5)
-}
-.comments__profile-content{
-  position:relative;width:100%;max-width:500px;max-height:70vh;background:var(--surface);
-  border-radius:16px 16px 0 0;padding:20px;overflow-y:auto;z-index:10;
-  display:flex;flex-direction:column;box-shadow:0 -4px 16px rgba(0,0,0,.15)
-}
-.comments__profile-close{
-  position:absolute;top:12px;right:12px;width:32px;height:32px;
-  border:none;background:var(--control);border-radius:50%;cursor:pointer;
-  font-size:18px;color:var(--text);transition:background .2s;z-index:11
-}
-.comments__profile-close:hover{background:var(--grid)}
-
-.comments__profile-header{margin-bottom:16px;border-bottom:1px solid var(--grid);padding-bottom:12px}
-.comments__profile-name{
-  margin:0;font-size:18px;font-weight:700;color:var(--text)
-}
-.comments__profile-stat{
-  margin:8px 0 0;font-size:12px;color:var(--label)
-}
-
-.comments__profile-activity{margin-top:12px}
-.comments__profile-activity h3{
-  margin:0 0 8px;font-size:14px;font-weight:600;color:var(--text)
-}
-.comments__profile-list{
-  display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto
-}
-.comments__activity-item{
-  padding:8px;background:var(--control);border-radius:8px;font-size:12px;
-  color:var(--text);display:flex;align-items:center;gap:6px
-}
-.comments__activity-num{
-  font-weight:600;color:var(--lb600);min-width:20px
-}
-.comments__activity-text{color:var(--label)}
-.comments__activity-empty{
-  padding:16px;text-align:center;color:var(--label);font-size:12px;
-  background:var(--control);border-radius:8px
-}
-.comments__activity-error{
-  padding:12px;background:#FFD8D8;color:#C41E3A;border-radius:8px;
-  font-size:12px;text-align:center
-}
+/* v118: 郵便番号モード（〒 ボタンで ON のときだけ）。ON が一目で分かるように */
+.zipbar{position:absolute;top:calc(var(--tripbar-h,44px) + 8px);right:12px;z-index:41;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:0;border-radius:999px;background:#C62828;color:#fff;font-weight:800;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.zipbar b{background:#fff;color:#C62828;border-radius:6px;padding:1px 6px;font-size:12px}
+.zipbar span{font-weight:600;font-size:11px;opacity:.9}
+#zipbtn.on{background:#C62828 !important;color:#fff !important;box-shadow:0 0 0 3px rgba(198,40,40,.3)}
+body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2px}

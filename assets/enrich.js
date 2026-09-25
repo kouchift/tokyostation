@@ -225,7 +225,7 @@ function galleryHtml(res, o) {
   return h;
 }
 function extractHtml(res, o) {
-  var t = res.extract; if (!t) return "";
+  var t = res.extract; if (!t || o.noExtract) return "";   // v108: 一之宮はカードに概要を持つので重ねない
   // 既に説明文（descs）が出ているカードでは、重複を避けて «続き» だけ出す
   var cut = t.indexOf("。"), first = cut >= 0 ? t.slice(0, cut + 1) : t;
   var body = o.hasIntro ? t.slice(first.length).trim() : t;

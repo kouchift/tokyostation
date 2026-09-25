@@ -10,7 +10,8 @@
 (function (RG) {
 "use strict";
 var $ = RG.$, esc = RG.esc;
-var W = 1280, H = 720, DUR = 20, FPS = 30, KEEP_DAYS = 7;
+var W = 1280, H = 720, DUR = 20, FPS = 30, KEEP_DAYS = 7;          // 横（YouTube・X）。v116: 縦 1080×1920（TikTok・リール・ショート）は spec.W/H で
+function dims(spec) { return spec && spec.vertical ? { W: 1080, H: 1920 } : { W: 1280, H: 720 }; }
 var SITE = "https://kouchift.github.io/tokyostation/";
 var CREDIT = "～この世知辛い世の、喉の渇きを潤したい～";
 
@@ -60,7 +61,12 @@ RG.pvSpecFromPlan = function (itemsIn, opts) {
     legs.push({ kind: kind, label: it.label, mode: it.mode, emoji: it.emoji, minutes: it.min, yen: it.yen, from: from, to: to, path: path, detail: it.detail || [] });
   });
   var tmin = legs.reduce(function (a, l) { return a + (l.minutes || 0); }, 0), tyen = legs.reduce(function (a, l) { return a + (l.yen || 0); }, 0);
-  return { title: (first.from || "出発地") + " → " + (last.to || "目的地"), legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()), captions: gatherCaptions(itemsAll, opts) };
+  var fromN = String(first.from || "出発地").replace(/^現在地.*/, "現在地"), toN = String(last.to || "目的地");
+  var spots = itemsAll.filter(function (x) { return x.k === "spot" && x.label; }).map(function (x) { return x.label; }).slice(0, 4);
+  var tags = ["東京ステーションガイド", fromN.replace(/駅$/, ""), toN.replace(/駅$/, "")].concat(spots.slice(0, 2)).map(function (t) { return "#" + String(t).replace(/[\s・\/#（）()]/g, ""); })
+    .filter(function (t, i, a) { return t.length > 1 && t !== "#現在地" && a.indexOf(t) === i; });
+  return { title: fromN + " → " + toN, fromN: fromN, toN: toN, spots: spots, tags: tags, legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()), captions: gatherCaptions(itemsAll, opts),
+           vertical: opts && opts.vertical != null ? !!opts.vertical : (RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent)) };
 };
 function arc(a, b) {
   var out = [], n = 24;
@@ -88,11 +94,18 @@ function ease(t) { return t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t); }
 function txt(c, s, x, y, size, color, align, weight) {
   c.font = (weight || 700) + " " + size + "px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif"; c.fillStyle = color; c.textAlign = align || "left"; c.textBaseline = "middle"; c.fillText(s, x, y);
 }
+/* v116: 横幅に収まるまで文字を小さくして真ん中に（縦の動画は幅が狭い） */
+function fit(c, s, x, y, size, maxW, color, weight) {
+  var z = size; c.font = (weight || 700) + " " + z + "px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
+  while (z > 14 && c.measureText(s).width > maxW) { z--; c.font = (weight || 700) + " " + z + "px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif"; }
+  txt(c, s, x, y, z, color, "center", weight);
+}
 function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 function fmtMin(m) { m = Math.round(m || 0); return m >= 60 ? Math.floor(m / 60) + "時間" + (m % 60 ? (m % 60) + "分" : "") : m + "分"; }
 function yen(n) { return "¥" + Math.round(n || 0).toLocaleString("ja-JP"); }
 
 function makeDrawer(spec) {
+  var D = dims(spec), W = D.W, H = D.H, V = H > W, OY = V ? (H - 720) / 2 : 0;   // 縦のときは文字の画面を上下の真ん中に
   var rings = decodePref();
   // 経路全体の範囲
   var pts = []; spec.legs.forEach(function (l) { (l.path || []).forEach(function (p) { pts.push(p); }); });
@@ -103,6 +116,7 @@ function makeDrawer(spec) {
   la0 -= padLa; la1 += padLa; lo0 -= padLo; lo1 += padLo;
   var hasCap = !!(spec.captions && spec.captions.trim());
   var MX = 40, MY = hasCap ? 70 : 90, MW = 760, MH = hasCap ? 500 : 560;      // 字幕があるときは下に帯の場所を空ける
+  if (V) { MX = 40; MY = 150; MW = W - 80; MH = 1020; }                        // 縦: 地図を上に大きく、要点は下に
   var kx = MW / (lo1 - lo0), ky = MH / ((la1 - la0) * 1.22), k = Math.min(kx, ky);
   function pj(p) { return [MX + (p[1] - lo0) * k + (MW - (lo1 - lo0) * k) / 2, MY + (la1 - p[0]) * k * 1.22 + (MH - (la1 - la0) * k * 1.22) / 2]; }
   var total = spec.legs.reduce(function (a, l) { return a + Math.max(1, (l.path || []).length - 1); }, 0);
@@ -152,10 +166,11 @@ function makeDrawer(spec) {
     c.globalAlpha = 1;
     if (t < 3) {
       var a = ease(t / 0.8), a2 = ease((t - 0.6) / 0.8);
-      c.globalAlpha = a; txt(c, "ROUTE PV", W / 2, 200, 34, "#9fd3c7", "center", 800);
-      txt(c, spec.title, W / 2, 300, 56, "#fff", "center", 900); c.globalAlpha = a2;
-      txt(c, (spec.date.getMonth() + 1) + "/" + spec.date.getDate() + " 出発・所要 " + fmtMin(spec.minutes) + "・" + yen(spec.yen), W / 2, 380, 30, "#e0f2f1", "center", 600);
-      txt(c, "東京ステーションガイド", W / 2, 560, 26, "#80cbc4", "center", 700); c.globalAlpha = 1; return;
+      c.globalAlpha = a; txt(c, "ROUTE PV", W / 2, OY + 200, 34, "#9fd3c7", "center", 800);
+      fit(c, spec.title, W / 2, OY + 300, 56, W - 80, "#fff", 900); c.globalAlpha = a2;
+      txt(c, (spec.date.getMonth() + 1) + "/" + spec.date.getDate() + " 出発・所要 " + fmtMin(spec.minutes) + "・" + yen(spec.yen), W / 2, OY + 380, 30, "#e0f2f1", "center", 600);
+      if (spec.spots && spec.spots.length) fit(c, "立ち寄り: " + spec.spots.join("・"), W / 2, OY + 440, 28, W - 100, "#ffe0b2", 700);
+      txt(c, "東京ステーションガイド", W / 2, OY + 560, 26, "#80cbc4", "center", 700); c.globalAlpha = 1; return;
     }
     if (t < 14) {
       var u = ease((t - 3) / 0.6);
@@ -185,12 +200,21 @@ function makeDrawer(spec) {
         done += segs;
       });
       if (curPos) { c.font = "34px serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(curEmoji, curPos[0], curPos[1] - 4); }
+      /* v116: 出発・到着の名前（白い札） */
+      var L0 = spec.legs[0], L1 = spec.legs[spec.legs.length - 1];
+      [[L0 && L0.path && L0.path[0], spec.fromN, "#2E7D32"], [L1 && L1.path && L1.path[L1.path.length - 1], spec.toN, "#E53935"]].forEach(function (e) {
+        if (!e[0] || !e[1]) return; var q = pj(e[0]); c.font = "800 24px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
+        var tw = c.measureText(e[1]).width + 20, bx = Math.max(MX, Math.min(MX + MW - tw, q[0] - tw / 2)), by = q[1] + 14;
+        roundRect(c, bx, by, tw, 34, 10); c.fillStyle = "rgba(255,255,255,0.95)"; c.fill(); c.strokeStyle = e[2]; c.lineWidth = 2; c.stroke();
+        txt(c, e[1], bx + tw / 2, by + 17, 24, "#1a1a1a", "center", 800);
+      });
       c.restore();
       // 右の要点パネル
-      var px = MX + MW + 30, pw = W - px - 30;
-      roundRect(c, px, MY - 10, pw, MH + 20, 18); c.fillStyle = "rgba(255,255,255,0.10)"; c.fill();
-      txt(c, "ルートの要点", px + 20, MY + 20, 24, "#9fd3c7", "left", 800);
-      var yy = MY + 70;
+      var px = MX + MW + 30, pw = W - px - 30, py = MY - 10, ph = MH + 20;
+      if (V) { px = 40; pw = W - 80; py = MY + MH + 30; ph = H - py - (hasCap ? 300 : 90); }
+      roundRect(c, px, py, pw, ph, 18); c.fillStyle = "rgba(255,255,255,0.10)"; c.fill();
+      txt(c, "ルートの要点", px + 20, py + 30, 24, "#9fd3c7", "left", 800);
+      var yy = py + 80;
       spec.legs.slice(0, 6).forEach(function (l, li) {
         var on = l === curLeg;
         if (on) { roundRect(c, px + 10, yy - 26, pw - 20, 78, 12); c.fillStyle = "rgba(255,255,255,0.16)"; c.fill(); }
@@ -198,26 +222,28 @@ function makeDrawer(spec) {
         txt(c, fmtMin(l.minutes) + "・" + yen(l.yen), px + 22, yy + 34, 22, on ? "#e0f2f1" : "#b0bec5", "left", 600);
         yy += 90;
       });
-      txt(c, "合計 " + fmtMin(spec.minutes) + " / " + yen(spec.yen), px + 22, MY + MH - 30, 26, "#fff", "left", 900);
+      txt(c, "合計 " + fmtMin(spec.minutes) + " / " + yen(spec.yen), px + 22, py + ph - 30, 26, "#fff", "left", 900);
       c.globalAlpha = 1; drawCaption(c, t); return;
     }
     if (t < 17) {
       var v = ease((t - 14) / 0.6);
       c.globalAlpha = v;
-      txt(c, "まとめ", W / 2, 150, 34, "#9fd3c7", "center", 800);
-      txt(c, spec.title, W / 2, 230, 44, "#fff", "center", 900);
-      txt(c, "所要 " + fmtMin(spec.minutes) + "　運賃 " + yen(spec.yen) + "　区間 " + spec.legs.length, W / 2, 320, 36, "#e0f2f1", "center", 700);
-      txt(c, "※ 時刻表・道路状況を見ていない概算です。各社の公式情報で確認してください", W / 2, 400, 22, "#b0bec5", "center", 500);
-      txt(c, "地図: 国土数値情報（行政区域）を加工　経路: 東京ステーションガイド", W / 2, 470, 20, "#90a4ae", "center", 500);
+      txt(c, "まとめ", W / 2, OY + 130, 34, "#9fd3c7", "center", 800);
+      fit(c, spec.title, W / 2, OY + 210, 44, W - 80, "#fff", 900);
+      fit(c, "所要 " + fmtMin(spec.minutes) + "　運賃 " + yen(spec.yen) + "　区間 " + spec.legs.length, W / 2, OY + 290, 36, W - 80, "#e0f2f1", 700);
+      if (spec.spots && spec.spots.length) fit(c, "立ち寄り: " + spec.spots.join("・"), W / 2, OY + 350, 28, W - 80, "#ffe0b2", 700);
+      if (spec.tags && spec.tags.length) fit(c, spec.tags.join(" "), W / 2, OY + 410, 26, W - 80, "#80deea", 700);
+      fit(c, "※ 時刻表・道路状況を見ていない概算です。各社の公式情報で確認してください", W / 2, OY + 470, 22, W - 60, "#b0bec5", 500);
+      fit(c, "地図: 国土数値情報（行政区域）を加工　経路: 東京ステーションガイド", W / 2, OY + 520, 20, W - 60, "#90a4ae", 500);
       c.globalAlpha = 1; drawCaption(c, t); return;
     }
     var w2 = ease((t - 17) / 0.6);
     c.globalAlpha = w2;
-    txt(c, "この動画には保有期限があります", W / 2, 150, 40, "#ffcc80", "center", 900);
-    txt(c, expStr + " まで（1週間）", W / 2, 220, 48, "#fff", "center", 900);
-    txt(c, "応援の有無にかかわらず、期限を過ぎると削除される可能性があります", W / 2, 300, 26, "#e0f2f1", "center", 600);
-    txt(c, "この地図を、現場の声で育て続けたいと思っています。役に立ったら応援してもらえると嬉しいです", W / 2, 380, 24, "#ffe0b2", "center", 700);
-    txt(c, SITE, W / 2, 470, 28, "#80cbc4", "center", 700);
+    fit(c, "この動画には保有期限があります", W / 2, OY + 150, 40, W - 60, "#ffcc80", 900);
+    txt(c, expStr + " まで（1週間）", W / 2, OY + 220, 48, "#fff", "center", 900);
+    fit(c, "応援の有無にかかわらず、期限を過ぎると削除される可能性があります", W / 2, OY + 300, 26, W - 60, "#e0f2f1", 600);
+    fit(c, "この地図を、現場の声で育て続けたいと思っています。役に立ったら応援してもらえると嬉しいです", W / 2, OY + 380, 24, W - 60, "#ffe0b2", 700);
+    txt(c, SITE, W / 2, OY + 470, 28, "#80cbc4", "center", 700);
     txt(c, CREDIT, W - 30, H - 40, 26, "#fff", "right", 800);
     c.globalAlpha = 1;
   };
@@ -238,7 +264,8 @@ function loadMuxer() {
 function makeMp4(spec, onProgress) {
   if (!(window.VideoEncoder && window.VideoFrame && VideoEncoder.isConfigSupported)) return Promise.reject(new Error("no webcodecs"));
   var ov = RG.PV_CODEC || null;                                            // 検証用の差し替え（{codec:"vp09.00.10.08", mux:"vp9"} など）。通常は H.264
-  var cfg = { codec: ov ? ov.codec : "avc1.42001f", width: W, height: H, bitrate: 3000000, framerate: FPS, latencyMode: "quality" };
+  var D = dims(spec), W = D.W, H = D.H;
+  var cfg = { codec: ov ? ov.codec : (H > W ? "avc1.640028" : "avc1.42001f"), width: W, height: H, bitrate: H > W ? 5000000 : 3000000, framerate: FPS, latencyMode: "quality" };   // 縦 1080×1920 は Baseline 3.1 を超えるので High 4.0
   if (!ov) cfg.avc = { format: "avc" };
   return loadMuxer().then(function () { return VideoEncoder.isConfigSupported(cfg); }).then(function (sup) {
     if (!sup || !sup.supported) throw new Error("h264 unsupported");
@@ -271,7 +298,7 @@ function makeMp4(spec, onProgress) {
 function makeRec(spec, onProgress) {
   return new Promise(function (res, rej) {
     if (!(window.MediaRecorder && document.createElement("canvas").captureStream)) { rej(new Error("unsupported")); return; }
-    var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    var D = dims(spec), cv = document.createElement("canvas"); cv.width = D.W; cv.height = D.H;
     var c = cv.getContext("2d"), draw = makeDrawer(spec);
     var stream = cv.captureStream(FPS);
     /* H.264 の MP4 を最優先（X・Instagram が受け付ける形式）。Chrome の "video/mp4" は VP9 入りの MP4 になることがあるので、あとで中身を確かめる */
@@ -305,6 +332,7 @@ RG.pvMake = function (spec, onProgress) {
     return makeRec(spec, onProgress).then(function (r) { return sniffCodec(r.blob).then(function (cd) { r.codec = cd; return r; }); });
   });
 };
+RG.pvDrawer = function (spec) { return makeDrawer(spec); };             // 試験用（1 コマだけ描く）
 RG.pvIsMp4 = function (rec) { return /mp4/.test(rec && rec.mime || ""); };
 /* SNS（X・Instagram・TikTok）にそのまま出せる形式か: MP4 × H.264 */
 RG.pvSnsReady = function (rec) { return RG.pvIsMp4(rec) && (rec.codec === "h264" || rec.codec == null); };
@@ -315,14 +343,15 @@ RG.pvFlow = function (kind, proceed, items, opts) {
   var spec = RG.pvSpecFromPlan(items, opts);
   if (!spec || !RG.pvSupported()) { proceed && proceed(null); return; }
   var m = RG.openModal("🎬 ルート PV を作っています（20秒）", '<div class="pv"><p class="set__d">' + esc(spec.title) + " の 20 秒動画をこの端末で作っています。作り終わると " + (kind === "obsidian" ? "Obsidian に送ります" : kind === "mail" ? "メールを開きます" : "共有に進みます") + "。</p>" +
-    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + W + '" height="' + H + '" class="pv__cv"></canvas><p class="src">' + (spec.captions ? "書いてあるメモ・感想・ひとことは字幕として動画に入ります。" : "メモ欄に書いておくと、字幕として動画に入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
+    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + dims(spec).W + '" height="' + dims(spec).H + '" class="pv__cv' + (spec.vertical ? " pv__cv--v" : "") + '"></canvas><p class="src">' + (spec.captions ? "書いてあるメモ・感想・ひとことは字幕として動画に入ります。" : "メモ欄に書いておくと、字幕として動画に入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
   var cv = $("#pv-cv", m), c = cv.getContext("2d"), draw = makeDrawer(spec), bar = $("#pv-bar", m);
   var t0 = performance.now(), live = true;
   (function tick() { if (!live) return; var t = (performance.now() - t0) / 1000; draw(c, Math.min(DUR, t)); if (t < DUR) requestAnimationFrame(tick); })();
   RG.pvMake(spec, function (p) { if (bar) bar.style.width = (p * 100).toFixed(0) + "%"; }).then(function (r) {
     live = false;
     var id = "pv" + Date.now(), exp = Date.now() + KEEP_DAYS * 864e5;
-    var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime) };
+    var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime), vertical: !!spec.vertical, tags: spec.tags || [],
+                again: function () { var o = Object.assign({}, opts || {}, { vertical: !spec.vertical }); RG.pvFlow(kind, proceed, items, o); } };
     put(rec).catch(function () {});
     RG.pvShow(rec, kind, proceed);
   }).catch(function () { live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
@@ -333,13 +362,14 @@ RG.pvShow = function (rec, kind, proceed) {
   var isMp4 = RG.pvIsMp4(rec), sns = RG.pvSnsReady(rec), file = null;
   try { file = new File([rec.blob], rec.name, { type: rec.mime }); } catch (e) { file = null; }
   var mobile = RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent);
-  var postTxt = "【東京移動メモ】" + rec.title + "\n20秒のルートPV\n\n地図で確認 → " + SITE;
-  var html = '<div class="pv"><video id="pv-v" class="pv__v" src="' + url + '" controls autoplay muted playsinline></video>' +
+  var postTxt = "【東京移動メモ】" + rec.title + "\n20秒のルートPV" + (rec.tags && rec.tags.length ? "\n" + rec.tags.join(" ") : "") + "\n\n地図で確認 → " + SITE;
+  var html = '<div class="pv"><video id="pv-v" class="pv__v' + (rec.vertical ? " pv__v--v" : "") + '" src="' + url + '" controls autoplay muted playsinline></video>' +
     '<div class="pv__exp">⏳ この動画の保有期限: <b>' + expStr + '</b>（1週間）。応援の有無にかかわらず、期限を過ぎると消える可能性があります。</div>' +
     (RG.snsPanelHTML ? RG.snsPanelHTML({ video: true, main: "youtube" }) : "") +
     '<div class="sh__btns">' +
       '<a class="sh__b" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (isMp4 ? "MP4" : "WebM") + '・' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
       (proceed ? '<button class="sh__b" type="button" id="pv-go">' + (kind === "obsidian" ? "🟣 Obsidian に送る（続ける）" : kind === "mail" ? "📧 メールに進む" : "📤 共有に進む") + "</button>" : "") +
+      (rec.again ? '<button class="sh__b" type="button" id="pv-again">' + (rec.vertical ? "🖥️ 横（YouTube・X 向け）で作り直す" : "📱 縦（TikTok・リール・ショート向け）で作り直す") + "</button>" : "") +
       '<button class="sh__b" type="button" id="pv-tip">☕ 応援する</button>' +
     "</div>" +
     '<p class="rc__hint" id="pv-hint"></p>' +
@@ -356,6 +386,7 @@ RG.pvShow = function (rec, kind, proceed) {
     return { title: "ルート PV: " + rec.title, text: postTxt.replace("\n\n地図で確認 → " + SITE, ""), url: SITE, file: file, blobUrl: url, fileName: rec.name, kind: "video" };
   });
   var go = $("#pv-go", m); if (go) go.addEventListener("click", function () { proceed && proceed(rec); });
+  var ag = $("#pv-again", m); if (ag) ag.addEventListener("click", function () { URL.revokeObjectURL(url); rec.again(); });
   var tp = $("#pv-tip", m); if (tp) tp.addEventListener("click", function () { if (RG.tipQuick) RG.tipQuick(); });
 };
 RG.pvList = function () {

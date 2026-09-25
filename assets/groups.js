@@ -25,7 +25,7 @@ var GROUPS = [
   { id: "study", e: "🎓", label: "学ぶ",         c: "#5E35B1",
     ids: ["univ", "high", "library", "museum"] },
   { id: "fun",   e: "🎈", label: "楽しむ・休む", c: "#C2185B",
-    ids: ["onsen_jp", "sento", "onsen", "sport", "dog", "camera", "event", "smoke", "adult"] }
+    ids: ["onsen_jp", "sento", "onsen", "bath_x", "sport", "dog", "camera", "event", "smoke", "adult"] }
 ];
 RG.GENRE_GROUPS = GROUPS;
 

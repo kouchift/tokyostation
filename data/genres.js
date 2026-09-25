@@ -62,8 +62,8 @@ RG.GENRES = [
     desc: "AED（自動体外式除細動器）の設置場所。数が多いので、アイコンを押して選んだときだけ地図に出ます" },
   { id: "shelter", e: "🏳️", label: "避難場所",       c: "#197A4B", enabled: true, od: true,
     desc: "東京都防災マップの避難所・避難場所（東京都総務局・都内全域を統一形式で公開）" },
-  { id: "camera",  e: "📹", label: "ライブカメラ",   c: "#E5006E", enabled: true, od: true,
-    desc: "全国の公開ライブカメラ（国・自治体・放送局・新聞社などが YouTube で公開）と東京都の河川・海面カメラ。押すとこのページのまま公式プレイヤーで再生（配信元の広告が出ます）。地図では赤い LIVE 印でほかのスポットと区別します" },
+  { id: "camera",  e: "📹", label: "監視カメラ",     c: "#5A6472", enabled: true, od: true,
+    desc: "全国の公開ライブカメラ（国・自治体・放送局など、YouTube配信）と東京都の河川・海面カメラ。サイト内でそのまま再生できます" },
   { id: "event",   e: "🎪", label: "イベント",       c: "#E5006E", enabled: true, od: true,
     desc: "これから開かれる催し。先の月ほど規模の大きいものだけを残しています" },
   { id: "baby",    e: "👶", label: "赤ちゃんの駅",   c: "#F0851E", enabled: true, od: true,
@@ -73,8 +73,8 @@ RG.GENRES = [
   { id: "cycle_park", e: "🅿️", label: "駐輪場",      c: "#8A5A2B", enabled: true, od: true,   // v101: cycle → cycle_park（シェアサイクルと重複していた）
     desc: "公営の自転車駐車場" },
   { id: "sento",   e: "🛁", label: "銭湯",             c: "#C81432", enabled: true,
-    desc: "東京都公衆浴場業生活衛生同業組合の組合員銭湯。東京都・各区の入浴支援や" +
-          "クーポン施策の対象になることが多い施設です（施策の有無は各自治体で要確認）",
+    desc: "各都道府県の公衆浴場業生活衛生同業組合に入っている «街の銭湯»（東京は東京銭湯マップ、ほかは各県の組合サイトから・v108 で全国に）。" +
+          "自治体の入浴支援やクーポン施策の対象になることが多い施設です（施策の有無は各自治体で要確認）。スーパー銭湯・共同浴場は別のジャンル",
     src: "https://www.1010.or.jp/map/" },
 
   /* ---- 出かける計画に効く10ジャンル（OpenStreetMap ODbL）---- */
@@ -117,6 +117,24 @@ RG.GENRES = [
 
   { id: "klm",     e: "🎡", label: "見どころ", c: "#E4007F", enabled: true, optIn: true, kanto: true,
     desc: "テーマパーク・城・神社・美術館・温泉・道の駅など4,109か所（日本全国）" },
+
+  /* v115: 防災情報（気象警報・噴火警報）。いま出ているときだけ地図に出る（assets/alerts.js が気象庁から取る） */
+  { id: "alert",    e: "⚠️", label: "防災情報（警報・火山）", c: "#C62828", enabled: true,
+    desc: "いま出ている気象警報（警報以上）と噴火警報。地震は «地震» の帯で" },
+
+  /* v114: «はじめての土地» で探したくなるもの（全国・OpenStreetMap・GitHub Actions が毎月更新 → data/auto/travel.js） */
+  { id: "tourinfo", e: "ℹ️", label: "観光案内所",      c: "#0277BD", enabled: true, optIn: true, travel: true,
+    desc: "地図・パンフレット・宿や交通の相談。はじめての街ではまずここ" },
+  { id: "stay",     e: "🏨", label: "宿（ホテル・旅館）", c: "#6A1B9A", enabled: true, optIn: true, travel: true,
+    desc: "ホテル・旅館・ホステル。空室や料金は各宿のサイトで" },
+  { id: "taxi",     e: "🚕", label: "タクシー乗り場",  c: "#F9A825", enabled: true, optIn: true, travel: true,
+    desc: "駅前や繁華街の乗り場" },
+  { id: "busterm",  e: "🚌", label: "バスターミナル",  c: "#2E7D32", enabled: true, optIn: true, travel: true,
+    desc: "高速バス・路線バスのターミナル" },
+  { id: "laundry",  e: "🧺", label: "コインランドリー", c: "#00838F", enabled: true, optIn: true, travel: true,
+    desc: "長旅の洗濯に" },
+  { id: "rentacar", e: "🚗", label: "レンタカー",      c: "#455A64", enabled: true, optIn: true, travel: true,
+    desc: "駅から先の足に" },
 
   { id: "police",  e: "🚓", label: "交番・警察",   c: "#1565C0", enabled: true, optIn: true, osm10: true,
     desc: "落とし物や道を聞きたいときに。関東ぜんぶで3,595か所" },
@@ -178,6 +196,8 @@ RG.GENRES = [
   { id: "food_top", e: "🍽️", label: "高評価飲食店TOP10", c: "#FE3939", enabled: false,
     desc: "その駅で評価の高い飲食店 上位10件",
     reason: "レビュー点数を持つ公開データがありません。グルメサイトのスコアは利用規約上使えません" },
+  { id: "bath_x",   e: "🧖", label: "スーパー銭湯・共同浴場", c: "#8E24AA", enabled: true,
+    desc: "スーパー銭湯・サウナ、温泉地の共同浴場・日帰り温泉、浴場組合に入っていない «〜湯»（OpenStreetMap の公衆浴場から。組合加入の «銭湯» とは分けています）" },
   { id: "onsen",    e: "♨️", label: "温泉の銭湯",       c: "#EC6E00", enabled: true,
     desc: "天然温泉を使っている銭湯（東京都公衆浴場業生活衛生同業組合「東京銭湯マップ」より）",
     src: "https://www.1010.or.jp/map/" },

@@ -1,5 +1,0 @@
-# tools/build_livecams.py --from-list 用のひな型（タブ区切り・# 行は無視）
-# 名称	緯度	経度	種類	都道府県	配信元	YouTubeのURLかID	[メモ]	[チャンネルID UCxxxx(任意)]
-# 種類の例: 街 港 海 山 河川 空港 道路 動物 城
-# 例（すでに収録済みなので下見では「すでに入っています」になります）:
-石垣島ライブ	24.34	124.16	海	沖縄県	RBC琉球放送	https://www.youtube.com/watch?v=5jHCxMEGor0	テスト行
