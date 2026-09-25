@@ -1007,6 +1007,8 @@ var Map = (function () {
     n.appendChild(el("circle", { class: "poi__hit", r: 10 }));
     // 名前。寄ったときだけ出す（poiLOD が決める）
     n.appendChild(el("text", { class: "poi__t", "text-anchor": "middle" }));
+    // v104: ライブカメラの «🔴 LIVE» の点（camera ジャンルのときだけ出す。ふだんは隠す）
+    n.__live = el("circle", { class: "poi__live" }); n.__live.style.display = "none"; n.appendChild(n.__live);
     n.addEventListener("click", function (ev) { ev.stopPropagation(); if (n.__p) RG.showSpot(n.__p); });
     // ホバーのふきだしはマウス／ペンだけ。指のタップでは出さない（タップは click → カードを開く。
     // v74: Android で指の下にふきだしが出て click を横取りし、0.5秒で消える不具合の修正）
@@ -1142,6 +1144,18 @@ var Map = (function () {
       if (!ic) setEmoji(e0, g.e, t.x, t.y, esz * uu, logo);
       n.classList.toggle("poi--logo", !!logo);
       n.classList.toggle("poi--ic", !!ic);
+      /* v104: ライブカメラ（YouTube 公式配信）は «いま見られる映像» なので、赤い LIVE の点で目立たせる（HOT）。
+         点の位置は印の右上。他ジャンルでは隠す（node は使い回すので毎回 display を決める） */
+      var live = t.g === "camera" && !myPins.length;
+      n.classList.toggle("poi--live", live);
+      if (n.__live) {
+        if (live) {
+          var rr = SZ2.poiC * uu, off = rr * 0.82;
+          n.__live.setAttribute("cx", (t.x + off).toFixed(2)); n.__live.setAttribute("cy", (t.y - off).toFixed(2));
+          n.__live.style.setProperty("r", (rr * 0.5).toFixed(3) + "px", "important");
+          n.__live.style.display = "";
+        } else n.__live.style.display = "none";
+      }
       h0.setAttribute("cx", t.x); h0.setAttribute("cy", t.y);
       h0.style.setProperty("r", (14 * uu).toFixed(3) + "px", "important");
       /* 名前は «寄っていて、かつ数が少ない» ときだけ。
@@ -2212,7 +2226,7 @@ function mergeExtraPois(key) {
   if (RG.CAMS_JP) once("cams_jp", function () {
     RG.CAMS_JP.forEach(function (r, i) {
       RG.MAPPOI.push({ i: "cj" + i, n: r.n, la: r.la, lo: r.lo, g: "camera", s: 3.8, ti: 1,
-                       t: (r.k || "ライブ") + "カメラ", be: "📹", bc: "#5A6472", url: r.url || null,
+                       t: (r.k || "ライブ") + "カメラ", url: r.url || null,   // v104: 色は genre（赤 LIVE）・印はカメラのスプライトに任せる
                        yt: r.yt || null, ch: r.ch || null, by: r.by || null, kind: r.k || null,
                        srcNote: "全国のライブカメラ: 配信元 " + (r.by || "不明") + "（YouTube）。位置はおおよそ。配信は止まる/変わることがあります。" });
     });

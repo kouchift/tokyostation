@@ -41,7 +41,7 @@ function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgen
 var CAP = 999999;   // 9回目の解脱の天井。累計がここに達すると、それ以上の寄付はできない
 function record(amt, app) {
   var S = st();
-  if ((S.total || 0) >= CAP) { RG.tripStatus && RG.tripStatus("🙏 累計が 999,999 円に達しています。これ以上の寄付はできません（9回目の解脱が最大です）。", "info", 6000); return S; }
+  if ((S.total || 0) >= CAP) { RG.tripStatus && RG.tripStatus("🙏 累計が 999,999 円に達しています。9回目の解脱が最大です。", "info", 6000); return S; }
   if ((S.total || 0) + amt > CAP) amt = CAP - (S.total || 0);
   S.hist = S.hist || [];
   S.hist.push({ t: Date.now(), a: amt, p: app || "paypay" });
@@ -133,13 +133,12 @@ RG.tipBind = function (root) {
 RG.openTip = function (next) {
   var S = st();
   if (S.skipConfirm) { (next || RG.showTip)(); return; }
-  var m = RG.openModal("⚠️ さきに、ひとつだけ確認", '<div class="tj tj--c">' +
-    '<p class="tj__big">改善のご要望は出せます。ただし――</p>' +
-    '<p>制作者は<b>「日本でいちばん多忙であるフリ」</b>が非常に上手いため、ご要望が実装される見込みは<b>極端に低い</b>です。' +
-    "投げ銭をいただいても、この見込みは<b>上がりません</b>（心は温まります）。</p>" +
-    '<p class="tj__q">それでも良いですか？</p>' +
+  var m = RG.openModal("☕ 応援する", '<div class="tj tj--c">' +
+    '<p class="tj__big">この地図を応援していただきます。</p>' +
+    '<p>投げ銭は、地図の維持管理に充てられます。改善のご要望も、ここから出せます。</p>' +
+    '<p class="tj__q">応援を続けますか？</p>' +
     '<label class="set__sw"><input id="tip-skip" type="checkbox" checked> 次回からこの確認を出さない（連続して投げ銭するかた向け）</label>' +
-    '<div class="tj__row"><button id="tip-yes" class="set__b2" type="button">はい、それでも</button>' +
+    '<div class="tj__row"><button id="tip-yes" class="set__b2" type="button">はい、応援する</button>' +
     '<button id="tip-no" class="set__b" type="button">やめておく</button></div></div>');
   $("#tip-yes", m).addEventListener("click", function () {
     var S2 = st(); S2.skipConfirm = !!$("#tip-skip", m).checked; save(S2); (next || RG.showTip)();
@@ -292,14 +291,13 @@ function payHTML(C, S) {
   var app = isMainApp(S.app) ? S.app : "paypay";
   return SCHOOL_NOTE + '<p class="tj__lead">たった一人の制作者（<b>従業員1名の宗教法人</b>のような、非課税で端数の概念が無い世界の住人）を、確実に笑顔にできます。' +
     "このサイトの維持管理は<b>この投げ銭だけ</b>で成り立っています。</p>" +
-    '<p class="tj__hint">いま見えているのは «投げ銭前» の姿です。投げ銭が積み上がるほど、制作者はビジュアルをよりリアルに・より高解像に・コンテンツをより充実させる努力をするつもりです（実現の日は未定、保証はまるでありません）。' +
-    "初回の投げ銭では画面が確かに変わります。2回目以降は何も変わりません――それが世知辛さというものです。</p>" +
+    '<p class="tj__hint">投げ銭が積み上がるほど、制作者はビジュアルをよりリアルに・より高解像に・コンテンツをより充実させていきます。初回の投げ銭では画面が確かに変わります。2回目以降も、あなたのご支援が地図をより良いものにしていきます。</p>' +
     '<div class="tj__apps"><button class="tj__app' + (app === "paypay" ? " on" : "") + '" type="button" data-app="paypay">PayPay <small>' + esc(C.paypayId) + "</small></button>" +
     '<button class="tj__app' + (app === "kyash" ? " on" : "") + '" type="button" data-app="kyash">Kyash <small>' + esc(C.kyashId) + "</small></button></div>" +
     '<div class="tj__amts">' + (C.amounts || [100, 500, 1000, 3000]).map(function (a) {
       var e = a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬";
       return '<button class="tj__amt' + (S.lastAmount === a ? " on" : "") + '" type="button" data-amt="' + a + '"><span>' + e + "</span>" + yen(a) + "</button>"; }).join("") +
-    '<button class="tj__amt tj__amt--poor" type="button" data-poor="1"><span>🙏</span>貧乏なので<br>救いの言葉を</button></div>' +
+    '<button class="tj__amt tj__amt--poor" type="button" data-poor="1"><span>💬</span>感想・応援の<br>お言葉</button></div>' +
     '<div id="tip-how" class="tj__how"></div>' +
     (S.lastAmount ? '<p class="tj__last">前回: ' + yen(S.lastAmount) + "（" + appName(S.app) + "）。同じ額をくり返すなら「🔁 くり返し」へ。</p>" : "") +
     (isMobile() ? '<p class="tj__hint">📱 スマホなら <button class="tj__lnk" type="button" data-quick="1">☕ 押すだけ投げ銭</button> が 1 タップです（ID を自動コピーしてアプリを開きます）。</p>' : "");
@@ -321,16 +319,16 @@ function howHTML(C, app, amt) {
 }
 /* 回数に応じたひとこと（くり返すほど、ウィットで追い打ち） */
 var WIT = [
-  "2回目。1回目で画面は変わりました。2回目で変わるのは、制作者の表情だけです。",
-  "3回目。三度目の正直、と言いますが、画面は正直に何も変わりません。心は変わります。",
-  "4回目。ここまで来ると、もはや «常連»。常連に特典が無いのが、この世の世知辛さです。",
-  "5回目。五円玉なら «ご縁»。五回目は «業» と書いて «カルマ» と読みます。",
-  "6回目。制作者は今、多忙のフリをやめて、あなたの投げ銭画面を見つめています。",
-  "7回目。ラッキーセブン。抽選はありません。当たりも外れも、はじめから無いのです。",
-  "8回目。末広がり。広がるのは制作者の笑顔だけで、機能は広がりません（現時点では）。",
-  "9回目。苦しいときの神頼み、と言いますが、神は宗教法人（従業員1名）の側にいます。",
-  "10回目。ついに二桁。ここから先は、あなたと制作者だけの秘密の修行です。",
-  "11回目以降。もう何も言うことはありません。輪廻転生した地球のどこかで、この徳は必ず……返ってこないかもしれません。"
+  "2回目。1回目で画面は変わりました。2回目以降の変化をお楽しみに。",
+  "3回目。三度目の正直。あなたのご支援で、より良いものが生まれています。",
+  "4回目。ここまで来ると、もはや «常連»。常連のあなただからこそ、大事です。",
+  "5回目。五円玉なら «ご縁»。五回目のご縁で、地図はさらに育ちます。",
+  "6回目。制作者も応援されていることに気づいています。ここまでの応援、ありがとうございます。",
+  "7回目。ラッキーセブン。抽選はありませんが、確実に地図が良くなっています。",
+  "8回目。末広がり。広がるのは制作者の笑顔だけではなく、ユーザーも増えています。",
+  "9回目。ここまで応援していただける方は本当に少ないです。本当にありがとうございます。",
+  "10回目。ついに二桁。あなたのような応援者がいるから、この地図は存在できます。",
+  "11回目以降。もう何も言うことはありません。この感謝は言葉では足りません。本当にありがとうございます。"
 ];
 function afterTip(S2, amt) {
   var n = S2.count || 1, msg;
@@ -686,7 +684,7 @@ function bindHist(m, C) {
   var b = $("#tip-clear", m); if (!b) return;
   b.addEventListener("click", function () {
     var S0 = st(), n = (S0.gedatsu || 0) + 1, need = GEDATSU_WALL[n];
-    if (n > 9) { RG.openModal("🧹 懺悔のリセット", '<div class="tj tj--c"><p class="tj__big">解脱は 9 回目が最大です。</p><p>あなたはすでに 9 回、暗いトンネルを抜けました。これ以上の解脱はなく、累計 999,999 円を超える寄付もできません。あとは静かに地図を眺めてください。</p></div>'); return; }
+    if (n > 9) { RG.openModal("🎊 究極の解脱", '<div class="tj tj--c"><p class="tj__big">9 回目の解脱を達成されました。</p><p>あなたはすでに 9 回、暗いトンネルを抜けました。最高位に到達したあなたは、地図の伝説的なサポーターです。これまでのご応援、本当にありがとうございました。</p></div>'); return; }
     if (need && (S0.total || 0) < need) {
       RG.openModal("⚠️ 所定の金額に達していません", '<div class="tj tj--c">' +
         '<p class="tj__big">' + n + " 回目の解脱には、累計 <b>" + yen(need) + "</b> が必要です。</p>" +
@@ -727,13 +725,13 @@ function rebirth() {
   ov.addEventListener("click", function () { ov.classList.remove("on"); setTimeout(function () { ov.remove(); RG.showTip("hist"); }, 300); });
 }
 
-/* ---- 救いの言葉・要望 ---- */
+/* ---- 感想・要望 ---- */
 function msgHTML(C, S) {
   var left = S.lastMsgAt ? Math.ceil((S.lastMsgAt + 600000 - Date.now()) / 60000) : 0;
-  return '<p class="tj__lead">🙏 貧乏でも大丈夫。お名前とひとことを入れて「制作者へ届け！」を押すと、制作者のもとへ届きます。改善のご要望もここから（実装見込みは極端に低い前提で）。</p>' +
+  return '<p class="tj__lead">💬 ご感想やご要望をお聞かせください。お名前とひとことを入れて「制作者へ届け！」を押すと、制作者のもとへ届きます。改善のご指摘やご提案が、地図をより良くしていきます。</p>' +
     '<div class="tj__form"><label>お名前（ニックネーム可）<input id="tip-name" maxlength="40" value="' + esc(S.name || "") + '"></label>' +
     '<label>ひとこと・ご要望（400字まで）<textarea id="tip-text" maxlength="400" rows="4">' + esc(S.reqFor || "") + '</textarea></label>' +
-    (S.reqFor ? '<p class="tj__hint">📮 更新依頼として下書きを入れました。要望の前に <b>☕ 投げ銭</b> を一つ添えると、制作者の多忙のフリが 3% ほど揺らぎます。</p>' : "") +
+    (S.reqFor ? '<p class="tj__hint">📮 更新依頼として下書きを入れました。ご要望とともに投げ銭をいただくと、制作者のやる気が高まります。</p>' : "") +
     '<div class="tj__row"><button id="tip-send" class="set__b2" type="button"' + (left > 0 ? " disabled" : "") + ">📨 制作者へ届け！</button>" +
     (left > 0 ? '<span class="tj__hint">連投よけのため、あと約 ' + left + " 分お待ちください。</span>" : "") + "</div>" +
     '<div id="tip-msgres" class="tj__res"></div></div>' +
@@ -754,13 +752,13 @@ function bindMsg(m, C) {
       b.disabled = true; res.textContent = "送っています…";
       fetch(C.discordWebhook, { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: body.slice(0, 1900), username: "東京ステーションガイド 窓口", allowed_mentions: { parse: [] } }) })
-        .then(function (r) { if (!r.ok) throw 0; S.lastMsgAt = Date.now(); save(S); res.innerHTML = "📨 届きました。ありがとうございます。制作者は多忙のフリをしながら、必ず読みます。"; })
+        .then(function (r) { if (!r.ok) throw 0; S.lastMsgAt = Date.now(); save(S); res.innerHTML = "📨 届きました。ありがとうございます。制作者が確認いたします。"; })
         .catch(function () { b.disabled = false; res.innerHTML = "送れませんでした。<a href=\"" + mailtoHref(C, body) + "\">メールで送る</a> をお試しください。"; });
     } else if (C.googleForm && C.googleForm.action) {
       b.disabled = true; res.textContent = "送っています…";
       var fd = new FormData(); fd.append(C.googleForm.name, name); fd.append(C.googleForm.text, text + "\n---\nvid:" + vid() + (S.total ? " 投げ銭累計 " + yen(S.total) : ""));
       fetch(C.googleForm.action, { method: "POST", mode: "no-cors", body: fd })
-        .then(function () { S.lastMsgAt = Date.now(); save(S); res.innerHTML = "📨 届きました。ありがとうございます。制作者は多忙のフリをしながら、必ず読みます。"; })
+        .then(function () { S.lastMsgAt = Date.now(); save(S); res.innerHTML = "📨 届きました。ありがとうございます。制作者が確認いたします。"; })
         .catch(function () { b.disabled = false; res.innerHTML = "送れませんでした。しばらくしてからもう一度お試しください。"; });
     } else {
       S.lastMsgAt = Date.now(); save(S);

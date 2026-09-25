@@ -88,6 +88,7 @@ tools/build_standalone.py  単一ファイル版の生成
 
 ## v71
 - `data/cams_jp.js` — 各配信元の YouTube チャンネル。一覧の入手元: 国土交通省 九州地方整備局「河川カメラ YouTube 一覧」、近畿地方整備局「ライブカメラ」、水管理・国土保全局「河川ライブ配信一覧」、各放送局・新聞社・自治体の公式チャンネル。動画IDは YouTube oEmbed で 2026-09-06 に有効確認。
+- `data/cams_jp.js`（v120 で合流した分）— livecam.asia のライブカメラ索引（RSS）から候補を集め、YouTube oEmbed で埋め込み可能を 2026-09-23 に確認（`tools/build_livecams.py`）。再生は各配信元の公式プレイヤー。
 - `data/buzz.js` — 投稿の存在は X 公式 oEmbed（publish.twitter.com/oembed）で確認。「話題になった」根拠は各件の `src`（Togetter まとめ・報道）。見出しは当サイトの要約。
 
 ## v77
