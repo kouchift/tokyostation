@@ -34,11 +34,15 @@ APP = "東京ステーションガイド アップローダー"
 CONF = os.path.join(os.path.expanduser("~"), ".tsg_uploader.json")
 API = "https://api.github.com"
 
+# «ぜんぶ入れ替える» でも GitHub 側から消さないもの（GitHub Actions が作る・管理する）
+KEEP_REMOTE = ["data/auto/*", ".github/*"]
+
 # 上げないもの（作業用のファイル）
 SKIP = ["*.pyc", "__pycache__/*", ".git/*", "node_modules/*", "*.zip",
         "standalone.html", ".DS_Store", "Thumbs.db", "*.tmp", "*.log",
         "uploader/*", "*.tgz", "*_prev.js.gz", "tools/__pycache__/*",
-        "CLAUDE.md", ".claude/*", "CLAUDE.local.md"]   # v109: Claude 向けの作業メモは公開しない   # v93: アップローダー自身（トークン入り）と作業ファイルは上げない
+        "CLAUDE.md", ".claude/*", "CLAUDE.local.md",
+        "data/auto/*"]   # v114: GitHub Actions が毎日・毎月書き換える（手元の写しで上書きしない）   # v109: Claude 向けの作業メモは公開しない   # v93: アップローダー自身（トークン入り）と作業ファイルは上げない
 
 
 # ----------------------------------------------------------------- 設定
@@ -318,7 +322,7 @@ class App(tk.Tk):
                 if rel not in remote: add.append(rel)
                 elif remote[rel] != sha: upd.append(rel)
                 else: same += 1
-            dele = [p for p in remote if p not in local] if replace_all else []
+            dele = [p for p in remote if p not in local and not any(fnmatch.fnmatch(p, k) for k in KEEP_REMOTE)] if replace_all else []   # v114: GitHub Actions の出力とワークフローは消さない
 
             self.L("")
             self.L("■ 変わりぶん")

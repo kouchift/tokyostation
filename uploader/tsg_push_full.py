@@ -39,7 +39,9 @@ def main():
         if rel not in remote: add.append(rel)
         elif remote[rel] != sha: upd.append(rel)
         else: same += 1
-    dele = [p for p in remote if p not in local]
+    import fnmatch
+    from tsg_uploader import KEEP_REMOTE
+    dele = [p for p in remote if p not in local and not any(fnmatch.fnmatch(p, k) for k in KEEP_REMOTE)]   # v114: GitHub Actions の出力は消さない
 
     print("■ 変わりぶん  新しく増える %d / 中身が変わる %d / そのまま %d / 消える %d" % (len(add), len(upd), same, len(dele)))
     for p in (add + upd)[:20]: print("     ＋ " + p)
