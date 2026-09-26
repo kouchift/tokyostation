@@ -18,6 +18,8 @@ import json, os, re, sys, io, time, hashlib, datetime, urllib.request, urllib.pa
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data", "auto", "buzz_auto.js")
+ARC = os.path.join(ROOT, "data", "auto", "buzz_archive.js")   # v126: 21 日を過ぎて落ちた分を残す（場所で追うときの «過去の話題»）
+ARC_MAX = 6000
 RSS = "https://trends.google.com/trending/rss?geo=JP"
 UA = "tokyostation-guide/1.0 (https://kouchift.github.io/tokyostation/)"
 KEEP_DAYS = 21
@@ -130,11 +132,13 @@ def main():
         if m:
             old = json.JSONDecoder().raw_decode(s[m.end():])[0]
     lim = (datetime.date.fromisoformat(today) - datetime.timedelta(days=KEEP_DAYS)).isoformat()
-    ids, heads, merged = set(), set(), []
+    ids, heads, merged, dropped = set(), set(), [], []
     for b in new + old:
-        if b["id"] in ids or b["n"] in heads or b["d"] < lim:           # 同じ記事が別の URL で来ることがある → 見出しでもまとめる
+        if b["id"] in ids or b["n"] in heads:                           # 同じ記事が別の URL で来ることがある → 見出しでもまとめる
             continue
-        ids.add(b["id"]); heads.add(b["n"]); merged.append(b)
+        ids.add(b["id"]); heads.add(b["n"])
+        (dropped if b["d"] < lim else merged).append(b)
+    archive(dropped)
     merged.sort(key=lambda b: b["d"], reverse=True)
     js = ("/* «話題の場所» の自動更新（tools/auto_buzz.py・GitHub Actions で毎朝）最終更新 %s\n"
           "   Google トレンドの急上昇ワード（日本）とその関連ニュースのうち、サイトの «場所の名前» が出てくるもの。SNS の投稿ではない\n"
@@ -143,6 +147,29 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     open(OUT, "w", encoding="utf-8").write(js)
     print("→ data/auto/buzz_auto.js 今日 +%d 件・合計 %d 件" % (len(new), len(merged)))
+
+
+def archive(dropped):
+    """v126: 落ちた分を data/auto/buzz_archive.js に足す（id と見出しで重複をまとめ、新しい順に ARC_MAX 件まで）"""
+    arc = []
+    if os.path.exists(ARC):
+        s = open(ARC, encoding="utf-8").read()
+        m = re.search(r"RG\.BUZZ_ARCHIVE\s*=\s*", s)
+        if m:
+            arc = json.JSONDecoder().raw_decode(s[m.end():])[0]
+    ids, heads, out = set(), set(), []
+    for b in dropped + arc:
+        if b["id"] in ids or b["n"] in heads:
+            continue
+        ids.add(b["id"]); heads.add(b["n"]); out.append(b)
+    out.sort(key=lambda b: b["d"], reverse=True)
+    out = out[:ARC_MAX]
+    js = ("/* «話題の場所» の過去の分（tools/auto_buzz.py）。毎朝の自動収集で 21 日を過ぎたものをここに残す\n"
+          "   場所を追ったとき（駅・スポットのカードの «この場所の話題»）だけ読み込む。見出しはニュースの見出し（引用）・url は記事 */\n"
+          "RG.BUZZ_ARCHIVE = %s;\n") % json.dumps(out, ensure_ascii=False, separators=(",", ":"))
+    open(ARC, "w", encoding="utf-8").write(js)
+    if dropped:
+        print("→ data/auto/buzz_archive.js ＋%d 件・合計 %d 件" % (len(dropped), len(out)))
 
 
 if __name__ == "__main__":

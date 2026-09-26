@@ -275,6 +275,7 @@ RG.showKantoLM = function (p) {
       '<span class="smk__e">' + r.e + "</span>" +
       "<div><h3>" + esc(r.n) + '</h3><p class="smk__k">' + esc(r.t || "見どころ") +
       (r.sl ? " ・ " + r.sl + " 言語版で紹介" : "") + "</p></div></div>" +
+    (RG.eduHistHtml ? RG.eduHistHtml(r.n) : "") + (RG.buzzBlock ? RG.buzzBlock({ la: p.la, lo: p.lo, n: r.n }) : "") +   // v126
     (RG.enrichSlot ? RG.enrichSlot() : "") +
     '<div class="smkg">' +
       (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
@@ -287,6 +288,7 @@ RG.showKantoLM = function (p) {
     (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "行きかたを見る") : "") +
     '<p class="src">出典: Wikidata (CC0)。営業時間や休みは公式でご確認ください。</p></div>');
   if (RG.enrichIn) RG.enrichIn(m, { name: r.n, la: p.la, lo: p.lo, kind: "spot", hasHero: false, hasIntro: false });
+  if (RG.buzzBlockFill) RG.buzzBlockFill(m);   // v126
 };
 
 })(window.RG);

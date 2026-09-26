@@ -1825,6 +1825,8 @@ var Card = (function () {
   function render(id, d) {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
+           (RG.eduHistHtml ? RG.eduHistHtml(s.n) : "") +                                                                          // v126: 教科書にでてくる場所
+           (RG.buzzBlock ? RG.buzzBlock({ la: s.la, lo: s.lo, n: RG.stLabel(s) }) : "") +                                     // v126: この場所の話題（いま・過去）
            '<section class="sec sec--term" data-term="' + esc(s.id) + '" hidden><h3>主要駅へのアクセス <small>この駅から・日中の目安</small></h3><div class="term__l"></div></section>' +   // v86: 中身は開いたあとに計算して入れる（termFill）
            nearSpotsHtml(s) +                                                                                                      // v94: 近くのスポット
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
@@ -1958,6 +1960,7 @@ var Card = (function () {
     });
   }
   function bind(root, id, d) {
+    if (RG.buzzBlockFill) RG.buzzBlockFill(root);   // v126
     var st0 = RG.byId[id];
     if (st0) setTimeout(function () { try { termFill(root, st0); } catch (e) {} }, 80);
     if (RG.tokyoModeBind) RG.tokyoModeBind(root);

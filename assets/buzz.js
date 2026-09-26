@@ -195,7 +195,7 @@ RG.buzzRailRefresh = function (force) {
     box.querySelectorAll("[data-bzid]").forEach(function (el) { el.addEventListener("click", function () {
       var it = byId(el.dataset.bzid); if (!it) return;
       RG.Map.gotoLatLng(it.la, it.lo, 220);
-      RG.showBuzz(areaOf(it), "all");
+      RG.showBuzzPlace(it.la, it.lo, it.at || areaOf(it), 1.2, it.id);   // v126: その場所の «いま・記憶に残る・過去» へ
     }); });
   }, force ? 0 : 400);
 };
@@ -205,4 +205,104 @@ RG.buzzBind = function () {
   var b = document.getElementById("btn-buzz");
   if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData(["buzz"]); RG.showBuzz(null, "fresh"); }); }
 };
+/* =========================================================================
+   v126: 場所を追う «この場所の話題»
+   ・ふだん（地図の山・一覧）は «いま» の話題（鮮度枠）とつなぐ
+   ・駅やスポットを開いたとき＝場所を追ったときは、その場所のまわりの過去の話題もさがせる
+     並び: ① いまの話題（新しい順） ② 記憶に残る話題（インパクト 4 以上。大きい順→新しい順） ③ そのほかの過去（年ごと・新しい順）
+   ・毎朝の自動収集は 21 日で一覧から落ちるが、落ちた分は data/auto/buzz_archive.js に残る（場所で追うときだけ読む）
+   ========================================================================= */
+var ARCH = { state: "", cb: [] };
+RG.buzzArchive = function (cb) {
+  if (ARCH.state === "done") { cb && cb(); return; }
+  if (cb) ARCH.cb.push(cb);
+  if (ARCH.state === "loading") return;
+  ARCH.state = "loading";
+  var v = document.documentElement.getAttribute("data-build") || "";
+  var s = document.createElement("script"); s.async = true;
+  s.src = "data/auto/buzz_archive.js" + (v ? "?v=" + v : "");
+  function done() { ARCH.state = "done"; var c = ARCH.cb; ARCH.cb = []; c.forEach(function (f) { try { f(); } catch (e) {} }); }
+  s.onload = done; s.onerror = function () { RG.BUZZ_ARCHIVE = RG.BUZZ_ARCHIVE || []; done(); };
+  document.head.appendChild(s);
+};
+function allItems() {
+  withAuto();
+  var seen = {}, out = [];
+  (RG.BUZZ || []).concat(RG.BUZZ_ARCHIVE || []).forEach(function (b) { if (b && b.id && !seen[b.id] && b.la != null) { seen[b.id] = 1; out.push(b); } });
+  return out;
+}
+/* 場所のまわりの話題を 3 つの枠に分ける */
+RG.buzzNear = function (la, lo, km) {
+  var M = META(), now = [], mem = [], past = [];
+  allItems().forEach(function (b) {
+    var d = RG.hav([la, lo], [b.la, b.lo]); if (d > km) return;
+    b.__km = d;
+    var age = ageDays(b.d);
+    if (age <= M.FRESH_DAYS) now.push(b);
+    else if ((b.imp || 0) >= M.EVERGREEN_MIN) mem.push(b);
+    else past.push(b);
+  });
+  now.sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+  mem.sort(function (a, b) { return (b.imp || 0) - (a.imp || 0) || (a.d < b.d ? 1 : -1); });
+  past.sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+  return { now: now, mem: mem, past: past, n: now.length + mem.length + past.length };
+};
+function whenLabel(b) {
+  var age = ageDays(b.d);
+  if (age <= 3) return '<b class="bzp__w bzp__w--new">NEW</b>';
+  if (age <= META().FRESH_DAYS) return '<b class="bzp__w bzp__w--now">いま</b>';
+  return '<b class="bzp__w">' + esc(b.d.slice(0, 4)) + "年" + (+b.d.slice(5, 7)) + "月</b>";
+}
+function miniRow(b) {
+  var p = PL[b.pl] || PL.x;
+  return '<button class="bzp__i" type="button" data-bzone="' + esc(b.id) + '">' + whenLabel(b) +
+    '<span class="bzp__n">' + esc(b.n) + '</span><span class="bzp__p">' + p.e + ((b.imp || 0) >= META().EVERGREEN_MIN ? " 🏆" : "") + "</span></button>";
+}
+/* 駅・スポットのカードに入れる枠（中身はあとで埋める。過去の分を読み込んでから数えるため） */
+RG.buzzBlock = function (p) {
+  if (!p || p.la == null || !RG.BUZZ) return "";
+  return '<section class="sec bzp" data-bzslot="' + p.la + "," + p.lo + '" data-bzname="' + esc(p.n || "") + '"></section>';
+};
+RG.buzzBlockFill = function (root) {
+  var el = root && root.querySelector("[data-bzslot]"); if (!el) return;
+  RG.buzzArchive(function () {
+    var c = el.getAttribute("data-bzslot").split(","), name = el.getAttribute("data-bzname") || "";
+    var N = RG.buzzNear(+c[0], +c[1], 1.2);
+    if (!N.n) { el.remove(); return; }
+    var top = N.now.slice(0, 3); top = top.concat(N.mem.slice(0, 4 - top.length)); top = top.concat(N.past.slice(0, 4 - top.length));
+    el.innerHTML = '<h3>🔥 この場所の話題 <small>まわり約1km</small></h3>' +
+      '<p class="bzp__sum">' + (N.now.length ? "いま <b>" + N.now.length + "</b> 件" : "いまの話題はなし") +
+        (N.mem.length ? "・記憶に残る話題 <b>" + N.mem.length + "</b> 件" : "") + (N.past.length ? "・過去 <b>" + N.past.length + "</b> 件" : "") + "</p>" +
+      '<div class="bzp__l">' + top.map(miniRow).join("") + "</div>" +
+      (N.n > top.length || N.past.length || N.mem.length ? '<button class="bzp__more" type="button" data-bzplace="1">🕰️ 過去の話題もさがす（' + N.n + " 件）</button>" : "");
+    el.querySelectorAll("[data-bzone]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzzPlace(+c[0], +c[1], name, 1.2, b.dataset.bzone); }); });
+    var mo = el.querySelector("[data-bzplace]"); if (mo) mo.addEventListener("click", function () { RG.showBuzzPlace(+c[0], +c[1], name, 1.2); });
+  });
+};
+/* 場所を追う一覧（いま → 記憶に残る → 年ごとの過去）。半径は 1・3・10 km から選べる */
+RG.showBuzzPlace = function (la, lo, name, km, focusId) {
+  km = km || 1.2;
+  RG.buzzArchive(function () {
+    var N = RG.buzzNear(la, lo, km), years = {};
+    N.past.forEach(function (b) { var y = b.d.slice(0, 4); (years[y] = years[y] || []).push(b); });
+    function sec(title, lead, list) { return list.length ? '<h4 class="bzp__h">' + title + " <small>" + list.length + "件</small></h4>" + (lead ? '<p class="bzp__lead">' + lead + "</p>" : "") + '<ul class="bz__list">' + list.map(function (b) { return row(b, true); }).join("") + "</ul>" : ""; }
+    var html = '<div class="bz bz--place">' +
+      '<p class="bz__lead">«' + esc(name || "この場所") + "» のまわりで話題になったこと。<b>いまの話題</b>を先に、つづけて <b>時間がたっても語られる話題</b>、そのあとに <b>過去の話題</b>を年ごとに並べています。</p>" +
+      '<div class="bz__tabs">' + [1.2, 3, 10].map(function (k) { return '<button class="bz__tab' + (k === km ? " on" : "") + '" type="button" data-km="' + k + '">まわり ' + (k < 2 ? "約1" : k) + " km</button>"; }).join("") + "</div>" +
+      (N.n ? sec("🆕 いまの話題", "", N.now) + sec("🏆 記憶に残る話題", "インパクトが大きく、時間がたっても語られるもの。", N.mem) +
+             Object.keys(years).sort().reverse().map(function (y) { return sec("🕰️ " + y + "年の話題", "", years[y]); }).join("")
+           : '<p class="bz__none">このまわりには、まだ話題がありません。範囲を広げてみてください。</p>') +
+      '<p class="src">見出しは当サイトの要約か、ニュースの見出し（引用）です。投稿者・配信元が消すと見られなくなります。毎朝の自動収集（📰）は 21 日で «いま» から外れ、そのあとは «過去» としてここに残ります。</p></div>';
+    var m = RG.openModal("🔥 " + (name || "この場所") + " の話題", html);
+    m.querySelectorAll("[data-km]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzzPlace(la, lo, name, +b.dataset.km); }); });
+    m.querySelectorAll("[data-go]").forEach(function (b) { b.addEventListener("click", function () {
+      var it = byIdAll(b.dataset.go); if (!it) return; RG.closeModal(); RG.Map.gotoLatLng(it.la, it.lo, 220); }); });
+    m.querySelectorAll("[data-emb]").forEach(function (b) { b.addEventListener("click", function () {
+      var it = byIdAll(b.dataset.emb), box = b.closest(".bz__it").querySelector(".bz__emb"); if (!it || !box) return;
+      box.hidden = false; embed(it, box); b.disabled = true; }); });
+    if (focusId) { var f = m.querySelector('.bz__it[data-id="' + focusId + '"]'); if (f) { f.classList.add("hi"); setTimeout(function () { f.scrollIntoView({ block: "center" }); }, 60); } }
+  });
+};
+function byIdAll(id) { return allItems().filter(function (b) { return b.id === id; })[0]; }
+
 })(window.RG);

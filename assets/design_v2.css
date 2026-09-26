@@ -312,3 +312,44 @@ body.navon .hint, body.navon #quickbar, body.navon .heroSearch__pill { display: 
 .nav__step { display: block; width: 100%; text-align: left; border: 0; background: #0F1A2B; color: #dfe8f5; font: inherit; font-size: 12.5px; font-weight: 700; padding: 6px 12px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nav__step b { color: #fff; }
 .nav__step i { font-style: normal; display: inline-block; width: .7em; height: .7em; border-radius: 2px; margin: 0 4px 0 2px; vertical-align: .05em; }
+
+/* ===== v126: 教科書にでてくる場所（やさしい解説）・この場所の話題 ===== */
+.eh { border: 2px solid #F5C451; border-radius: 16px; background: #FFFBEF; padding: 12px 14px 10px; margin: 12px 0; }
+.eh h3 { display: block; margin: 0 0 4px; padding: 0; font-size: 15px; color: #6B4E00; border: 0; }
+.eh h3::before { display: none !important; }
+.eh h3 small { display: block; font-weight: 700; color: #8A6D00; margin: 2px 0 0; font-size: 12px; }
+.eh__t { margin: 0 0 6px; font-size: 18px; font-weight: 800; color: #3A2A00; }
+.eh__kw { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.eh__kw span { background: #fff; border: 1px solid #F5C451; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: #6B4E00; }
+.eh__kid p { font-size: 15.5px; line-height: 1.9; margin: 0 0 8px; color: #222; }
+.eh__hee { background: #fff; border-radius: 12px; padding: 8px 12px; margin: 6px 0; }
+.eh__hee b { display: block; color: #B35C00; font-size: 14px; margin-bottom: 2px; }
+.eh__hee ul { margin: 0; padding-left: 1.2em; }
+.eh__hee li { font-size: 14.5px; line-height: 1.8; margin: 4px 0; }
+.eh__look { font-size: 14px; line-height: 1.7; margin: 8px 0; }
+.eh__look b { display: block; color: #0B5394; }
+.eh__q { background: #0B5394; color: #fff; border-radius: 12px; padding: 0; margin: 8px 0 4px; }
+.eh__q summary { cursor: pointer; list-style: none; padding: 10px 12px; font-weight: 800; font-size: 14.5px; line-height: 1.6; }
+.eh__q summary::-webkit-details-marker { display: none; }
+.eh__q summary span { display: inline-block; margin-left: 8px; background: #fff; color: #0B5394; border-radius: 999px; padding: 0 10px; font-size: 12px; }
+.eh__q[open] summary span { display: none; }
+.eh__q p { margin: 0; padding: 0 12px 12px; font-size: 16px; font-weight: 800; }
+.eh__q p::before { content: "⭕ "; }
+body.night .eh { background: #2b2616; border-color: #8A6D00; }
+body.night .eh__kid p, body.night .eh__t, body.night .eh__look { color: #f3ecd8; }
+body.night .eh__hee { background: #1f1b10; }
+.bzp { margin: 12px 0; }
+.bzp h3 small { font-weight: 600; color: var(--label, #666); font-size: 12px; margin-left: 4px; }
+.bzp__sum { font-size: 12.5px; color: var(--label, #555); margin: 2px 0 6px; }
+.bzp__l { display: flex; flex-direction: column; gap: 6px; }
+.bzp__i { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 1px solid var(--border, #e3e6ea); background: #fff; border-radius: 12px; padding: 8px 10px; font: inherit; font-size: 13.5px; cursor: pointer; min-height: 44px; }
+.bzp__n { flex: 1; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.bzp__w { flex: none; font-size: 11px; border-radius: 6px; padding: 2px 6px; background: #EEF1F5; color: #333; }
+.bzp__w--new { background: #FF4500; color: #fff; }
+.bzp__w--now { background: #FFE3D6; color: #B32D00; }
+.bzp__more { margin-top: 8px; width: 100%; min-height: 44px; border: 0; border-radius: 12px; background: #1F2A37; color: #fff; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; }
+.bzp__h { margin: 14px 0 4px; font-size: 15px; }
+.bzp__h small { color: var(--label, #666); font-weight: 600; }
+.bzp__lead { font-size: 12.5px; color: var(--label, #555); margin: 0 0 6px; }
+.bz__it.hi { outline: 3px solid #FF4500; border-radius: 12px; }
+body.night .bzp__i { background: #23272c; color: #eef; border-color: #3a4048; }

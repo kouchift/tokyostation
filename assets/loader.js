@@ -54,6 +54,7 @@ var IDLE = [
   { f: "data/crime.js",     key: "crime",     label: "安全のデータ" },
   { f: "data/bigevents.js", key: "bigev",     label: "大きな行事" },
   { f: "data/descs.js",     key: "descs",     label: "説明文" },
+  { f: "data/edu_history.js", key: "eduhist", label: "歴史の場所のやさしい解説" },   // v126
   { f: "data/poi.js",       key: "poi",       label: "駅のまわりの情報" },
   { f: "data/mappois.js",   key: "pois",      label: "スポット" },
   { f: "data/user_pois.js", key: "user",      label: "自分のスポット" },

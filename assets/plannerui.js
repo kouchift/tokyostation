@@ -395,6 +395,8 @@ RG.showSpot = function (p) {
       (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
     (RG.pinRow ? RG.pinRow(p) : "") +
     (RG.focusHtml ? RG.focusHtml(p.n) : "") +
+    (RG.eduHistHtml ? RG.eduHistHtml(p.n) : "") +                       // v126: 教科書にでてくる場所
+    (RG.buzzBlock ? RG.buzzBlock(p) : "") +                             // v126: この場所の話題（いま・過去）
     (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") + (RG.sentoBlock ? RG.sentoBlock(p) : "") +
     (RG.mountainBlock ? RG.mountainBlock(p) : "") + (RG.riverBlock ? RG.riverBlock(p) : "") + (RG.castleBlock ? RG.castleBlock(p) : "") + (RG.ichiBlock ? RG.ichiBlock(p) : "") +
     (RG.levechiBlock ? RG.levechiBlock(p) : "") +
@@ -449,6 +451,7 @@ RG.showSpot = function (p) {
   if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), noExtract: !!p.ichi, q: p.q || null,
                                                                         wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
   if (RG.reqBind) RG.reqBind(m);
+  if (RG.buzzBlockFill) RG.buzzBlockFill(m);   // v126
   if (RG.postsEnabled && RG.postsEnabled()) RG.postsBind(m, p); else if (RG.commentsEnabled && RG.commentsEnabled()) RG.commentsBind(m, p); else if (RG.memoSpotBind) RG.memoSpotBind(m, p);          // v85: スポットにも «行った人の声»／v106: みんなのコメント
   if (RG.focusBind) RG.focusBind(m);
   if (RG.natureBind) RG.natureBind(m, p);
