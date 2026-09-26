@@ -12,7 +12,7 @@ function $$(s, r) { return Array.prototype.slice.call((r || document).querySelec
 /* 目的でまとめる。ここに載っていないジャンルは «そのほか» に入る */
 var GROUPS = [
   { id: "see",   e: "👀", label: "見る・行く",   c: "#7B3FE4",
-    ids: ["near_special", "buzz", "yt", "view_jp", "onsen_jp", "mountain", "castle", "shukuba", "river", "zoo", "koshin", "klm", "ichinomiya", "shrine_major", "temple_major", "bunkazai", "history", "worship", "leisure", "museum", "park", "view", "landmark"] },
+    ids: ["near_special", "whs", "buzz", "yt", "view_jp", "onsen_jp", "mountain", "castle", "shukuba", "river", "zoo", "koshin", "klm", "ichinomiya", "shrine_major", "temple_major", "bunkazai", "history", "worship", "leisure", "museum", "park", "view", "landmark"] },
   { id: "help",  e: "🆘", label: "こまったとき", c: "#E53935",
     ids: ["toilet", "baby", "water", "hosp", "pharm", "police", "aed", "shelter", "wifi", "civic", "library"] },
   { id: "eat",   e: "🍜", label: "食べる・買う", c: "#F0851E",
@@ -275,7 +275,7 @@ RG.showKantoLM = function (p) {
       '<span class="smk__e">' + r.e + "</span>" +
       "<div><h3>" + esc(r.n) + '</h3><p class="smk__k">' + esc(r.t || "見どころ") +
       (r.sl ? " ・ " + r.sl + " 言語版で紹介" : "") + "</p></div></div>" +
-    (RG.eduHistHtml ? RG.eduHistHtml(r.n) : "") + (RG.buzzBlock ? RG.buzzBlock({ la: p.la, lo: p.lo, n: r.n }) : "") +   // v126
+    (RG.whsBanner ? RG.whsBanner(r.n) : "") + (RG.eduHistHtml ? RG.eduHistHtml(r.n) : "") + (RG.buzzBlock ? RG.buzzBlock({ la: p.la, lo: p.lo, n: r.n }) : "") +   // v126
     (RG.enrichSlot ? RG.enrichSlot() : "") +
     '<div class="smkg">' +
       (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +

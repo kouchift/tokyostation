@@ -329,6 +329,7 @@ RG.showSpot = function (p) {
   if (p.adult && RG.showAdult) { RG.showAdult(p.adult); return; }
   if (p.camspot && RG.showCamSpot) { RG.showCamSpot(p.camspot); return; }
   if (p.buzz && RG.showBuzz) { RG.showBuzz(p.buzz, "fresh"); return; }
+  if (p.whs && RG.showWHS) { RG.showWHS(p.whs); return; }            // v127: 世界遺産の印
   if (p.osm10 && RG.showOsm10) { RG.showOsm10(p); return; }
   if (p.klm && RG.showKantoLM) { RG.showKantoLM(p); return; }
   if (p.univ != null && RG.showUniv) { RG.showUniv(p.univ); return; }
@@ -395,6 +396,7 @@ RG.showSpot = function (p) {
       (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
     (RG.pinRow ? RG.pinRow(p) : "") +
     (RG.focusHtml ? RG.focusHtml(p.n) : "") +
+    (RG.whsBanner ? RG.whsBanner(p.n) : "") +                           // v127: 世界遺産の一部なら帯
     (RG.eduHistHtml ? RG.eduHistHtml(p.n) : "") +                       // v126: 教科書にでてくる場所
     (RG.buzzBlock ? RG.buzzBlock(p) : "") +                             // v126: この場所の話題（いま・過去）
     (RG.viewBlock ? RG.viewBlock(p) : "") + (RG.onsenBlock ? RG.onsenBlock(p) : "") + (RG.sentoBlock ? RG.sentoBlock(p) : "") +

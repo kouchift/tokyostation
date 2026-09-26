@@ -55,6 +55,7 @@ var IDLE = [
   { f: "data/bigevents.js", key: "bigev",     label: "大きな行事" },
   { f: "data/descs.js",     key: "descs",     label: "説明文" },
   { f: "data/edu_history.js", key: "eduhist", label: "歴史の場所のやさしい解説" },   // v126
+  { f: "data/whs_jp.js",    key: "whs",       label: "日本の世界遺産" },          // v127
   { f: "data/poi.js",       key: "poi",       label: "駅のまわりの情報" },
   { f: "data/mappois.js",   key: "pois",      label: "スポット" },
   { f: "data/user_pois.js", key: "user",      label: "自分のスポット" },
@@ -142,7 +143,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, travel: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, sentojp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
+                 smoke: 1, travel: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, whs: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, sentojp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;
@@ -248,7 +249,7 @@ function armOnDemandTriggers() {
   if (RG.Map && RG.Map.setGenres) {
     var orig = RG.Map.setGenres;
     // v87: 第2段で来る軽いジャンル（レベチ・話題・一之宮・神社仏閣）だけなら、6MB の第3段は読まない
-    var LIGHT = { levechi: 1, buzz: 1, ichinomiya: 1, shrine_major: 1, temple_major: 1 };
+    var LIGHT = { levechi: 1, buzz: 1, whs: 1, ichinomiya: 1, shrine_major: 1, temple_major: 1 };
     RG.Map.setGenres = function (list) {
       var real = list && list.length && list.indexOf("__none__") < 0;
       var heavy = real && list.some(function (g) { return !LIGHT[g]; });
