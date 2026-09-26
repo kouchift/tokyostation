@@ -69,7 +69,7 @@ function yen(v) {
 
 /* ------------------------------------------------------------ 会社のカード */
 var MK = { P: "東証プライム", S: "東証スタンダード", G: "東証グロース", N: "非上場（有価証券報告書 提出）" };
-function logoUrl(f, w) { return "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=" + (w || 160); }
+function logoUrl(f, w) { if (RG.wmFile) return RG.wmFile(f, w || 160); return "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=" + (w || 160); }
 function empVal(c) { return Array.isArray(c.emp) ? c.emp[1] : c.emp; }
 function revVal(c) { return Array.isArray(c.rev) ? (c.rev.length ? c.rev[c.rev.length - 1][1] : null) : c.rev; }
 var RANKS = null;

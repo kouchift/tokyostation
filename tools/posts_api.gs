@@ -48,7 +48,7 @@
 var PROP = PropertiesService.getScriptProperties();
 var ADMIN_KEY = "__ADMIN_KEY__";              // 管理ページ用の鍵。tools/posts_deploy.mjs が置き換える（置き換わっていなければ ScriptProperties の ADMIN_KEY）
 var SHOW_PER_SPOT = 50;                       // 1 スポットに表示する写真
-var MAX_BYTES = 3 * 1024 * 1024;              // 1 枚 3MB まで（画面側で 1600px にしているので普通は 0.2〜0.6MB）
+var MAX_BYTES = 1.5 * 1024 * 1024;            // v137: 1 枚 1.5MB まで（画面側で長辺 1600px・約 480KB 以内にそろえて送る。古い画面でも 0.6MB 程度）
 var PER_DAY_PHOTOS = 60, PER_DAY_COMMENTS = 60, MIN_GAP_MS = 3000;
 var PER_USER_SPOT = 20;                       // 1 人が 1 スポットに出せる写真
 var PER_SPOT_DAY = 60;                        // 1 スポットに 1 日に来る写真（誰からでも）

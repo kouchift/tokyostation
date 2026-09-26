@@ -254,7 +254,7 @@ function showEv(id) {
   panel.hidden = false;
   panel.querySelector(".hp__body").scrollTop = 0;
   fit();
-  if (RG.wpGallery) RG.wpGallery(panel.querySelector("[data-hgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(evSpot(e)) : null);
+  if (RG.wpGallery) RG.wpGallery(panel.querySelector("[data-hgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(evSpot(e)) : null, e.ph);
   else loadImg(e.imgwp || e.wp);
   if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(panel, evSpot(e));
   if (RG.track) try { RG.track("hist", e.id); } catch (x) {}
@@ -271,7 +271,7 @@ function loadImg(wp) {
   }
   if (IMG[wp] !== undefined) { put(IMG[wp]); return; }
   box.innerHTML = '<span class="hp__ld">写真を読み込んでいます…</span>';
-  fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=800&titles=" + encodeURIComponent(wp))
+  fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=960&titles=" + encodeURIComponent(wp))
     .then(function (r) { return r.json(); }).then(function (j) {
       var pg = j && j.query && j.query.pages, k = pg && Object.keys(pg)[0], t = k && pg[k].thumbnail;
       IMG[wp] = t ? { src: t.source, page: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(pg[k].title) } : null; put(IMG[wp]);

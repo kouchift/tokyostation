@@ -125,14 +125,14 @@ function galFetch(titles, cb) {
   var key = titles.join("|"); if (GAL[key]) { cb(GAL[key]); return; }
   var base = "https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1";
   var main = titles[0], rest = titles.slice(1);
-  var p1 = fetch(base + "&generator=images&gimlimit=40&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=720&titles=" + encodeURIComponent(main))
+  var p1 = fetch(base + "&generator=images&gimlimit=40&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=500&titles=" + encodeURIComponent(main))
     .then(function (r) { return r.json(); }).then(function (j) {
       var pg = (j.query && j.query.pages) || {};
       return Object.keys(pg).map(function (k) { return pg[k]; }).filter(function (p) {
         var ii = p.imageinfo && p.imageinfo[0]; return ii && /jpeg|png/.test(ii.mime) && ii.width >= 480 && ii.height >= 300 && !SKIP.test(p.title);
       }).map(function (p) { var ii = p.imageinfo[0]; return { src: ii.thumburl || ii.url, page: ii.descriptionurl, cap: p.title.replace(/^(File|ファイル):/, "").replace(/\.[a-z]+$/i, "").replace(/_/g, " "), f: p.title }; });
     }).catch(function () { return []; });
-  var p0 = fetch(base + "&prop=pageimages&piprop=thumbnail|name&pithumbsize=720&titles=" + encodeURIComponent(titles.join("|")))
+  var p0 = fetch(base + "&prop=pageimages&piprop=thumbnail|name&pithumbsize=500&titles=" + encodeURIComponent(titles.join("|")))
     .then(function (r) { return r.json(); }).then(function (j) {
       var pg = (j.query && j.query.pages) || {};
       return Object.keys(pg).map(function (k) { return pg[k]; }).filter(function (p) { return p.thumbnail; })
@@ -144,19 +144,23 @@ function galFetch(titles, cb) {
     GAL[key] = out.slice(0, 14); cb(GAL[key]);
   });
 }
-/* box: 置き場所。titles: 記事名（先頭が主） */
-RG.wpGallery = function (box, titles, likeKey) {
-  titles = (titles || []).filter(Boolean); if (!box || !titles.length) return;
+/* box: 置き場所。titles: 記事名（先頭が主）。pre: 前もって集めた写真 [[path,横,縦,説明], …]（v137: あれば API を呼ばずにすぐ出す） */
+RG.wpGallery = function (box, titles, likeKey, pre) {
+  titles = (titles || []).filter(Boolean); if (!box || (!titles.length && !(pre && pre.length))) return;
+  if (pre && pre.length) { draw(pre.map(function (q) { var fn = decodeURIComponent(q[0].slice(2).split("/").pop()); return { p: q[0], ow: q[1], oh: q[2], cap: (q[3] || fn).replace(/\.[a-z]+$/i, "").replace(/_/g, " "), f: "File:" + fn, page: RG.wmPage(q[0]) }; })); return; }
   box.innerHTML = '<div class="hkg__ld">写真を集めています…</div>';
-  galFetch(titles, function (L) {
+  galFetch(titles, draw);
+  function draw(L) {
     if (!box.isConnected) return;
     if (!L.length) { box.remove(); return; }
     box.innerHTML = '<div class="hkg__rail">' + L.map(function (x, i) {
-      return '<figure class="hkg__f"><a href="' + esc(x.page) + '" target="_blank" rel="noopener"><img src="' + esc(x.src) + '" alt="" loading="' + (i < 2 ? "eager" : "lazy") + '" onerror="var f=this.closest(\'figure\');if(f)f.remove()"></a>' +
+      var im = x.p && RG.wmImg ? RG.wmImg(x.p, 320, { ow: x.ow, oh: x.oh, eager: i < 2 }) :
+        '<img src="' + esc(RG.wmNormalize ? RG.wmNormalize(x.src, 500) : x.src) + '" alt="" loading="' + (i < 2 ? "eager" : "lazy") + '" decoding="async" onerror="var f=this.closest(\'figure\');if(f)f.remove()">';
+      return '<figure class="hkg__f"><a href="' + esc(x.page) + '" target="_blank" rel="noopener">' + im + "</a>" +
         '<figcaption>' + esc(x.cap.slice(0, 40)) + (likeKey && RG.likeBtn ? RG.likeBtn(likeKey, "g" + RG.hash16(x.f)) : "") + "</figcaption></figure>"; }).join("") + "</div>" +
       '<p class="hkg__n">📷 ' + L.length + " 枚 ― 横にすべらせて見る。押すと元のページ（撮影者・ライセンス）</p>";
     if (likeKey && RG.likeFill) RG.likeFill(box, likeKey);
-  });
+  }
 };
 
 /* ---------------- カード ---------------- */
@@ -200,7 +204,7 @@ RG.hkCard = function (id) {
       (i >= 0 && i < L.length - 1 ? '<button class="whs__b" type="button" data-hkc="' + esc(L[i + 1].id) + '">' + esc(L[i + 1].n.replace(/（.*?）/g, "").slice(0, 12)) + " ›</button>" : "") + "</div>" +
     '<p class="src">解説は当サイトの手書き（定説にもとづく。«〜と伝わる»«諸説» はそう書いています）。位置はおおよそ。写真は Wikipedia・ウィキメディア・コモンズの画像（押すと撮影者・ライセンスのページ）。</p></div>';
   var m = RG.openModal("🏯 " + x.n.replace(/（.*?）/g, ""), html);
-  RG.wpGallery(m.querySelector("[data-hkgal]"), [x.wp].concat(x.img || []), RG.postKey ? RG.postKey(P) : null);
+  RG.wpGallery(m.querySelector("[data-hkgal]"), [x.wp].concat(x.img || []), RG.postKey ? RG.postKey(P) : null, x.ph);   // v137: 前もって集めた写真
   var f = m.querySelector("[data-hkfly]");
   if (f) f.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(x.la, x.lo, 50); if (RG.tripStatus) RG.tripStatus("🏯 " + esc(x.n), "info", 4000); });
   m.querySelectorAll("[data-hkev]").forEach(function (b) { b.addEventListener("click", function () { RG.histOpen({ ev: b.getAttribute("data-hkev") }); }); });

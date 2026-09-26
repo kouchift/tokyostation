@@ -53,18 +53,24 @@ document.addEventListener("click", function (e) {
   var a = e.target && e.target.closest && e.target.closest("[data-gravelist]");
   if (a) { e.preventDefault(); ensure(function () { RG.showGrave(null, a.getAttribute("data-gravelist")); }); }
 });
-function loadImg(root, wp) {
+function loadImg(root, wp, ip) {
   var box = root.querySelector(".grv__img"); if (!box) return;
   function put(o) {
     if (!box.isConnected) return;
     if (!o || !o.src) { box.classList.add("grv__img--none"); box.innerHTML = "<span>🪦</span>"; return; }
-    box.innerHTML = '<img src="' + esc(o.src) + '" alt="" loading="lazy"><a class="grv__cr" href="' + esc(o.page) + '" target="_blank" rel="noopener">画像: Wikipedia</a>';
+    box.innerHTML = '<img src="' + esc(o.src) + '" alt="" loading="lazy" decoding="async"><a class="grv__cr" href="' + esc(o.page) + '" target="_blank" rel="noopener">画像: Wikipedia</a>';
+  }
+  /* v137: 前もって集めた写真（ip = [path, 横, 縦]）があれば API を呼ばずに標準の幅で読む */
+  if (ip && ip[0] && RG.wmImg) {
+    box.innerHTML = RG.wmImg(ip[0], 108, { ow: ip[1], oh: ip[2], onerr: false }) + '<a class="grv__cr" href="' + esc(RG.wmPage(ip[0])) + '" target="_blank" rel="noopener">画像: Wikipedia</a>';
+    var im = box.querySelector("img"); if (im) im.addEventListener("error", function () { if (im.dataset.r === "2" && box.isConnected) { box.classList.add("grv__img--none"); box.innerHTML = "<span>🪦</span>"; } });
+    return;
   }
   if (IMG[wp] !== undefined) { put(IMG[wp]); return; }
-  fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=480&titles=" + encodeURIComponent(wp))
+  fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=250&titles=" + encodeURIComponent(wp))
     .then(function (r) { return r.json(); }).then(function (j) {
       var pg = j && j.query && j.query.pages, k = pg && Object.keys(pg)[0], t = k && pg[k].thumbnail;
-      IMG[wp] = t ? { src: t.source, page: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(pg[k].title) } : null; put(IMG[wp]);
+      IMG[wp] = t ? { src: RG.wmNormalize ? RG.wmNormalize(t.source, 250) : t.source, page: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(pg[k].title) } : null; put(IMG[wp]);
     }).catch(function () { IMG[wp] = null; put(null); });
 }
 function listHtml(cur, onlyEra) {
@@ -114,7 +120,7 @@ RG.showGrave = function (id, era) {
       "お墓の位置はおおよそ。同じ人のお墓が複数あるときは代表的な1か所です。</p></div>";
   var m = RG.openModal("🪦 " + x.n.replace(/（.*?）/g, "") + " のお墓", html);
   bindCommon(m, x);
-  loadImg(m, x.imgwp || x.wp);
+  loadImg(m, x.imgwp || x.wp, x.ip);
   if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(m, gSpot(x));
   if (RG.track) try { RG.track("grave", x.id); } catch (e) {}
 };

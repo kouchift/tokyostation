@@ -15,6 +15,9 @@
 "use strict";
 var esc = RG.esc, $ = RG.$;
 var MAX_PER_SPOT = 50, MAX_EDGE = 1600, THUMB = 400, QUALITY = 0.82, TTL = 5 * 60 * 1000;
+/* v137: 送る写真の «そろえ方»。機種ごとの画質の差（4800 万画素・HEIC 由来・高圧縮など）を送る前にならす
+   長辺 1600px → 画質 0.82 / 0.76 / 0.70 の順で 1 枚 BUDGET 以内に収める → だめなら長辺 1280・1024 で繰り返す（サーバーと表示を軽く保つ） */
+var BUDGET = 480 * 1024, QLADDER = [0.82, 0.76, 0.70], EDGES = [MAX_EDGE, 1280, 1024];
 var mem = {};                       // スポットの鍵 → { t, photos, comments }
 var UP = {};                        // スポットの鍵 → 送信中の状態 { cancelled, left }（カードを閉じて開き直しても 2 本目を始めない）
 
@@ -50,7 +53,7 @@ function nick() { try { return localStorage.getItem("tsg.cm.nick") || ""; } catc
 function setNick(n) { try { if (n) localStorage.setItem("tsg.cm.nick", n); } catch (e) {} }
 function tag(u) { return "#" + String(u || "").slice(-4); }
 function prefOf(la, lo) { var p = RG.prefAt ? RG.prefAt(la, lo) : null; return p ? p.n : ""; }
-function thumbUrl(f, w) { return /^https?:/.test(f) ? f : "https://drive.google.com/thumbnail?id=" + encodeURIComponent(f) + "&sz=w" + (w || THUMB); }   // http で始まるときはそのまま（手元の試験用の受け皿）
+function thumbUrl(f, w) { return RG.driveThumb ? RG.driveThumb(f, w || 200) : /^https?:/.test(f) ? f : "https://drive.google.com/thumbnail?id=" + encodeURIComponent(f) + "&sz=w" + (w || THUMB); }   // v137: 枠の幅（CSS px）× 画面の密度を 200/400/800/1600 に丸める   // http で始まるときはそのまま（手元の試験用の受け皿）
 function fmtDate(s) { var d = new Date(s); return isNaN(d) ? "" : d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate(); }
 function spotOf(p) { return { n: p.n, la: +p.la, lo: +p.lo, pf: prefOf(p.la, p.lo) }; }
 
@@ -253,40 +256,67 @@ var LOC_RANK = { ok: 0, here: 1, none: 2, far: 3 };               // 表示の�
 function rankOf(x) { return Object.prototype.hasOwnProperty.call(LOC_RANK, x.loc) ? LOC_RANK[x.loc] : 2; }
 function byPriority(a, b) { return rankOf(a) - rankOf(b) || (a.ts < b.ts ? 1 : -1); }
 
-/* ---- 画像を縮める（向きは EXIF どおり・長辺 MAX_EDGE px・JPEG）＋ 透かし ----
-   opt.credit: 右下に小さく CREDIT ／ opt.loc: "none"|"far" なら右上に目立つ色のラベル（必須） */
+/* ---- 画像を縮める（向きは EXIF どおり・長辺 MAX_EDGE px・JPEG・1 枚 BUDGET 以内）＋ 透かし ----
+   opt.credit: 右下に小さく CREDIT ／ opt.loc: "none"|"far" なら右上に目立つ色のラベル（必須）
+   ・大きく縮めるときは半分ずつ段階的に縮める（一度に縮めるとギザギザ・モアレが出る機種がある）
+   ・どんな形式・画質で来ても必ず JPEG に作り直す（EXIF も消える） */
+function bytesOf(d) { return Math.round((d.length - d.indexOf(",") - 1) * 3 / 4); }
+function render(bm, edge, opt) {
+  var w = bm.width, h = bm.height, s = Math.min(1, edge / Math.max(w, h));
+  var cw = Math.max(1, Math.round(w * s)), ch = Math.max(1, Math.round(h * s));
+  var src = bm, sw = w, sh = h;
+  while (sw / 2 >= cw * 1.5) {                                     // 2 倍より大きいあいだは半分ずつ
+    var nw = Math.round(sw / 2), nh = Math.round(sh / 2), t = document.createElement("canvas"); t.width = nw; t.height = nh;
+    var tx = t.getContext("2d"); tx.imageSmoothingEnabled = true; tx.imageSmoothingQuality = "high"; tx.drawImage(src, 0, 0, nw, nh);
+    if (src !== bm) { src.width = src.height = 0; }                // 途中の画面はすぐ手放す（スマホのメモリ）
+    src = t; sw = nw; sh = nh;
+  }
+  var cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+  var cx = cv.getContext("2d"); cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = "high";
+  cx.fillStyle = "#fff"; cx.fillRect(0, 0, cw, ch); cx.drawImage(src, 0, 0, cw, ch);
+  if (src !== bm) { src.width = src.height = 0; }
+  var base = Math.max(cw, ch), pad = Math.round(base * 0.012);
+  if (opt.credit) {                                              // 右下: 本当に小さく（長辺の 1.3%・最小 10px）。白字＋うすい影でどの写真でも読める
+    var fs = Math.max(10, Math.round(base * 0.013));
+    cx.font = "600 " + fs + "px system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic', sans-serif";
+    cx.textAlign = "right"; cx.textBaseline = "bottom";
+    cx.shadowColor = "rgba(0,0,0,.55)"; cx.shadowBlur = Math.max(2, fs / 5); cx.shadowOffsetX = 0; cx.shadowOffsetY = 1;
+    cx.fillStyle = "rgba(255,255,255,.82)"; cx.fillText(CREDIT, cw - pad, ch - pad);
+    cx.shadowColor = "transparent"; cx.shadowBlur = 0; cx.shadowOffsetY = 0;
+  }
+  if (LOC_LABEL[opt.loc]) {                                      // 右上: 小さめだが一目で分かる色（黄色の地に黒字・赤いふち）
+    var fs2 = Math.max(12, Math.round(base * 0.017)), txt = "⚠ " + LOC_LABEL[opt.loc] + (opt.loc === "far" && opt.km ? " 約" + opt.km.toFixed(1) + "km" : "");
+    var FONT = "px system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic', sans-serif";
+    cx.font = "700 " + fs2 + FONT;
+    while (fs2 > 8 && cx.measureText(txt).width + fs2 * 0.9 + pad * 2 > cw) { fs2--; cx.font = "700 " + fs2 + FONT; }   // 細長い写真でも右上に収める
+    cx.textAlign = "right"; cx.textBaseline = "top";
+    var tw = cx.measureText(txt).width, bx = cw - pad - tw - fs2 * 0.9, by = pad, bw = tw + fs2 * 0.9, bh = fs2 * 1.5;
+    cx.fillStyle = "#FFD600"; cx.strokeStyle = "#D50000"; cx.lineWidth = Math.max(1.5, fs2 / 8);
+    if (cx.roundRect) { cx.beginPath(); cx.roundRect(bx, by, bw, bh, fs2 * 0.35); cx.fill(); cx.stroke(); } else { cx.fillRect(bx, by, bw, bh); cx.strokeRect(bx, by, bw, bh); }
+    cx.fillStyle = "#111"; cx.fillText(txt, cw - pad - fs2 * 0.45, by + fs2 * 0.25);
+  }
+  return { cv: cv, w: cw, h: ch, s: s };
+}
 function shrink(file, opt) {
   opt = opt || {};
   var make = window.createImageBitmap
     ? createImageBitmap(file, { imageOrientation: "from-image" }).catch(function () { return createImageBitmap(file); })
     : new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = URL.createObjectURL(file); });
   return make.then(function (bm) {
-    var w = bm.width, h = bm.height, s = Math.min(1, MAX_EDGE / Math.max(w, h));
-    var cw = Math.round(w * s), ch = Math.round(h * s);
-    var cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
-    var cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cw, ch); cx.drawImage(bm, 0, 0, cw, ch);
+    var w = bm.width, h = bm.height, best = null;
+    for (var e = 0; e < EDGES.length; e++) {
+      if (e > 0 && Math.max(w, h) <= EDGES[e]) break;               // もう縮められない（元が小さい）
+      var r = render(bm, EDGES[e], opt);
+      for (var q = 0; q < QLADDER.length; q++) {
+        var d = r.cv.toDataURL("image/jpeg", QLADDER[q]), b = bytesOf(d);
+        if (!best || b < best.bytes) best = { data: d, w: r.w, h: r.h, s: r.s, q: QLADDER[q], bytes: b };
+        if (b <= BUDGET) break;
+      }
+      r.cv.width = r.cv.height = 0;
+      if (best.bytes <= BUDGET) break;
+    }
     if (bm.close) bm.close();
-    var base = Math.max(cw, ch), pad = Math.round(base * 0.012);
-    if (opt.credit) {                                              // 右下: 本当に小さく（長辺の 1.3%・最小 10px）。白字＋うすい影でどの写真でも読める
-      var fs = Math.max(10, Math.round(base * 0.013));
-      cx.font = "600 " + fs + "px system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic', sans-serif";
-      cx.textAlign = "right"; cx.textBaseline = "bottom";
-      cx.shadowColor = "rgba(0,0,0,.55)"; cx.shadowBlur = Math.max(2, fs / 5); cx.shadowOffsetX = 0; cx.shadowOffsetY = 1;
-      cx.fillStyle = "rgba(255,255,255,.82)"; cx.fillText(CREDIT, cw - pad, ch - pad);
-      cx.shadowColor = "transparent"; cx.shadowBlur = 0; cx.shadowOffsetY = 0;
-    }
-    if (LOC_LABEL[opt.loc]) {                                      // 右上: 小さめだが一目で分かる色（黄色の地に黒字・赤いふち）
-      var fs2 = Math.max(12, Math.round(base * 0.017)), txt = "⚠ " + LOC_LABEL[opt.loc] + (opt.loc === "far" && opt.km ? " 約" + opt.km.toFixed(1) + "km" : "");
-      var FONT = "px system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic', sans-serif";
-      cx.font = "700 " + fs2 + FONT;
-      while (fs2 > 8 && cx.measureText(txt).width + fs2 * 0.9 + pad * 2 > cw) { fs2--; cx.font = "700 " + fs2 + FONT; }   // 細長い写真でも右上に収める
-      cx.textAlign = "right"; cx.textBaseline = "top";
-      var tw = cx.measureText(txt).width, bx = cw - pad - tw - fs2 * 0.9, by = pad, bw = tw + fs2 * 0.9, bh = fs2 * 1.5;
-      cx.fillStyle = "#FFD600"; cx.strokeStyle = "#D50000"; cx.lineWidth = Math.max(1.5, fs2 / 8);
-      if (cx.roundRect) { cx.beginPath(); cx.roundRect(bx, by, bw, bh, fs2 * 0.35); cx.fill(); cx.stroke(); } else { cx.fillRect(bx, by, bw, bh); cx.strokeRect(bx, by, bw, bh); }
-      cx.fillStyle = "#111"; cx.fillText(txt, cw - pad - fs2 * 0.45, by + fs2 * 0.25);
-    }
-    return { data: cv.toDataURL("image/jpeg", QUALITY), w: cw, h: ch, resized: s < 1, ow: w, oh: h };
+    return { data: best.data, w: best.w, h: best.h, resized: best.s < 1, ow: w, oh: h, bytes: best.bytes, q: best.q };
   });
 }
 RG.postsShrink = shrink;
@@ -299,7 +329,7 @@ RG.postsHtml = function (p) {
     '<div class="pst__up">' +
       '<label class="pst__btn"><input type="file" accept="image/*" multiple hidden data-pst-file>📷 写真を投稿する（まとめて選べます）</label>' +
       '<label class="pst__btn pst__btn--cam"><input type="file" accept="image/*" capture="environment" hidden data-pst-cam>📸 その場で撮る（現在地で確認）</label>' +
-      '<p class="pst__note">大きな写真は自動で縮めて送ります（長辺 ' + MAX_EDGE + 'px）。1 スポット ' + MAX_PER_SPOT + ' 枚まで。ご自身で撮った写真だけにしてください。人の顔・車のナンバーが写るものは避けてください。</p>' +
+      '<p class="pst__note">写真は機種に関係なく同じ画質にそろえて送ります（長辺 ' + MAX_EDGE + 'px まで・1 枚 約 ' + Math.round(BUDGET / 1024) + 'KB まで）。1 スポット ' + MAX_PER_SPOT + ' 枚まで。ご自身で撮った写真だけにしてください。人の顔・車のナンバーが写るものは避けてください。</p>' +
       '<div class="pst__queue" data-pst-queue hidden></div>' +
     "</div>" +
     '<div class="pst__cm" data-pst-cm></div>' +
@@ -320,7 +350,7 @@ function renderSpot(root, p, d) {
   n.textContent = ph.length ? "（写真 " + ph.length + "／" + MAX_PER_SPOT + "）" : "";
   grid.innerHTML = ph.length ? ph.map(function (x, i) {
     var nc = d.comments.filter(function (c) { return c.pid === x.pid; }).length;
-    return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy">' +
+    return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f, 200)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy" decoding="async">' +
       (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み">📍</b>' : "") + (nc ? "<i>💬" + nc + "</i>" : "") + (d.likes && d.likes[x.pid] ? '<i class="pst__lk">♥' + d.likes[x.pid] + "</i>" : "") + "</button>";
   }).join("") : '<p class="pst__ld">まだ写真がありません。最初の 1 枚をどうぞ。</p>';
   var sc = d.comments.filter(function (c) { return !c.pid; }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
@@ -334,7 +364,7 @@ function renderSpot(root, p, d) {
   var hole = document.querySelector(".modal .spotcard__ph");
   if (hole && ph.length && !hole.__pst) {
     hole.__pst = 1;
-    hole.innerHTML = '<img class="spotcard__i" src="' + esc(thumbUrl(ph[0].f, 1000)) + '" alt="">' +
+    hole.innerHTML = '<img class="spotcard__i" src="' + esc(thumbUrl(ph[0].f, 400)) + '" alt="" decoding="async">' +
       '<span class="pst__credit">📷 ' + esc(ph[0].name) + " さんの投稿" + (ph.length > 1 ? "（ほか " + (ph.length - 1) + " 枚）" : "") + "</span>";
     hole.classList.add("spotcard__ph--user");
     hole.addEventListener("click", function () { viewer(p, ph, 0); });
@@ -523,7 +553,7 @@ RG.postsBind = function (m, p) {
             if (!fits(r.loc)) { li.textContent = fullMsg(r.loc); li.parentNode.classList.add("ng"); return; }
             li.textContent = "縮めています";
             return shrink(f, { credit: credit, loc: r.loc, km: r.km }).then(function (im) {
-              li.textContent = (im.resized ? im.ow + "×" + im.oh + " → " : "") + im.w + "×" + im.h + " 送信中";
+              li.textContent = (im.resized ? im.ow + "×" + im.oh + " → " : "") + im.w + "×" + im.h + "・" + Math.round(im.bytes / 1024) + "KB 送信中";
               var meta = r.meta || {};                                   // 管理人だけが見る記録（公開しない）
               meta.method = r.loc; meta.cam = cam ? 1 : 0; meta.orig = { w: im.ow, h: im.oh }; meta.ua = String(navigator.userAgent || "").slice(0, 200);
               var km2 = r.loc === "here" ? r.hereKm : r.km;
@@ -576,7 +606,7 @@ function viewer(p, list, i) {
     var x = list[i], d = mem[k] || { comments: [] };
     var cs = d.comments.filter(function (c) { return c.pid === x.pid; }).sort(function (a, b) { return a.ts < b.ts ? -1 : 1; });
     box.innerHTML = '<div class="phv__in">' +
-      '<div class="phv__img"><img src="' + esc(thumbUrl(x.f, MAX_EDGE)) + '" alt="' + esc(x.cap || p.n) + '"></div>' +
+      '<div class="phv__img"><img src="' + esc(thumbUrl(x.f, 800)) + '" alt="' + esc(x.cap || p.n) + '" decoding="async"></div>' +
       '<div class="phv__side"><div class="phv__meta">' + nameBtn(x) + '<span class="pst__dt">' + fmtDate(x.ts) + "・" + (i + 1) + "／" + list.length + "</span>" + RG.likeBtn(k, x.pid) + "</div>" +
         '<p class="phv__loc phv__loc--' + (x.loc === "ok" || LOC_LABEL[x.loc] ? x.loc : "none") + '">' + (x.loc === "ok" ? "📍 撮影位置を確認済み（スポットから " + (x.dist != null && x.dist !== "" ? (x.dist < 1000 ? x.dist + "m" : (x.dist / 1000).toFixed(1) + "km") : "1km 以内") + "）" :
           x.loc === "far" ? "⚠️ 撮影位置がスポットから離れています（約 " + ((+x.dist || 0) / 1000).toFixed(1) + " km）。投稿者が «このスポットの写真» と確認して載せたものです" :
@@ -654,7 +684,7 @@ RG.showUser = function (u, name) {
         (list.length ? '<ul class="usr__list">' + list.map(function (it, j) {
           var s = it.spot;
           return '<li><button type="button" class="usr__it" data-it="' + j + '">' +
-            (it.type === "photo" ? '<img src="' + esc(thumbUrl(it.x.f, 200)) + '" alt="" loading="lazy">' : '<span class="usr__ic">💬</span>') +
+            (it.type === "photo" ? '<img src="' + esc(thumbUrl(it.x.f, 100)) + '" alt="" loading="lazy" decoding="async">' : '<span class="usr__ic">💬</span>') +
             '<span class="usr__tx"><b>' + esc(s.n) + '</b><small>' + esc(it.pf || "") + " ・ " + fmtDate(it.ts) + (it.type === "comment" && it.x.pid ? " ・ 写真へのコメント" : "") + "</small>" +
             (it.type === "photo" ? (it.x.cap ? "<em>" + esc(it.x.cap) + "</em>" : "") : "<em>" + esc(it.x.text) + "</em>") + "</span></button></li>";
         }).join("") + "</ul>" : '<p class="pst__ld">この条件の投稿はありません。</p>');

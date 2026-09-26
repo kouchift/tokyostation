@@ -25,13 +25,13 @@ RG.histLongDone = function (id) { return !!done()[id]; };
 /* 小さな写真をまとめて取る（記事名 → サムネイル） */
 function thumbs(titles, cb) {
   titles.forEach(function (t) {                                    // «File:…» はその画像をそのまま（記事に代表の画像が無いとき用）
-    if (t && /^File:/.test(t) && THUMB[t] === undefined) { var f = t.slice(5); THUMB[t] = { src: "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=320", page: "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(f) }; }
+    if (t && /^File:/.test(t) && THUMB[t] === undefined) { var f = t.slice(5); THUMB[t] = { src: "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=330", page: "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(f) }; }
   });
   var need = titles.filter(function (t) { return t && THUMB[t] === undefined; });
   if (!need.length) { cb(); return; }
   var chunks = []; for (var i = 0; i < need.length; i += 45) chunks.push(need.slice(i, i + 45));
   Promise.all(chunks.map(function (ch) {
-    return fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=320&pilimit=50&titles=" + encodeURIComponent(ch.join("|")))
+    return fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=330&pilimit=50&titles=" + encodeURIComponent(ch.join("|")))
       .then(function (r) { return r.json(); }).then(function (j) {
         var q = j.query || {}, map = {};
         (q.normalized || []).concat(q.redirects || []).forEach(function (x) { map[x.from] = x.to; });
@@ -42,7 +42,7 @@ function thumbs(titles, cb) {
     // 記事に代表の画像が無いときは、その記事の中の写真を 1 枚さがす（1 記事ずつ・数は少ない）
     var miss = need.filter(function (t) { return THUMB[t] === null; }).slice(0, 12);
     return Promise.all(miss.map(function (t) {
-      return fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&generator=images&gimlimit=30&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=320&titles=" + encodeURIComponent(t))
+      return fetch("https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&generator=images&gimlimit=30&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=330&titles=" + encodeURIComponent(t))
         .then(function (r) { return r.json(); }).then(function (j) {
           var pg = (j.query && j.query.pages) || {}, best = null;
           Object.keys(pg).forEach(function (k) { var p = pg[k], ii = p.imageinfo && p.imageinfo[0];
@@ -57,7 +57,7 @@ function fillThumbs(root) {
   Array.prototype.forEach.call(root.querySelectorAll("[data-th]"), function (f) {
     var o = THUMB[f.getAttribute("data-th")], img = f.querySelector("img");
     if (!o) { if (f.classList.contains("hl__who-i")) { f.classList.add("hl__noimg"); } else f.remove(); return; }
-    img.src = o.src; img.onerror = function () { f.remove(); };
+    img.src = RG.wmNormalize ? RG.wmNormalize(o.src, f.classList.contains("hl__who-i") ? 120 : 330) : o.src; img.onerror = function () { f.remove(); };
     var a = f.querySelector("a"); if (a) a.href = o.page;
   });
 }
@@ -78,12 +78,14 @@ RG.histLong = function (id) {
       '<nav class="hl__toc"><b>もくじ</b>' + x.sec.map(function (s, k) { return '<a href="#" data-hlgo="' + k + '">' + (k + 1) + ". " + esc(s.h) + "</a>"; }).join("") + "</nav>" +
       x.sec.map(function (s, k) {
         return '<section class="hl__sec" data-hlsec="' + k + '"><h3><em>' + (k + 1) + "</em>" + esc(s.h) + "</h3>" +
-          (s.img ? '<figure class="hl__fig" data-th="' + esc(s.img) + '"><a target="_blank" rel="noopener"><img alt="" loading="lazy"></a>' + (s.cap ? "<figcaption>" + esc(s.cap) + "</figcaption>" : "") + "</figure>" : "") +
+          (s.ip && RG.wmImg ? '<figure class="hl__fig"><a href="' + esc(RG.wmPage(s.ip[0])) + '" target="_blank" rel="noopener">' + RG.wmImg(s.ip[0], 128, { ow: s.ip[1], oh: s.ip[2] }) + "</a>" + (s.cap ? "<figcaption>" + esc(s.cap) + "</figcaption>" : "") + "</figure>" :   // v137: 前もって集めた写真
+           s.img ? '<figure class="hl__fig" data-th="' + esc(s.img) + '"><a target="_blank" rel="noopener"><img alt="" loading="lazy" decoding="async"></a>' + (s.cap ? "<figcaption>" + esc(s.cap) + "</figcaption>" : "") + "</figure>" : "") +
           s.p.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</section>";
       }).join("") +
       (x.num && x.num.length ? '<h3 class="hl__h">🔢 数字で見る</h3><div class="hl__num">' + x.num.map(function (n) { return "<div><b>" + esc(n[0]) + "</b><span>" + esc(n[1]) + "</span></div>"; }).join("") + "</div>" : "") +
       (x.who && x.who.length ? '<h3 class="hl__h">👤 登場人物</h3><div class="hl__who">' + x.who.map(function (w) {
-        return '<div class="hl__wi"><figure class="hl__who-i" data-th="' + esc(w[2] || w[0]) + '"><a target="_blank" rel="noopener"><img alt="" loading="lazy"></a></figure><div><b>' + esc(w[0]) + "</b><span>" + esc(w[1]) + "</span></div></div>"; }).join("") + "</div>" : "") +
+        return '<div class="hl__wi">' + (w[3] && RG.wmImg ? '<figure class="hl__who-i"><a href="' + esc(RG.wmPage(w[3][0])) + '" target="_blank" rel="noopener">' + RG.wmImg(w[3][0], 56, { ow: w[3][1], oh: w[3][2], onerr: false }) + "</a></figure>" :
+          '<figure class="hl__who-i" data-th="' + esc(w[2] || w[0]) + '"><a target="_blank" rel="noopener"><img alt="" loading="lazy" decoding="async"></a></figure>') + '<div><b>' + esc(w[0]) + "</b><span>" + esc(w[1]) + "</span></div></div>"; }).join("") + "</div>" : "") +
       (x.now && x.now.length ? '<div class="hl__now"><b>🏠 いまの暮らしとのつながり</b><ul>' + x.now.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
       (x.moshi ? '<div class="hl__moshi"><b>💭 もしも…？</b><p>' + esc(x.moshi) + "</p></div>" : "") +
       (e.koji && e.koji.length ? '<div class="hp__koji"><b>📜 故事成語・名言</b>' + e.koji.map(function (k) { return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span></div>"; }).join("") + "</div>" : "") +
@@ -102,8 +104,8 @@ RG.histLong = function (id) {
     var m = RG.openModal("📖 " + e.t.split(" ―")[0], html);
     m.classList.add("modal--hl");
     var body = m.querySelector(".hl"), scroller = scrollParent(body);
-    RG.wpGallery && RG.wpGallery(m.querySelector("[data-hlgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(spot(e)) : null);
-    thumbs(x.sec.map(function (s) { return s.img; }).concat((x.who || []).map(function (w) { return w[2] || w[0]; })), function () { if (body.isConnected) fillThumbs(body); });
+    RG.wpGallery && RG.wpGallery(m.querySelector("[data-hlgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(spot(e)) : null, e.ph);
+    thumbs(x.sec.filter(function (s) { return !s.ip; }).map(function (s) { return s.img; }).concat((x.who || []).filter(function (w) { return !w[3]; }).map(function (w) { return w[2] || w[0]; })), function () { if (body.isConnected) fillThumbs(body); });
     // 読んだ割合のバー
     var bar = m.querySelector("[data-hlbar]");
     if (scroller && bar) scroller.addEventListener("scroll", function () {

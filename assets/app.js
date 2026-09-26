@@ -104,6 +104,7 @@ function isTouch() { return !window.matchMedia("(hover:hover)").matches; }
 function cimg(f, w) {
   if (!f) return null;
   if (/^https?:/.test(f)) return f;
+  if (RG.wmFile) return RG.wmFile(f, w > 500 && w < 720 ? 500 : w || 400);   // v137: 画像サーバーへ直接（転送なし・標準の幅。640 は 500 に＝重い 960 を避ける）
   return "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=" + (w || 400);
 }
 function cpage(f) {
