@@ -40,7 +40,15 @@ function distToPath(p, path) {
 RG.navDistToPath = distToPath;
 
 /* 選んだ手段のルート形状を作る（電車は駅の並び、それ以外は直線） */
+/* v125: 電車は railPath の区間（N.lines）の駅を順につなぐ（前は opt.rail.stations が無く、いつも «まっすぐ» の線だった） */
 function buildPath(origin, destCoord, opt) {
+  var segs = N.lines || [];
+  if (segs.length) {
+    var pp = [origin];
+    segs.forEach(function (g) { (g.ids || []).forEach(function (id) { var t = RG.byId[id]; if (t) pp.push([t.la, t.lo]); }); });
+    pp.push(destCoord);
+    return pp;
+  }
   if (opt && opt.rail && opt.rail.stations && opt.rail.stations.length) {
     var pts = [origin];
     opt.rail.stations.forEach(function (id) {
@@ -62,14 +70,49 @@ RG.navReroute = function (why) {
   if (!N.on) return;
   var here = N.last || RG.Trip.origin;
   if (N.last) RG.setOrigin(here, "現在地（案内し直し）", null, null);
-  N.path = buildPath(here, N.dest, N.opt);
   N.lines = railLines(here, N.dest);
+  N.path = buildPath(here, N.dest, N.opt);
+  N.from = here; drawRoute(true);
   N.offCount = 0;
   RG.tripStatus("🔁 " + (why ? esc(why) + "を見て、" : "") + "いまの場所から案内し直します。", "ok", 3200);
   if (RG.showRoutes && N.destId) RG.showRoutes(N.destId);
   bar();
 };
 RG.navBar = function () { bar(); };
+/* v125: 地図に経路を描いて、全体が見えるように寄せる */
+function xy(c) { var P = RG.project(c[0], c[1]); return [P.x, P.y]; }
+function sxy(id) { var t = RG.byId[id]; return t ? [t.x, t.y] : null; }
+function drawRoute(fit) {
+  if (!RG.Map.paintRoute) return;
+  if (!N.on) { RG.Map.paintRoute([], false); return; }
+  var from = N.from || RG.Trip.origin, segs = N.lines || [], parts = [];
+  if (segs.length) {
+    var first = sxy(segs[0].ids[0]); if (first) parts.push({ kind: "walk", pts: [xy(from), first] });
+    segs.forEach(function (g, i) {
+      var pts = g.ids.map(sxy).filter(Boolean);
+      if (i && parts.length) { var prev = parts[parts.length - 1].pts, pe = prev[prev.length - 1]; if (pts[0] && (pe[0] !== pts[0][0] || pe[1] !== pts[0][1])) parts.push({ kind: "walk", pts: [pe, pts[0]] }); }
+      parts.push({ kind: "rail", c: (RG.lineColor && RG.lineColor[g.line]) || "#0B5394", pts: pts });
+    });
+    var lg = segs[segs.length - 1], last = sxy(lg.ids[lg.ids.length - 1]);
+    if (last) parts.push({ kind: "walk", pts: [last, xy(N.dest)] });
+  } else parts.push({ kind: "walk", pts: [xy(from), xy(N.dest)] });
+  RG.Map.paintRoute(parts, fit);
+}
+RG.navFit = function () { drawRoute(true); };
+/* v125: 案内の帯に出す «次にすること»（乗る駅・路線・降りる駅を 1 行で） */
+function stepHtml() {
+  var segs = N.lines || [];
+  if (!segs.length) return "";
+  var o = N.opt && N.opt.rail, s0 = RG.byId[segs[0].ids[0]], out = [];
+  if (s0 && !(o && o.accessMin != null && o.accessMin < 1)) out.push("🚶 <b>" + esc(RG.stLabel(s0)) + "</b>まで" + (o && o.accessMin != null ? "徒歩" + Math.round(o.accessMin) + "分" : "歩く"));
+  else if (s0) out.push("🚉 <b>" + esc(RG.stLabel(s0)) + "</b>から");
+  segs.slice(0, 3).forEach(function (g) {
+    var t = RG.byId[g.ids[g.ids.length - 1]];
+    out.push('<i style="background:' + esc((RG.lineColor && RG.lineColor[g.line]) || "#0B5394") + '"></i><b>' + esc(g.line) + "</b>" + (t ? " → " + esc(RG.stLabel(t)) : ""));
+  });
+  if (segs.length > 3) out.push("ほか");
+  return '<button class="nav__step" id="nv-fit" type="button" title="経路の全体を地図に出す">' + out.join(" ／ ") + "</button>";
+}
 RG.startNav = function (destCoord, destName, opt) {
   if (!navigator.geolocation) { RG.tripStatus("この端末では位置情報が使えないため、案内モードは始められません。", "warn"); return; }
   if (RG.secureOK && !RG.secureOK()) { if (RG.showGeoHelp) RG.showGeoHelp({ code: 0 }); return; }
@@ -78,11 +121,15 @@ RG.startNav = function (destCoord, destName, opt) {
   N.on = true; N.dest = destCoord; N.destName = destName || "目的地";
   N.mode = (opt && opt.id) || "walk";
   N.modeLabel = (opt && opt.m && opt.m.label) || "徒歩";
-  N.path = buildPath(RG.Trip.origin, destCoord, opt);
   N.startedAt = Date.now(); N.muted = false; N.offCount = 0; N.lastPrompt = 0;
   N.startKm = RG.hav(RG.Trip.origin, destCoord);
   N.opt = opt || null;
   N.lines = railLines(RG.Trip.origin, destCoord);   // v123: 使う路線（運行情報で知らせるため）
+  N.path = buildPath(RG.Trip.origin, destCoord, opt);
+  N.from = RG.Trip.origin;
+  document.body.classList.add("navon");
+  if (RG.heroFold) RG.heroFold("route");
+  drawRoute(true);                                    // v125: 経路を地図に描いて全体を見せる（前は描かれず、地図も動かなかった）
   bar();
   RG.tripStatus("🧭 案内をはじめました。道をそれたら教えます。", "ok", 3200);
   N.watchId = navigator.geolocation.watchPosition(onPos, onErr,
@@ -124,7 +171,9 @@ function askReroute(offM, here) {
   $("#nv-re", m).addEventListener("click", function () {
     RG.closeModal();
     RG.setOrigin(here, "現在地（案内し直し）", null, null);
+    N.lines = railLines(here, N.dest);
     N.path = buildPath(here, N.dest, N.opt);
+    N.from = here; drawRoute(true); bar();
     N.offCount = 0;
     RG.tripStatus("🔁 いまの場所から案内し直します。", "ok", 3000);
     if (RG.showRoutes && N.destId) RG.showRoutes(N.destId);
@@ -153,8 +202,10 @@ function bar(off, rest, acc) {
       (N.muted ? '<button class="nav__x" id="nv-unmute" type="button" title="お知らせを再開">🔕</button>' : "") +
       '<button class="nav__x" id="nv-stop" type="button">案内をやめる</button>' +
     "</div>" +
+    stepHtml() +
     '<div class="nav__prog"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
     disStrip();
+  var fb = $("#nv-fit", b); if (fb) fb.addEventListener("click", function () { drawRoute(true); });
   var st = $("#nv-stop", b); if (st) st.addEventListener("click", function () { stop(); });
   var ds = $("#nv-dis", b); if (ds) ds.addEventListener("click", function () { RG.navReroute("運行情報"); });
   var um = $("#nv-unmute", b);
@@ -172,6 +223,8 @@ function disStrip() {
 function stop(quiet) {
   if (N.watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(N.watchId);
   N.watchId = null; N.on = false; N.muted = false; N.offCount = 0;
+  document.body.classList.remove("navon");
+  drawRoute(false);
   bar();
   if (!quiet) RG.tripStatus("案内を終わりました。おつかれさまでした。", "ok", 2800);
 }

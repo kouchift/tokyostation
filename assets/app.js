@@ -203,6 +203,8 @@ RG.goHere = function () {
 
 /* v124: 駅なら «○○駅»、港・空港・ヘリポート（鉄道以外の点）はそのままの名前 */
 RG.stLabel = function (s) { return !s ? "" : s.ext ? s.n : s.n + "駅"; };
+/* v125: 現在地の呼び名。いちばん近い駅が 200m 以内なら «○○駅のそば»（«約0.0km» と出ていた） */
+RG.hereLabel = function (best) { return !best ? "現在地" : "現在地（" + RG.stLabel(best.s) + (best.km < 0.2 ? "のそば）" : "から約" + best.km.toFixed(1) + "km）"); };
 /* data/net.json（コンパクト版）を、これまでどおりの RG.NET の形に戻す */
 RG.decodeNet = function (j) {
   var lines = j.lines.map(function (l) { return { name: l[0], color: l[1], edges: l[2] }; });
@@ -1040,6 +1042,34 @@ var Map = (function () {
     });
     gE.parentNode.insertBefore(gDis, gE.nextSibling);
   }
+  /* v125: 案内中の経路を地図に描く（歩く所は点線・電車は路線の色）。parts: [{ pts:[[x,y],…], kind:"walk"|"rail", c:"#色" }]。空で消す */
+  var gNav = null;
+  function paintRoute(parts, fit) {
+    if (!svg || !gE) return;
+    if (gNav && gNav.parentNode) gNav.parentNode.removeChild(gNav);
+    gNav = null;
+    parts = (parts || []).filter(function (p) { return p.pts && p.pts.length > 1; });
+    if (!parts.length) return;
+    gNav = el("g", { class: "navroute", "aria-hidden": "true" });
+    var xs = [], ys = [];
+    function d(pts) { return pts.map(function (q, i) { xs.push(q[0]); ys.push(q[1]); return (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(""); }
+    parts.forEach(function (p) { gNav.appendChild(el("path", { class: "nr--glow", d: d(p.pts) })); });
+    parts.forEach(function (p) {
+      var a = { class: "nr--" + p.kind, d: d(p.pts) };
+      if (p.kind === "rail") a.style = "stroke:" + (p.c || "#0B5394");
+      gNav.appendChild(el("path", a));
+    });
+    parts.forEach(function (p, i) {   // 乗る駅・降りる駅・乗り換えの駅に丸、いちばん最後は赤
+      var q = p.pts[p.pts.length - 1];
+      if (p.kind === "rail") { var s = p.pts[0]; gNav.appendChild(el("circle", { cx: s[0], cy: s[1], r: U(3.5) })); }
+      gNav.appendChild(el("circle", { class: i === parts.length - 1 ? "nr--end" : "", cx: q[0], cy: q[1], r: U(i === parts.length - 1 ? 5 : 3.5) }));
+    });
+    gE.parentNode.insertBefore(gNav, gE.nextSibling);
+    if (fit && xs.length) {   // 画面の下半分は案内の帯やカードで隠れがちなので少し広めに
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys), sp = Math.max(x1 - x0, y1 - y0, U(20));
+      fitBox(x0 - sp * 0.06, y0 - sp * 0.06, x1 + sp * 0.3, y1 + sp * 0.12, 1.2);   // 右はズームの列、下は運行情報の帯で隠れるので、その分だけ広く
+    }
+  }
   function focusDisrupt(on) { if (svg) svg.classList.toggle("dismode", !!on && !!gDis); }
   function paintWatch(ids) {
     Object.keys(flags).forEach(function (id) { flags[id].watch = false; });
@@ -1321,7 +1351,7 @@ var Map = (function () {
   }
   return { draw: draw, initViewport: initViewport, zoom: zoom, fitAll: fitAll, focus: focus,
            select: select, screenPos: screenPos, screenPosXY: screenPosXY, paintIso: paintIso, paintPick: paintPick,
-           paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine, paintDisrupt: paintDisrupt, focusDisrupt: focusDisrupt,
+           paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine, paintDisrupt: paintDisrupt, focusDisrupt: focusDisrupt, paintRoute: paintRoute,
            drawBase: drawBase, project: project,
            flyTo: flyTo,
            viewBox: function () { return { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; },
@@ -1449,9 +1479,9 @@ var Card = (function () {
   }
   /* v94: 駅カードの «次の一手»。出発地が別の駅なら「○○駅から ここへ」（1 タップで比較）、この駅が出発地なら「ここから、どこへ？」（検索欄へ）。
      ☆（注視駅＝お気に入り）は右上に既存。共有はこの駅のリンク（?st=）。データが無くても壊れない（すべて既存の値だけ） */
-  function cardActs(s) {
+  function cardActs(s) {   // v125: 出発地の名前は «（…）» を外して短く（«現在地（東京駅から約0…» と切れていた）
     var T = RG.Trip || {}, isOrigin = !!(T.origin && T.id === s.id);
-    var from = (T.origin && T.label ? T.label : "東京駅").replace(/^出発：/, "");
+    var from = (T.origin && T.label ? T.label : "東京駅").replace(/^出発：/, "").replace(/（.*$/, "");
     var primary = isOrigin
       ? '<button class="cact cact--p" type="button" data-cardq-focus="1"><span class="ms">search</span><b>ここから、どこへ？</b><small>行き先を入れて比較</small></button>'
       : '<button class="cact cact--p" type="button" data-to="' + esc(s.id) + '"><span class="ms">navigation</span><b>' + esc(from.length > 12 ? from.slice(0, 11) + "…" : from) + 'から ここへ</b><small>移動手段をくらべる</small></button>';
@@ -2654,7 +2684,7 @@ RG.boot = function () {
         if (RG.setOrigin && (!T.origin || (def && T.id === def.id && !T.isGeo))) {
           var c = [la, lo], best = null;
           RG.NET.stations.forEach(function (s) { var km = RG.hav(c, [s.la, s.lo]); if (!best || km < best.km) best = { s: s, km: km }; });
-          RG.setOrigin(c, "現在地（" + RG.stLabel(best.s) + "から約" + best.km.toFixed(1) + "km）", null, p.coords.accuracy);
+          RG.setOrigin(c, RG.hereLabel(best), null, p.coords.accuracy);
         }
         if (moved || document.querySelector(".modal")) return;
         if (RG.Map.paintMe) RG.Map.paintMe([la, lo], p.coords.accuracy);

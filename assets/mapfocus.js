@@ -50,7 +50,7 @@ RG.heroFold = function (why) {
 RG.heroExpand = function (focus) {
   if (!hero) return;
   if (mode !== "full") apply("full", "user");
-  if (focus) { var inp = $("#hero-q"); if (inp) setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } }, 60); }
+  if (focus) { var inp = $("#hero-q"); if (inp) { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } } }   // v125: 押したその場で（iPhone はタップの中でないとキーボードが出ない）
 };
 RG.heroToggle = function () { if (mode === "mini") RG.heroExpand(false); else RG.heroFold("user"); };
 
@@ -130,7 +130,7 @@ RG.mapFocusInit = function () {
   pill.type = "button"; pill.className = "heroSearch__pill"; pill.id = "hero-pill"; pill.hidden = true;
   pill.setAttribute("aria-label", "行き先の検索を開く");
   pill.innerHTML = '<span class="ms" aria-hidden="true">search</span><b></b><i class="ms" aria-hidden="true">expand_more</i>';
-  pill.addEventListener("click", function () { RG.heroExpand(!mobile()); if (RG.settings && RG.settings.heroFold === "mini") { /* «いつも小さく» は開いても設定は変えない */ } });
+  pill.addEventListener("click", function () { RG.heroExpand(true);   /* v125: スマホでも 1 タップで入力へ（前は «開く→欄を押す» の 2 タップ） */ if (RG.settings && RG.settings.heroFold === "mini") { /* «いつも小さく» は開いても設定は変えない */ } });
   hero.insertBefore(pill, hero.firstChild);
   // たたむボタン（見出しの行の右）
   var eyebrow = hero.querySelector(".heroSearch__eyebrow");

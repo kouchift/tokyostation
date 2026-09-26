@@ -101,8 +101,7 @@ function useGeo(retry) {
       if (!best || km < best.km) best = { s: s, km: km };
     });
     var acc = p.coords.accuracy ? "±" + Math.round(p.coords.accuracy) + "m" : "";
-    setOrigin(c, "現在地（" + RG.stLabel(best.s) + "から約" + best.km.toFixed(1) + "km" +
-                 (acc ? " / 精度" + acc : "") + "）", null, p.coords.accuracy);
+    setOrigin(c, RG.hereLabel(best), null, p.coords.accuracy);
     if (RG.viewAround) RG.viewAround(c[0], c[1]); else RG.Map.gotoLatLng(c[0], c[1], 340);   // v113: 前後 2〜3 駅が入る広さ
   }, function (e) {
     status("", "");
@@ -808,8 +807,8 @@ function showRoutes(destId) {
   var r = RG.Planner.estimate(Trip.origin, [s.la, s.lo], Trip.when, Trip.aggr);
   var kl = { day: "日中", peak: "ラッシュ", night: "深夜・早朝" }[r.hourKind];
   var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(RG.stLabel(s)) + "</b>" +
-    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '">🪪 ルートカードを作る</button>' +
-    ' <button class="rt__card rt__share" type="button" data-rshare="' + esc(s.id) + '">🔗 この検索を共有</button>' +
+    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '" title="ルートカードを作る">🪪 カード</button>' +
+    ' <button class="rt__card rt__share" type="button" data-rshare="' + esc(s.id) + '" title="この検索を共有">🔗 共有</button>' +
     (RG.favs ? ' <button class="rt__card rt__fav' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? " on" : "") + '" type="button" data-rfav="' + esc(s.id) + '" aria-pressed="' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "true" : "false") + '">' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "★ お気に入り" : "☆ お気に入り") + "</button>" : "") + "</div>" +
     '<div class="rt__meta">' + (r.at.getMonth() + 1) + "/" + r.at.getDate() + " " + hhmm(r.at) +
     " 発（" + kl + "）／直線 " + r.straightKm.toFixed(1) + "km／" +

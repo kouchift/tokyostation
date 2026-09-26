@@ -284,3 +284,31 @@ body {
 .opt__plus { display: block; font-style: normal; font-size: 10px; font-weight: 700; color: #8A6D00; }
 /* v124: 駅カードの路線のチップ（路線の色で塗る）。v117 のチップ共通の «うすい背景» が路線の色まで消して、白い文字が読めなくなっていた */
 .lchip.lchip--go, .lchip.lchip--sk { background: var(--lc, #6B7280) !important; border-color: transparent !important; color: #fff !important; }
+
+/* ===== v125: スマホの見やすさ・押しやすさ ===== */
+/* 灰色の地に白い字で «押せないように見えた» ボタン（リストに追加・詳細へ）→ 濃い字 */
+.opt__b { color: var(--lb900, #0B2A4A); }
+.opt__b--nav { color: #fff; }
+.opt__b:disabled { color: #fff; }
+/* 運行情報の帯: スマホでは «影響を見る» を › だけにして、路線の文字を切らない */
+@media (max-width: 720px) {
+  .tinfochip { max-width: calc(100% - 96px); left: 12px; transform: none; padding-right: 10px; }
+  .tinfochip__m { font-size: 0; }
+  .tinfochip__m::after { content: "›"; font-size: 18px; }
+  /* 操作の説明（駅をタップで詳細…）は長くて切れていた → «全体/倍率» だけ */
+  .hint { font-size: 0; padding: 4px 10px; }
+  .hint #zlevel { font-size: 11px; margin-left: 0; }
+}
+/* 案内中は地図の上の飾り（スポット・地図の設定・説明）を隠して、経路を広く見せる */
+body.navon .hint, body.navon #quickbar, body.navon .heroSearch__pill { display: none !important; }
+/* 案内中の経路（地図の上） */
+.navroute path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.navroute .nr--glow { stroke: #fff; stroke-width: 11px; opacity: .9; }
+.navroute .nr--rail { stroke-width: 6px; }
+.navroute .nr--walk { stroke: #0B5394; stroke-width: 4px; stroke-dasharray: 2 7; }
+.navroute circle { fill: #fff; stroke: #0B2A4A; stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.navroute .nr--end { fill: #D0021B; stroke: #fff; }
+/* 案内の帯の «次にすること» */
+.nav__step { display: block; width: 100%; text-align: left; border: 0; background: #0F1A2B; color: #dfe8f5; font: inherit; font-size: 12.5px; font-weight: 700; padding: 6px 12px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav__step b { color: #fff; }
+.nav__step i { font-style: normal; display: inline-block; width: .7em; height: .7em; border-radius: 2px; margin: 0 4px 0 2px; vertical-align: .05em; }
