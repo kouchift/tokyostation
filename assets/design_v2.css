@@ -471,3 +471,9 @@ body.histon .pois, body.histon .poihost { opacity: .3; }
 .hp__kj span { display: block; font-size: 14px; line-height: 1.7; }
 .hp__kj small { display: block; font-size: 12px; color: #666; }
 body.night .hp__hook { background: #3a2f1c; color: #f6e3c0; } body.night .hp__koji { background: #23272c; border-color: #8a96a6; }
+
+/* ===== v130: 出来事の舞台（旧国・都道府県）===== */
+.histroute .hr--area { fill-opacity: .16; stroke-opacity: .7; stroke-width: 1.6px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+.hp__area { margin: 0 0 8px; font-size: 13px; line-height: 1.6; background: #F7F8FA; border-radius: 10px; padding: 6px 10px; }
+.hp__area b { margin-right: 6px; }
+body.night .hp__area { background: #262b31; }

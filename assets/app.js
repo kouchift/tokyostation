@@ -1073,13 +1073,15 @@ var Map = (function () {
   }
   /* v128: れきし地図・世界遺産の地点の線。lines: [{ pts:[[x,y],…], c:"#色", dash:true }]。印（番号の丸）は HTML で重ねる（RG.onMapView） */
   var gHist = null;
-  function paintHist(lines) {
+  function paintHist(lines, areas) {   // v130: areas: [{ d:"M…Z", c:"#色" }] = 出来事の舞台（旧国・都道府県）を薄くぬる
     if (!svg || !gE) return;
     if (gHist && gHist.parentNode) gHist.parentNode.removeChild(gHist);
     gHist = null;
     lines = (lines || []).filter(function (l) { return l.pts && l.pts.length > 1; });
-    if (!lines.length) return;
+    areas = (areas || []).filter(function (a) { return a && a.d; });
+    if (!lines.length && !areas.length) return;
     gHist = el("g", { class: "histroute", "aria-hidden": "true" });
+    areas.forEach(function (a) { gHist.appendChild(el("path", { class: "hr--area", d: a.d, style: "fill:" + (a.c || "#B71C1C") + ";stroke:" + (a.c || "#B71C1C") })); });
     lines.forEach(function (l) {
       var d = l.pts.map(function (q, i) { return (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); }).join("");
       gHist.appendChild(el("path", { class: "hr--glow", d: d }));

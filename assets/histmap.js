@@ -27,6 +27,65 @@ function ensureData(cb) {
   document.head.appendChild(s);
 }
 
+/* ---------------- v130: 出来事の舞台（旧国・都道府県）を薄くぬる ----------------
+   ・明治より前は旧国（令制国・data/kuni.js）、明治からは都道府県（data/geo/pref.json）
+   ・e.ar があればその名前、なければ «場所の点が入っている国・県» を自動で選ぶ */
+var MODERN = { meiji: 1, taisho: 1, showa: 1, heisei: 1, reiwa: 1 };
+var POLY = { kuni: null, pref: null }, PATHD = {}, KUNI_WAIT = [];
+function topoPolys(topo) {
+  var sc = topo.transform.scale, tr = topo.transform.translate;
+  var arcs = topo.arcs.map(function (arc) { var x = 0, y = 0; return arc.map(function (q) { x += q[0]; y += q[1]; return [x * sc[0] + tr[0], y * sc[1] + tr[1]]; }); });
+  function ring(r) { var pts = []; r.forEach(function (idx) { var a = idx < 0 ? arcs[~idx].slice().reverse() : arcs[idx]; for (var j = pts.length ? 1 : 0; j < a.length; j++) pts.push(a[j]); }); return pts; }
+  return topo.objects.g.geometries.map(function (g) {
+    var rs = g.type === "Polygon" ? g.arcs : g.type === "MultiPolygon" ? [].concat.apply([], g.arcs) : [];
+    var rings = rs.map(ring).filter(function (r) { return r.length > 2; }), bb = [180, 90, -180, -90];
+    rings.forEach(function (r) { r.forEach(function (q) { if (q[0] < bb[0]) bb[0] = q[0]; if (q[1] < bb[1]) bb[1] = q[1]; if (q[0] > bb[2]) bb[2] = q[0]; if (q[1] > bb[3]) bb[3] = q[1]; }); });
+    var p = g.properties || {};
+    return { n: p.n || "", s: p.s || String(p.n || "").replace(/国$/, ""), rings: rings, bb: bb };
+  });
+}
+function inRing(x, y, r) { var c = false; for (var i = 0, j = r.length - 1; i < r.length; j = i++) { var a = r[i], b = r[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; }
+function polyAt(list, la, lo) {
+  for (var i = 0; i < list.length; i++) { var p = list[i]; if (lo < p.bb[0] || lo > p.bb[2] || la < p.bb[1] || la > p.bb[3]) continue;
+    var n = 0; p.rings.forEach(function (r) { if (inRing(lo, la, r)) n++; }); if (n % 2) return p; }
+  return null;
+}
+function polys(kind) {
+  if (POLY[kind]) return POLY[kind];
+  var topo = kind === "pref" ? RG.GEO_PREF : RG.KUNI_GEO; if (!topo) return null;
+  try { POLY[kind] = topoPolys(topo); } catch (e) { POLY[kind] = []; }
+  return POLY[kind];
+}
+function needKuni(cb) {
+  if (RG.KUNI_GEO) { cb(); return; }
+  KUNI_WAIT.push(cb); if (KUNI_WAIT.length > 1) return;
+  var v = document.documentElement.getAttribute("data-build") || "";
+  var s = document.createElement("script"); s.async = true; s.src = "data/kuni.js" + (v ? "?v=" + v : "");
+  s.onload = s.onerror = function () { var w = KUNI_WAIT; KUNI_WAIT = []; w.forEach(function (f) { try { f(); } catch (e) {} }); };
+  document.head.appendChild(s);
+}
+function pathOf(kind, p) {
+  var k = kind + ":" + p.n; if (PATHD[k]) return PATHD[k];
+  return (PATHD[k] = p.rings.map(function (r) { return r.map(function (q, i) { var P = RG.project(q[1], q[0]); return (i ? "L" : "M") + P.x.toFixed(1) + " " + P.y.toFixed(1); }).join("") + "Z"; }).join(""));
+}
+/* 出来事の舞台: [{ kind, p(ポリゴン), label }] */
+function areasOf(e) {
+  var kind = MODERN[e.era] ? "pref" : "kuni", list = polys(kind); if (!list) return [];
+  var out = [], seen = {};
+  function add(p) { if (p && !seen[p.n]) { seen[p.n] = 1; out.push(p); } }
+  if (e.ar && e.ar.length) e.ar.forEach(function (n) { list.forEach(function (p) { if (p.n === n || p.s === n) add(p); }); });
+  else e.pts.forEach(function (q) { add(polyAt(list, q[1], q[2])); });
+  return out.map(function (p) { return { kind: kind, p: p }; });
+}
+function areaLabel(A) {
+  if (!A.length) return "";
+  var K = {}; (RG.KUNI || []).forEach(function (k) { K[k.s] = k; });
+  return A.map(function (a) {
+    if (a.kind === "pref") return a.p.n;
+    var k = K[a.p.s]; return a.p.s + (k && k.pf && k.pf.length ? "（" + k.pf.join("・").replace(/[県府都]/g, function (m) { return m; }) + "）" : "");
+  }).join("・");
+}
+
 /* ---------------- 地図の上の印（HTML）と線（SVG） ---------------- */
 function ensureLayer() {
   if (layer && layer.parentNode) return layer;
@@ -50,6 +109,7 @@ function place() {
   }
 }
 RG.onMapView = function () { if (S.on) place(); };
+var AREAS = [];
 function drawMarks(pts, color, route, dash) {
   var L = ensureLayer(); if (!L) return;
   S.marks = pts.map(function (p, i) { var P = RG.project(p[1], p[2]); return { x: P.x, y: P.y, n: p[0], i: i }; });
@@ -59,11 +119,12 @@ function drawMarks(pts, color, route, dash) {
     return '<button class="hmk' + (few || i === 0 || i === pts.length - 1 ? " hmk--l" : "") + '" type="button" data-hmk="' + i + '" style="--hc:' + esc(color) + '" aria-label="' + esc(m.n) + '">' +
       '<b>' + (pts.length > 1 ? i + 1 : "★") + '</b><span>' + esc(m.n) + "</span></button>";
   }).join("");
-  if (RG.Map.paintHist) RG.Map.paintHist(route && pts.length > 1 ? [{ pts: S.marks.map(function (m) { return [m.x, m.y]; }), c: color, dash: !!dash }] : []);
+  if (RG.Map.paintHist) RG.Map.paintHist(route && pts.length > 1 ? [{ pts: S.marks.map(function (m) { return [m.x, m.y]; }), c: color, dash: !!dash }] : [],
+    AREAS.map(function (a) { return { d: pathOf(a.kind, a.p), c: color }; }));
   place();
 }
 function clearMarks() {
-  S.marks = []; if (layer) layer.innerHTML = "";
+  S.marks = []; AREAS = []; if (layer) layer.innerHTML = "";
   if (RG.Map.paintHist) RG.Map.paintHist([]);
 }
 /* 下の窓に隠れない位置に寄せる */
@@ -138,7 +199,7 @@ function tabs() {
   }).join("") + "</div>";
 }
 function showEra(id) {
-  S.era = id; S.ev = null; S.mode = "era";
+  S.era = id; S.ev = null; S.mode = "era"; AREAS = [];
   var E = eraOf(id) || D().eras[0], list = sorted().filter(function (e) { return e.era === E.id; });
   var all = [];
   list.forEach(function (e) { e.pts.forEach(function (p) { all.push(p); }); });
@@ -159,7 +220,9 @@ function showEv(id) {
   var e = evOf(id); if (!e) return;
   var E = eraOf(e.era) || { c: "#B71C1C", n: "" }, list = sorted(), i = list.indexOf(e);
   S.era = e.era; S.ev = e.id; S.mode = "ev";
+  AREAS = MODERN[e.era] || RG.KUNI_GEO ? areasOf(e) : [];
   drawMarks(e.pts, E.c, e.route, e.legend);
+  if (!MODERN[e.era] && !RG.KUNI_GEO) needKuni(function () { if (S.ev !== e.id) return; AREAS = areasOf(e); drawMarks(e.pts, E.c, e.route, e.legend); var al = panel && panel.querySelector(".hp__area"); if (al) { al.innerHTML = areaHtml(); al.hidden = !AREAS.length; } });
   var prev = list[i - 1], next = list[i + 1];
   ensurePanel().innerHTML = head("📜 " + esc(E.n)) +
     '<div class="hp__body">' +
@@ -168,6 +231,7 @@ function showEv(id) {
     '<h3 class="hp__t">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv] + "</em>" : "") + esc(e.t) + "</h3>" +
     '<p class="hp__meta"><span style="--ec:' + E.c + '">' + esc(E.n) + "</span><span>📅 " + esc(e.ys) + "</span>" + (e.gg ? "<span>🏷️ 元号 " + esc(e.gg) + "</span>" : "") +
       (e.legend ? '<span class="hp__lg">神話・伝承</span>' : "") + (e.note ? '<span class="hp__note">' + esc(e.note) + "</span>" : "") + "</p>" +
+    '<p class="hp__area"' + (AREAS.length ? "" : " hidden") + ">" + areaHtml() + "</p>" +
     '<div class="hp__pts">' + e.pts.map(function (p, j) { return '<button class="hp__pt" type="button" data-pt="' + j + '"><b style="background:' + E.c + '">' + (e.pts.length > 1 ? j + 1 : "★") + "</b>" + esc(p[0]) + "</button>"; }).join("") +
       '<button class="hp__pt hp__pt--fit" type="button" data-hfit="1">🔭 ぜんぶ見る</button></div>' +
     '<div class="eh__kid">' + e.kid.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
@@ -185,6 +249,7 @@ function showEv(id) {
   loadImg(e.imgwp || e.wp);
   if (RG.track) try { RG.track("hist", e.id); } catch (x) {}
 }
+function areaHtml() { return AREAS.length ? "<b>🗺️ 舞台</b>" + esc(areaLabel(AREAS)) : ""; }
 /* 写真: Wikipedia の記事の代表画像（押したときだけ取りに行く） */
 function loadImg(wp) {
   var box = panel && panel.querySelector(".hp__img"); if (!box || !wp) { if (box) box.remove(); return; }
@@ -227,7 +292,7 @@ RG.histClose = function () {
 };
 /* 世界遺産などの «地点をぜんぶ地図に出す» */
 RG.histShowPoints = function (title, pts, color) {
-  S.on = true; S.mode = "pts"; document.body.classList.add("histon");
+  S.on = true; S.mode = "pts"; AREAS = []; document.body.classList.add("histon");
   if (RG.closeModal) try { RG.closeModal(); } catch (e) {}
   if (RG.heroFold) RG.heroFold("route");
   drawMarks(pts, color || "#0B5394", false, false);
