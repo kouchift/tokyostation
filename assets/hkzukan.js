@@ -51,7 +51,7 @@ function choosePref() {
   idx(function () {
     var I = RG.HK_INDEX || {};
     var html = '<div class="hkz"><p class="hkz__lead">歴史オタクのための、都道府県ごと 100 か所の «超コア» カード。物語・年表・人物・諸説・現地の見どころまで。<br>' +
-      "いまできている県から順に増やしています（準備中の県は、れきし地図・偉人の墓・世界遺産で楽しめます）。</p>" +
+      "47 都道府県 × 100 か所＝4,700 か所。県を選ぶと、その県のカードだけを読み込みます。</p>" +
       REGIONS.map(function (r) {
         var o = ""; for (var i = r[1]; i <= r[2]; i++) { var c = code(i), on = !!I[c];
           o += '<button class="hkz__pf' + (on ? " on" : "") + (c === S.pf ? " cur" : "") + '" type="button"' + (on ? ' data-hkpf="' + c + '"' : " disabled") + ">" + esc(PREFS[i - 1]) +
