@@ -94,7 +94,7 @@ function ensureLayer() {
   host.appendChild(layer);
   layer.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-hmk]"); if (!b) return;
-    e.stopPropagation(); pick(+b.getAttribute("data-hmk"), true);
+    e.stopPropagation(); if (S.mode === "custom" && S.onPick) { S.onPick(+b.getAttribute("data-hmk")); return; } pick(+b.getAttribute("data-hmk"), true);
   });
   return layer;
 }
@@ -172,6 +172,7 @@ function ensurePanel() {
     if ((b = t.closest("[data-hev]"))) { showEv(b.getAttribute("data-hev")); return; }
     if ((b = t.closest("[data-pt]"))) { pick(+b.getAttribute("data-pt"), false); return; }
     if ((b = t.closest("[data-hfit]"))) { fit(); return; }
+    if ((b = t.closest("[data-hzk]"))) { RG.hkOpen(); return; }   // v134
     if ((b = t.closest("[data-hgrave]"))) { RG.graveShowMap(b.getAttribute("data-hgrave")); return; }   // v133
     if ((b = t.closest("[data-hback]"))) { showEra(S.era || "edo"); return; }
     if ((b = t.closest("[data-hlv]"))) {   // v129: 大項目だけ ⇔ 中項目まで
@@ -191,6 +192,7 @@ function head(title) {
 function lvSwitch() {
   var m = maxLv(); if (m < 2) return '<span class="hp__lv">大項目</span>';
   var o = ""; for (var i = 1; i <= m; i++) o += '<button class="hp__lvb' + (i === S.lv ? " on" : "") + '" type="button" data-hlv="' + i + '" title="' + (i === 1 ? "大項目だけ" : LVN[i] + "まで出す") + '">' + (i === 1 ? "大" : LVN[i].charAt(0)) + "</button>";
+  if (RG.hkOpen) o += '<button class="hp__lvb hp__lvb--hk" type="button" data-hzk="1" title="都道府県別の歴オタ図鑑（超コア）">超</button>';   // v134
   return '<span class="hp__lvs" role="group" aria-label="くわしさ">' + o + "</span>";
 }
 function tabs() {
@@ -207,6 +209,7 @@ function showEra(id) {
   drawMarks(all, E.c, false, false); fit();
   ensurePanel().innerHTML = head("📜 れきし地図") + tabs() +
     '<div class="hp__body"><p class="hp__era" style="--ec:' + E.c + '"><b>' + esc(E.n) + "</b><span>" + esc(E.span) + "</span>" + esc(E.d) + "</p>" +
+    (RG.hkOpen ? '<button class="hp__hkb" type="button" data-hzk="1">🏯 都道府県別 «歴オタ図鑑»（超コア） <small>各県 100 か所の深掘りカード</small></button>' : "") +   // v134
     (RG.graveShowMap && RG.graveCount(E.id) !== 0 ? '<button class="hp__grvb" type="button" data-hgrave="' + E.id + '">🪦 この時代の偉人の墓' + (RG.graveCount(E.id) > 0 ? "（" + RG.graveCount(E.id) + "人）" : "") + "を地図に出す <small>エピソードつき</small></button>" : "") +   // v133
     '<ol class="hp__list">' + list.map(function (e) {
       return '<li><button class="hp__ev hp__ev--l' + (e.lv || 1) + '" type="button" data-hev="' + e.id + '"><span class="hp__y">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv].charAt(0) + "</em>" : "") + esc(e.ys) + (e.gg ? "<i>" + esc(e.gg) + "</i>" : "") + "</span>" +
@@ -229,7 +232,7 @@ function showEv(id) {
   var prev = list[i - 1], next = list[i + 1];
   ensurePanel().innerHTML = head("📜 " + esc(E.n)) +
     '<div class="hp__body">' +
-    '<div class="hp__img" data-himg="' + esc(e.imgwp || e.wp || "") + '"></div>' +
+    (RG.wpGallery ? '<div class="hkc__gal hp__gal" data-hgal="1"></div>' : '<div class="hp__img" data-himg="' + esc(e.imgwp || e.wp || "") + '"></div>') +   // v134: 写真をまとめて
     (e.hook ? '<p class="hp__hook">🤔 ' + esc(e.hook) + "</p>" : "") +
     '<h3 class="hp__t">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv] + "</em>" : "") + esc(e.t) + "</h3>" +
     '<p class="hp__meta"><span style="--ec:' + E.c + '">' + esc(E.n) + "</span><span>📅 " + esc(e.ys) + "</span>" + (e.gg ? "<span>🏷️ 元号 " + esc(e.gg) + "</span>" : "") +
@@ -245,13 +248,17 @@ function showEv(id) {
     '<div class="hp__nav">' + (prev ? '<button class="hp__b" type="button" data-hev="' + prev.id + '"><small>‹ 前の出来事</small>' + esc(prev.ys.replace(/（.*$/, "")) + " " + esc(prev.t.split(" ―")[0]) + "</button>" : "<span></span>") +
       (next ? '<button class="hp__b hp__b--n" type="button" data-hev="' + next.id + '"><small>次の出来事 ›</small>' + esc(next.ys.replace(/（.*$/, "")) + " " + esc(next.t.split(" ―")[0]) + "</button>" : "") + "</div>" +
     '<button class="hp__back" type="button" data-hback="1">☰ ' + esc(E.n) + " の一覧へ</button>" +
+    (RG.postsEnabled && RG.postsEnabled() && RG.postsHtml ? RG.postsHtml(evSpot(e)) : "") +   // v134: みんなの補足（コメント・写真・いいね）
     '<p class="src">解説は当サイトの手書き（定説にもとづく。«説»・«伝承» はそう書いています）。場所はおおよその位置。写真は Wikipedia（ウィキメディア・コモンズ）の記事の画像で、ライセンスは各ファイルのページに書かれています。</p></div>';
   panel.hidden = false;
   panel.querySelector(".hp__body").scrollTop = 0;
   fit();
-  loadImg(e.imgwp || e.wp);
+  if (RG.wpGallery) RG.wpGallery(panel.querySelector("[data-hgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(evSpot(e)) : null);
+  else loadImg(e.imgwp || e.wp);
+  if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(panel, evSpot(e));
   if (RG.track) try { RG.track("hist", e.id); } catch (x) {}
 }
+function evSpot(e) { return { n: "📜" + e.t.split(" ―")[0], la: e.pts[0][1], lo: e.pts[0][2], pt: "💬 みんなの補足（コメント・写真）", ph: "この出来事への補足・知っていること・行ってみた感想（300字まで）" }; }   // v134: 出来事ごとのコメントの鍵
 function areaHtml() { return AREAS.length ? "<b>🗺️ 舞台</b>" + esc(areaLabel(AREAS)) : ""; }
 /* 写真: Wikipedia の記事の代表画像（押したときだけ取りに行く） */
 function loadImg(wp) {
@@ -310,6 +317,21 @@ RG.histShowPoints = function (title, pts, color, gids) {   // v133: gids=偉人�
   var lv = panel.querySelector(".hp__lv") || panel.querySelector(".hp__lvs"); if (lv) lv.remove();
   fit();
 };
+/* v134: ほかの部品（歴オタ図鑑など）が下の窓と地図の印を使う。html は窓の中身、pts は印、onPick(i) は印を押したとき */
+RG.histCustom = function (title, html, pts, color, onPick, keepView) {
+  S.on = true; S.mode = "custom"; S.onPick = onPick || null; AREAS = []; document.body.classList.add("histon");
+  if (RG.closeModal) try { RG.closeModal(); } catch (e) {}
+  if (RG.heroFold) RG.heroFold("route");
+  drawMarks(pts, color || "#6D4C41", false, false);
+  var P = ensurePanel(), sc = P.querySelector(".hp__body"), top = keepView && sc ? sc.scrollTop : 0;
+  P.innerHTML = head(title) + '<div class="hp__body">' + html + "</div>";
+  P.hidden = false; P.classList.remove("hp--min");
+  var lv = P.querySelector(".hp__lv") || P.querySelector(".hp__lvs"); if (lv) lv.remove();
+  if (keepView) P.querySelector(".hp__body").scrollTop = top; else fit();
+  return P;
+};
+RG.histFit = function () { fit(); };
+RG.histPick = function (i) { pick(i, false); };
 /* ?hist=出来事id|時代id|1 で開く（共有リンク） */
 RG.histFromUrl = function () {
   var v; try { v = new URLSearchParams(location.search).get("hist"); } catch (e) { return; }

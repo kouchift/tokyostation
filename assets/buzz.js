@@ -80,7 +80,8 @@ function row(b, showArea) {
     '<div class="bz__body"><div class="bz__top"><span class="bz__pl bz__pl--' + esc(b.pl) + '">' + p.e + ' ' + p.n + '</span>' +
     '<span class="bz__d">' + esc(b.d) + (age <= 3 ? ' <b class="bz__new">NEW</b>' : "") + "</span>" +
     (showArea ? '<span class="bz__a">' + esc(areaOf(b)) + "</span>" : "") +
-    '<span class="bz__imp" title="インパクト">' + "🔥".repeat(Math.max(1, Math.min(5, b.imp || 1))) + "</span></div>" +
+    '<span class="bz__imp" title="インパクト">' + "🔥".repeat(Math.max(1, Math.min(5, b.imp || 1))) + "</span>" +
+    (heatOf(b) >= 4 ? '<b class="bz__hot">激アツ</b>' : "") + ((b.m || 1) > 1 ? '<span class="bz__m" title="別の記事でもくり返し話題に">×' + b.m + "</span>" : "") + "</div>" +
     '<div class="bz__n">' + esc(b.n) + "</div>" +
     (b.by ? '<div class="bz__by">' + (b.pl === "news" ? "記事: " : "投稿: ") + esc(b.by) + "</div>" : "") +
     (b.ev ? '<div class="bz__ev">話題の根拠: ' + esc(b.ev) + (b.src ? ' <a href="' + esc(b.src) + '" target="_blank" rel="noopener">出典</a>' : "") + "</div>" : "") +
@@ -91,9 +92,29 @@ function row(b, showArea) {
 }
 
 /* 一覧（土地の絞り込みつき） */
+/* v134: 土地ごとの «話題のストック»（最大 50 件・自動更新）。土地を選んだときだけ読む */
+var STK = { idx: null, sort: "hot" };
+function stkLoad(f, cb) {
+  var v = document.documentElement.getAttribute("data-build") || "", s = document.createElement("script");
+  s.async = true; s.src = f + "?v=" + (v || "") + "." + Math.floor(Date.now() / 36e5);   // 1 時間ごとに新しいものを取りに行く
+  s.onload = s.onerror = function () { cb(); }; document.head.appendChild(s);
+}
+function stkIndex(cb) { if (RG.BUZZ_STOCK_INDEX) { cb(); return; } stkLoad("data/auto/buzz_stock/index.js", cb); }
+function stkArea(a, cb) {
+  stkIndex(function () {
+    var I = RG.BUZZ_STOCK_INDEX || {}; RG.BUZZ_STOCK = RG.BUZZ_STOCK || {};
+    if (!I[a] || RG.BUZZ_STOCK[a]) { cb(); return; }
+    stkLoad("data/auto/buzz_stock/" + I[a].f + ".js", cb);
+  });
+}
 RG.showBuzz = function (area, tab) {
-  var L = RG.buzzLists(), M = META();
+  if (area && !tab) tab = "stock";
+  if (tab === "stock" && !area) tab = "fresh";
+  if (tab === "stock" && !(RG.BUZZ_STOCK && RG.BUZZ_STOCK[area]) && !STK["tried" + area]) { STK["tried" + area] = 1; stkArea(area, function () { RG.showBuzz(area, tab); }); return; }
+  if (!RG.BUZZ_STOCK_INDEX && !STK.triedIdx) { STK.triedIdx = 1; stkIndex(function () { RG.showBuzz(area, tab); }); return; }
+  var L = RG.buzzLists(), M = META(), SI = RG.BUZZ_STOCK_INDEX || {};
   var areas = {}; L.all.forEach(function (b) { areas[areaOf(b)] = (areas[areaOf(b)] || 0) + 1; });
+  Object.keys(SI).forEach(function (a) { if (SI[a].n) areas[a] = Math.max(areas[a] || 0, SI[a].n); });   // v134: ストックの件数
   var names = Object.keys(areas).sort(function (a, b) {
     if (a === M.TOP) return -1; if (b === M.TOP) return 1;
     var ta = /区$/.test(a), tb = /区$/.test(b); if (ta !== tb) return ta ? -1 : 1;   // 23区 → 都道府県
@@ -102,14 +123,25 @@ RG.showBuzz = function (area, tab) {
   tab = tab || "fresh";
   var pool = tab === "fresh" ? L.fresh.concat(L.borrow) : tab === "ever" ? L.ever : L.all.slice().sort(function (a, b) { return a.d < b.d ? 1 : -1; });
   var list = area ? pool.filter(function (b) { return areaOf(b) === area; }) : pool;
+  if (tab === "stock") {                                           // v134: ストック（自動のストック＋手で集めた SNS の話題）
+    var st = ((RG.BUZZ_STOCK || {})[area] || []).slice(), have = {};
+    st.forEach(function (b) { have[b.id] = 1; });
+    L.all.forEach(function (b) { if (areaOf(b) === area && !have[b.id]) st.push(b); });
+    list = st.sort(STK.sort === "new" ? function (a, b) { return (a.ld || a.d) < (b.ld || b.d) ? 1 : -1; }
+                                      : function (a, b) { return (heatOf(b) - heatOf(a)) || (a.d < b.d ? 1 : -1); }).slice(0, 60);
+  }
   var html = '<div class="bz">' +
     '<p class="bz__lead">X・TikTok・Instagram で話題になった投稿と、<b>毎朝自動で拾う</b> «Google の急上昇ワード・ニュースに出た場所»（📰）を、<b>土地ごと</b>に追えます。' +
     "鮮度枠は " + M.FRESH_DAYS + " 日で自動的に入れ替わり、インパクトの高いものだけ殿堂に残ります。並びは日替わり／週替わり。</p>" +
     '<div class="bz__tabs">' +
-      ['fresh|🆕 いま話題 ' + (L.fresh.length + L.borrow.length), 'ever|🏆 殿堂 ' + L.ever.length, 'all|📚 すべて ' + L.all.length].map(function (s) {
+      (area ? ['stock|📦 ' + area.replace(/（.*$/, "") + "のストック " + (tab === "stock" ? list.length : (SI[area] ? SI[area].n : ""))] : []).concat(
+      ['fresh|🆕 いま話題 ' + (L.fresh.length + L.borrow.length), 'ever|🏆 殿堂 ' + L.ever.length, 'all|📚 すべて ' + L.all.length]).map(function (s) {
         var k = s.split("|")[0]; return '<button class="bz__tab' + (k === tab ? " on" : "") + '" type="button" data-tab="' + k + '">' + s.split("|")[1] + "</button>"; }).join("") + "</div>" +
     '<div class="bz__areas"><button class="bz__ar' + (!area ? " on" : "") + '" type="button" data-area="">全国</button>' +
       names.map(function (a) { return '<button class="bz__ar' + (a === area ? " on" : "") + (a === M.TOP ? " top" : "") + '" type="button" data-area="' + esc(a) + '">' + (a === M.TOP ? "👑 " : "") + esc(a) + ' <small>' + areas[a] + "</small></button>"; }).join("") + "</div>" +
+    (tab === "stock" ? '<div class="bz__stk"><span>' + (SI[area] ? "🔥 激アツ " + SI[area].hot + " 件・今日の新着 " + SI[area]["new"] + " 件" : "") + '</span>' +
+      [["hot", "🔥 熱い順"], ["new", "🆕 新しい順"]].map(function (x) { return '<button class="bz__tab' + (STK.sort === x[0] ? " on" : "") + '" type="button" data-stks="' + x[0] + '">' + x[1] + "</button>"; }).join("") +
+      '<p>ここ 7 日の新しい話題（最大 20 件）と、何度も話題になった «激アツ» を合わせて最大 50 件。自動収集のたびに入れ替わります。</p></div>' : "") +
     (list.length ? '<ul class="bz__list">' + list.map(function (b) { return row(b, !area); }).join("") + "</ul>"
                  : '<p class="bz__none">この枠にはいま投稿がありません。「すべて」を見るか、日を置いてまたどうぞ。</p>') +
     '<p class="src">投稿は各SNSの公式埋め込みで表示します（押すまで読み込みません）。見出しは当サイトの要約で、本文の転載ではありません。' +
@@ -117,6 +149,7 @@ RG.showBuzz = function (area, tab) {
     "左の写真は<b>その場所</b>の Wikipedia の画像で、投稿の画像ではありません。</p></div>";
   var m = RG.openModal("🔥 SNSで話題の場所" + (area ? " ― " + area : ""), html);
   m.querySelectorAll("[data-tab]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzz(area, b.dataset.tab); }); });
+  m.querySelectorAll("[data-stks]").forEach(function (b) { b.addEventListener("click", function () { STK.sort = b.dataset.stks; RG.showBuzz(area, "stock"); }); });
   m.querySelectorAll("[data-area]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzz(b.dataset.area || null, tab); }); });
   m.querySelectorAll("[data-go]").forEach(function (b) { b.addEventListener("click", function () {
     var it = byId(b.dataset.go); if (!it) return;
@@ -128,7 +161,12 @@ RG.showBuzz = function (area, tab) {
     box.hidden = false; embed(it, box); b.disabled = true;
   }); });
 };
-function byId(id) { return (RG.BUZZ || []).filter(function (b) { return b.id === id; })[0]; }
+function byId(id) {
+  var r = (RG.BUZZ || []).filter(function (b) { return b.id === id; })[0]; if (r) return r;
+  Object.keys(RG.BUZZ_STOCK || {}).some(function (a) { return RG.BUZZ_STOCK[a].some(function (b) { if (b.id === id) { r = b; return true; } }); });   // v134: ストック
+  return r;
+}
+function heatOf(b) { return b.h != null ? b.h : (b.imp || 1) + 1.5 * Math.log(1 + (b.m || 1)) / Math.LN2; }
 
 /* 公式の埋め込み（押したときだけ外部スクリプトを読む） */
 var loaded = {};

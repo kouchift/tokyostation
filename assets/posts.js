@@ -71,11 +71,57 @@ RG.postsNick = function (n) { if (n) setNick(n); return nick(); };
 function loadSpot(k, force) {
   var c = mem[k];
   if (c && !force && Date.now() - c.t < TTL) return Promise.resolve(c);
-  return get("a=spot&k=" + encodeURIComponent(k)).then(function (d) {
+  if (LOADING[k] && !force) return LOADING[k];
+  return (LOADING[k] = calcMyUid().then(function (u) { return get("a=spot&k=" + encodeURIComponent(k) + (u ? "&u=" + u : "")); }).then(function (d) {
+    delete LOADING[k];
     if (d.error) throw new Error(d.error);
-    return (mem[k] = { t: Date.now(), photos: d.photos || [], comments: d.comments || [] });
-  });
+    var my = {}; (d.mine || []).forEach(function (id) { my[id] = 1; });
+    return (mem[k] = { t: Date.now(), photos: d.photos || [], comments: d.comments || [], likes: d.likes || null, mine: my });   // likes が無い＝受け皿が古い（いいねは出さない）
+  }, function (e) { delete LOADING[k]; throw e; }));
 }
+var LOADING = {};
+
+/* ---- v134: いいね（写真 1 枚ごと・コメント 1 件ごと・カードの写真 1 枚ごと）。登録なし・1 端末 1 回・もう一度押すと取り消し ---- */
+RG.hash16 = function (str) {
+  var h1 = 0x811c9dc5, h2 = 0x01000193 ^ 0x5bd1e995; str = String(str);
+  for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619) >>> 0; h2 = Math.imul(h2 ^ c, 2246822519) >>> 0; }
+  return ("0000000" + h1.toString(16)).slice(-8) + ("0000000" + h2.toString(16)).slice(-8);
+};
+RG.likeBtn = function (k, id) { return '<button type="button" class="lk" data-lk="' + esc(id) + '" data-lkk="' + esc(k) + '" hidden aria-label="いいね"><i>♡</i><span></span></button>'; };
+function paintLike(b, d) {
+  var id = b.getAttribute("data-lk"), n = (d.likes && d.likes[id]) || 0, on = !!(d.mine && d.mine[id]);
+  b.hidden = false; b.classList.toggle("on", on);
+  b.querySelector("i").textContent = on ? "♥" : "♡"; b.querySelector("span").textContent = n ? n : "";
+  b.title = on ? "いいね済み（押すと取り消し）" : "いいね";
+}
+RG.likeFill = function (root, k) {
+  if (!RG.postsEnabled() || !root) return;
+  loadSpot(k, false).then(function (d) {
+    if (!d.likes) return;                                             // 受け皿がまだ古い
+    Array.prototype.forEach.call(root.querySelectorAll('[data-lk][data-lkk="' + String(k).replace(/"/g, '\\"') + '"]'), function (b) { paintLike(b, d); });
+  }).catch(function () {});
+};
+function spotFromKey(k) {
+  var i = k.lastIndexOf("@"), ll = k.slice(i + 1).split(",");
+  return { n: k.slice(0, i), la: +ll[0], lo: +ll[1], pf: prefOf(+ll[0], +ll[1]) };
+}
+document.addEventListener("click", function (e) {
+  var b = e.target && e.target.closest && e.target.closest("[data-lk]"); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  var k = b.getAttribute("data-lkk"), id = b.getAttribute("data-lk"), d = mem[k]; if (!d || !d.likes || b.__busy) return;
+  var on = !(d.mine && d.mine[id]);
+  d.mine = d.mine || {}; if (on) d.mine[id] = 1; else delete d.mine[id];
+  d.likes[id] = Math.max(0, (d.likes[id] || 0) + (on ? 1 : -1));
+  document.querySelectorAll('[data-lk="' + id + '"]').forEach(function (x) { if (x.getAttribute("data-lkk") === k) paintLike(x, d); });
+  b.__busy = 1;
+  post({ a: "like", k: k, spot: spotFromKey(k), id: id, on: on, tok: tok() }).then(function (r) {
+    d.likes[id] = r.n; document.querySelectorAll('[data-lk="' + id + '"]').forEach(function (x) { if (x.getAttribute("data-lkk") === k) paintLike(x, d); });
+  }).catch(function (er) {
+    if (on) delete d.mine[id]; else d.mine[id] = 1; d.likes[id] = Math.max(0, (d.likes[id] || 0) + (on ? -1 : 1));
+    document.querySelectorAll('[data-lk="' + id + '"]').forEach(function (x) { if (x.getAttribute("data-lkk") === k) paintLike(x, d); });
+    if (RG.tripStatus) RG.tripStatus("いいねを送れませんでした: " + er.message, "warn", 4000);
+  }).then(function () { b.__busy = 0; });
+}, true);
 
 /* ---- v108: 撮影位置の確認（EXIF の GPS ＋ 現在地）と、管理人だけが見る撮影データの記録 ----
    ・写真の中の TIFF（EXIF の本体）を探して読む。JPEG の APP1 と HEIC は «Exif\0\0 + TIFF»、
@@ -248,7 +294,7 @@ RG.postsShrink = shrink;
 /* =========================================================== カードの枠 */
 RG.postsHtml = function (p) {
   if (!RG.postsEnabled()) return "";
-  return '<section class="pst" data-pst="1"><h3 class="pst__h">📷 みんなの写真と声 <span class="pst__n" data-pst-n></span></h3>' +
+  return '<section class="pst" data-pst="1"><h3 class="pst__h">' + esc(p.pt || "📷 みんなの写真と声") + ' <span class="pst__n" data-pst-n></span></h3>' +
     '<div class="pst__grid" data-pst-grid><p class="pst__ld">読み込んでいます…</p></div>' +
     '<div class="pst__up">' +
       '<label class="pst__btn"><input type="file" accept="image/*" multiple hidden data-pst-file>📷 写真を投稿する（まとめて選べます）</label>' +
@@ -260,7 +306,7 @@ RG.postsHtml = function (p) {
     '<form class="pst__form" data-pst-form>' +
       '<input class="pst__hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<input class="pst__name" name="name" maxlength="20" placeholder="名前（表示名）" value="' + esc(nick()) + '" required>' +
-      '<textarea name="text" maxlength="300" rows="2" placeholder="このスポットへのひとこと（300字まで）" required></textarea>' +
+      '<textarea name="text" maxlength="300" rows="2" placeholder="' + esc(p.ph || "このスポットへのひとこと（300字まで）") + '" required></textarea>' +
       '<button class="pst__send" type="submit">💬 書きこむ</button><span class="pst__st" data-pst-st></span>' +
     "</form></section>";
 };
@@ -275,14 +321,15 @@ function renderSpot(root, p, d) {
   grid.innerHTML = ph.length ? ph.map(function (x, i) {
     var nc = d.comments.filter(function (c) { return c.pid === x.pid; }).length;
     return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy">' +
-      (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み">📍</b>' : "") + (nc ? "<i>💬" + nc + "</i>" : "") + "</button>";
+      (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み">📍</b>' : "") + (nc ? "<i>💬" + nc + "</i>" : "") + (d.likes && d.likes[x.pid] ? '<i class="pst__lk">♥' + d.likes[x.pid] + "</i>" : "") + "</button>";
   }).join("") : '<p class="pst__ld">まだ写真がありません。最初の 1 枚をどうぞ。</p>';
   var sc = d.comments.filter(function (c) { return !c.pid; }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
   cm.innerHTML = sc.length ? '<ul class="pst__list">' + sc.map(function (c) {
-    return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span><p>" + esc(c.text) + "</p></li>";
+    return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(RG.postKey(p), c.cid) + "<p>" + esc(c.text) + "</p></li>";
   }).join("") + "</ul>" : "";
   Array.prototype.forEach.call(grid.querySelectorAll("[data-ph]"), function (b) { b.addEventListener("click", function () { viewer(p, ph, +b.dataset.ph); }); });
   bindWho(root);
+  RG.likeFill(root, RG.postKey(p));                                 // v134: いいね
   // カード上の «自由に使える写真がありません» の枠を、投稿された写真で埋める
   var hole = document.querySelector(".modal .spotcard__ph");
   if (hole && ph.length && !hole.__pst) {
@@ -530,13 +577,13 @@ function viewer(p, list, i) {
     var cs = d.comments.filter(function (c) { return c.pid === x.pid; }).sort(function (a, b) { return a.ts < b.ts ? -1 : 1; });
     box.innerHTML = '<div class="phv__in">' +
       '<div class="phv__img"><img src="' + esc(thumbUrl(x.f, MAX_EDGE)) + '" alt="' + esc(x.cap || p.n) + '"></div>' +
-      '<div class="phv__side"><div class="phv__meta">' + nameBtn(x) + '<span class="pst__dt">' + fmtDate(x.ts) + "・" + (i + 1) + "／" + list.length + "</span></div>" +
+      '<div class="phv__side"><div class="phv__meta">' + nameBtn(x) + '<span class="pst__dt">' + fmtDate(x.ts) + "・" + (i + 1) + "／" + list.length + "</span>" + RG.likeBtn(k, x.pid) + "</div>" +
         '<p class="phv__loc phv__loc--' + (x.loc === "ok" || LOC_LABEL[x.loc] ? x.loc : "none") + '">' + (x.loc === "ok" ? "📍 撮影位置を確認済み（スポットから " + (x.dist != null && x.dist !== "" ? (x.dist < 1000 ? x.dist + "m" : (x.dist / 1000).toFixed(1) + "km") : "1km 以内") + "）" :
           x.loc === "far" ? "⚠️ 撮影位置がスポットから離れています（約 " + ((+x.dist || 0) / 1000).toFixed(1) + " km）。投稿者が «このスポットの写真» と確認して載せたものです" :
           x.loc === "here" ? "📍 写真に位置情報はありませんが、投稿者が現地（スポットから 1km 以内）で投稿したことを確認しています" :
           "📍? 写真に位置情報がありません（撮影場所を確かめられません）") + "</p>" +
         (x.cap ? '<p class="phv__cap">' + esc(x.cap) + "</p>" : "") +
-        '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span><p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +
+        '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(k, c.cid) + "<p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +
         '<form class="pst__form" data-phv-form><input class="pst__hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
           '<input class="pst__name" name="name" maxlength="20" placeholder="名前（表示名）" value="' + esc(nick()) + '" required>' +
           '<textarea name="text" maxlength="300" rows="2" placeholder="この写真へのコメント" required></textarea>' +
@@ -550,6 +597,7 @@ function viewer(p, list, i) {
     if (pv) pv.addEventListener("click", function () { i = (i - 1 + list.length) % list.length; draw(); });
     if (nx) nx.addEventListener("click", function () { i = (i + 1) % list.length; draw(); });
     bindWho(box);
+    RG.likeFill(box, k);                                              // v134: いいね
     box.querySelector("[data-rep]").addEventListener("click", function () {
       if (!confirm("この写真を「不適切」として報告しますか？（3 件で自動的に非表示になります）")) return;
       post({ a: "report", id: x.pid, tok: tok() }).then(function () { alert("報告しました。ありがとうございます。"); }).catch(function (e) { alert(e.message); });

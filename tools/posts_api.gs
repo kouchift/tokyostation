@@ -31,7 +31,7 @@
  *   «"u" + SHA-256(tok) の先頭 12 文字»。uid を知っても tok は分からないので、なりすまして投稿できない。
  *
  * 呼び出し（画面側 assets/posts.js）
- *   GET  ?a=spot&k=<スポットの鍵>        … そのスポットの表示中の写真（最大 50）とコメント
+ *   GET  ?a=spot&k=<スポットの鍵>[&u=<uid>] … そのスポットの表示中の写真（最大 50）とコメント・いいねの数（likes）・自分が押したもの（mine）
  *   GET  ?a=user&u=<uid>                 … その人の投稿（写真・コメント）全部
  *   GET  ?a=recent&n=50                  … 新着
  *   POST（本文は JSON 文字列・Content-Type は text/plain にしてプリフライトを避ける）
@@ -39,6 +39,7 @@
  *        {a:"comment", k, spot:{n,la,lo,pf}, tok, name, text, pid, hp}      pid があれば写真へのコメント
  *        {a:"report",  id, tok}                                            id は写真の pid かコメントの cid
  *        {a:"tip",     st, line, car, to, tok, name}                       v112: «この駅は ○号車が △ に近い»（みんなで貯める）
+ *        {a:"like",    k, spot, id, on, tok}                                 v110: いいね（id: 写真 p… ／コメント c… ／カードの写真 g…）。on=false で取り消し
  *        {a:"tipvote", id, tok}                                            v112: «合ってた»（1 人 1 回）
  *   GET  ?a=tips&st=<駅名>                                                  v112: その駅の «便利な号車» 情報
  *   注意: loc（撮影位置の判定）とラベルの焼き込みは画面側で行う。改造した画面からは «ok» と偽れるので、
@@ -58,6 +59,8 @@ var C_COLS = ["cid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "text", "pi
 var R_COLS = ["id", "uid", "ts"];
 var T_COLS = ["tid", "st", "line", "car", "to", "uid", "name", "ts", "votes", "hidden"];   // v112: 便利な号車
 var TV_COLS = ["tid", "uid", "ts"];
+var L_COLS = ["id", "k", "uid", "ts"];        // v110: いいね（写真 p…・コメント c…・カードの写真 g…）。1 人 1 回・もう一度押すと取り消し
+var PER_DAY_LIKES = 500;
 var PER_DAY_TIPS = 20;
 var X_COLS = ["ts", "result", "pid", "uid", "name", "k", "spot_n", "spot_la", "spot_lo", "loc", "dist_m", "method", "cam",
               "gps_la", "gps_lo", "datetime_original", "make", "model", "software", "file_name", "file_size", "file_type", "file_modified",
@@ -113,7 +116,7 @@ function syncHidden() {
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function sheet_(name) {
   var ss = SpreadsheetApp.openById(PROP.getProperty("SS")), sh = ss.getSheetByName(name);
-  var COLS = { Reports: R_COLS, ExifLog: X_COLS, Tips: T_COLS, TipVotes: TV_COLS };
+  var COLS = { Reports: R_COLS, ExifLog: X_COLS, Tips: T_COLS, TipVotes: TV_COLS, Likes: L_COLS };
   if (!sh && COLS[name]) { sh = ss.insertSheet(name); sh.appendRow(COLS[name]); sh.setFrozenRows(1); }   // 古い setup で作ったシートにも足す
   return sh;
 }
@@ -275,7 +278,7 @@ function photo_(b, uid, name, k, spot, now, today) {
 function doGet(e) {
   try {
     var q = e.parameter || {}, a = q.a || "spot";
-    if (a === "ping") return json_({ ok: true, v: 109 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
+    if (a === "ping") return json_({ ok: true, v: 110 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
     ensureInit_();
     if (a === "admin") {                          // 管理ページ（admin/posts.html）用。鍵が合うときだけ撮影データの記録を返す
       if (!q.key || q.key !== adminKey_()) return json_({ error: "鍵が違います" });
@@ -286,9 +289,10 @@ function doGet(e) {
       return json_({ ok: true, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl() });
     }
     if (a === "spot") {
-      var k = clean_(q.k, 200);
+      var k = clean_(q.k, 200), me = clean_(q.u, 20), lk = {}, my = [];
+      rows_("Likes", L_COLS).forEach(function (r) { if (r.k !== k) return; lk[r.id] = (lk[r.id] || 0) + 1; if (me && r.uid === me) my.push(r.id); });   // v110
       return json_({ photos: shown_(rows_("Photos", P_COLS), k).map(photoOut_),
-                     comments: rows_("Comments", C_COLS).filter(function (r) { return r.k === k && visible_(r); }).map(commentOut_) });
+                     comments: rows_("Comments", C_COLS).filter(function (r) { return r.k === k && visible_(r); }).map(commentOut_), likes: lk, mine: my });
     }
     if (a === "user") {
       var u = clean_(q.u, 40);
@@ -374,6 +378,23 @@ function doPost(e) {
     if (+spot.la < 20 || +spot.la > 46 || +spot.lo < 122 || +spot.lo > 154 ||
         k !== clean_(String(spot.n || "").slice(0, 60) + "@" + (+spot.la).toFixed(4) + "," + (+spot.lo).toFixed(4), 200)) return json_({ error: "spot" });
     var name = clean_(b.name, 20) || "匿名";
+
+    if (b.a === "like") {                         // v110: いいね（押す／取り消す）
+      var lid = String(b.id || "");
+      if (!/^[pcg][0-9a-f]{16}$/.test(lid)) return json_({ error: "見つかりません" });
+      if (lid.charAt(0) !== "g") {                // 写真・コメントは、そのスポットに本当にあるものだけ
+        var shn = lid.charAt(0) === "p" ? "Photos" : "Comments", cl = shn === "Photos" ? P_COLS : C_COLS;
+        if (!rows_(shn, cl).some(function (r) { return r[cl[0]] === lid && r.k === k && visible_(r); })) return json_({ error: "見つかりません" });
+      }
+      var LK = rows_("Likes", L_COLS), mine2 = LK.filter(function (r) { return r.id === lid && r.uid === uid; })[0];
+      if (b.on && !mine2) {
+        if (LK.filter(function (r) { return r.uid === uid && day_(r.ts) === today; }).length >= PER_DAY_LIKES) return json_({ error: "今日のいいねの上限に達しました" });
+        sheet_("Likes").appendRow([lid, txt_(k, 200), uid, now]);
+      } else if (!b.on && mine2) sheet_("Likes").deleteRow(mine2._row);
+      SpreadsheetApp.flush();
+      var n2 = rows_("Likes", L_COLS).filter(function (r) { return r.id === lid; }).length;
+      return json_({ ok: true, id: lid, n: n2, on: !!b.on });
+    }
 
     if (b.a === "photo") {
       var out = photo_(b, uid, name, k, spot, now, today);

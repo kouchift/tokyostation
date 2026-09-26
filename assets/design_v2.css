@@ -509,3 +509,62 @@ body.night .hp__area { background: #262b31; }
 .hp__ptw { display: inline-flex; gap: 2px; } .hp__gc { min-width: 40px; min-height: 40px; border: 1px solid #8D6E63; background: #EFEBE9; border-radius: 999px; font-size: 16px; cursor: pointer; }
 body.night .grv__visit { background: #2a2320; border-color: #6D4C41; } body.night .grv__visit > b, body.night .grv__gn small { color: #e9d7cf; }
 body.night .grv__c, body.night .grv__all summary, body.night .grv__manner { background: #2d2724; color: #eee; } body.night .grv__go--l { background: #262b31; color: #eee; }
+/* v134: 歴オタ図鑑・写真ギャラリー・いいね */
+.hp__hkb { display: block; width: 100%; min-height: 46px; border: 0; border-radius: 12px; margin: 0 0 8px; padding: 6px 12px; font: inherit; font-size: 14px; font-weight: 800; text-align: left; color: #FFF8E1; background: linear-gradient(135deg, #1B1B1B, #5D4037 70%, #B8860B); cursor: pointer; }
+.hp__hkb small { display: block; font-size: 11.5px; opacity: .85; }
+.hp__lvb--hk { background: #3E2723 !important; color: #FFD54F !important; }
+.hkz__top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.hkz__chg { min-height: 40px; border: 0; border-radius: 999px; padding: 0 14px; font: inherit; font-weight: 900; background: #3E2723; color: #FFE082; cursor: pointer; }
+.hkz__prog { position: relative; flex: 1; height: 26px; border-radius: 999px; background: #EFEBE9; overflow: hidden; }
+.hkz__prog b { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #FFB300, #E65100); }
+.hkz__prog i { position: relative; display: block; text-align: center; font-style: normal; font-size: 12px; font-weight: 800; line-height: 26px; color: #3E2723; }
+.hkz__q { width: 100%; box-sizing: border-box; min-height: 42px; border: 1px solid #D7CCC8; border-radius: 12px; padding: 0 12px; font: inherit; font-size: 15px; margin: 2px 0 6px; }
+.hkz__f { display: flex; gap: 5px; overflow-x: auto; padding: 2px 0 6px; align-items: center; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.hkz__f > span { flex: none; font-size: 11.5px; font-weight: 800; color: #6D4C41; min-width: 34px; }
+.hkz__c { flex: none; min-height: 34px; border: 1px solid #D7CCC8; background: #fff; border-radius: 999px; padding: 0 11px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.hkz__c.on { background: #5D4037; border-color: #5D4037; color: #fff; }
+.hkz__n { font-size: 12px; color: #666; margin: 4px 0; }
+.hkz__list { list-style: none; margin: 0; padding: 0; }
+.hkz__it { position: relative; display: block; width: 100%; text-align: left; border: 1px solid #EFEBE9; background: #fff; border-radius: 12px; padding: 8px 10px 8px 46px; margin: 0 0 6px; font: inherit; cursor: pointer; }
+.hkz__it.rd { background: #FBF8F6; } .hkz__it.rd .hkz__t { color: #6D4C41; }
+.hkz__rk { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; font-weight: 900; font-size: 14px; color: #fff; background: #8D6E63; }
+.hkz__it .hkz__rk { position: absolute; left: 9px; top: 10px; }
+.hkz__rk--S { background: linear-gradient(135deg, #B71C1C, #FF6F00); } .hkz__rk--A { background: #6D4C41; } .hkz__rk--B { background: #90A4AE; }
+.hkz__t { display: block; font-size: 15px; font-weight: 900; line-height: 1.4; } .hkz__t em { font-style: normal; font-size: 11px; color: #999; margin-right: 4px; }
+.hkz__ok { font-style: normal; color: #2E7D32; }
+.hkz__m { display: block; font-size: 11.5px; color: #6D4C41; margin: 1px 0; } .hkz__h { display: block; font-size: 13px; line-height: 1.6; color: #444; }
+.hkz__lead { font-size: 14px; line-height: 1.8; }
+.hkz__rg { margin: 10px 0; } .hkz__rg > b { display: block; font-size: 13px; margin-bottom: 4px; } .hkz__rg > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.hkz__pf { min-width: 76px; min-height: 44px; border: 1px solid #E0E0E0; background: #FAFAFA; color: #aaa; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 800; padding: 3px 8px; }
+.hkz__pf small { display: block; font-size: 10px; font-weight: 700; } .hkz__pf.on { background: #3E2723; color: #FFE082; border-color: #3E2723; cursor: pointer; } .hkz__pf.cur { outline: 3px solid #FFB300; }
+.hkc__gal, .hp__gal { margin: 0 -4px 10px; }
+.hkg__rail { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 4px 6px; -webkit-overflow-scrolling: touch; }
+.hkg__f { flex: none; width: 78%; max-width: 420px; margin: 0; scroll-snap-align: center; position: relative; }
+.hkg__f img { width: 100%; height: 220px; object-fit: cover; border-radius: 14px; display: block; background: #EFEBE9; }
+.hkg__f figcaption { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #666; padding: 3px 4px 0; line-height: 1.4; }
+.hkg__f figcaption .lk { margin-left: auto; }
+.hkg__n, .hkg__ld { font-size: 11.5px; color: #777; margin: 2px 4px; }
+.hkc__hd { display: flex; align-items: center; gap: 8px; } .hkc__n { margin: 4px 0; font-size: 20px; line-height: 1.35; } .hkc__n small { display: block; font-size: 12px; color: #8D6E63; font-weight: 700; }
+.hkc__meta { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 8px; } .hkc__meta span { font-size: 12px; font-weight: 700; background: #F4EFEC; color: #4E342E; border-radius: 999px; padding: 3px 9px; }
+.hkc__meta .hkc__sh { background: #FFF3E0; color: #8A4B00; }
+.hkc__lead { font-size: 15.5px; line-height: 1.9; font-weight: 700; color: #2b2b2b; }
+.hkc__h { margin: 16px 0 6px; font-size: 16px; border-left: 5px solid #8D6E63; padding-left: 8px; }
+.hkc__story p { font-size: 15.5px; line-height: 2; margin: 0 0 10px; text-indent: 1em; }
+.hkc__tl { list-style: none; margin: 0; padding: 0 0 0 10px; border-left: 3px solid #BCAAA4; }
+.hkc__tl li { position: relative; padding: 4px 0 8px 10px; } .hkc__tl li::before { content: ""; position: absolute; left: -17px; top: 10px; width: 11px; height: 11px; border-radius: 50%; background: #6D4C41; border: 2px solid #fff; }
+.hkc__tl b { display: block; font-size: 13px; color: #6D4C41; } .hkc__tl span { font-size: 14.5px; line-height: 1.7; }
+.hkc__who { display: grid; grid-template-columns: 1fr; gap: 6px; } .hkc__who div { background: #FAF7F5; border-radius: 10px; padding: 6px 10px; } .hkc__who b { display: block; font-size: 14px; } .hkc__who span { font-size: 13px; color: #555; line-height: 1.6; }
+.hkc__deep { background: #1F1B18; color: #F5E9DC; border-radius: 14px; padding: 10px 14px; margin: 14px 0; } .hkc__deep > b { color: #FFD54F; font-size: 14.5px; }
+.hkc__deep ul { margin: 6px 0 0; padding-left: 1.2em; } .hkc__deep li { font-size: 14.5px; line-height: 1.85; margin: 6px 0; }
+.hkc__look { background: #F1F8E9; border-radius: 14px; padding: 8px 12px; margin: 10px 0; } .hkc__look > b { color: #33691E; } .hkc__look ul { margin: 4px 0 0; padding-left: 1.2em; } .hkc__look li { font-size: 14.5px; line-height: 1.8; }
+.hkc__myth { font-size: 12.5px; color: #8A4B00; background: #FFF8E1; border-radius: 10px; padding: 6px 10px; }
+.lk { display: inline-flex; align-items: center; gap: 3px; min-height: 30px; min-width: 44px; border: 1px solid #F8BBD0; background: #fff; color: #C2185B; border-radius: 999px; padding: 0 9px; font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.lk i { font-style: normal; font-size: 15px; } .lk.on { background: #FCE4EC; border-color: #EC407A; }
+.pst__list li .lk { float: right; } .pst__lk { background: rgba(194,24,91,.85) !important; }
+body.night .hkz__it, body.night .hkz__c, body.night .hkz__q { background: #262b31; color: #eee; border-color: #3a4048; } body.night .hkz__it.rd { background: #2d2724; }
+body.night .hkc__story p, body.night .hkc__lead { color: #eee; } body.night .hkc__who div, body.night .hkc__meta span { background: #2d2724; color: #eee; } body.night .hkc__look { background: #1f2a1a; color: #e8f5e9; }
+/* v134: 話題のストック */
+.bz__stk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; } .bz__stk > span { font-size: 12px; font-weight: 800; color: #BF360C; margin-right: auto; }
+.bz__stk p { width: 100%; margin: 2px 0 0; font-size: 11.5px; color: #777; }
+.bz__hot { font-size: 11px; color: #fff; background: linear-gradient(135deg, #D50000, #FF6D00); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+.bz__m { font-size: 11px; font-weight: 800; color: #BF360C; margin-left: 4px; }

@@ -12,6 +12,7 @@ var esc = RG.esc, IMG = {}, WAIT = [];
 var ERA_ORD = ["飛鳥", "奈良", "平安", "鎌倉", "南北朝", "室町", "戦国", "安土桃山", "江戸", "幕末", "明治", "大正", "昭和"];
 var ERA_C = { "飛鳥": "#2E8B57", "奈良": "#1F7A8C", "平安": "#C2185B", "鎌倉": "#5D4037", "南北朝": "#455A64", "室町": "#455A64", "戦国": "#455A64",
               "安土桃山": "#B8860B", "江戸": "#1565C0", "幕末": "#0D47A1", "明治": "#B71C1C", "大正": "#6A1B9A", "昭和": "#37474F" };
+function gSpot(x) { return { n: "🪦" + x.n.replace(/（.*?）/g, ""), la: x.la, lo: x.lo, pt: "💬 みんなの補足（お参りの写真・エピソード）", ph: "この人やお墓について知っていること・お参りした感想（300字まで）" }; }   // v134: お墓ごとのコメントの鍵
 function G() { return RG.GRAVES || []; }
 function byId(id) { return G().filter(function (x) { return x.id === id; })[0]; }
 function km(a, b, c, d) { var r = Math.PI / 180, x = (d - b) * r * Math.cos((a + c) / 2 * r), y = (c - a) * r; return Math.sqrt(x * x + y * y) * 6371; }
@@ -102,6 +103,7 @@ RG.showGrave = function (id, era) {
         (x.he && RG.histOpen ? '<button class="grv__go grv__go--l" type="button" data-ghist="' + esc(x.he) + '">📜 ' + esc(x.era) + "のれきし地図</button>" : "") + "</div></div>" +
     (near.length ? '<h4 class="whs__h">👥 同じ墓所・近くに眠る人</h4><div class="whs__pts">' + near.map(function (o) {
       return '<button class="grv__c" type="button" data-to="' + esc(o.x.id) + '">' + esc(o.x.n.replace(/（.*?）/g, "")) + "<small>" + (o.d < 0.15 ? "同じ墓所" : Math.round(o.d * 1000) + "m") + "</small></button>"; }).join("") + "</div>" : "") +
+    (RG.postsEnabled && RG.postsEnabled() && RG.postsHtml ? RG.postsHtml(gSpot(x)) : "") +   // v134: みんなの補足（コメント・写真・いいね）
     '<p class="grv__manner">🙏 お参りのマナー: 静かに。墓石や柵にはさわらない・のぼらない。ほかの方のお墓も写らないよう、写真は控えめに。お寺の開門時間を守りましょう。</p>' +
     '<div class="wls"><a class="wl wl--w" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(x.wp) + '" target="_blank" rel="noopener">📖 Wikipedia</a>' +
       '<a class="wl" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(x.n.replace(/（.*?）/g, "") + " 歴史") + '" target="_blank" rel="noopener">▶️ 動画をさがす</a></div>' +
@@ -113,6 +115,7 @@ RG.showGrave = function (id, era) {
   var m = RG.openModal("🪦 " + x.n.replace(/（.*?）/g, "") + " のお墓", html);
   bindCommon(m, x);
   loadImg(m, x.imgwp || x.wp);
+  if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(m, gSpot(x));
   if (RG.track) try { RG.track("grave", x.id); } catch (e) {}
 };
 function bindCommon(m, x, era) {

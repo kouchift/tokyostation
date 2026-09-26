@@ -2639,7 +2639,7 @@ RG.boot = function () {
   // ---- ここから下は «無くても地図は見られる» もの ----
   step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
   step("メイン検索", function () { if (RG.initHeroSearch) RG.initHeroSearch(); });   // v89: 東京駅から、どこへ行く？
-  step("共有リンクの復元", function () { if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl(); if (RG.histFromUrl) RG.histFromUrl(); });   // v91: ?from=&to=
+  step("共有リンクの復元", function () { if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl(); if (RG.histFromUrl) RG.histFromUrl(); if (RG.hkFromUrl) RG.hkFromUrl(); });   // v91: ?from=&to=
   step("お気に入りと履歴", function () { if (RG.favs) RG.favs.init(); });   // v92: この端末だけ（tsg.fav.v1）
   step("現地モード", function () { if (RG.onsite) RG.onsite.init(); });   // v95: 下のパネル（押したときだけ位置情報）
   step("コンビニの絞り込み", function () { if (RG.cvsFilterInit) RG.cvsFilterInit(); });   // v99: 7／F／L
