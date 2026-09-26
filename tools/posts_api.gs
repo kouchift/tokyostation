@@ -33,7 +33,8 @@
  * 呼び出し（画面側 assets/posts.js）
  *   GET  ?a=spot&k=<スポットの鍵>[&u=<uid>] … そのスポットの表示中の写真（最大 50）とコメント・いいねの数（likes）・自分が押したもの（mine）
  *   GET  ?a=user&u=<uid>                 … その人の投稿（写真・コメント）全部
- *   GET  ?a=recent&n=50                  … 新着
+ *   GET  ?a=recent&n=50                  … 新着（写真だけ）
+ *   GET  ?a=feed&n=60&pf=東京都&t=p|c&before=<ISO> … v138: みんなの新着（写真とコメント・新しい順・都道府県で絞る。区の絞り込みは画面側）
  *   POST（本文は JSON 文字列・Content-Type は text/plain にしてプリフライトを避ける）
  *        {a:"photo",   k, spot:{n,la,lo,pf}, tok, name, cap, img:<base64 JPEG>, w, h, loc, dist, credit, hp}
  *        {a:"comment", k, spot:{n,la,lo,pf}, tok, name, text, pid, hp}      pid があれば写真へのコメント
@@ -278,7 +279,7 @@ function photo_(b, uid, name, k, spot, now, today) {
 function doGet(e) {
   try {
     var q = e.parameter || {}, a = q.a || "spot";
-    if (a === "ping") return json_({ ok: true, v: 110 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
+    if (a === "ping") return json_({ ok: true, v: 138 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
     ensureInit_();
     if (a === "admin") {                          // 管理ページ（admin/posts.html）用。鍵が合うときだけ撮影データの記録を返す
       if (!q.key || q.key !== adminKey_()) return json_({ error: "鍵が違います" });
@@ -305,6 +306,13 @@ function doGet(e) {
         .map(function (r) { return { tid: r.tid, st: r.st, line: r.line, car: +r.car || 0, to: r.to, uid: r.uid, name: r.name, ts: iso_(r.ts), votes: +r.votes || 0 }; });
       TT.sort(function (x, y) { return y.votes - x.votes || (x.ts < y.ts ? 1 : -1); });
       return json_({ tips: TT.slice(0, 100) });
+    }
+    if (a === "feed") {                           // v138: みんなの新着（写真とコメントを新しい順）。pf=都道府県名 t=p|c before=この時刻より古いもの
+      var fn = Math.max(10, Math.min(200, +q.n || 60)), fpf = clean_(q.pf, 8), ft = q.t === "p" || q.t === "c" ? q.t : "", fb = ms_(q.before) || 0, FI = [];
+      if (ft !== "c") rows_("Photos", P_COLS).forEach(function (r) { if (visible_(r) && (!fpf || r.pf === fpf) && (!fb || ms_(r.ts) < fb)) FI.push({ ty: "p", t: ms_(r.ts), r: r }); });
+      if (ft !== "p") rows_("Comments", C_COLS).forEach(function (r) { if (visible_(r) && (!fpf || r.pf === fpf) && (!fb || ms_(r.ts) < fb)) FI.push({ ty: "c", t: ms_(r.ts), r: r }); });
+      FI.sort(function (x, y) { return y.t - x.t; });
+      return json_({ items: FI.slice(0, fn).map(function (o) { return { ty: o.ty, ts: iso_(o.r.ts), x: o.ty === "p" ? photoOut_(o.r) : commentOut_(o.r) }; }), more: FI.length > fn });
     }
     if (a === "recent") {
       var n = Math.min(200, +q.n || 50);

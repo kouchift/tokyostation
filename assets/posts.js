@@ -57,6 +57,41 @@ function thumbUrl(f, w) { return RG.driveThumb ? RG.driveThumb(f, w || 200) : /^
 function fmtDate(s) { var d = new Date(s); return isNaN(d) ? "" : d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate(); }
 function spotOf(p) { return { n: p.n, la: +p.la, lo: +p.lo, pf: prefOf(p.la, p.lo) }; }
 
+/* ---- v138: 送信の進みぐあい（進捗バー）----
+   Apps Script は送信の途中経過を返さない（アップロードの進み具合を取ると事前確認の通信が起き、受け皿が答えられない）。
+   そこで «縮める» は実際の段階で、«送る» は写真の大きさから見込んだ時間で少しずつ進め、返事が来たら一気に 100% にする */
+function Prog(host, before) {
+  var w = document.createElement("div"); w.className = "pgb"; w.setAttribute("role", "progressbar"); w.setAttribute("aria-valuemin", "0"); w.setAttribute("aria-valuemax", "100");
+  w.innerHTML = '<div class="pgb__t"><span data-l></span><b data-p>0%</b></div><div class="pgb__bar"><i></i></div>';
+  if (before) host.insertBefore(w, before); else host.appendChild(w);
+  var cur = 0, tm = null;
+  function paint(f, label) {
+    cur = Math.max(cur, Math.min(1, f)); var pc = Math.round(cur * 100);
+    w.querySelector("i").style.width = pc + "%"; w.querySelector("[data-p]").textContent = pc + "%"; w.setAttribute("aria-valuenow", pc);
+    if (label != null) w.querySelector("[data-l]").textContent = label;
+  }
+  function stop() { if (tm) { clearInterval(tm); tm = null; } }
+  return {
+    el: w,
+    set: function (f, label) { stop(); paint(f, label); },
+    creep: function (from, to, ms, label) {                          // from → to へ «見込み時間 ms» で近づく（to には届かない＝返事待ち）
+      stop(); paint(from, label); var t0 = Date.now();
+      tm = setInterval(function () { if (!w.isConnected) { stop(); return; } paint(from + (to - from) * (1 - Math.exp(-(Date.now() - t0) / ms))); }, 150);
+    },
+    done: function (msg, keepMs) {
+      stop(); paint(1, msg); w.classList.add("pgb--ok");
+      if (keepMs !== 0) setTimeout(function () { w.classList.add("pgb--fade"); setTimeout(function () { w.remove(); }, 600); }, keepMs || 4000);
+    },
+    fail: function (msg) { stop(); w.classList.add("pgb--ng"); w.querySelector("[data-l]").textContent = msg; }
+  };
+}
+RG.postsProg = Prog;
+function flashNew(root, sel) {                                     // 反映された投稿を一瞬光らせて、見える位置へ
+  var e = root.querySelector(sel); if (!e) return;
+  e.classList.add("pst--new"); setTimeout(function () { e.classList.remove("pst--new"); }, 2600);
+  try { e.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (x) {}
+}
+
 /* ---- 通信 ---- */
 function get(q) {
   return fetch(api() + (api().indexOf("?") >= 0 ? "&" : "?") + q, { redirect: "follow" }).then(function (r) { return r.json(); });
@@ -324,7 +359,8 @@ RG.postsShrink = shrink;
 /* =========================================================== カードの枠 */
 RG.postsHtml = function (p) {
   if (!RG.postsEnabled()) return "";
-  return '<section class="pst" data-pst="1"><h3 class="pst__h">' + esc(p.pt || "📷 みんなの写真と声") + ' <span class="pst__n" data-pst-n></span></h3>' +
+  return '<section class="pst" data-pst="1"><h3 class="pst__h">' + esc(p.pt || "📷 みんなの写真と声") + ' <span class="pst__n" data-pst-n></span>' +
+      '<button type="button" class="pst__feed" data-feed="' + esc(prefOf(p.la, p.lo)) + '">🕒 みんなの新着</button></h3>' +
     '<div class="pst__grid" data-pst-grid><p class="pst__ld">読み込んでいます…</p></div>' +
     '<div class="pst__up">' +
       '<label class="pst__btn"><input type="file" accept="image/*" multiple hidden data-pst-file>📷 写真を投稿する（まとめて選べます）</label>' +
@@ -350,24 +386,24 @@ function renderSpot(root, p, d) {
   n.textContent = ph.length ? "（写真 " + ph.length + "／" + MAX_PER_SPOT + "）" : "";
   grid.innerHTML = ph.length ? ph.map(function (x, i) {
     var nc = d.comments.filter(function (c) { return c.pid === x.pid; }).length;
-    return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f, 200)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy" decoding="async">' +
+    return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" data-pid="' + esc(x.pid) + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f, 200)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy" decoding="async">' +
       (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み">📍</b>' : "") + (nc ? "<i>💬" + nc + "</i>" : "") + (d.likes && d.likes[x.pid] ? '<i class="pst__lk">♥' + d.likes[x.pid] + "</i>" : "") + "</button>";
   }).join("") : '<p class="pst__ld">まだ写真がありません。最初の 1 枚をどうぞ。</p>';
   var sc = d.comments.filter(function (c) { return !c.pid; }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
   cm.innerHTML = sc.length ? '<ul class="pst__list">' + sc.map(function (c) {
-    return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(RG.postKey(p), c.cid) + "<p>" + esc(c.text) + "</p></li>";
+    return '<li data-cid="' + esc(c.cid) + '">' + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(RG.postKey(p), c.cid) + "<p>" + esc(c.text) + "</p></li>";
   }).join("") + "</ul>" : "";
   Array.prototype.forEach.call(grid.querySelectorAll("[data-ph]"), function (b) { b.addEventListener("click", function () { viewer(p, ph, +b.dataset.ph); }); });
   bindWho(root);
   RG.likeFill(root, RG.postKey(p));                                 // v134: いいね
   // カード上の «自由に使える写真がありません» の枠を、投稿された写真で埋める
   var hole = document.querySelector(".modal .spotcard__ph");
-  if (hole && ph.length && !hole.__pst) {
-    hole.__pst = 1;
+  if (hole && ph.length && hole.__pst !== ph[0].pid + ph.length) {
+    var first = !hole.__pst; hole.__pst = ph[0].pid + ph.length;
     hole.innerHTML = '<img class="spotcard__i" src="' + esc(thumbUrl(ph[0].f, 400)) + '" alt="" decoding="async">' +
       '<span class="pst__credit">📷 ' + esc(ph[0].name) + " さんの投稿" + (ph.length > 1 ? "（ほか " + (ph.length - 1) + " 枚）" : "") + "</span>";
     hole.classList.add("spotcard__ph--user");
-    hole.addEventListener("click", function () { viewer(p, ph, 0); });
+    if (first) hole.addEventListener("click", function () { var d2 = mem[RG.postKey(p)]; if (d2) viewer(p, d2.photos.slice().sort(byPriority), 0); });
   }
 }
 function bindWho(root) {
@@ -542,6 +578,9 @@ RG.postsBind = function (m, p) {
         var st = UP[k] = { cancelled: false, left: 0, views: [] };
         function tell(done) { st.views.forEach(function (fn) { try { fn(st.left, done); } catch (e) {} }); }
         var chain = Promise.resolve(), ok = 0;
+        var nSend = files.filter(function (f, i) { return res[i].loc !== "block" && (res[i].loc !== "far" || okFar[i]); }).length, nth = 0;
+        var pg = Prog(q, q.querySelector(".pst__ql")); pg.set(0, "0 / " + nSend + " 枚 — 準備しています");
+        q.querySelector(".pst__ql").scrollTop = 0;
         files.forEach(function (f, i) {
           var r = res[i], li = q.querySelector('[data-qi="' + i + '"] b');
           if (r.loc === "block") return;
@@ -552,7 +591,10 @@ RG.postsBind = function (m, p) {
             if (st.cancelled) { li.textContent = "やめました"; li.parentNode.classList.add("ng"); return; }
             if (!fits(r.loc)) { li.textContent = fullMsg(r.loc); li.parentNode.classList.add("ng"); return; }
             li.textContent = "縮めています";
+            var base = nth / nSend, span = 1 / nSend; nth++;
+            pg.creep(base, base + span * 0.2, 800, nth + " / " + nSend + " 枚目 — 画質をそろえています");
             return shrink(f, { credit: credit, loc: r.loc, km: r.km }).then(function (im) {
+              pg.creep(base + span * 0.2, base + span * 0.97, 2500 + im.bytes / 150, nth + " / " + nSend + " 枚目 — 送っています（" + Math.round(im.bytes / 1024) + "KB）");
               li.textContent = (im.resized ? im.ow + "×" + im.oh + " → " : "") + im.w + "×" + im.h + "・" + Math.round(im.bytes / 1024) + "KB 送信中";
               var meta = r.meta || {};                                   // 管理人だけが見る記録（公開しない）
               meta.method = r.loc; meta.cam = cam ? 1 : 0; meta.orig = { w: im.ow, h: im.oh }; meta.ua = String(navigator.userAgent || "").slice(0, 200);
@@ -562,7 +604,12 @@ RG.postsBind = function (m, p) {
             }).then(function (res2) {
               ok++; li.textContent = "✓ 完了" + (res2.dropped ? "（表示枠の都合で 1 枚が枠の外へ）" : ""); li.parentNode.classList.add("ok");
               if (res2.uid && !MYUID) MYUID = res2.uid;
-              if (mem[k]) { if (res2.dropped) mem[k].photos = mem[k].photos.filter(function (x) { return x.pid !== res2.dropped; }); mem[k].photos.push(res2.photo); }
+              var d0 = mem[k] = mem[k] || { t: 0, photos: [], comments: [], likes: null, mine: {} };
+              if (res2.dropped) d0.photos = d0.photos.filter(function (x) { return x.pid !== res2.dropped; });
+              if (res2.photo) d0.photos.push(res2.photo);
+              pg.set(nth / nSend, ok + " / " + nSend + " 枚 投稿しました");
+              RG.postsFeedStale();
+              if (document.body.contains(root) && res2.photo) { renderSpot(root, p, d0); flashNew(root, '[data-pid="' + res2.photo.pid + '"]'); }   // 1 枚ずつすぐ一覧に出す
             }).catch(function (e) {
               var msg = /decod|InvalidState|source image/i.test(e.message || "") ? "この形式（HEIC など）は読めませんでした。JPEG で選び直してください" : e.message;
               li.textContent = "✕ " + msg; li.parentNode.classList.add("ng");
@@ -572,8 +619,10 @@ RG.postsBind = function (m, p) {
         chain.then(function () {
           delete UP[k]; tell(true);
           go.textContent = st.cancelled ? "途中でやめました（" + ok + " 枚 投稿）" : ok ? ok + " 枚 投稿しました" : "投稿できませんでした";
+          if (ok) pg.done("✓ " + ok + " 枚 投稿しました — 写真の一覧に反映済み" + (ok < nSend ? "（" + (nSend - ok) + " 枚は送れませんでした）" : ""), 0);
+          else pg.fail(st.cancelled ? "やめました" : "✕ 投稿できませんでした（一覧の理由を見てください）");
           xBtn.disabled = false; xBtn.textContent = "閉じる";
-          if (document.body.contains(root)) refresh(true); else if (mem[k]) mem[k].t = 0;   // カードを閉じていたら、次に開いたとき取り直す
+          if (document.body.contains(root)) refresh(true); else if (mem[k]) mem[k].t = 0;   // 反映は 1 枚ごとに済んでいる。念のため受け皿の最新と合わせる（カードを閉じていたら次に開いたとき）
           if (RG.tripStatus) RG.tripStatus(ok ? "📷 写真を " + ok + " 枚 投稿しました" : "📷 写真を投稿できませんでした", ok ? "ok" : "warn", 3000);
         });
       });
@@ -588,10 +637,17 @@ RG.postsBind = function (m, p) {
     e.preventDefault();
     var nm = form.name.value.trim(), tx = form.text.value.trim();
     if (!nm || !tx) return;
-    setNick(nm); st.textContent = "送っています…"; form.querySelector("button").disabled = true;
+    setNick(nm); st.textContent = ""; form.querySelector("button").disabled = true;
+    var old = form.querySelector(".pgb"); if (old) old.remove();
+    var pg = Prog(form); pg.creep(0.05, 0.95, 2500, "送っています…");
     post({ a: "comment", k: k, spot: spotOf(p), tok: tok(), name: nm, text: tx, pid: "", hp: form.hp.value })
-      .then(function (r) { form.text.value = ""; st.textContent = "✓ 書きこみました"; if (mem[k]) mem[k].comments.push(r.comment); renderSpot(root, p, mem[k]); })
-      .catch(function (er) { st.textContent = "✕ " + er.message; })
+      .then(function (r) {
+        form.text.value = ""; pg.done("✓ 書きこみました — 下の一覧に反映済み");
+        var d0 = mem[k] = mem[k] || { t: 0, photos: [], comments: [], likes: null, mine: {} };
+        d0.comments.push(r.comment); RG.postsFeedStale();
+        if (document.body.contains(root)) { renderSpot(root, p, d0); flashNew(root, '[data-cid="' + r.comment.cid + '"]'); }
+      })
+      .catch(function (er) { pg.fail("✕ " + er.message); })
       .then(function () { form.querySelector("button").disabled = false; });
   });
 };
@@ -613,7 +669,7 @@ function viewer(p, list, i) {
           x.loc === "here" ? "📍 写真に位置情報はありませんが、投稿者が現地（スポットから 1km 以内）で投稿したことを確認しています" :
           "📍? 写真に位置情報がありません（撮影場所を確かめられません）") + "</p>" +
         (x.cap ? '<p class="phv__cap">' + esc(x.cap) + "</p>" : "") +
-        '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return "<li>" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(k, c.cid) + "<p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +
+        '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return '<li data-cid="' + esc(c.cid) + '">' + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(k, c.cid) + "<p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +
         '<form class="pst__form" data-phv-form><input class="pst__hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
           '<input class="pst__name" name="name" maxlength="20" placeholder="名前（表示名）" value="' + esc(nick()) + '" required>' +
           '<textarea name="text" maxlength="300" rows="2" placeholder="この写真へのコメント" required></textarea>' +
@@ -636,10 +692,20 @@ function viewer(p, list, i) {
     f.addEventListener("submit", function (e) {
       e.preventDefault();
       var nm = f.name.value.trim(), tx = f.text.value.trim(); if (!nm || !tx) return;
-      setNick(nm); st.textContent = "送っています…";
+      setNick(nm); st.textContent = ""; f.querySelector("button").disabled = true;
+      var pg = Prog(f); pg.creep(0.05, 0.95, 2500, "送っています…");
       post({ a: "comment", k: k, spot: spotOf(p), tok: tok(), name: nm, text: tx, pid: x.pid, hp: f.hp.value })
-        .then(function (r) { (mem[k] = mem[k] || { t: Date.now(), photos: list, comments: [] }).comments.push(r.comment); draw(); })
-        .catch(function (er) { st.textContent = "✕ " + er.message; });
+        .then(function (r) {
+          (mem[k] = mem[k] || { t: Date.now(), photos: list, comments: [] }).comments.push(r.comment); RG.postsFeedStale();
+          pg.done("✓ コメントしました", 0);
+          setTimeout(function () {                                     // 完了を一瞬見せてから描き直す（再タップ不要）
+            if (!box.isConnected) return; draw();
+            var n2 = box.querySelector(".phv__side .pst__st"); if (n2) n2.textContent = "✓ コメントしました（反映済み）";
+            flashNew(box, '[data-cid="' + r.comment.cid + '"]');
+            var root2 = document.querySelector(".modal [data-pst]"); if (root2 && mem[k] && document.body.contains(root2)) renderSpot(root2, p, mem[k]);   // 下のカードの «💬数» も更新
+          }, 700);
+        })
+        .catch(function (er) { pg.fail("✕ " + er.message); f.querySelector("button").disabled = false; });
     });
   }
   function close() { box.remove(); document.removeEventListener("keydown", key); }
@@ -750,4 +816,163 @@ RG.postsMapClear = function (quiet) {
 };
 /* 地図の印（userpost）を押したとき: 地図のデータに本物のスポットがあればそれを開く */
 RG.postsResolve = function (p) { return p && p.upKey ? findSpot(p.upKey, p.spotRef) : p; };
+
+/* =========================================================== v138: みんなの新着（投稿を新しい順に）
+   ・全国／都道府県で絞る。東京都はさらに 23 区ごと（23 区の外は «多摩・島しょ»）
+   ・写真だけ／声（コメント）だけにも絞れる。開いているあいだは 60 秒ごとに自動で新しいものを足す（押し直し不要）
+   ・受け皿（posts_api.gs）が v138 より古いときは «写真の新着»（a=recent）だけで代わりに出す */
+var PREFS = ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県", "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
+  "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県",
+  "鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"];
+var WARDS = ["千代田区", "中央区", "港区", "新宿区", "文京区", "台東区", "墨田区", "江東区", "品川区", "目黒区", "大田区", "世田谷区", "渋谷区", "中野区", "杉並区",
+  "豊島区", "北区", "荒川区", "板橋区", "練馬区", "足立区", "葛飾区", "江戸川区"];
+var TAMA = "多摩・島しょ";
+var FEED = {}, FEED_TTL = 60 * 1000, FEED_OLD = false;             // FEED: 条件 → { t, items, more }。FEED_OLD: 受け皿が古い（写真だけ）
+RG.postsFeedStale = function () { FEED = {}; var m = document.querySelector(".modal .feed"); if (m && m.__reload) m.__reload(true); };
+var fs0 = { pf: "", ward: "", ty: "" };
+try { var sv = JSON.parse(localStorage.getItem("tsg.feed") || "null"); if (sv) fs0 = { pf: sv.pf || "", ward: sv.ward || "", ty: sv.ty || "" }; } catch (e) {}
+function saveFs() { try { localStorage.setItem("tsg.feed", JSON.stringify(fs0)); } catch (e) {} }
+
+/* 東京都の区（data/admin.js の区の形で判定。23 区の外は «多摩・島しょ»） */
+function inRing(x, y, r) {
+  var c = false;
+  for (var i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+    var xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-12) + xi)) c = !c;
+  }
+  return c;
+}
+var WCACHE = {};
+function wardOf(la, lo) {
+  var key = (+la).toFixed(4) + "," + (+lo).toFixed(4); if (WCACHE[key] !== undefined) return WCACHE[key];
+  var L = RG.ADMIN && RG.ADMIN.L2; if (!L) return null;              // まだ読み込んでいない
+  var hit = TAMA;
+  for (var i = 0; i < L.length; i++) {
+    var a = L[i]; if (WARDS.indexOf(a.n) < 0) continue;
+    var inside = false; for (var j = 0; j < a.r.length; j++) if (inRing(+lo, +la, a.r[j])) inside = !inside;
+    if (inside) { hit = a.n; break; }
+  }
+  return (WCACHE[key] = hit);
+}
+var ADM_WAIT = null;
+function needAdmin(cb) {
+  if (RG.ADMIN && RG.ADMIN.L2) { cb(); return; }
+  if (ADM_WAIT) { ADM_WAIT.push(cb); return; }
+  ADM_WAIT = [cb];
+  var v = document.documentElement.getAttribute("data-build") || "", sc = document.createElement("script");
+  sc.async = true; sc.src = "data/admin.js" + (v ? "?v=" + v : "");
+  sc.onload = sc.onerror = function () { var w = ADM_WAIT; ADM_WAIT = null; w.forEach(function (f) { try { f(); } catch (e) {} }); };
+  document.head.appendChild(sc);
+}
+function ago(ts) {
+  var s = (Date.now() - new Date(ts).getTime()) / 1000; if (!(s >= 0)) return fmtDate(ts);
+  return s < 60 ? "たったいま" : s < 3600 ? Math.floor(s / 60) + " 分前" : s < 86400 ? Math.floor(s / 3600) + " 時間前" : s < 86400 * 7 ? Math.floor(s / 86400) + " 日前" : fmtDate(ts);
+}
+function areaOf(it) {
+  var sp = it.x.spot, pf = sp.pf || prefOf(sp.la, sp.lo);
+  return pf === "東京都" ? pf + " " + (wardOf(sp.la, sp.lo) || "") : pf;
+}
+/* 受け皿から取る（条件ごとに 60 秒おぼえる）。before: これより古いもの（もっと見る） */
+function fetchFeed(pf, ty, before) {
+  var n = pf === "東京都" && fs0.ward ? 200 : 60;                 // 区で絞るときは多めに取って端末で絞る
+  var q = "a=feed&n=" + n + (pf ? "&pf=" + encodeURIComponent(pf) : "") + (ty ? "&t=" + ty : "") + (before ? "&before=" + encodeURIComponent(before) : "");
+  var p0 = FEED_OLD ? Promise.resolve({ error: "unknown" }) : get(q);
+  return p0.then(function (d) {
+    if (d && d.items) return { items: d.items, more: !!d.more };
+    if (d && d.error && d.error !== "unknown") throw new Error(d.error);
+    FEED_OLD = true;                                                  // 古い受け皿: 写真の新着だけ
+    if (before) return { items: [], more: false };
+    return get("a=recent&n=200").then(function (r) {
+      if (r.error) throw new Error(r.error);
+      var it = (r.photos || []).map(function (x) { return { ty: "p", ts: x.ts, x: x }; })
+        .filter(function (o) { return !pf || (o.x.spot.pf || prefOf(o.x.spot.la, o.x.spot.lo)) === pf; })
+        .filter(function (o) { return ty !== "c"; });
+      return { items: it, more: false };
+    });
+  });
+}
+RG.showFeed = function (pf) {
+  if (!RG.postsEnabled()) { if (RG.tripStatus) RG.tripStatus("投稿の受け皿がまだ準備されていません", "warn", 3000); return; }
+  if (pf != null && PREFS.indexOf(pf) >= 0 && pf !== fs0.pf) { fs0.pf = pf; fs0.ward = ""; saveFs(); }
+  calcMyUid();
+  var m = RG.openModal("🕒 みんなの新着", '<div class="feed"><div class="feed__ctl"></div><div class="feed__st" aria-live="polite"></div><ul class="feed__list"></ul><div class="feed__ft"></div></div>');
+  var host = m.querySelector(".feed"), items = [], more = false, busy = false, seen = 0, timer = null;
+  try { seen = +localStorage.getItem("tsg.feed.seen") || 0; } catch (e) {}
+  function ctl() {
+    host.querySelector(".feed__ctl").innerHTML =
+      '<select data-fpf aria-label="地域で絞る"><option value="">🗾 全国</option>' + PREFS.map(function (n) { return "<option" + (fs0.pf === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>" +
+      (fs0.pf === "東京都" ? '<select data-fward aria-label="区で絞る"><option value="">23 区と多摩・島しょ すべて</option>' + WARDS.concat([TAMA]).map(function (n) { return "<option" + (fs0.ward === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>" : "") +
+      '<div class="seg feed__ty" role="group" aria-label="種類">' + [["", "すべて"], ["p", "📷 写真"], ["c", "💬 声"]].map(function (t) { return '<button type="button" data-fty="' + t[0] + '" class="' + (fs0.ty === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + "</div>" +
+      '<button type="button" class="feed__rl" data-frl aria-label="最新にする">↻</button>';
+    var a = host.querySelector("[data-fpf]"); a.addEventListener("change", function () { fs0.pf = a.value; fs0.ward = ""; saveFs(); ctl(); load(true); });
+    var w = host.querySelector("[data-fward]"); if (w) w.addEventListener("change", function () { fs0.ward = w.value; saveFs(); load(true); });
+    Array.prototype.forEach.call(host.querySelectorAll("[data-fty]"), function (b) { b.addEventListener("click", function () { fs0.ty = b.dataset.fty; saveFs(); ctl(); load(true); }); });
+    host.querySelector("[data-frl]").addEventListener("click", function () { FEED = {}; load(true); });
+  }
+  function shown() { return items.filter(function (it) { return !(fs0.pf === "東京都" && fs0.ward) || wardOf(it.x.spot.la, it.x.spot.lo) === fs0.ward; }); }
+  function draw() {
+    var L = shown(), list = host.querySelector(".feed__list");
+    list.innerHTML = L.length ? L.map(function (it, j) {
+      var x = it.x, ph = it.ty === "p", nw = new Date(it.ts).getTime() > seen && seen > 0;
+      return '<li class="feed__li' + (nw ? " feed__li--new" : "") + '"><button type="button" class="feed__it" data-fi="' + j + '">' +
+        (ph ? '<img src="' + esc(thumbUrl(x.f, 72)) + '" alt="" loading="lazy" decoding="async" width="72" height="72">' : '<span class="feed__ic">💬</span>') +
+        '<span class="feed__tx"><b>' + esc(x.spot.n) + "</b><small>" + (nw ? '<em class="feed__nw">NEW</em>' : "") + esc(areaOf(it)) + " ・ " + ago(it.ts) +
+          (ph ? "" : x.pid ? " ・ 写真へのコメント" : "") + "</small>" + (ph ? (x.cap ? "<i>" + esc(x.cap) + "</i>" : "") : "<i>" + esc(x.text) + "</i>") + "</span></button>" +
+        '<div class="feed__by">' + nameBtn(x) + (x.uid === MYUID ? '<span class="feed__me">あなた</span>' : "") + "</div></li>";
+    }).join("") : '<li class="pst__ld">' + (busy ? "読み込んでいます…" : "この条件の投稿はまだありません。") + "</li>";
+    Array.prototype.forEach.call(list.querySelectorAll("[data-fi]"), function (b) { b.addEventListener("click", function () { var it = L[+b.dataset.fi]; openSpot({ k: it.x.k, spot: it.x.spot }); }); });
+    bindWho(list);
+    var ft = host.querySelector(".feed__ft");
+    ft.innerHTML = more ? '<button type="button" class="pst__send" data-fmore>もっと見る</button>' : L.length ? '<p class="pst__ld">ここまでです。</p>' : "";
+    var mb = ft.querySelector("[data-fmore]"); if (mb) mb.addEventListener("click", function () { loadMore(mb); });
+  }
+  function status(t) { host.querySelector(".feed__st").innerHTML = t; }
+  function stamp() {
+    var d = new Date();
+    status("🕒 " + d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2) + " 時点・開いているあいだは 60 秒ごとに自動で更新" +
+      (FEED_OLD ? '<br><small>いまは «写真» の新着だけを表示しています（«声» は受け皿の更新後に並びます）</small>' : ""));
+  }
+  function load(force) {
+    var key = fs0.pf + "|" + fs0.ty + "|" + (fs0.pf === "東京都" && fs0.ward ? "w" : ""), c = FEED[key];
+    if (c && !force && Date.now() - c.t < FEED_TTL) { items = c.items; more = c.more; draw(); stamp(); return; }
+    busy = true; if (!items.length) draw();
+    var pg = items.length ? null : Prog(host.querySelector(".feed__st")); if (pg) pg.creep(0.05, 0.9, 2500, "新着を読み込んでいます…");
+    var need = fs0.pf === "東京都" ? new Promise(function (r) { needAdmin(r); }) : Promise.resolve();
+    Promise.all([fetchFeed(fs0.pf, fs0.ty, ""), need]).then(function (a) {
+      var d = a[0]; busy = false;
+      var had = items.length ? new Date(items[0].ts).getTime() : 0, fresh = had ? d.items.filter(function (it) { return new Date(it.ts).getTime() > had; }).length : 0;
+      items = d.items; more = d.more; FEED[key] = { t: Date.now(), items: items, more: more };
+      if (!host.isConnected) return;
+      draw(); stamp();
+      if (fresh && !force) status(host.querySelector(".feed__st").innerHTML + ' <b class="feed__add">＋' + fresh + " 件 新しく届きました</b>");
+      if (items[0]) { try { localStorage.setItem("tsg.feed.seen", String(new Date(items[0].ts).getTime())); } catch (e) {} }
+    }).catch(function (e) { busy = false; if (host.isConnected) { draw(); status('<span class="pst__err">読み込めませんでした: ' + esc(e.message) + "</span>"); } });
+  }
+  function loadMore(btn) {
+    if (!items.length) return;
+    btn.disabled = true; btn.textContent = "読み込んでいます…";
+    fetchFeed(fs0.pf, fs0.ty, items[items.length - 1].ts).then(function (d) {
+      var have = {}; items.forEach(function (it) { have[(it.x.pid || it.x.cid)] = 1; });
+      items = items.concat(d.items.filter(function (it) { return !have[it.x.pid || it.x.cid]; })); more = d.more;
+      var key = fs0.pf + "|" + fs0.ty + "|" + (fs0.pf === "東京都" && fs0.ward ? "w" : ""); FEED[key] = { t: Date.now(), items: items, more: more };
+      if (host.isConnected) draw();
+    }).catch(function (e) { btn.disabled = false; btn.textContent = "もう一度（" + e.message + "）"; });
+  }
+  host.__reload = function () { load(true); };
+  ctl(); load(false);
+  timer = setInterval(function () {                                  // 開いているあいだだけ 60 秒ごと（画面が裏にあるときは休む）
+    if (!host.isConnected || !m.classList.contains("show")) { clearInterval(timer); return; }
+    if (document.visibilityState === "visible") load(false);
+  }, FEED_TTL);
+};
+document.addEventListener("click", function (e) {
+  var b = e.target && e.target.closest && e.target.closest("[data-feed]"); if (!b) return;
+  e.preventDefault(); e.stopPropagation(); RG.showFeed(b.getAttribute("data-feed") || "");
+}, true);
+/* ヘッダーの «みんなの新着» ボタン: 受け皿が設定されていれば出す */
+(function hdr(n) {
+  var b = document.getElementById("btn-feed"); if (!b) return;
+  if (RG.postsEnabled()) { b.hidden = false; b.addEventListener("click", function () { RG.showFeed(); }); return; }
+  if (n < 40) setTimeout(function () { hdr(n + 1); }, 1500);        // data/support.js は後から届く
+})(0);
 })(window.RG);
