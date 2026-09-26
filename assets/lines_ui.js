@@ -155,11 +155,14 @@ var Rail = (function () {
       '<div class="lr__row lr__row--g">' +
       genres.map(function (g) {
         var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
-        return '<button class="lr__i lr__i--g' + (g.enabled ? "" : " off") + '" type="button" ' +
+        // v122: 地図の印と同じ絵（RG.gMark）＋ 名前 ＋ 件数。アイコンだけでは何か分からないので名前を必ず出す
+        return '<button class="lr__i lr__i--g lr__i--v2' + (g.enabled ? "" : " off") + '" type="button" ' +
           'data-genre="' + esc(g.id) + '" style="--lc:' + g.c + '" aria-pressed="false" ' +
           'data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '" ' +
           (g.enabled ? "" : "disabled ") + 'aria-label="' + esc(g.label) + '">' +
-          '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>" +
+          (RG.gMark ? RG.gMark(g) : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +
+          '<span class="lr__lbl">' + esc(g.short || g.label) + "</span>" +
+          '<span class="lr__num">' + (!g.enabled ? "データなし" : n ? n.toLocaleString() : g.optIn ? "押すと出る" : "&nbsp;") + "</span>" +
           (g.optIn ? '<span class="lr__dot">▶</span>' : "") + "</button>"; }).join("") +
       "</div>" +
       '<div class="lr__note"><button class="lr__c" type="button" id="lr-legend">' +
@@ -175,7 +178,7 @@ var Rail = (function () {
       '<button class="lr__c lr__c--p" type="button" id="lr-pins">📌 自分のピン</button> ' +
       '<button class="lr__c lr__c--p" type="button" id="lr-pin">📌 自分のピン</button> ' +
       "アイコンを押すと、そのジャンルだけを地図に残します（<b>いくつでも選べます</b>）。" +
-      "うすいアイコンはデータが取れていないものです。名前の下の数字は地図にある件数です。</div>";
+      "地図の印と同じ絵です。うすいアイコンはデータが取れていないもの、名前の下の数字はいま読み込んである件数です。</div>";
     box.innerHTML =
       '<div class="lr__bar">' +
         '<span class="lr__tabs">' +
@@ -203,6 +206,7 @@ var Rail = (function () {
       $$(".lr__tab", box).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.tab === t)); });
       $$("[data-pane]", box).forEach(function (p) { p.hidden = p.dataset.pane !== t; });
       if (t === "buzz" && RG.buzzRailRefresh) RG.buzzRailRefresh(true);
+      if (t === "poi") refreshGenreCounts();   // v122: 開いたときに件数を数え直す
     }
     $$(".lr__tab", box).forEach(function (b) {
       b.addEventListener("click", function () {
@@ -384,7 +388,7 @@ var Rail = (function () {
           var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
           return '<button class="legend__r' + (g.enabled ? "" : " off") + '" type="button" data-lg="' +
             esc(g.id) + '"' + (g.enabled ? "" : " disabled") + ">" +
-            '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>" +
+            (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +   // v122: 地図と同じ印
             '<span class="legend__t"><b>' + esc(g.label) + "</b>" +
               "<i>" + esc(g.desc || "") + "</i>" +
               (g.enabled ? "" : '<u>⚠ ' + esc(g.reason || "データ未取得") + "</u>") + "</span>" +
@@ -556,8 +560,8 @@ var Rail = (function () {
   function showGenre(id, anchor) {
     var g = genreMeta(id), r = anchor.getBoundingClientRect();
     var n = (RG.MAPPOI || []).filter(function (p) { return p.g === id; }).length;
-    pop.innerHTML = '<div class="lp__h"><span class="gbadge gbadge--b" style="--lc:' + g.c + '">' +
-      g.e + '</span><div><b>' + esc(g.label) + "</b></div></div>" +
+    pop.innerHTML = '<div class="lp__h">' + (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge gbadge--b" style="--lc:' + g.c + '">' + g.e + "</span>") +
+      '<div><b>' + esc(g.label) + "</b></div></div>" +
       '<div class="lp__b">' + esc(g.desc || "") + "</div>" +
       (g.enabled ? '<div class="lp__b">地図に <b>' + n + "</b> 件</div>" +
                    '<div class="lp__t' + (g.optIn ? " lp__t--w" : "") + '">' + (id === "event"
@@ -577,6 +581,18 @@ var Rail = (function () {
     ST.genres = cur; save();
     RG.Map.setGenres(cur); syncGenreButtons();
   }
+  /* v122: スポットの種類の件数（データは段階的に届くので、届くたびに数え直す。1 回の走査で全ジャンル分） */
+  function refreshGenreCounts() {
+    var cnt = {}, P = RG.MAPPOI || [];
+    for (var i = 0; i < P.length; i++) { var k = P[i].g; cnt[k] = (cnt[k] || 0) + 1; }
+    $$(".lr__i--v2[data-genre]", box).forEach(function (b) {
+      var g = genreMeta(b.dataset.genre), n = cnt[b.dataset.genre] || 0, el = $(".lr__num", b);
+      b.classList.toggle("off", !g.enabled); b.disabled = !g.enabled;
+      if (el) el.textContent = !g.enabled ? "データなし" : n ? n.toLocaleString() : g.optIn ? "押すと出る" : "\u00a0";   // 0 件は «まだ読み込んでいない» ことが多いので空けておく
+    });
+  }
+  var rgcT = null;
+  document.addEventListener("rg:data", function () { clearTimeout(rgcT); rgcT = setTimeout(refreshGenreCounts, 1500); });
   function syncGenreButtons() {
     var cur = ST.genres || [];
     $$("[data-genre]", box).forEach(function (b) {
@@ -593,7 +609,7 @@ var Rail = (function () {
       sr.innerHTML = picked.length ? '<span class="lr__selh">選択中:</span>' + picked.map(function (id) {
         var g = (RG.GENRES || []).filter(function (x) { return x.id === id; })[0] || { e: "📍", label: id, c: "#888" };
         return '<button class="sel__c" type="button" data-unsel="' + esc(id) + '" style="--lc:' + g.c + '">' +
-          '<span class="sel__e">' + g.e + '</span><span class="sel__n">' + esc(g.label) + '</span><span class="sel__x">✕</span></button>'; }).join("") +
+          (RG.gMark && g.id ? RG.gMark(g, "gmk--sm") : '<span class="sel__e">' + g.e + "</span>") + '<span class="sel__n">' + esc(g.label) + '</span><span class="sel__x">✕</span></button>'; }).join("") +
         '<button class="lr__c" type="button" data-gnone2="1">ぜんぶ解除</button>' : "";
       $$("[data-unsel]", sr).forEach(function (b) { b.addEventListener("click", function () {
         ST.genres = (ST.genres || []).filter(function (x) { return x !== b.dataset.unsel; }); save(); syncGenreButtons(); }); });

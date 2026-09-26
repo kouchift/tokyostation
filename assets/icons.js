@@ -31,6 +31,26 @@ RG.gIconHtml = function (gid, emoji, cls) {
   if (id) return '<svg class="gic' + cls + '" aria-hidden="true" focusable="false"><use href="#' + id + '"></use></svg>';
   return '<span class="gic gic--e' + cls + '" aria-hidden="true">' + RG.esc(emoji || "📍") + "</span>";
 };
+/* v122: 地図の印と同じ見た目の «ジャンルの印»（ジャンルの色でべた塗りの丸＋白いアイコン＋白いふち）。
+   スポットの種類の一覧・アイコンの意味・選択中の札で使い、地図と一覧で同じ絵にそろえる。
+   アイコンが無いジャンルは地図と同じく絵文字（うすい色の丸＋色のふち）、レベチは王冠の絵、ライブカメラは赤い点つき */
+RG.gMark = function (g, cls) {
+  if (!g) return "";
+  var id = RG.iconId(g.id), inner, kind;
+  if (g.id === "levechi" && RG.LEVECHI_ICON) { inner = '<img src="' + RG.esc(RG.LEVECHI_ICON) + '" alt="">'; kind = "img"; }
+  else if (id) { inner = '<svg aria-hidden="true" focusable="false"><use href="#' + id + '"></use></svg>'; kind = "ic"; }
+  else { inner = "<span>" + RG.esc(g.e || "📍") + "</span>"; kind = "e"; }
+  return '<span class="gmk gmk--' + kind + (g.id === "camera" ? " gmk--live" : "") + (cls ? " " + cls : "") +
+    '" data-gmk="' + RG.esc(g.id) + '" data-gmkc="' + RG.esc(cls || "") + '" style="--pc:' + (g.c || "#888") + '" aria-hidden="true">' + inner + "</span>";
+};
+/* 絵（icons.svg）が後から届いたら、絵文字のままの印を差し替える */
+document.addEventListener("rg:icons", function () {
+  var els = document.querySelectorAll(".gmk--e[data-gmk]");
+  for (var i = 0; i < els.length; i++) {
+    var gid = els[i].getAttribute("data-gmk"), g = (RG.GENRES || []).filter(function (x) { return x.id === gid; })[0];
+    if (g && RG.iconId(gid)) els[i].outerHTML = RG.gMark(g, els[i].getAttribute("data-gmkc") || "");
+  }
+});
 /* 地図の印。中心 (x,y)・一辺 size の <use> を置く。アイコンが無ければ null（呼び出し側が setEmoji にする） */
 RG.setIcon = function (node, gid, x, y, size) {
   var id = RG.iconId(gid, true);

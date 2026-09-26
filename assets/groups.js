@@ -65,7 +65,7 @@ RG.buildGroupBar = function () {
         if (!g) return "";
         return '<button class="sel__c" type="button" data-unsel="' + esc(id) +
           '" style="--lc:' + g.c + '" title="' + esc(g.label) + " をやめる\">" +
-          (RG.gIconHtml ? RG.gIconHtml(id, g.e, "sel__e") : '<span class="sel__e">' + g.e + "</span>") +   // v101
+          (RG.gMark ? RG.gMark(g, "gmk--sm") : RG.gIconHtml ? RG.gIconHtml(id, g.e, "sel__e") : '<span class="sel__e">' + g.e + "</span>") +   // v101 → v122: 地図と同じ印
           '<span class="sel__n">' + esc(g.label) + "</span>" +
           '<span class="sel__k">' + countOf(id) + "</span>" +
           '<span class="sel__x">✕</span></button>';
@@ -112,7 +112,7 @@ RG.buildGroupBar = function () {
       if (!g) return "";
       return '<button class="sel__c" type="button" data-unsel="' + esc(id) +
         '" style="--lc:' + g.c + '">' +
-        (RG.gIconHtml ? RG.gIconHtml(id, g.e, "sel__e") : '<span class="sel__e">' + g.e + "</span>") +   // v101
+        (RG.gMark ? RG.gMark(g, "gmk--sm") : RG.gIconHtml ? RG.gIconHtml(id, g.e, "sel__e") : '<span class="sel__e">' + g.e + "</span>") +   // v101 → v122: 地図と同じ印
         '<span class="sel__n">' + esc(g.label) + "</span>" +
         '<span class="sel__k">' + countOf(id) + "</span>" +
         '<span class="sel__x">✕</span></button>';
@@ -183,7 +183,7 @@ function groupPanel(gid) {
       return '<button class="gi' + (on ? " on" : "") + (g.enabled ? "" : " off") +
         '" type="button" data-gid="' + esc(id) + '" style="--lc:' + g.c +
         '" data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '">' +
-        (RG.gIconHtml ? RG.gIconHtml(id, g.e, "gi__e") : '<span class="gi__e">' + g.e + "</span>") +   // v101
+        (RG.gMark ? RG.gMark(g, "gi__e") : RG.gIconHtml ? RG.gIconHtml(id, g.e, "gi__e") : '<span class="gi__e">' + g.e + "</span>") +   // v101 → v122: 地図と同じ印
         '<span class="gi__l">' + esc(g.label) + "</span>" +
         '<span class="gi__n">' + (g.enabled ? (n ? n : (g.optIn ? "▶" : "—")) : "—") + "</span>" +
         "</button>";

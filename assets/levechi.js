@@ -80,6 +80,8 @@ RG.levechiPaintBtn = function () {
 };
 /* 地図左上のボタン（データがあるときだけ） */
 RG.levechiInit = function () {
+  // v122: トップの地図には出さない（持ち主の指示。スポットの種類の «👑 レベチなレストラン» と、店のカードの «レベチだけ表示» から出せる）
+  if (!RG.LEVECHI_TOPBTN) return;
   if (document.getElementById("lv-only")) { RG.levechiPaintBtn(); return; }
   if (!RG.LEVECHI || !RG.LEVECHI.length) return;
   var host = document.querySelector(".mapwrap"); if (!host) return;
