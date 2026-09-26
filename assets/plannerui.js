@@ -101,7 +101,7 @@ function useGeo(retry) {
       if (!best || km < best.km) best = { s: s, km: km };
     });
     var acc = p.coords.accuracy ? "±" + Math.round(p.coords.accuracy) + "m" : "";
-    setOrigin(c, "現在地（" + best.s.n + "駅から約" + best.km.toFixed(1) + "km" +
+    setOrigin(c, "現在地（" + RG.stLabel(best.s) + "から約" + best.km.toFixed(1) + "km" +
                  (acc ? " / 精度" + acc : "") + "）", null, p.coords.accuracy);
     if (RG.viewAround) RG.viewAround(c[0], c[1]); else RG.Map.gotoLatLng(c[0], c[1], 340);   // v113: 前後 2〜3 駅が入る広さ
   }, function (e) {
@@ -406,7 +406,7 @@ RG.showSpot = function (p) {
     fromHtml +
     (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
     '<div class="exgrid">' +
-      exrow("📍 最寄り駅", near.length ? near[0].t.n + "駅" : "—",
+      exrow("📍 最寄り駅", near.length ? RG.stLabel(near[0].t) : "—",
             near.length ? "徒歩 約" + Math.round(near[0].km * DT / W.speed * 60) + "分（" +
               Math.round(near[0].km * 1000) + "m）" : "半径2km内に駅なし") +
       exrow("🚉 徒歩圏の駅", near.length + " 駅",
@@ -701,6 +701,8 @@ function pareto(r) {
     "線より上の点は、時間でも費用でも他に負けています。</p></div>";
 }
 
+/* v124: 2 時間を超える所要は «20時間19分» の形で（島への船・夜行便） */
+function durHtml(m) { m = Math.round(m); return m < 120 ? m + "<i>分</i>" : Math.floor(m / 60) + "<i>時間</i>" + (m % 60 ? (m % 60) + "<i>分</i>" : ""); }
 function optCard(o, i, ctx) {
   var b = [];
   if (o.stopped) b.push('<span class="ob ob--stop">いまは運休の時間帯</span>');
@@ -716,7 +718,7 @@ function optCard(o, i, ctx) {
   var head = RG.Plan.adults + RG.Plan.kids;
   return '<div class="opt' + (o.stopped ? " opt--stop" : "") + '" data-i="' + i + '" style="--c:' + o.m.color + '">' +
     '<div class="opt__hd"><span class="opt__em">' + o.m.emoji + '</span><b>' + esc(o.m.label) + "</b>" +
-    '<span class="opt__t">' + o.minutes + "<i>分</i></span><span class=\"opt__y\">" + yen(o.yen) +
+    '<span class="opt__t">' + durHtml(o.minutes) + "</span><span class=\"opt__y\">" + yen(o.yen) + (o.yenPlus ? '<i class="opt__plus">' + esc(o.yenPlus) + "</i>" : "") +
     (head > 1 ? '<i class="opt__party">' + head + "人 " + yen(pc) + "</i>" : "") + "</span></div>" +
     '<div class="opt__bar"><i style="width:' + Math.min(100, o.minutes / 120 * 100) + '%"></i></div>' +
     '<div class="opt__badges">' + b.join("") + "</div>" +
@@ -766,10 +768,10 @@ function summaryHtml(r, s, rec) {
     (dz ? '<button class="rs__dis rs__dis--' + dz.sev + '" type="button" onclick="RG.showTrainInfo()">' + dz.c.e + " <b>" + esc(RG.tinfoItemLine(dz)) + "</b> " + esc(dz.st || RG.tinfoSevLabel(dz.sev)) +
       (dz.c.t ? "（" + esc(dz.c.t) + "）" : "") + (rec.disrupt.length > 1 ? " ほか" + (rec.disrupt.length - 1) + "件" : "") + "<span>" + (dz.sev === 2 ? "遅れを見込んだ所要です" : "詳しく") + " ›</span></button>" : "") +
     '<div class="rs__grid">' +
-      '<div class="rs__c"><small>所要</small><b>' + rec.minutes + '<i>分</i></b></div>' +
+      '<div class="rs__c"><small>所要</small><b>' + durHtml(rec.minutes) + '</b></div>' +
       '<div class="rs__c"><small>乗換</small><b>' + (x != null ? x + "<i>回</i>" : "—") + "</b></div>" +
       '<div class="rs__c"><small>徒歩</small><b>' + (w != null ? w + "<i>分</i>" : "—") + "</b></div>" +
-      '<div class="rs__c"><small>費用</small><b>' + yen(rec.yen) + "</b></div>" +
+      '<div class="rs__c"><small>費用</small><b>' + yen(rec.yen) + (rec.yenPlus ? '<i class="opt__plus">' + esc(rec.yenPlus) + "</i>" : "") + "</b></div>" +
     "</div>" +
     (f.length ? '<div class="rs__feat">' + f.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("") + "</div>" : "") +
     '<div class="rs__acts"><button class="opt__b opt__b--nav" type="button" data-nav="' + rec.__i + '">🗺️ 地図で経路を見る</button>' +
@@ -805,7 +807,7 @@ function showRoutes(destId) {
   }
   var r = RG.Planner.estimate(Trip.origin, [s.la, s.lo], Trip.when, Trip.aggr);
   var kl = { day: "日中", peak: "ラッシュ", night: "深夜・早朝" }[r.hourKind];
-  var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(s.n) + "駅</b>" +
+  var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(RG.stLabel(s)) + "</b>" +
     ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '">🪪 ルートカードを作る</button>' +
     ' <button class="rt__card rt__share" type="button" data-rshare="' + esc(s.id) + '">🔗 この検索を共有</button>' +
     (RG.favs ? ' <button class="rt__card rt__fav' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? " on" : "") + '" type="button" data-rfav="' + esc(s.id) + '" aria-pressed="' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "true" : "false") + '">' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "★ お気に入り" : "☆ お気に入り") + "</button>" : "") + "</div>" +
@@ -859,7 +861,7 @@ function showRoutes(destId) {
     b.addEventListener("click", function () {
       RG.Nav.destId = s.id;
       RG.closeModal();
-      RG.startNav([s.la, s.lo], s.n + "駅", r.options[+b.dataset.nav]);
+      RG.startNav([s.la, s.lo], RG.stLabel(s), r.options[+b.dataset.nav]);
     });
   });
   $$("[data-sort]", m).forEach(function (b) {
@@ -887,8 +889,8 @@ function showRoutes(destId) {
   });
   var sh = $("[data-rshare]", m);
   if (sh) sh.addEventListener("click", function () {
-    var url = RG.routeShareUrl(s.id), txt = "【" + Trip.label + " → " + s.n + "駅】" + (recOpt ? " " + recOpt.m.emoji + " " + recOpt.m.label + " 約" + recOpt.minutes + "分・" + yen(recOpt.yen) : "") + "\n東京ステーションガイドで移動手段をくらべる →";
-    if (RG.snsOpen) RG.snsOpen("🔗 この検索を共有", { title: Trip.label + " → " + s.n + "駅", text: txt, url: url }, { main: "line", primary: ["line", "x", "copy"] });
+    var url = RG.routeShareUrl(s.id), txt = "【" + Trip.label + " → " + RG.stLabel(s) + "】" + (recOpt ? " " + recOpt.m.emoji + " " + recOpt.m.label + " 約" + recOpt.minutes + "分・" + yen(recOpt.yen) : "") + "\n東京ステーションガイドで移動手段をくらべる →";
+    if (RG.snsOpen) RG.snsOpen("🔗 この検索を共有", { title: Trip.label + " → " + RG.stLabel(s), text: txt, url: url }, { main: "line", primary: ["line", "x", "copy"] });
     else if (navigator.clipboard) navigator.clipboard.writeText(url);
   });
   $$("[data-act]", m).forEach(function (b) {
@@ -896,7 +898,7 @@ function showRoutes(destId) {
   });
   $$("[data-add]", m).forEach(function (b) {
     b.addEventListener("click", function () {
-      RG.addRouteToPlan(r.options[+b.dataset.add], r, Trip.label, s.n + "駅", s.id);
+      RG.addRouteToPlan(r.options[+b.dataset.add], r, Trip.label, RG.stLabel(s), s.id);
       b.textContent = "✓ 追加ずみ"; b.disabled = true;
     });
   });

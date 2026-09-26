@@ -190,7 +190,8 @@ function railField(from, date) {
   var ins = accessPoints(from, 25, 3.0);
   if (!ins.length) return {};
   var dist = {}, S = {}, heap = new Heap();
-  var TI = P.__noBlock ? null : (RG.tinfoLine || null);   // v123: 運行情報（止まっている路線は使わない・遅れは目安を足す）。__noBlock = 止まっている路線しか無いときの予備の探索
+  var TI = P.__noBlock ? null : (RG.tinfoLine || null);
+  var EX = (RG.EXT && RG.EXT.lines) || {}, EXL = (RG.EXT && RG.EXT.link) || {}, T0 = date.getHours() * 60 + date.getMinutes();   // v124: 船・ヘリ・島の飛行機（時刻表つき）   // v123: 運行情報（止まっている路線は使わない・遅れは目安を足す）。__noBlock = 止まっている路線しか無いときの予備の探索
   /* 状態: key = 駅id + SEP + 路線名（"" = 駅に着いただけ／歩いて来た） */
   function relax(key, d, st) { if (dist[key] == null || d < dist[key]) { dist[key] = d; S[key] = st; heap.push(d, key); } }
   ins.forEach(function (i) {
@@ -203,11 +204,42 @@ function railField(from, date) {
     var iu = S[key], u = iu.id, adj = RG.adj[u]; if (!adj) continue;
     for (var a = 0; a < adj.length; a++) {
       var e = adj[a], line = e.line || "(不明)", step, pen = 0, xfer = 0, nkm = null, nline = line, boarded = true;
+      var xl = null, xdep = null, nlb = iu.lb, ntrip = null;
       if (line === "乗り換え") {
         if (!iu.line) continue;                                          // 着いただけ／歩いて来た直後にまた歩くのは無し（近くの駅は乗車候補に入っている）
-        step = e.km * WD / W.speed * 60 + (T.walkXferMin || 2);         // 歩く＋改札・階段
+        var lk = EXL[u + "|" + e.to];
+        step = lk ? lk.min : e.km * WD / W.speed * 60 + (T.walkXferMin || 2);   // 歩く＋改札・階段（港・空港との間は決めた分数）
         xfer = 1; nline = ""; boarded = iu.boarded;
         pen += xp + (kids ? stepBonus(u) : 0);
+      } else if ((xl = EX[line])) {
+        /* v124: 船・ヘリ・島の飛行機。乗るときは «次の便» まで待つ（締め切り分を足す）。乗ったままなら次の港までの時間 */
+        var k2 = u + ">" + e.to, clock = T0 + iu.real, same = iu.line === line, tr = same ? iu.trip : null;
+        var cont = tr ? xl.tn[tr.id + "|" + k2] : null;
+        if (cont != null) { step = tr.day + cont - clock; ntrip = tr; xdep = iu.dep; }   // 同じ便に乗ったまま次の港へ
+        else {
+          var ready = clock + (same ? 0 : (xl.spec.checkin || 0)), deps = xl.dep[k2];   // 乗り継ぎ（同じ会社の次の便）は締め切りを足さない
+          if (deps && deps.length) {
+            var day = Math.floor(ready / 1440) * 1440, pick = null;
+            for (var q = 0; q < deps.length && !pick; q++) if (day + deps[q][0] >= ready) pick = deps[q];
+            if (!pick) { pick = deps[0]; day += 1440; }
+            xdep = day + pick[0]; step = (day + pick[1]) - clock; ntrip = { id: pick[3], day: day };
+          } else if (xl.hop[k2] != null) {
+            if (same) step = xl.hop[k2];
+            else {
+              var w0 = xl.spec.wait || 30, tod = ((ready % 1440) + 1440) % 1440, h = xl.spec.hours;
+              if (h && (tod < h[0] || tod > h[1])) w0 += (tod < h[0] ? h[0] - tod : 1440 - tod + h[0]);   // 営業時間外は開くまで待つ
+              step = (xl.spec.checkin || 0) + w0 + xl.hop[k2];
+            }
+          } else continue;
+          if (!same) { nlb = u; if (iu.line) { xfer = 1; pen += xp; } }
+          else if (xdep != null && iu.dep != null) xdep = iu.dep;         // 表示の «発» は最初に乗った便のもの
+        }
+        nkm = {}; for (var k3 in iu.km) nkm[k3] = iu.km[k3];
+        var lb = iu.line === line ? iu.lb : u, f1 = xl.fare(lb, e.to), f0 = lb === u ? 0 : xl.fare(lb, u);
+        /* 運賃は «乗った港→降りる港» の表の額（区間の足し算ではない）。着く時刻が同じなら安い方を選ぶ（2,000 円 ＝ 1 分ぶん・表示の所要には入れない）。
+           運賃が分からない便は «2.5 万円くらい» として比べる（表示には出さない） */
+        if (f1 == null || f0 == null) { nkm.UNK = 1; if (!same) pen += 25000 / 2000; }
+        else { nkm.FIX = (nkm.FIX || 0) + f1 - f0; pen += (f1 - f0) / 2000; }
       } else {
         var shin = /新幹線|博多南線/.test(line);
         var dz = TI ? TI(line, u, e.to) : null;                         // 区間が分かっている情報は、その区間の辺だけに効く
@@ -230,7 +262,7 @@ function railField(from, date) {
       }
       var nd = top[0] + step + pen;
       relax(e.to + SEP + nline, nd, { id: e.to, line: nline, access: iu.access, km: nkm || iu.km, transfers: iu.transfers + xfer,
-                                       board: iu.board, prev: key, real: iu.real + step, boarded: boarded });
+                                       board: iu.board, prev: key, real: iu.real + step, boarded: boarded, lb: nlb, dep: xdep != null ? xdep : (iu.line === line ? iu.dep : null), trip: ntrip });
     }
   }
   /* 駅ごとに «いちばん早い状態» を代表にする（電車で着いた状態を優先） */
@@ -242,6 +274,8 @@ function railField(from, date) {
   Object.keys(out).forEach(function (id) {
     var key = out[id], i = S[key], yen = 0, note = [];
     Object.keys(i.km).forEach(function (fk) {
+      if (fk === "FIX") { yen += i.km.FIX; note.push("船・ヘリ・島の飛行機・水上バス " + Math.round(i.km.FIX).toLocaleString() + "円（公式の運賃表）"); return; }
+      if (fk === "UNK") { note.push("⚠ 運賃が決まっていない区間があります（合計に入っていません）"); return; }
       var f = C.fares.rail[fk]; if (!f) return;
       var v = tableFare(f.table, i.km[fk]);
       yen += v; note.push(f.operator + " " + i.km[fk].toFixed(1) + "km → " + v + "円");
@@ -274,12 +308,12 @@ P.railPath = function (from, to, date) {
   while (key && guard++ < 3000) {
     var st = S[key]; if (!st) break;
     ids.push(st.id);
-    if (st.line && st.prev) { var pst = S[st.prev]; if (!segs.length || segs[0].line !== st.line) segs.unshift({ line: st.line, ids: [st.id, pst.id] }); else segs[0].ids.push(pst.id); }
+    if (st.line && st.prev) { var pst = S[st.prev]; if (!segs.length || segs[0].line !== st.line) segs.unshift({ line: st.line, ids: [st.id, pst.id], arr: st.real, dep: st.dep }); else { segs[0].ids.push(pst.id); if (st.dep != null) segs[0].dep = st.dep; } }
     key = st.prev;
   }
   ids.reverse(); segs.forEach(function (g) { g.ids.reverse(); });
   var shin = segs.some(function (g) { return /新幹線/.test(g.line); });
-  return { ids: ids, segs: segs, board: r.board, alight: r.alight, minutes: r.minutes, yen: r.yen, shinkansen: shin, transfers: r.transfers };
+  return { ids: ids, segs: segs, board: r.board, alight: r.alight, minutes: r.minutes, yen: r.yen, shinkansen: shin, transfers: r.transfers, t0: date.getHours() * 60 + date.getMinutes() };
 };
 
 /* v123: 運転見合わせの路線を避けると経路が無くなるとき（駅がその路線にしか無い・データの穴）は、避けずに探し直して «止まっている路線を使う» 印を付ける */
@@ -310,6 +344,37 @@ function railRoute0(from, to, date) {
   return best;
 }
 P.railRoute = railRoute;
+
+/* v124: 経路の中の «船・ヘリ・島の飛行機・水上バス・渡し» の区間 → 表示用 */
+var XE = { ship: "⛴️", jet: "🚤", boat: "🛥️", heli: "🚁", plane: "🛩️" };
+function hhmm(m) { m = Math.round(m); var d = Math.floor(m / 1440), t = ((m % 1440) + 1440) % 1440; return (d > 0 ? (d === 1 ? "翌" : d + "日後 ") : "") + Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); }
+function extLegs(from, to, date) {
+  var out = { legs: [], lines: [], links: [], label: "", emoji: "", color: "" };
+  if (!RG.EXT || !Object.keys(RG.EXT.lines).length) return out;
+  var rp = null; try { rp = P.railPath(from, to, date); } catch (e) { rp = null; }
+  if (!rp || !rp.segs) return out;
+  var modes = {}, rail = false;
+  rp.segs.forEach(function (g) {
+    var X = RG.EXT.lines[g.line];
+    if (!X) { rail = true; return; }
+    var a = RG.byId[g.ids[0]], b = RG.byId[g.ids[g.ids.length - 1]], sp = X.spec, rare = sp.rare;
+    modes[sp.mode] = 1;
+    var dep = g.dep != null ? g.dep : null, arr = rp.t0 + g.arr;
+    var f = X.fare(g.ids[0], g.ids[g.ids.length - 1]);
+    out.legs.push({ line: g.line, mode: sp.mode, from: a && a.n, to: b && b.n, dep: dep, arr: arr, yen: f, url: sp.url });
+    if (f == null) out.yenPlus = sp.mode === "plane" ? "＋航空運賃" : "＋運賃";
+    out.lines.push((XE[sp.mode] || "⛴️") + " " + g.line + "：" + (a ? a.n : "") + (dep != null ? " " + hhmm(dep) + "発" : "") + " → " + (b ? b.n : "") + " " + hhmm(arr) + "着" +
+      (f != null ? "（" + f.toLocaleString() + "円）" : "（運賃は公式で）") + (rare ? " ⚠ 毎日は出ていません" : ""));
+    if (sp.days) out.lines.push("　└ " + sp.days);
+    if (sp.url && !out.links.some(function (l) { return l.u === sp.url; })) out.links.push({ t: sp.op + " の時刻・運賃", u: sp.url });
+  });
+  if (!out.legs.length) return out;
+  var m = modes.heli ? "heli" : modes.plane ? "plane" : modes.jet ? "jet" : modes.ship ? "ship" : "boat";
+  var nm = { heli: "ヘリ", plane: "飛行機（島）", jet: "高速船", ship: "船", boat: "水上バス・渡し" }[m];
+  out.label = (rail ? "電車＋" : "") + nm; out.emoji = XE[m]; out.color = { heli: "#C1272D", plane: "#0B5CAD", jet: "#E4007F", ship: "#1D3F8F", boat: "#0098D8" }[m];
+  out.lines.unshift("🕒 出発 " + hhmm(rp.t0) + " として、次の便を待つ時間も所要に入れています");
+  return out;
+}
 
 /* ======================================================= 単一手段の見積り */
 function baseOptions(from, to, date, aggr) {
@@ -342,17 +407,22 @@ function baseOptions(from, to, date, aggr) {
     var stopped = P.isAfterLastTrain(date);
     var usesShin = (r.fareNote || []).some(function (n) { return /新幹線/.test(n); });
     var dis = RG.tinfoImpact ? RG.tinfoImpact(from, to, date) : [];   // v123: この経路で使う路線に出ている運行情報
-    push({ id: "train", disrupt: dis, m: usesShin ? { label: "新幹線＋電車", emoji: "🚄", color: "#0071BC", conf: C.modes.train.conf } : C.modes.train, minutes: r.minutes, yen: r.yen, rail: r, stopped: stopped,
-      detail: [(RG.byId[r.board] ? RG.byId[r.board].n : r.board) + "駅から乗車（徒歩" +
+    var xs = extLegs(from, to, date);                                  // v124: 船・ヘリ・島の飛行機の区間
+    var mm = usesShin ? { label: "新幹線＋電車", emoji: "🚄", color: "#0071BC", conf: C.modes.train.conf } : C.modes.train;
+    if (xs.legs.length) mm = { label: xs.label, emoji: xs.emoji, color: xs.color, conf: "中（時刻・運賃は各社公式の掲載値）" };
+    if (xs.legs.length) stopped = false;                               // 船・飛行機は «終電後» の判定を使わない（次の便まで待つ時間が所要に入っている）
+    push({ id: "train", disrupt: dis, ext: xs.legs, yenPlus: xs.yenPlus || "", m: mm, minutes: r.minutes, yen: r.yen, rail: r, stopped: stopped,
+      detail: xs.lines.concat([(RG.byId[r.board] ? RG.byId[r.board].n : r.board) + (RG.byId[r.board] && RG.byId[r.board].ext ? "" : "駅") + "から乗車（徒歩" +
                  Math.round(r.accessMin) + "分）",
-               (RG.byId[r.alight] ? RG.byId[r.alight].n : r.alight) + "駅で下車（徒歩" +
+               (RG.byId[r.alight] ? RG.byId[r.alight].n : r.alight) + (RG.byId[r.alight] && RG.byId[r.alight].ext ? "" : "駅") + "で下車（徒歩" +
                  Math.round(r.egressMin) + "分）",
-               "乗換 " + r.transfers + " 回"].concat(dis.map(function (it) {
+               "乗換 " + r.transfers + " 回"]).concat(dis.map(function (it) {
                  return it.c.e + " " + RG.tinfoItemLine(it) + "：" + (it.st || RG.tinfoSevLabel(it.sev)) + (it.c.t ? "（" + it.c.t + "）" : "") + " — この経路で使う路線です";
                })).concat(r.viaStopped ? ["🚨 運転を見合わせている路線を使わないと着けません（この駅はその路線にしか乗れないか、地図のデータに迂回路がありません）。再開を待つか、バス・タクシーの案も見てください"]
                  : RG.tinfo && RG.tinfo.items && RG.tinfo.items.some(function (it) { return it.sev >= 3; }) ? ["🚦 運転を見合わせている区間は避けて探しています"] : []).concat(A.kids ? ["ベビーカーでの移動を考慮しています（乗り換えの少なさと、現場メモで動きやすいとされた駅を優先）"] : []).concat(r.fareNote)
         .concat(stopped ? ["🌙 いまは終電後の時間帯です。この案は始発以降でないと成立しません"] : []),
-      conf: "中（運賃テーブルは要検証）" });
+      conf: xs.legs.length ? "中（船・ヘリ・島の飛行機の時刻と運賃は公式の掲載値。運航日・欠航は要確認）" : "中（運賃テーブルは要検証）",
+      links: xs.links });
   }
 
   var mt = C.modes.taxi, tkm = st * C.detour.car;

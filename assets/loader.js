@@ -26,7 +26,8 @@
 
 /* 第1段：これが無いと地図が描けない小さな設定（合計 約40KB） */
 var CORE = ["data/version.js", "data/config.js", "data/lines_meta.js",
-            "data/genres.js", "data/score.js", "data/areas.js", "data/focus.js"];
+            "data/genres.js", "data/score.js", "data/areas.js", "data/focus.js",
+            "data/transit_tokyo.js"];   // v124: 島への船・ヘリ・島の飛行機・水上バス・渡し（路線網に足す）
 
 /* 第2段：地図が出たあと、端末が暇なときに順に足す（合計 約2MB・gzip後 約600KB） */
 var IDLE = [

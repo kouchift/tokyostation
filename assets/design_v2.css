@@ -274,3 +274,13 @@ body {
   font: inherit; font-size: 13px; color: #fff; background: #D0021B; text-align: left; cursor: pointer; }
 .rs__dis--2 { background: #E67700; } .rs__dis--1 { background: #8A6D00; }
 .rs__dis span { margin-left: auto; font-size: 12px; font-weight: 800; background: rgba(255, 255, 255, .22); border-radius: 999px; padding: 2px 10px; }
+
+/* ---- v124: 島への船・ヘリ・島の飛行機・水上バス・渡し船（data/transit_tokyo.js）---- */
+#map .ln--ext { vector-effect: non-scaling-stroke; opacity: .9 !important; }
+#map .ln--ship, #map .ln--jet { stroke-dasharray: 9px 6px; }
+#map .ln--boat { stroke-dasharray: 5px 4px; }
+#map .ln--heli { stroke-dasharray: 2px 5px; stroke-linecap: round; }
+#map .ln--plane { stroke-dasharray: 1px 7px; stroke-linecap: round; }
+.opt__plus { display: block; font-style: normal; font-size: 10px; font-weight: 700; color: #8A6D00; }
+/* v124: 駅カードの路線のチップ（路線の色で塗る）。v117 のチップ共通の «うすい背景» が路線の色まで消して、白い文字が読めなくなっていた */
+.lchip.lchip--go, .lchip.lchip--sk { background: var(--lc, #6B7280) !important; border-color: transparent !important; color: #fff !important; }

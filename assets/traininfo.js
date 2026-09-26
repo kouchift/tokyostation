@@ -154,10 +154,11 @@ function ingest(j) {
   /* 路線ごと: w = 路線まるごとの重さ、E = { 辺: 重さ }（区間が分かったもの） */
   var by = {};
   function put(n, it, edges, exact) {
-    var o = by[n] = by[n] || { sev: 0, w: 0, E: {}, exact: false, items: [], dmin: 0 };
+    var o = by[n] = by[n] || { sev: 0, w: 0, E: {}, U: {}, exact: false, items: [], dmin: 0 };
     o.sev = Math.max(o.sev, it.sev); if (o.items.indexOf(it) < 0) o.items.push(it);
     if (it.sev === 2) o.dmin = Math.max(o.dmin, it.dmin || 10);
-    if (edges) edges.forEach(function (k) { o.E[k] = Math.max(o.E[k] || 0, it.sev); });
+    /* exact でない（線路名に別の運転系統が同居。例: 中央本線 = 中央線快速＋各駅停車）区間は U（«影響があるかも»）: 乗れなくはしない */
+    if (edges) edges.forEach(function (k) { var T = exact ? o.E : o.U; T[k] = Math.max(T[k] || 0, it.sev); });
     else { o.w = Math.max(o.w, it.sev); if (exact) o.exact = true; }
   }
   items.forEach(function (it) {
@@ -169,7 +170,7 @@ function ingest(j) {
       if (!acc.length && dflt) { var d = sectionEdges(n, dflt[0], dflt[1]); if (d) acc = d; }
       return acc.length ? acc : null;
     }
-    it.map.lines.forEach(function (n) { var es = edgesOn(n, null); put(n, it, es, true); });
+    it.map.lines.forEach(function (n) { var es = edgesOn(n, null); put(n, it, es, true); });   // まるごと重なる路線の区間は exact
     it.map.part.forEach(function (p) { var es = edgesOn(p[0], [p[1], p[2]]); if (es) put(p[0], it, es, false); });   // 区間が決まらない «一部» の路線は色を付けない（まるごと赤くすると誤解を招く）
   });
   var sig = items.map(function (it) { return it.id + ":" + it.sev + ":" + it.text.length; }).join(",");
@@ -188,10 +189,14 @@ function ingest(j) {
 RG.tinfoLine = function (name, a, b) {
   var o = ST.byLine[name]; if (!o || !o.sev) return null;
   var sv = o.w, sec = false;
-  if (a != null && b != null) { var e = o.E[ek(a, b)]; if (e) { sv = Math.max(sv, e); sec = true; } }
-  else sv = o.sev;
+  var maybe = false;
+  if (a != null && b != null) {
+    var k = ek(a, b), e = o.E[k], u = o.U[k];
+    if (e) { sv = Math.max(sv, e); sec = true; }
+    if (u && u > sv) { sv = u; maybe = true; }
+  } else sv = o.sev;
   if (!sv) return null;
-  return { sev: sv, exact: o.exact || sec, items: o.items, dmin: o.dmin };
+  return { sev: sv, exact: (o.exact && o.w >= sv) || (sec && !maybe), maybe: maybe, items: o.items, dmin: o.dmin };
 };
 /* 経路（区間の路線名の列）に影響のある運行情報 */
 /* lines: 路線名の列、または [{line, ids:[駅id…]}]（区間つき。区間の外の情報は数えない） */
@@ -200,7 +205,7 @@ RG.tinfoForLines = function (lines) {
   (lines || []).forEach(function (g) {
     var n = typeof g === "string" ? g : g.line, o = ST.byLine[n]; if (!o) return;
     var touch = o.w > 0 || typeof g === "string" || !g.ids;
-    if (!touch) for (var i = 1; i < g.ids.length; i++) if (o.E[ek(g.ids[i - 1], g.ids[i])]) { touch = true; break; }
+    if (!touch) for (var i = 1; i < g.ids.length; i++) { var kk = ek(g.ids[i - 1], g.ids[i]); if (o.E[kk] || o.U[kk]) { touch = true; break; } }
     if (!touch) return;
     o.items.forEach(function (it) { if (!seen[it.id]) { seen[it.id] = 1; out.push(it); } });
   });
@@ -236,7 +241,8 @@ function paint(changed) {
   Object.keys(ST.byLine).forEach(function (n) {
     var o = ST.byLine[n];
     if (o.w) list.push({ line: n, sev: o.w });
-    var bySev = {}; Object.keys(o.E).forEach(function (k) { if (o.E[k] > o.w) (bySev[o.E[k]] = bySev[o.E[k]] || []).push(k); });
+    var bySev = {}, EU = {}; Object.keys(o.U).forEach(function (k) { EU[k] = o.U[k]; }); Object.keys(o.E).forEach(function (k) { EU[k] = Math.max(EU[k] || 0, o.E[k]); });
+    Object.keys(EU).forEach(function (k) { if (EU[k] > o.w) (bySev[EU[k]] = bySev[EU[k]] || []).push(k); });
     Object.keys(bySev).forEach(function (sv) { list.push({ line: n, sev: +sv, d: segD(bySev[sv]) }); });
   });
   if (RG.Map && RG.Map.paintDisrupt) RG.Map.paintDisrupt(list);
@@ -273,7 +279,7 @@ RG.tinfoFocus = function (on, it) {
     var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     Object.keys(ST.byLine).forEach(function (n) {
       var o = ST.byLine[n]; if (it && o.items.indexOf(it) < 0) return;
-      var ks = o.w ? lineEdges(n).map(function (e) { return ek(e[0], e[1]); }) : Object.keys(o.E);
+      var ks = o.w ? lineEdges(n).map(function (e) { return ek(e[0], e[1]); }) : Object.keys(o.E).concat(Object.keys(o.U));
       ks.forEach(function (k) { k.split("|").forEach(function (id) { var t = RG.byId[id]; if (!t) return; x0 = Math.min(x0, t.x); y0 = Math.min(y0, t.y); x1 = Math.max(x1, t.x); y1 = Math.max(y1, t.y); }); });
     });
     if (isFinite(x0)) try { RG.Map.fitBox(x0, y0, x1, y1, 1.25); } catch (e) {}

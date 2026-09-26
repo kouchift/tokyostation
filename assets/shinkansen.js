@@ -44,7 +44,7 @@ RG.shinkansenHtml = function (name) {
   var pass = (s.stops || []).filter(function (x) { return x.stop === "none"; }).map(function (x) { return x.svc; });
   var lines = (s.lines || []).map(function (L) {
     var Lm = SK.lines[L] || {};
-    return '<button class="lchip lchip--sk" type="button" data-skline="' + esc(L) + '" style="background:' + (Lm.color || "#1e50a2") + '">🚄 ' + esc(L) + "</button>";
+    return '<button class="lchip lchip--sk" type="button" data-skline="' + esc(L) + '" style="--lc:' + (Lm.color || "#1e50a2") + ';background:' + (Lm.color || "#1e50a2") + '">🚄 ' + esc(L) + "</button>";
   }).join("");
   var facts = [
     s.y ? ["新幹線開業", s.y + "年" + (s.y0 && s.y0 !== s.y ? "（駅自体は " + s.y0 + " 年）" : "")] : null,
