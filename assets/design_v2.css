@@ -568,3 +568,33 @@ body.night .hkc__story p, body.night .hkc__lead { color: #eee; } body.night .hkc
 .bz__stk p { width: 100%; margin: 2px 0 0; font-size: 11.5px; color: #777; }
 .bz__hot { font-size: 11px; color: #fff; background: linear-gradient(135deg, #D50000, #FF6D00); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
 .bz__m { font-size: 11px; font-weight: 800; color: #BF360C; margin-left: 4px; }
+/* v135: 大項目の読み物 */
+.hl__cta { display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 0; border-radius: 14px; padding: 10px 14px; margin: 0 0 10px; font: inherit; text-align: left; cursor: pointer; color: #fff; background: linear-gradient(135deg, #0D47A1, #1976D2 55%, #26A69A); box-shadow: 0 4px 14px rgba(13,71,161,.25); }
+.hl__cta b { font-size: 17px; } .hl__cta span { font-size: 12.5px; opacity: .92; }
+.hp__rd { font-style: normal; font-size: 10.5px; font-weight: 800; color: #0D47A1; background: #E3F2FD; border-radius: 999px; padding: 1px 6px; margin-left: 4px; }
+.hl__bar { position: sticky; top: 0; z-index: 3; height: 5px; background: #ECEFF1; margin: -4px 0 8px; border-radius: 3px; overflow: hidden; box-shadow: 0 0 0 6px #fff; } body.night .hl__bar { box-shadow: 0 0 0 6px #1d2126; } .hl__bar b { display: block; height: 100%; width: 0; background: var(--ec, #1976D2); transition: width .15s; }
+.hl__gal .hkg__f { width: 46%; max-width: 240px; } .hl__gal .hkg__f img { height: 120px; border-radius: 10px; }
+.hl__meta { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; } .hl__meta span { font-size: 12px; font-weight: 800; background: #ECEFF1; color: #333; border-radius: 999px; padding: 3px 9px; } .hl__meta span[style] { color: #fff; } .hl__ok { background: #E8F5E9 !important; color: #2E7D32 !important; }
+.hl__t { font-size: 22px; line-height: 1.4; margin: 8px 0; }
+.hl__intro { font-size: 17px; line-height: 1.95; font-weight: 700; background: #FFFDE7; border-radius: 14px; padding: 12px 14px; }
+.hl__toc { background: #F5F7FA; border-radius: 12px; padding: 8px 12px; margin: 10px 0; } .hl__toc b { display: block; font-size: 13px; color: #555; } .hl__toc a { display: block; padding: 5px 0; font-size: 14px; font-weight: 700; color: #1565C0; text-decoration: none; border-top: 1px dashed #DDE3EA; }
+.hl__sec { margin: 18px 0; overflow: hidden; } .hl__sec h3 { display: flex; gap: 8px; align-items: flex-start; font-size: 18px; line-height: 1.45; margin: 0 0 8px; }
+.hl__sec h3 em { flex: none; font-style: normal; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ec, #1976D2); color: #fff; font-size: 14px; }
+.hl__sec p { font-size: 16px; line-height: 2; margin: 0 0 10px; }
+.hl__fig { float: right; width: 128px; margin: 2px 0 8px 12px; } .hl__fig img { width: 128px; height: 100px; object-fit: cover; border-radius: 10px; display: block; background: #ECEFF1; } .hl__fig figcaption { font-size: 10.5px; line-height: 1.4; color: #666; margin-top: 3px; }
+.hl__h { font-size: 17px; margin: 20px 0 8px; }
+.hl__num { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; } .hl__num div { background: #E3F2FD; border-radius: 12px; padding: 8px 10px; } .hl__num b { display: block; font-size: 22px; color: #0D47A1; line-height: 1.2; } .hl__num span { font-size: 12.5px; line-height: 1.5; }
+.hl__who { display: grid; gap: 8px; } .hl__wi { display: flex; gap: 10px; align-items: center; background: #FAFAFA; border-radius: 12px; padding: 6px 10px; }
+.hl__who-i { flex: none; width: 56px; height: 56px; margin: 0; border-radius: 50%; overflow: hidden; background: #ECEFF1; } .hl__who-i img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.hl__noimg::after { content: "👤"; display: grid; place-items: center; height: 100%; font-size: 26px; } .hl__noimg img { display: none; }
+.hl__wi b { display: block; font-size: 15px; } .hl__wi span { font-size: 13px; color: #555; line-height: 1.5; }
+.hl__now { background: #E8F5E9; border-radius: 14px; padding: 10px 14px; margin: 14px 0; } .hl__now b { color: #1B5E20; } .hl__now ul { margin: 4px 0 0; padding-left: 1.2em; } .hl__now li { font-size: 15px; line-height: 1.8; }
+.hl__moshi { background: #F3E5F5; border-radius: 14px; padding: 10px 14px; margin: 14px 0; } .hl__moshi b { color: #6A1B9A; } .hl__moshi p { font-size: 15.5px; line-height: 1.9; margin: 4px 0 0; }
+.hl__words { margin: 10px 0; } .hl__words summary { min-height: 44px; display: flex; align-items: center; font-weight: 800; background: #F5F7FA; border-radius: 12px; padding: 0 12px; cursor: pointer; } .hl__words dt { font-weight: 900; margin-top: 8px; } .hl__words dd { margin: 2px 0 0 1em; font-size: 14.5px; line-height: 1.7; }
+.hl__q { background: #FFF8E1; border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; } .hl__q > p { font-weight: 800; font-size: 15.5px; margin: 0 0 6px; }
+.hl__q > div { display: grid; gap: 6px; } .hl__q button { min-height: 44px; text-align: left; border: 1px solid #FFE082; background: #fff; border-radius: 10px; padding: 6px 12px; font: inherit; font-size: 15px; cursor: pointer; }
+.hl__q button.ok { background: #C8E6C9; border-color: #43A047; font-weight: 800; } .hl__q button.ng { background: #FFCDD2; border-color: #E53935; }
+.hl__ans { font-size: 14.5px; line-height: 1.7; margin: 8px 0 0; } .hl__score { font-weight: 900; font-size: 16px; text-align: center; }
+.hl__done { display: block; width: 100%; min-height: 54px; margin: 16px 0 10px; border: 0; border-radius: 16px; font: inherit; font-size: 17px; font-weight: 900; color: #fff; background: linear-gradient(135deg, #2E7D32, #66BB6A); cursor: pointer; } .hl__done.on { background: #E8F5E9; color: #2E7D32; }
+body.night .hl__intro { background: #2c2a1c; color: #f3ecd8; } body.night .hl__sec p { color: #eee; } body.night .hl__toc, body.night .hl__wi, body.night .hl__words summary { background: #262b31; color: #eee; }
+body.night .hl__num div { background: #1a2633; color: #eee; } body.night .hl__now { background: #1f2a1a; color: #e8f5e9; } body.night .hl__moshi { background: #2a1f2d; color: #eee; } body.night .hl__q { background: #2c2a1c; color: #eee; } body.night .hl__q button { background: #262b31; color: #eee; }

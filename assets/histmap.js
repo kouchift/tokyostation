@@ -213,7 +213,7 @@ function showEra(id) {
     (RG.graveShowMap && RG.graveCount(E.id) !== 0 ? '<button class="hp__grvb" type="button" data-hgrave="' + E.id + '">🪦 この時代の偉人の墓' + (RG.graveCount(E.id) > 0 ? "（" + RG.graveCount(E.id) + "人）" : "") + "を地図に出す <small>エピソードつき</small></button>" : "") +   // v133
     '<ol class="hp__list">' + list.map(function (e) {
       return '<li><button class="hp__ev hp__ev--l' + (e.lv || 1) + '" type="button" data-hev="' + e.id + '"><span class="hp__y">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv].charAt(0) + "</em>" : "") + esc(e.ys) + (e.gg ? "<i>" + esc(e.gg) + "</i>" : "") + "</span>" +
-        '<b>' + esc(e.t) + (e.legend ? ' <em class="hp__lg">伝承</em>' : "") + (e.route ? ' <em class="hp__rt">道すじ</em>' : "") + "</b>" +
+        '<b>' + esc(e.t) + (e.legend ? ' <em class="hp__lg">伝承</em>' : "") + (e.route ? ' <em class="hp__rt">道すじ</em>' : "") + (RG.histLong && (e.lv || 1) === 1 ? ' <em class="hp__rd">' + (RG.histLongDone && RG.histLongDone(e.id) ? "✔読んだ" : "📖読み物") + "</em>" : "") + "</b>" +
         (e.hook ? '<span class="hp__hk">' + esc(e.hook) + "</span>" : "") +
         '<small>📍 ' + esc(e.pts.map(function (p) { return p[0].replace(/（.*?）/g, ""); }).slice(0, 3).join("・") + (e.pts.length > 3 ? " ほか" : "")) + "</small></button></li>";
     }).join("") + "</ol>" +
@@ -234,6 +234,7 @@ function showEv(id) {
     '<div class="hp__body">' +
     (RG.wpGallery ? '<div class="hkc__gal hp__gal" data-hgal="1"></div>' : '<div class="hp__img" data-himg="' + esc(e.imgwp || e.wp || "") + '"></div>') +   // v134: 写真をまとめて
     (e.hook ? '<p class="hp__hook">🤔 ' + esc(e.hook) + "</p>" : "") +
+    (RG.histLong && (e.lv || 1) === 1 ? '<button class="hl__cta" type="button" data-hlong="' + e.id + '"><b>📖 じっくり読む</b><span>約10分・写真いっぱい・クイズつき' + (RG.histLongDone && RG.histLongDone(e.id) ? "・✔ 読んだ" : "") + "</span></button>" : "") +   // v135
     '<h3 class="hp__t">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv] + "</em>" : "") + esc(e.t) + "</h3>" +
     '<p class="hp__meta"><span style="--ec:' + E.c + '">' + esc(E.n) + "</span><span>📅 " + esc(e.ys) + "</span>" + (e.gg ? "<span>🏷️ 元号 " + esc(e.gg) + "</span>" : "") +
       (e.legend ? '<span class="hp__lg">神話・伝承</span>' : "") + (e.note ? '<span class="hp__note">' + esc(e.note) + "</span>" : "") + "</p>" +
