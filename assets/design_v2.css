@@ -208,3 +208,69 @@ body {
 .legend__n { font-family: var(--mono); font-size: 11px; color: var(--label, #6B7280); white-space: nowrap; }
 .legend__r .gmk { --s: 34px; margin: 0; }
 .legend__foot { display: flex; gap: 8px; }
+
+/* ---- v123: 運行情報（遅延・運転見合わせ・人身事故）----
+   地図: 止まっている路線 = 赤、遅れ = 橙、一部に影響 = 黄土。元の線の上に «白いふち＋色の太線»、止まっている路線は点滅の破線
+   «影響を見る» ではほかの路線と駅を薄くして、どこが止まっているかを一目で */
+#map .dis { pointer-events: none; vector-effect: non-scaling-stroke; }   /* 線の太さは画面の px（元の路線と同じ描き方） */
+#map .dis--glow { stroke: #fff; stroke-width: max(11px, calc(var(--lnw, 3.4) * 3.2px)) !important; opacity: .95; }
+#map .dis--core { stroke-width: max(6.5px, calc(var(--lnw, 3.4) * 2px)) !important; }
+#map .dis--core.dis--3 { stroke: #D0021B; stroke-dasharray: 14px 7px; animation: tsgDis 1.2s linear infinite; }
+#map .dis--core.dis--2 { stroke: #F08C00; }
+#map .dis--core.dis--1 { stroke: #B8860B; stroke-dasharray: 5px 6px; }
+@keyframes tsgDis { to { stroke-dashoffset: -21px; } }
+@media (prefers-reduced-motion: reduce) { #map .dis--core.dis--3 { animation: none; } }
+#map.dismode .ln:not(.ln--dis) { opacity: .12 !important; }
+#map.dismode .node:not(.online) { opacity: .25; }
+#map.dismode .poihost { opacity: .25; }
+
+/* 地図の上の帯（押すと一覧）。防災の帯（.alertchip）より少し上 */
+.tinfochip {
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: 108px; z-index: 41;
+  display: inline-flex; align-items: center; gap: 8px; max-width: calc(100% - 24px);
+  border: 0; border-radius: 999px; padding: 0 6px 0 14px; min-height: 38px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 800; color: #fff; background: #D0021B;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .28);
+}
+.tinfochip--2 { background: #E67700; }
+.tinfochip--1 { background: #8A6D00; }
+.tinfochip--3 { animation: tsgDisChip 2s ease-in-out infinite; }
+@keyframes tsgDisChip { 50% { box-shadow: 0 0 0 6px rgba(208, 2, 27, .25), 0 4px 14px rgba(0, 0, 0, .28); } }
+@media (prefers-reduced-motion: reduce) { .tinfochip--3 { animation: none; } }
+.tinfochip__t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tinfochip__m { flex: 0 0 auto; background: rgba(255, 255, 255, .22); border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+.tinfochip__d { flex: 0 0 auto; background: #fff; color: #D0021B; border-radius: 6px; padding: 1px 6px; font-size: 11px; }
+@media (pointer: coarse) { .tinfochip { min-height: var(--tsg-min-touch, 44px); } }
+
+/* 一覧 */
+.ti__lead { font-size: 13px; line-height: 1.6; color: var(--tsg-ink, #0B1F3A); margin: 0 0 10px; }
+.ti__demo { background: #FFF4E5; border: 1px solid #F0A000; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; margin: 0 0 10px; }
+.ti__list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ti__r { border: 1px solid #E3E8EF; border-left: 6px solid var(--lc, #888); border-radius: 12px; padding: 10px 12px; background: #fff; }
+.ti__r--3 { background: #FFF5F5; border-color: #F3C4C8; border-left-color: var(--lc, #D0021B); }
+.ti__h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ti__c { font-size: 20px; line-height: 1; }
+.ti__l { font-size: 15px; color: var(--tsg-ink, #0B1F3A); }
+.ti__s { font-size: 12px; font-weight: 800; color: #fff; border-radius: 999px; padding: 2px 9px; background: #8A6D00; }
+.ti__s--3 { background: #D0021B; } .ti__s--2 { background: #E67700; }
+.ti__m { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--label, #6B7280); margin: 4px 0 0; }
+.ti__cause { color: #D0021B; font-weight: 800; }
+.ti__x { font-size: 13px; line-height: 1.6; margin: 6px 0; color: #1F2937; }
+.ti__a { font-size: 11.5px; color: var(--label, #6B7280); margin: 4px 0 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.ti__a--none { color: #8A6D00; }
+.ti__ln { border: 1.5px solid var(--lc, #888); border-radius: 6px; padding: 0 6px; color: #1F2937; background: #fff; }
+.ti__big { font-size: 17px; line-height: 1.5; margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; color: #fff; background: #D0021B; }
+.ti__big--2 { background: #E67700; } .ti__big--1 { background: #8A6D00; }
+
+/* ルートの比較カードの札・案内中の帯 */
+.ob--dis { border: 0; font: inherit; font-size: 10.5px; font-weight: 800; color: #fff; background: #D0021B; cursor: pointer; }
+.ob--dis2 { background: #E67700; } .ob--dis1 { background: #8A6D00; }
+.nav__dis { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; padding: 8px 12px; font: inherit; font-size: 13px;
+  color: #fff; background: #D0021B; text-align: left; cursor: pointer; }
+.nav__dis--2 { background: #E67700; } .nav__dis--1 { background: #8A6D00; }
+.nav__dis span { margin-left: auto; font-weight: 800; background: rgba(255, 255, 255, .22); border-radius: 999px; padding: 2px 10px; flex: 0 0 auto; }
+.ti, .ti__list, .ti__r, .ti__x, .ti__lead { text-align: left; }
+.rs__dis { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; width: 100%; margin: 6px 0 8px; padding: 8px 12px; border: 0; border-radius: 10px;
+  font: inherit; font-size: 13px; color: #fff; background: #D0021B; text-align: left; cursor: pointer; }
+.rs__dis--2 { background: #E67700; } .rs__dis--1 { background: #8A6D00; }
+.rs__dis span { margin-left: auto; font-size: 12px; font-weight: 800; background: rgba(255, 255, 255, .22); border-radius: 999px; padding: 2px 10px; }

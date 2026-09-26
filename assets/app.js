@@ -972,6 +972,27 @@ var Map = (function () {
     }
     recomputeForced(); scheduleLod();
   }
+  /* v123: 運行情報（遅延・運転見合わせ）。止まっている路線は赤、遅れは橙で、元の線の上に太く重ねる。
+     sev: { 路線名: 1|2|3 }。focusDisrupt(true) でほかの路線を薄くする */
+  var gDis = null;
+  function paintDisrupt(list) {   // list: [{ line, sev, d? }]（d が無ければ路線まるごと）
+    if (!svg || !gE) return;
+    if (gDis && gDis.parentNode) gDis.parentNode.removeChild(gDis);
+    gDis = null;
+    list = (list || []).filter(function (x) { return x.sev && edgeByLine[x.line] && (x.d || x.d === undefined); });
+    var on = {}; list.forEach(function (x) { on[x.line] = 1; });
+    Object.keys(edgeByLine).forEach(function (k) { edgeByLine[k][0].classList.toggle("ln--dis", !!on[k]); });
+    svg.classList.toggle("has-dis", list.length > 0);
+    if (!list.length) { svg.classList.remove("dismode"); return; }
+    gDis = el("g", { class: "dislines", "aria-hidden": "true" });
+    list.sort(function (a, b) { return a.sev - b.sev; }).forEach(function (x) {
+      var d = x.d || edgeByLine[x.line][0].getAttribute("d");
+      gDis.appendChild(el("path", { class: "dis dis--glow dis--" + x.sev, d: d, fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }));
+      gDis.appendChild(el("path", { class: "dis dis--core dis--" + x.sev, d: d, fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }));
+    });
+    gE.parentNode.insertBefore(gDis, gE.nextSibling);
+  }
+  function focusDisrupt(on) { if (svg) svg.classList.toggle("dismode", !!on && !!gDis); }
   function paintWatch(ids) {
     Object.keys(flags).forEach(function (id) { flags[id].watch = false; });
     (ids || []).forEach(function (i) { flagOf(i).watch = true; });
@@ -1252,7 +1273,7 @@ var Map = (function () {
   }
   return { draw: draw, initViewport: initViewport, zoom: zoom, fitAll: fitAll, focus: focus,
            select: select, screenPos: screenPos, screenPosXY: screenPosXY, paintIso: paintIso, paintPick: paintPick,
-           paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine,
+           paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine, paintDisrupt: paintDisrupt, focusDisrupt: focusDisrupt,
            drawBase: drawBase, project: project,
            flyTo: flyTo,
            viewBox: function () { return { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; },

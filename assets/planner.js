@@ -190,6 +190,7 @@ function railField(from, date) {
   var ins = accessPoints(from, 25, 3.0);
   if (!ins.length) return {};
   var dist = {}, S = {}, heap = new Heap();
+  var TI = P.__noBlock ? null : (RG.tinfoLine || null);   // v123: 運行情報（止まっている路線は使わない・遅れは目安を足す）。__noBlock = 止まっている路線しか無いときの予備の探索
   /* 状態: key = 駅id + SEP + 路線名（"" = 駅に着いただけ／歩いて来た） */
   function relax(key, d, st) { if (dist[key] == null || d < dist[key]) { dist[key] = d; S[key] = st; heap.push(d, key); } }
   ins.forEach(function (i) {
@@ -209,7 +210,10 @@ function railField(from, date) {
         pen += xp + (kids ? stepBonus(u) : 0);
       } else {
         var shin = /新幹線|博多南線/.test(line);
+        var dz = TI ? TI(line, u, e.to) : null;                         // 区間が分かっている情報は、その区間の辺だけに効く
+        if (dz && dz.sev >= 3 && dz.exact) continue;                     // v123: 運転見合わせの区間・路線には乗らない
         var seg = hopMin(line, e.km, T);
+        if (dz && iu.line !== line) seg += dz.sev >= 3 ? 30 : dz.sev === 2 ? (dz.dmin || 10) : 2;   // 遅れは «乗るとき» に 1 回だけ（本文の «最大○分» があればそれ）
         if (iu.line === line) step = seg;                                // 同じ電車に乗り続ける
         else if (!iu.line) step = seg + T.waitMin;                          // 乗る（待ち。最初の乗車も、歩いて来た後も）
         else if (DUP[iu.line] && DUP[iu.line][line]) step = seg + 2;    // 重複ラベルへ（同じ線路。乗り換えに数えない）
@@ -252,7 +256,7 @@ P.railField = railField;
 /* 同じ出発地・時刻なら使い回す（飛行機の案で空港側からも引くため） */
 var fieldCache = [];
 P.railFieldCached = function (from, date) {
-  var key = from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+date / 600000) + "|" + KIDS.aggr + (KIDS.on ? "k" : "");
+  var key = from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+date / 600000) + "|" + KIDS.aggr + (KIDS.on ? "k" : "") + "|t" + (RG.tinfoVer || 0) + (P.__noBlock ? "nb" : "");
   for (var i = 0; i < fieldCache.length; i++) if (fieldCache[i].k === key) return fieldCache[i].f;
   var f = railField(from, date);
   fieldCache.push({ k: key, f: f }); if (fieldCache.length > 8) fieldCache.shift();
@@ -262,8 +266,10 @@ P.clearFieldCache = function () { fieldCache = []; };
 /* 乗車駅→降車駅の駅列（状態の prev をたどる）。PV 動画や地図の線に使う。
    segs: [{line, ids}] 路線ごとの区間（乗り換え表示・カードの路線名に使う） */
 P.railPath = function (from, to, date) {
-  var field = P.railFieldCached(from, date), r = railRoute(from, to, date);
+  var r = railRoute(from, to, date);
   if (!r) return null;
+  if (r.viaStopped) P.__noBlock = true;
+  var field; try { field = P.railFieldCached(from, date); } finally { P.__noBlock = false; }
   var S = field.__st || {}, f0 = field[r.alight], key = f0 && f0.sk, ids = [], segs = [], guard = 0;
   while (key && guard++ < 3000) {
     var st = S[key]; if (!st) break;
@@ -276,7 +282,17 @@ P.railPath = function (from, to, date) {
   return { ids: ids, segs: segs, board: r.board, alight: r.alight, minutes: r.minutes, yen: r.yen, shinkansen: shin, transfers: r.transfers };
 };
 
+/* v123: 運転見合わせの路線を避けると経路が無くなるとき（駅がその路線にしか無い・データの穴）は、避けずに探し直して «止まっている路線を使う» 印を付ける */
 function railRoute(from, to, date) {
+  var r = railRoute0(from, to, date);
+  if (!r && !P.__noBlock && RG.tinfo && RG.tinfo.items && RG.tinfo.items.length) {
+    P.__noBlock = true;
+    try { r = railRoute0(from, to, date); } finally { P.__noBlock = false; }
+    if (r) r.viaStopped = true;
+  }
+  return r;
+}
+function railRoute0(from, to, date) {
   var field = P.railFieldCached(from, date);
   var outs = accessPoints(to, 25, 3.0);
   if (!outs.length) return null;
@@ -325,12 +341,16 @@ function baseOptions(from, to, date, aggr) {
   if (r) {
     var stopped = P.isAfterLastTrain(date);
     var usesShin = (r.fareNote || []).some(function (n) { return /新幹線/.test(n); });
-    push({ id: "train", m: usesShin ? { label: "新幹線＋電車", emoji: "🚄", color: "#0071BC", conf: C.modes.train.conf } : C.modes.train, minutes: r.minutes, yen: r.yen, rail: r, stopped: stopped,
+    var dis = RG.tinfoImpact ? RG.tinfoImpact(from, to, date) : [];   // v123: この経路で使う路線に出ている運行情報
+    push({ id: "train", disrupt: dis, m: usesShin ? { label: "新幹線＋電車", emoji: "🚄", color: "#0071BC", conf: C.modes.train.conf } : C.modes.train, minutes: r.minutes, yen: r.yen, rail: r, stopped: stopped,
       detail: [(RG.byId[r.board] ? RG.byId[r.board].n : r.board) + "駅から乗車（徒歩" +
                  Math.round(r.accessMin) + "分）",
                (RG.byId[r.alight] ? RG.byId[r.alight].n : r.alight) + "駅で下車（徒歩" +
                  Math.round(r.egressMin) + "分）",
-               "乗換 " + r.transfers + " 回"].concat(A.kids ? ["ベビーカーでの移動を考慮しています（乗り換えの少なさと、現場メモで動きやすいとされた駅を優先）"] : []).concat(r.fareNote)
+               "乗換 " + r.transfers + " 回"].concat(dis.map(function (it) {
+                 return it.c.e + " " + RG.tinfoItemLine(it) + "：" + (it.st || RG.tinfoSevLabel(it.sev)) + (it.c.t ? "（" + it.c.t + "）" : "") + " — この経路で使う路線です";
+               })).concat(r.viaStopped ? ["🚨 運転を見合わせている路線を使わないと着けません（この駅はその路線にしか乗れないか、地図のデータに迂回路がありません）。再開を待つか、バス・タクシーの案も見てください"]
+                 : RG.tinfo && RG.tinfo.items && RG.tinfo.items.some(function (it) { return it.sev >= 3; }) ? ["🚦 運転を見合わせている区間は避けて探しています"] : []).concat(A.kids ? ["ベビーカーでの移動を考慮しています（乗り換えの少なさと、現場メモで動きやすいとされた駅を優先）"] : []).concat(r.fareNote)
         .concat(stopped ? ["🌙 いまは終電後の時間帯です。この案は始発以降でないと成立しません"] : []),
       conf: "中（運賃テーブルは要検証）" });
   }

@@ -52,6 +52,24 @@ function buildPath(origin, destCoord, opt) {
   return [origin, destCoord];
 }
 
+/* v123: 電車の案内なら、使う路線名の列（運行情報で «この経路に影響» を見分けるため） */
+function railLines(from, to) {
+  if (!/train|shin/.test(N.mode) || !RG.Planner || !RG.Planner.railPath) return [];
+  try { var rp = RG.Planner.railPath(from, to, new Date()); return rp && rp.segs ? rp.segs : []; } catch (e) { return []; }   // [{line, ids}]（区間つき）
+}
+/* v123: いまの場所から案内し直す（運行情報で «避けて案内し直す» から呼ぶ。止まっている路線は経路さがしが自動で避ける） */
+RG.navReroute = function (why) {
+  if (!N.on) return;
+  var here = N.last || RG.Trip.origin;
+  if (N.last) RG.setOrigin(here, "現在地（案内し直し）", null, null);
+  N.path = buildPath(here, N.dest, N.opt);
+  N.lines = railLines(here, N.dest);
+  N.offCount = 0;
+  RG.tripStatus("🔁 " + (why ? esc(why) + "を見て、" : "") + "いまの場所から案内し直します。", "ok", 3200);
+  if (RG.showRoutes && N.destId) RG.showRoutes(N.destId);
+  bar();
+};
+RG.navBar = function () { bar(); };
 RG.startNav = function (destCoord, destName, opt) {
   if (!navigator.geolocation) { RG.tripStatus("この端末では位置情報が使えないため、案内モードは始められません。", "warn"); return; }
   if (RG.secureOK && !RG.secureOK()) { if (RG.showGeoHelp) RG.showGeoHelp({ code: 0 }); return; }
@@ -64,6 +82,7 @@ RG.startNav = function (destCoord, destName, opt) {
   N.startedAt = Date.now(); N.muted = false; N.offCount = 0; N.lastPrompt = 0;
   N.startKm = RG.hav(RG.Trip.origin, destCoord);
   N.opt = opt || null;
+  N.lines = railLines(RG.Trip.origin, destCoord);   // v123: 使う路線（運行情報で知らせるため）
   bar();
   RG.tripStatus("🧭 案内をはじめました。道をそれたら教えます。", "ok", 3200);
   N.watchId = navigator.geolocation.watchPosition(onPos, onErr,
@@ -134,11 +153,21 @@ function bar(off, rest, acc) {
       (N.muted ? '<button class="nav__x" id="nv-unmute" type="button" title="お知らせを再開">🔕</button>' : "") +
       '<button class="nav__x" id="nv-stop" type="button">案内をやめる</button>' +
     "</div>" +
-    '<div class="nav__prog"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
+    '<div class="nav__prog"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+    disStrip();
   var st = $("#nv-stop", b); if (st) st.addEventListener("click", function () { stop(); });
+  var ds = $("#nv-dis", b); if (ds) ds.addEventListener("click", function () { RG.navReroute("運行情報"); });
   var um = $("#nv-unmute", b);
   if (um) um.addEventListener("click", function () {
     N.muted = false; RG.tripStatus("ルートのお知らせを再開しました。", "ok", 2400); bar(); });
+}
+/* v123: 案内中の経路に運行の影響があれば、案内の帯の下に赤い帯（押すと一覧） */
+function disStrip() {
+  var hit = RG.tinfoForLines && N.lines && N.lines.length ? RG.tinfoForLines(N.lines) : [];
+  if (!hit.length) return "";
+  var t = hit[0];
+  return '<button class="nav__dis nav__dis--' + t.sev + '" type="button" id="nv-dis">' + t.c.e + " <b>" + esc(RG.tinfoItemLine(t)) + "</b> " +
+    esc(t.st || RG.tinfoSevLabel(t.sev)) + (hit.length > 1 ? " ほか" + (hit.length - 1) + "件" : "") + '<span>避けて探す ›</span></button>';
 }
 function stop(quiet) {
   if (N.watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(N.watchId);

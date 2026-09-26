@@ -704,6 +704,8 @@ function pareto(r) {
 function optCard(o, i, ctx) {
   var b = [];
   if (o.stopped) b.push('<span class="ob ob--stop">いまは運休の時間帯</span>');
+  if (o.disrupt && o.disrupt.length) { var d0 = o.disrupt[0];   // v123: 経路で使う路線に運行の影響
+    b.push('<button class="ob ob--dis ob--dis' + d0.sev + '" type="button" onclick="RG.showTrainInfo()">' + d0.c.e + " " + esc(RG.tinfoItemLine(d0)) + " " + esc(d0.st || RG.tinfoSevLabel(d0.sev)) + (o.disrupt.length > 1 ? " ほか" + (o.disrupt.length - 1) : "") + "</button>"); }
   if (o.pareto) b.push('<span class="ob ob--pf">パレート最適</span>');
   if (o.kicker) b.push('<span class="ob ob--kick">' + esc(o.kicker) + "</span>");
   if (o.yenPerMin != null) b.push('<span class="ob">最安より' + o.vsCheapest.min + "分速い／+" +
@@ -759,7 +761,10 @@ function pickAxes(opts) {
 function summaryHtml(r, s, rec) {
   if (!rec) return "";
   var w = walkOf(rec), x = xferOf(rec), f = featOf(rec);
+  var dz = rec.disrupt && rec.disrupt.length ? rec.disrupt[0] : null;   // v123: 使う路線に運行の影響
   return '<div class="rs" data-i="' + rec.__i + '"><div class="rs__hd"><span class="rs__em">' + rec.m.emoji + "</span><b>" + esc(rec.m.label) + "</b><i>おすすめ</i></div>" +
+    (dz ? '<button class="rs__dis rs__dis--' + dz.sev + '" type="button" onclick="RG.showTrainInfo()">' + dz.c.e + " <b>" + esc(RG.tinfoItemLine(dz)) + "</b> " + esc(dz.st || RG.tinfoSevLabel(dz.sev)) +
+      (dz.c.t ? "（" + esc(dz.c.t) + "）" : "") + (rec.disrupt.length > 1 ? " ほか" + (rec.disrupt.length - 1) + "件" : "") + "<span>" + (dz.sev === 2 ? "遅れを見込んだ所要です" : "詳しく") + " ›</span></button>" : "") +
     '<div class="rs__grid">' +
       '<div class="rs__c"><small>所要</small><b>' + rec.minutes + '<i>分</i></b></div>' +
       '<div class="rs__c"><small>乗換</small><b>' + (x != null ? x + "<i>回</i>" : "—") + "</b></div>" +
