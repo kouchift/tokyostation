@@ -83,12 +83,15 @@ ol li{margin:3px 0}
     <li><b>Fine-grained</b>: Repository access = <code>kouchift/tokyostation</code>、Permissions = <b>Administration: Read-only</b>（トラフィックの読み出しに必要）／ <b>Classic</b>: scope <code>repo</code></li>
     <li>有効期限は 90 日程度に。上の欄に貼って「取得する」。トークンはこのブラウザの localStorage にだけ入ります（共有 PC では「保存」を外す）</li>
     <li>※ アップローダーの <code>uploader/はじめに読む.txt</code> のトークンは <b>公開サイトに載っています</b>。必ず失効させて作り直し、GitHub 上の <code>uploader/</code> フォルダを消してください（v93 で今後は上げない設定にしました）</li></ol></details>
-  <details><summary>全訪問者の «使われ方» を集める（5 分・無料・Google アカウントだけ）</summary><ol>
-    <li>Google スプレッドシートを新規作成 → URL の <code>/d/</code> と <code>/edit</code> の間の ID を控える</li>
-    <li><a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> → 新しいプロジェクト → <code>tools/setup_stats_backend.gs</code> の中身を貼る → <code>SHEET_ID</code> を書き換える</li>
-    <li>デプロイ → 新しいデプロイ → ウェブアプリ → 実行ユーザー「自分」・アクセス「全員」→ URL（…/exec）を控える</li>
-    <li><code>data/analytics.js</code> の <code>endpoint</code> にその URL を入れてアップロード → サイトが匿名の出来事を送り始める</li>
-    <li>上の「集計 API の URL」に同じ URL を入れて「取得する」</li></ol>
+  <details><summary>全訪問者の «使われ方» を集める（いちばん簡単: <code>tools/stats_deploy.bat</code> をダブルクリック）</summary><ol>
+    <li><code>tools/stats_deploy.bat</code> をダブルクリック。あとは画面の指示どおり（初回だけ Google ログイン・Apps Script API を ON・最後に 1 回だけブラウザで «許可»）</li>
+    <li>自動でやること: 受け皿（<code>tools/stats_api.gs</code>）の作成・公開・<code>data/analytics.js</code> の <code>endpoint</code> への書き込み・アップロード・この管理ページを URL とキー入りで開く、まで</li>
+    <li>スプレッドシートは自分で用意しなくてよい（初めて出来事が届いたときに «TSG 使われ方（東京ステーションガイド）» という名前で自動的にできる）</li></ol>
+    <details><summary>手でやる場合（スクリプトが使えないときだけ）</summary><ol>
+      <li><a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> → 新しいプロジェクト → <code>tools/setup_stats_backend.gs</code>（こちらは要 <code>SHEET_ID</code> 書き換え）か <code>tools/stats_api.gs</code>（<code>__ADMIN_KEY__</code> は好きな文字列か空に）の中身を貼る</li>
+      <li>デプロイ → 新しいデプロイ → ウェブアプリ → 実行ユーザー「自分」・アクセス「全員」→ URL（…/exec）を控える</li>
+      <li><code>data/analytics.js</code> の <code>endpoint</code> にその URL を入れてアップロード → サイトが匿名の出来事を送り始める</li>
+      <li>上の「集計 API の URL」に同じ URL を入れて「取得する」</li></ol></details>
     <p class="tiny">送られるのは 出来事の名前・短いラベル（駅名など）・ページ・参照元ドメイン・画面の区分・ブラウザの種類・言語・訪問ごとの乱数 だけ。氏名・メール・位置情報・端末 ID・IP は記録しません（Apps Script は IP を受け取れません）。訪問者はブラウザの「追跡しない」か 設定パネルで送信を止められます。</p></details>
   <details><summary>読み方</summary><p class="tiny">GitHub の「views」= ページの表示回数、「uniques」= 訪問者数（GitHub の推定、14 日分だけ保持）。サイト内の出来事は表示回数（pv）と訪問（sid）を分けて数えます。二つは数え方が違うので一致しません。</p></details>
 </section>
@@ -201,7 +204,7 @@ function evGo() {
   }).catch(function (e) { st("ev-st", "エラー", "bad"); $("#ev-out").innerHTML = '<p class="msg bad">取得できませんでした（' + esc(e.message) + '）。ウェブアプリのアクセスが「全員」になっているか、URL が …/exec で終わっているか確認してください。</p>'; });
 }
 $("#ev-go").addEventListener("click", evGo);
-try { var q = new URLSearchParams(location.search); $("#ev-api").value = q.get("api") || localStorage.getItem("tsg.admin.api") || ""; $("#ev-key").value = localStorage.getItem("tsg.admin.apikey") || ""; } catch (e) {}
+try { var q = new URLSearchParams(location.search); $("#ev-api").value = q.get("api") || localStorage.getItem("tsg.admin.api") || ""; $("#ev-key").value = q.get("key") || localStorage.getItem("tsg.admin.apikey") || ""; } catch (e) {}
 if ($("#ev-api").value) evGo();
 
 /* ---------- 4. このブラウザの記録 ---------- */
