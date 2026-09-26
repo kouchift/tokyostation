@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-build="132">
+<html lang="ja" data-build="133">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
@@ -23,21 +23,21 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kouchift.github.io/tokyostation/","url":"https://kouchift.github.io/tokyostation/","name":"東京ステーションガイド","description":"東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーで比較。全国8,000駅以上の路線図。","inLanguage":"ja"},{"@type":"WebApplication","name":"東京ステーションガイド","url":"https://kouchift.github.io/tokyostation/","applicationCategory":"TravelApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}]}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
 <!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
-<link rel="preload" href="data/net.json?v=132" as="fetch" crossorigin="anonymous">
-<link rel="preload" href="assets/app.bundle.js?v=132" as="script">
-<link rel="preload" href="data/config.js?v=132" as="script">
-<link rel="preload" href="data/lines_meta.js?v=132" as="script">
-<link rel="preload" href="data/genres.js?v=132" as="script">
-<link rel="preload" href="data/score.js?v=132" as="script">
-<link rel="preload" href="data/areas.js?v=132" as="script">
-<link rel="preload" href="data/focus.js?v=132" as="script">
+<link rel="preload" href="data/net.json?v=133" as="fetch" crossorigin="anonymous">
+<link rel="preload" href="assets/app.bundle.js?v=133" as="script">
+<link rel="preload" href="data/config.js?v=133" as="script">
+<link rel="preload" href="data/lines_meta.js?v=133" as="script">
+<link rel="preload" href="data/genres.js?v=133" as="script">
+<link rel="preload" href="data/score.js?v=133" as="script">
+<link rel="preload" href="data/areas.js?v=133" as="script">
+<link rel="preload" href="data/focus.js?v=133" as="script">
 <!-- v86: 書体（Plus Jakarta Sans／Noto Sans JP／JetBrains Mono）と Material Symbols。届くまでは端末の書体で描く（display=swap） -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap">
 <!-- v87: Material Symbols（アイコン字体）は assets/fonts/msymbols.woff2 に同梱（Google Fonts に届かない環境でもアイコンが出るように。@font-face は app.css） -->
-<link rel="stylesheet" href="assets/app.css?v=132">
-<link rel="stylesheet" href="assets/design_v2.css?v=132"><!-- v117: デザインの上書き（Wayfinding Modern） -->
+<link rel="stylesheet" href="assets/app.css?v=133">
+<link rel="stylesheet" href="assets/design_v2.css?v=133"><!-- v117: デザインの上書き（Wayfinding Modern） -->
 <style>
 /* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
 .mapwrap{min-height:52vh;background:#F5F6F8}
@@ -149,8 +149,8 @@
 try{if(document.fonts&&document.fonts.load){document.fonts.load('20px "Material Symbols Outlined"').then(ok,ok);}}catch(e){}
 setTimeout(ok,4000);})();
 </script>
-<script src="assets/app.bundle.js?v=132" defer></script>
-<script src="assets/comments-v109.js?v=132" defer></script>
+<script src="assets/app.bundle.js?v=133" defer></script>
+<script src="assets/comments-v109.js?v=133" defer></script>
 <script>
 /* v106: コメント機能の設定を RG.COMMENTS に入れる。endpoint が空なら表示しない */
 (function() {
@@ -164,7 +164,7 @@ setTimeout(ok,4000);})();
    ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
    ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
-  var netP = fetch("data/net.json?v=132", { credentials: "same-origin" })
+  var netP = fetch("data/net.json?v=133", { credentials: "same-origin" })
     .then(function (r) { if (!r.ok) throw new Error("net.json " + r.status); return r.json(); })
     .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
@@ -184,7 +184,7 @@ setTimeout(ok,4000);})();
       panic("読み込みが終わりませんでした。通信状態をご確認のうえ、再読み込みしてください。");
     }, 30000);
   }
-  var sc = document.querySelector('script[src^="assets/app.bundle.js"]');   // v108: 版番号に依存しない（?v=132 決め打ちで v107 は起動しなかった）
+  var sc = document.querySelector('script[src^="assets/app.bundle.js"]');   // v108: 版番号に依存しない（?v=133 決め打ちで v107 は起動しなかった）
   if (window.RG && window.RG.startApp) go();
   else if (sc) { sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); }); }
   // 地図の最初の駅が出たら骨組みを消す

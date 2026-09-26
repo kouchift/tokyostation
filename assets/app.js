@@ -1224,7 +1224,7 @@ var Map = (function () {
     for (var k = 0; k < cand.length; k++) {
       var q = cand[k];
       // 一之宮・話題は数の上限・間引きの対象外（必ず出す）。レベチは «絞っているとき» か «寄ったとき» だけ全部出す（v89: 引いた地図で王冠が団子にならないように）
-      var special = q.g === "alert" || q.g === "ichinomiya" || q.g === "buzz" || q.g === "whs" || q.g === "userpost" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
+      var special = q.g === "alert" || q.g === "ichinomiya" || q.g === "buzz" || q.g === "whs" || q.g === "grave" || q.g === "userpost" || (q.g === "levechi" && (picked || z >= 6)) || airmode;
       if (!special && show.length >= cap) continue;
       var key = airmode ? Math.round(q.x / cellA) + "," + Math.round(q.y / cellA) : Math.round(q.x / cell) + "," + Math.round(q.y / cell);
       if (used[key] && (!special || airmode)) continue;
@@ -1849,7 +1849,8 @@ var Card = (function () {
   function render(id, d) {
     var s = RG.byId[id]; if (!s) return "";
     return plate(s) +
-           (RG.whsBanner ? RG.whsBanner(s.n) : "") +                                                                              // v127: 世界遺産の一部なら帯
+           (RG.whsBanner ? RG.whsBanner(s.n) : "") +
+           (RG.graveBanner ? RG.graveBanner(s.la, s.lo) : "") +                                                                   // v133: 近くに眠る偉人                                                                              // v127: 世界遺産の一部なら帯
            (RG.eduHistHtml ? RG.eduHistHtml(s.n) : "") +                                                                          // v126: 教科書にでてくる場所
            (RG.buzzBlock ? RG.buzzBlock({ la: s.la, lo: s.lo, n: RG.stLabel(s) }) : "") +                                     // v126: この場所の話題（いま・過去）
            '<section class="sec sec--term" data-term="' + esc(s.id) + '" hidden><h3>主要駅へのアクセス <small>この駅から・日中の目安</small></h3><div class="term__l"></div></section>' +   // v86: 中身は開いたあとに計算して入れる（termFill）
@@ -2360,6 +2361,7 @@ function mergeExtraPois(key) {
   });
   if (RG.mergeBuzz) RG.mergeBuzz();
   if (RG.mergeWHS) RG.mergeWHS();   // v127: 世界遺産
+  if (RG.mergeGraves) RG.mergeGraves();   // v133: 偉人の墓
   if (RG.mergeViews) RG.mergeViews();
   if (RG.mergeOnsen) RG.mergeOnsen();
   if (RG.mergeSento) RG.mergeSento();   // v108: 全国の銭湯

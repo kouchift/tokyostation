@@ -172,6 +172,7 @@ function ensurePanel() {
     if ((b = t.closest("[data-hev]"))) { showEv(b.getAttribute("data-hev")); return; }
     if ((b = t.closest("[data-pt]"))) { pick(+b.getAttribute("data-pt"), false); return; }
     if ((b = t.closest("[data-hfit]"))) { fit(); return; }
+    if ((b = t.closest("[data-hgrave]"))) { RG.graveShowMap(b.getAttribute("data-hgrave")); return; }   // v133
     if ((b = t.closest("[data-hback]"))) { showEra(S.era || "edo"); return; }
     if ((b = t.closest("[data-hlv]"))) {   // v129: 大項目だけ ⇔ 中項目まで
       S.lv = +b.getAttribute("data-hlv"); try { localStorage.setItem("tsg.hist.lv", S.lv); } catch (x) {}
@@ -206,6 +207,7 @@ function showEra(id) {
   drawMarks(all, E.c, false, false); fit();
   ensurePanel().innerHTML = head("📜 れきし地図") + tabs() +
     '<div class="hp__body"><p class="hp__era" style="--ec:' + E.c + '"><b>' + esc(E.n) + "</b><span>" + esc(E.span) + "</span>" + esc(E.d) + "</p>" +
+    (RG.graveShowMap && RG.graveCount(E.id) !== 0 ? '<button class="hp__grvb" type="button" data-hgrave="' + E.id + '">🪦 この時代の偉人の墓' + (RG.graveCount(E.id) > 0 ? "（" + RG.graveCount(E.id) + "人）" : "") + "を地図に出す <small>エピソードつき</small></button>" : "") +   // v133
     '<ol class="hp__list">' + list.map(function (e) {
       return '<li><button class="hp__ev hp__ev--l' + (e.lv || 1) + '" type="button" data-hev="' + e.id + '"><span class="hp__y">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv].charAt(0) + "</em>" : "") + esc(e.ys) + (e.gg ? "<i>" + esc(e.gg) + "</i>" : "") + "</span>" +
         '<b>' + esc(e.t) + (e.legend ? ' <em class="hp__lg">伝承</em>' : "") + (e.route ? ' <em class="hp__rt">道すじ</em>' : "") + "</b>" +
@@ -218,6 +220,7 @@ function showEra(id) {
 }
 function showEv(id) {
   var e = evOf(id); if (!e) return;
+  if ((e.lv || 1) > S.lv) S.lv = e.lv;   // v133: 小項目を直接開いたら、前後の出来事もその細かさで
   var E = eraOf(e.era) || { c: "#B71C1C", n: "" }, list = sorted(), i = list.indexOf(e);
   S.era = e.era; S.ev = e.id; S.mode = "ev";
   AREAS = MODERN[e.era] || RG.KUNI_GEO ? areasOf(e) : [];
@@ -291,17 +294,20 @@ RG.histClose = function () {
   if (panel) panel.hidden = true;
 };
 /* 世界遺産などの «地点をぜんぶ地図に出す» */
-RG.histShowPoints = function (title, pts, color) {
+RG.histShowPoints = function (title, pts, color, gids) {   // v133: gids=偉人の墓の id（各地点に «📖 カード» ボタン）
   S.on = true; S.mode = "pts"; AREAS = []; document.body.classList.add("histon");
   if (RG.closeModal) try { RG.closeModal(); } catch (e) {}
   if (RG.heroFold) RG.heroFold("route");
   drawMarks(pts, color || "#0B5394", false, false);
   ensurePanel().innerHTML = head(esc(title)) + '<div class="hp__body"><div class="hp__pts">' +
-    pts.map(function (p, j) { return '<button class="hp__pt" type="button" data-pt="' + j + '"><b style="background:' + esc(color || "#0B5394") + '">' + (j + 1) + "</b>" + esc(p[0]) + "</button>"; }).join("") +
+    pts.map(function (p, j) {
+      var bt = '<button class="hp__pt" type="button" data-pt="' + j + '"><b style="background:' + esc(color || "#0B5394") + '">' + (j + 1) + "</b>" + esc(p[0]) + "</button>";
+      return gids ? '<span class="hp__ptw">' + bt + '<button class="hp__gc" type="button" data-grave="' + esc(gids[j]) + '" aria-label="カードを開く">📖</button></span>' : bt; }).join("") +
     '<button class="hp__pt hp__pt--fit" type="button" data-hfit="1">🔭 ぜんぶ見る</button></div>' +
-    '<p class="src">地点はおおよその位置です。閉じると地図の印も消えます。</p></div>';
+    (gids && S.era && RG.HIST ? '<button class="hp__back" type="button" data-hback="1">☰ ' + esc((eraOf(S.era) || {}).n || "") + " の一覧へ</button>" : "") +
+    '<p class="src">' + (gids ? "📖 を押すと、その人のエピソードとお墓の案内。" : "") + '地点はおおよその位置です。閉じると地図の印も消えます。</p></div>';
   panel.hidden = false; panel.classList.remove("hp--min");
-  var lv = panel.querySelector(".hp__lv"); if (lv) lv.remove();
+  var lv = panel.querySelector(".hp__lv") || panel.querySelector(".hp__lvs"); if (lv) lv.remove();
   fit();
 };
 /* ?hist=出来事id|時代id|1 で開く（共有リンク） */
