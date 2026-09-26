@@ -38,6 +38,12 @@ ol li{margin:3px 0}
 <main>
 <div class="grid">
 
+<section class="card wide" aria-labelledby="h-keys">
+  <h2 id="h-keys">🔑 設定の状態 <span class="st" id="keys-st">確認中…</span></h2>
+  <div id="keys-out" class="tiny"></div>
+  <p class="tiny">鍵が足りないときは、PC の <code>tools\admin_open.bat</code> を <b>ダブルクリックするだけ</b>。PC に保存ずみの鍵（<code>%USERPROFILE%\.tsg_*.json</code>）をこのブラウザに入れて、このページを開き直します（鍵は URL の «#» のうしろで渡すのでサーバーには送られず、開いたらすぐアドレス欄から消します）。</p>
+</section>
+
 <section class="card wide" aria-labelledby="h-site">
   <h2 id="h-site">🌐 公開中のサイトの状態 <span class="st" id="site-st">確認中…</span></h2>
   <div class="kpis" id="site-kpi"></div>
@@ -105,6 +111,14 @@ var OWNER = "kouchift", REPO = "tokyostation", SITE = new URL("../", location.hr
 var $ = function (s) { return document.querySelector(s); };
 var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
 var num = function (v) { return (+v || 0).toLocaleString("ja-JP"); };
+/* v125: tools/admin_open.bat が開く «#gh=…&skey=…&pkey=…» を受け取って保存し、アドレス欄から消す（«?api=&key=» の古い形も） */
+(function () {
+  var h = new URLSearchParams(location.hash.slice(1)), q = new URLSearchParams(location.search), put = function (k, v) { try { if (v) localStorage.setItem(k, v); } catch (e) {} };
+  put("tsg.admin.gh", h.get("gh")); put("tsg.admin.apikey", h.get("skey") || q.get("key")); put("tsg.admin.key", h.get("pkey"));
+  if (h.get("gh") || h.get("skey") || h.get("pkey") || q.get("key") || q.get("api")) history.replaceState(null, "", location.pathname);
+})();
+function apiOk(u) { return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u); }
+function lsg(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
 function st(id, txt, cls) { var e = $("#" + id); e.textContent = txt; e.className = "st " + (cls || ""); }
 function chart(rows, keyA, keyB, labelA, labelB) {           // rows: [{d, a, b}]（SVG の棒グラフ・依存なし）
   if (!rows.length) return "";
@@ -185,9 +199,9 @@ if (ghToken()) { st("gh-st", "保存ずみのトークンで取得できます")
 function evGo() {
   var url = $("#ev-api").value.trim(), key = $("#ev-key").value.trim(), days = $("#ev-days").value;
   if (!url) { st("ev-st", "未接続", "warn"); $("#ev-out").innerHTML = '<p class="msg">集計 API の URL を入れてください（下の「設定のしかた」）。</p>'; return; }
-  try { localStorage.setItem("tsg.admin.api", url); localStorage.setItem("tsg.admin.apikey", key); } catch (e) {}
+  try { if (url !== SITE_EV) localStorage.setItem("tsg.admin.api", url); localStorage.setItem("tsg.admin.apikey", key); } catch (e) {}
   st("ev-st", "取得中…");
-  fetch(url + (url.indexOf("?") > 0 ? "&" : "?") + "days=" + days + (key ? "&key=" + encodeURIComponent(key) : "")).then(function (r) { return r.json(); }).then(function (j) {
+  fetch(url + (url.indexOf("?") > 0 ? "&" : "?") + "days=" + days + (key && (url === SITE_EV || apiOk(url)) ? "&key=" + encodeURIComponent(key) : "")).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.ok) throw new Error((j && j.error) || "応答が不正");
     st("ev-st", "取得ずみ", "ok");
     var rows = (j.days || []).map(function (d) { return { d: d.d, a: d.pv, b: d.uv, ev: d.ev }; });
@@ -204,8 +218,28 @@ function evGo() {
   }).catch(function (e) { st("ev-st", "エラー", "bad"); $("#ev-out").innerHTML = '<p class="msg bad">取得できませんでした（' + esc(e.message) + '）。ウェブアプリのアクセスが「全員」になっているか、URL が …/exec で終わっているか確認してください。</p>'; });
 }
 $("#ev-go").addEventListener("click", evGo);
-try { var q = new URLSearchParams(location.search); $("#ev-api").value = q.get("api") || localStorage.getItem("tsg.admin.api") || ""; $("#ev-key").value = q.get("key") || localStorage.getItem("tsg.admin.apikey") || ""; } catch (e) {}
-if ($("#ev-api").value) evGo();
+/* v125: 集計 API の URL はサイトの data/analytics.js から自動で読む（手で貼らない）。鍵は Google の URL にだけ送る */
+var SITE_EV = "";
+$("#ev-key").value = lsg("tsg.admin.apikey");
+fetch(SITE + "data/analytics.js?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).catch(function () { return ""; }).then(function (s) {
+  SITE_EV = (s.match(/endpoint:\s*"([^"]*)"/) || [])[1] || "";
+  var saved = lsg("tsg.admin.api");
+  $("#ev-api").value = SITE_EV || (apiOk(saved) ? saved : "");
+  if ($("#ev-api").value) evGo();
+  keys();
+});
+/* v125: 設定の状態（何が入っていて、何が足りないか） */
+function keys() {
+  var rows = [
+    ["集計 API の URL", !!SITE_EV, SITE_EV ? "サイトの設定から自動" : "data/analytics.js が空（tools/stats_deploy.bat）"],
+    ["集計の読み出し鍵", !!lsg("tsg.admin.apikey"), "tools/admin_open.bat で入る"],
+    ["GitHub トークン（トラフィック）", !!lsg("tsg.admin.gh"), "tools/admin_open.bat で入る（アップローダーと同じトークン）"],
+    ["投稿の管理鍵（撮影データ）", !!lsg("tsg.admin.key"), "tools/admin_open.bat で入る"]
+  ];
+  var miss = rows.filter(function (r) { return !r[1]; }).length;
+  st("keys-st", miss ? "足りないもの " + miss + " 件" : "すべて設定ずみ", miss ? "warn" : "ok");
+  $("#keys-out").innerHTML = table(["項目", "状態", "入れ方"], rows.map(function (r) { return [esc(r[0]), r[1] ? "✅ 設定ずみ" : "❌ 未設定", esc(r[2])]; }), ["", "", ""]);
+}
 
 /* ---------- 4. このブラウザの記録 ---------- */
 function local() {

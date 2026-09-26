@@ -163,7 +163,7 @@ async function main() {
   say("   受け皿の URL : " + url);
   if (key) {
     say("   読み出しの鍵 : " + key + "（管理ページの «使われ方» で使います。人に見せない）");
-    openUrl(SITE + "admin/index.html?api=" + encodeURIComponent(url) + "&key=" + encodeURIComponent(key));
+    openUrl(SITE + "admin/index.html#skey=" + encodeURIComponent(key));   // v125: URL はページがサイトの設定から読む。鍵は «#» のうしろ（サーバーに送られない）
   } else say("   読み出しの鍵 : なし（誰でも URL を知っていれば読めます）");
   if (!URL_ONLY) say("   記録         : " + STATE);
 }
