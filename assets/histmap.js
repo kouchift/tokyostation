@@ -9,13 +9,16 @@
 (function (RG) {
 "use strict";
 var esc = RG.esc;
-var S = { on: false, era: null, ev: null, marks: [], sel: -1, mode: "" };
+var S = { on: false, era: null, ev: null, marks: [], sel: -1, mode: "", lv: 2 };
+try { var lv0 = +localStorage.getItem("tsg.hist.lv"); if (lv0 >= 1 && lv0 <= 4) S.lv = lv0; } catch (e) {}
+var LVN = { 1: "大項目", 2: "中項目", 3: "小項目", 4: "超コア" };
 var panel = null, layer = null, IMG = {};
 function U(w) { return w * (RG.K || 1); }
 function D() { return RG.HIST || { eras: [], ev: [] }; }
 function eraOf(id) { return D().eras.filter(function (e) { return e.id === id; })[0]; }
 function evOf(id) { return D().ev.filter(function (e) { return e.id === id; })[0]; }
-function sorted() { return D().ev.slice().sort(function (a, b) { return a.y - b.y || (a.era === "myth" ? -1 : 0); }); }
+function sorted() { return D().ev.filter(function (e) { return (e.lv || 1) <= S.lv; }).sort(function (a, b) { return a.y - b.y || (a.lv || 1) - (b.lv || 1) || (a.era === "myth" ? -1 : 0); }); }
+function maxLv() { var m = 1; D().ev.forEach(function (e) { if ((e.lv || 1) > m) m = e.lv; }); return m; }
 function ensureData(cb) {
   if (RG.HIST) { cb(); return; }
   var v = document.documentElement.getAttribute("data-build") || "";
@@ -68,11 +71,11 @@ function fit() {
   if (!S.marks.length || !RG.Map.fitBox) return;
   var xs = S.marks.map(function (m) { return m.x; }), ys = S.marks.map(function (m) { return m.y; });
   var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-  var span = Math.max(x1 - x0, y1 - y0), pad = Math.max(span * 0.18, U(10));
+  var span = Math.max(x1 - x0, y1 - y0), pad = Math.max(span * 0.18, U(35));   // 近い地点どうしでも、まわりの町がわかる広さに
   var wrap = document.querySelector(".mapwrap"), f = 0;
   if (panel && wrap && innerWidth < 760) f = Math.min(0.6, panel.offsetHeight / Math.max(1, wrap.clientHeight));
   var bx0 = x0 - pad, bx1 = x1 + pad, by0 = y0 - pad, by1 = y1 + pad;
-  if (S.marks.length === 1) { bx0 = x0 - U(18); bx1 = x0 + U(18); by0 = y0 - U(18); by1 = y0 + U(18); }
+  if (S.marks.length === 1) { bx0 = x0 - U(40); bx1 = x0 + U(40); by0 = y0 - U(40); by1 = y0 + U(40); }
   var t = innerWidth < 760 ? 0.14 : 0.06, h = by1 - by0;   // 上は検索の帯、下は窓に隠れる分だけ広げる
   by0 -= h * t / (1 - f - t); by1 += h * f / (1 - f - t);
   if (innerWidth >= 760 && panel) { var w = bx1 - bx0, fx = Math.min(0.5, (panel.offsetWidth + 24) / Math.max(1, wrap.clientWidth)); bx0 -= w * fx / (1 - fx); }
@@ -109,17 +112,27 @@ function ensurePanel() {
     if ((b = t.closest("[data-pt]"))) { pick(+b.getAttribute("data-pt"), false); return; }
     if ((b = t.closest("[data-hfit]"))) { fit(); return; }
     if ((b = t.closest("[data-hback]"))) { showEra(S.era || "edo"); return; }
+    if ((b = t.closest("[data-hlv]"))) {   // v129: 大項目だけ ⇔ 中項目まで
+      S.lv = +b.getAttribute("data-hlv"); try { localStorage.setItem("tsg.hist.lv", S.lv); } catch (x) {}
+      if (S.mode === "ev" && S.ev && (evOf(S.ev).lv || 1) <= S.lv) showEv(S.ev); else showEra(S.era || "edo");
+      return;
+    }
     if ((b = t.closest("[data-hmin]"))) { panel.classList.toggle("hp--min"); setTimeout(fit, 260); return; }
   });
   return panel;
 }
 function head(title) {
   return '<div class="hp__hd"><button class="hp__grab" type="button" data-hmin="1" aria-label="窓を小さく／大きく"></button>' +
-    '<b class="hp__ttl">' + title + '</b><span class="hp__lv" title="いまは大項目。中項目・小項目・超コアを順に追加していきます">大項目</span>' +
+    '<b class="hp__ttl">' + title + "</b>" + lvSwitch() +
     '<button class="hp__x" type="button" data-hx="1" aria-label="れきし地図を閉じる">×</button></div>';
 }
+function lvSwitch() {
+  var m = maxLv(); if (m < 2) return '<span class="hp__lv">大項目</span>';
+  var o = ""; for (var i = 1; i <= m; i++) o += '<button class="hp__lvb' + (i === S.lv ? " on" : "") + '" type="button" data-hlv="' + i + '" title="' + (i === 1 ? "大項目だけ" : LVN[i] + "まで出す") + '">' + (i === 1 ? "大" : LVN[i].charAt(0)) + "</button>";
+  return '<span class="hp__lvs" role="group" aria-label="くわしさ">' + o + "</span>";
+}
 function tabs() {
-  var cnt = {}; D().ev.forEach(function (e) { cnt[e.era] = (cnt[e.era] || 0) + 1; });
+  var cnt = {}; D().ev.forEach(function (e) { if ((e.lv || 1) <= S.lv) cnt[e.era] = (cnt[e.era] || 0) + 1; });
   return '<div class="hp__tabs" role="tablist">' + D().eras.filter(function (e) { return cnt[e.id]; }).map(function (e) {
     return '<button class="hp__tab' + (e.id === S.era ? " on" : "") + '" type="button" role="tab" data-hera="' + e.id + '" style="--ec:' + e.c + '">' + esc(e.n.replace("時代", "")) + "<small>" + cnt[e.id] + "</small></button>";
   }).join("") + "</div>";
@@ -133,8 +146,9 @@ function showEra(id) {
   ensurePanel().innerHTML = head("📜 れきし地図") + tabs() +
     '<div class="hp__body"><p class="hp__era" style="--ec:' + E.c + '"><b>' + esc(E.n) + "</b><span>" + esc(E.span) + "</span>" + esc(E.d) + "</p>" +
     '<ol class="hp__list">' + list.map(function (e) {
-      return '<li><button class="hp__ev" type="button" data-hev="' + e.id + '"><span class="hp__y">' + esc(e.ys) + (e.gg ? "<i>" + esc(e.gg) + "</i>" : "") + "</span>" +
+      return '<li><button class="hp__ev hp__ev--l' + (e.lv || 1) + '" type="button" data-hev="' + e.id + '"><span class="hp__y">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv].charAt(0) + "</em>" : "") + esc(e.ys) + (e.gg ? "<i>" + esc(e.gg) + "</i>" : "") + "</span>" +
         '<b>' + esc(e.t) + (e.legend ? ' <em class="hp__lg">伝承</em>' : "") + (e.route ? ' <em class="hp__rt">道すじ</em>' : "") + "</b>" +
+        (e.hook ? '<span class="hp__hk">' + esc(e.hook) + "</span>" : "") +
         '<small>📍 ' + esc(e.pts.map(function (p) { return p[0].replace(/（.*?）/g, ""); }).slice(0, 3).join("・") + (e.pts.length > 3 ? " ほか" : "")) + "</small></button></li>";
     }).join("") + "</ol>" +
     '<p class="src">地図の印はこの時代の出来事の場所（おおよそ）。押すと出来事の解説へ。</p></div>';
@@ -149,13 +163,16 @@ function showEv(id) {
   var prev = list[i - 1], next = list[i + 1];
   ensurePanel().innerHTML = head("📜 " + esc(E.n)) +
     '<div class="hp__body">' +
-    '<div class="hp__img" data-himg="' + esc(e.wp || "") + '"></div>' +
-    '<h3 class="hp__t">' + esc(e.t) + "</h3>" +
+    '<div class="hp__img" data-himg="' + esc(e.imgwp || e.wp || "") + '"></div>' +
+    (e.hook ? '<p class="hp__hook">🤔 ' + esc(e.hook) + "</p>" : "") +
+    '<h3 class="hp__t">' + ((e.lv || 1) > 1 ? '<em class="hp__lvt">' + LVN[e.lv] + "</em>" : "") + esc(e.t) + "</h3>" +
     '<p class="hp__meta"><span style="--ec:' + E.c + '">' + esc(E.n) + "</span><span>📅 " + esc(e.ys) + "</span>" + (e.gg ? "<span>🏷️ 元号 " + esc(e.gg) + "</span>" : "") +
       (e.legend ? '<span class="hp__lg">神話・伝承</span>' : "") + (e.note ? '<span class="hp__note">' + esc(e.note) + "</span>" : "") + "</p>" +
     '<div class="hp__pts">' + e.pts.map(function (p, j) { return '<button class="hp__pt" type="button" data-pt="' + j + '"><b style="background:' + E.c + '">' + (e.pts.length > 1 ? j + 1 : "★") + "</b>" + esc(p[0]) + "</button>"; }).join("") +
       '<button class="hp__pt hp__pt--fit" type="button" data-hfit="1">🔭 ぜんぶ見る</button></div>' +
     '<div class="eh__kid">' + e.kid.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
+    (e.koji && e.koji.length ? '<div class="hp__koji"><b>📜 故事成語・名言・名歌</b>' + e.koji.map(function (k) {
+      return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span>" + (k.o ? "<small>" + esc(k.o) + "</small>" : "") + "</div>"; }).join("") + "</div>" : "") +
     (e.hee && e.hee.length ? '<div class="eh__hee"><b>💡 へぇ〜！ ちょっとした雑学</b><ul>' + e.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
     (e.wp ? '<p class="hp__more"><a href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(e.wp) + '" target="_blank" rel="noopener">📖 Wikipedia でもっと読む</a></p>' : "") +
     '<div class="hp__nav">' + (prev ? '<button class="hp__b" type="button" data-hev="' + prev.id + '"><small>‹ 前の出来事</small>' + esc(prev.ys.replace(/（.*$/, "")) + " " + esc(prev.t.split(" ―")[0]) + "</button>" : "<span></span>") +
@@ -165,7 +182,7 @@ function showEv(id) {
   panel.hidden = false;
   panel.querySelector(".hp__body").scrollTop = 0;
   fit();
-  loadImg(e.wp);
+  loadImg(e.imgwp || e.wp);
   if (RG.track) try { RG.track("hist", e.id); } catch (x) {}
 }
 /* 写真: Wikipedia の記事の代表画像（押したときだけ取りに行く） */
