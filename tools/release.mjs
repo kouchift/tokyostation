@@ -27,8 +27,8 @@ function bump() {
   ];
   for (const [f, fn] of edits) { const s = rd(f), t = fn(s); if (t === s) throw new Error(f + " の版の番号を書き換えられませんでした"); wr(f, t); }
   say("   v" + cur + " → v" + nv + "（" + built + "）");
-  if (!new RegExp('"v' + nv + " ").test(rd("data/version.js")))
-    say("   ※ data/version.js の CHANGELOG に «v" + nv + " …» の行がありません（設定パネルの «変わったこと» に出ない）");
+  if (!new RegExp('"v' + nv + " ").test(rd("data/changelog.js")))
+    say("   ※ data/changelog.js の CHANGELOG に «v" + nv + " …» の行がありません（設定パネルの «変わったこと» に出ない）");
   return nv;
 }
 
@@ -79,8 +79,12 @@ async function main() {
     r = spawnSync("node", [path.join(ROOT, "tools", "build_bundle.js")], { stdio: "inherit", env: { ...process.env, NODE_PATH: path.join(NODE_LIB, "node_modules") } });
     if (r.status !== 0) throw new Error("まとめられませんでした" + (args.includes("--prebuilt") ? "（--prebuilt: まとめ済みの版が v" + nv + " ではありません）" : ""));
   }
-  r = spawnSync("node", ["--check", path.join(ROOT, "assets", "app.bundle.js")], { encoding: "utf8" });
-  if (r.status !== 0) throw new Error("まとめたファイルに文法の誤りがあります:\n" + r.stderr);
+  for (const b of ["app.bundle.js", "app.extra.js"]) {              // v139: 本体は 2 本（地図まで／残り）
+    r = spawnSync("node", ["--check", path.join(ROOT, "assets", b)], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error("まとめたファイル（" + b + "）に文法の誤りがあります:\n" + r.stderr);
+  }
+  r = spawnSync("node", [path.join(ROOT, "tools", "make_filehash.mjs")], { stdio: "inherit" });   // v139: ファイルごとの «中身の印»（sw.js が使う）
+  if (r.status !== 0) throw new Error("data/filehash.json を作れませんでした");
   for (const f of ["sw.js", "data/version.js", "data/support.js"]) {
     r = spawnSync("node", ["--check", path.join(ROOT, f)], { encoding: "utf8" });
     if (r.status !== 0) throw new Error(f + " に文法の誤りがあります:\n" + r.stderr);

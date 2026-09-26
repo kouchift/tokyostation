@@ -147,6 +147,14 @@ function galFetch(titles, cb) {
 /* box: 置き場所。titles: 記事名（先頭が主）。pre: 前もって集めた写真 [[path,横,縦,説明], …]（v137: あれば API を呼ばずにすぐ出す） */
 RG.wpGallery = function (box, titles, likeKey, pre) {
   titles = (titles || []).filter(Boolean); if (!box || (!titles.length && !(pre && pre.length))) return;
+  /* v139: 通信を節約しているとき（速度制限中など）は «押したら写真»。1 枚目だけ小さく見せて、残りは押してから */
+  if (RG.QOS && RG.QOS.lite() && !box.__go) {
+    var n0 = pre && pre.length ? pre.length : 0;
+    box.innerHTML = (pre && pre[0] && RG.wmImg ? '<figure class="hkg__one">' + RG.wmImg(pre[0][0], 120, { ow: pre[0][1], oh: pre[0][2] }) + "</figure>" : "") +
+      '<button type="button" class="imgtap" data-galgo>📷 写真を表示' + (n0 ? "（" + n0 + " 枚）" : "") + '<small>通信を節約中のため、押したときだけ読みます</small></button>';
+    box.querySelector("[data-galgo]").addEventListener("click", function () { box.__go = 1; RG.wpGallery(box, titles, likeKey, pre); });
+    return;
+  }
   if (pre && pre.length) { draw(pre.map(function (q) { var fn = decodeURIComponent(q[0].slice(2).split("/").pop()); return { p: q[0], ow: q[1], oh: q[2], cap: (q[3] || fn).replace(/\.[a-z]+$/i, "").replace(/_/g, " "), f: "File:" + fn, page: RG.wmPage(q[0]) }; })); return; }
   box.innerHTML = '<div class="hkg__ld">写真を集めています…</div>';
   galFetch(titles, draw);

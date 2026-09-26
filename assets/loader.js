@@ -151,50 +151,73 @@ function refresh(key) {
   clearTimeout(flushT);
   flushT = setTimeout(flush, 250);
 }
-function flush() {
+/* v139: 利用者が地図を触っている間は、裏の読み込み・反映を «待つ»。
+   力の弱いスマホで «指で動かしている最中に裏で重い作り直しが走ってカクッと止まる» のを防ぐ */
+var lastTouch = 0;
+["pointerdown", "pointermove", "wheel", "touchstart", "touchmove", "keydown"].forEach(function (t) {
+  document.addEventListener(t, function (e) { if (t !== "pointermove" || e.buttons) lastTouch = performance.now(); }, { passive: true, capture: true });
+});
+function busy() { return performance.now() - lastTouch < 1200; }
+RG.userBusy = busy;
+/* 仕事の列を «1 回 8ms まで» で区切って順に行う。区切りごとに画面へ手番を返す（触っている間は少し長めに待つ） */
+function runTasks(tasks, done) {
+  (function go() {
+    var t0 = performance.now();
+    while (tasks.length) {
+      var f = tasks.shift();
+      try { f(); } catch (e) { if (window.console) console.warn("追加データの反映でつまずきました:", e); }
+      if (performance.now() - t0 > 8) break;
+    }
+    if (tasks.length) setTimeout(go, busy() ? 300 : 0);
+    else if (done) done();
+  })();
+}
+RG.runTasks = runTasks;
+/* 届いたデータの反映（まとめて・小分けにして）。urgent: 利用者が待っている（使うときだけの読み込み）ので、触っていても待たない */
+function flush(urgent, done) {
+  if (urgent !== true && busy()) { flushT = setTimeout(flush, 350); return; }
   var keys = Object.keys(pendingKeys); pendingKeys = {};
   var base = false, poi = false, card = false;
   keys.forEach(function (k) { if (BASE_KEYS[k]) base = true; if (POI_KEYS[k]) poi = true;
                               if (k === "poi" || k === "descs" || k === "depth" || k === "shinkansen") card = true; });
-  try {
-    if (keys.indexOf("geopref") >= 0 && RG.buildGeoPref) RG.buildGeoPref();
-    if (keys.indexOf("geomuni") >= 0 && RG.buildGeoMuni) RG.buildGeoMuni();
-    if (base) {
-      if (RG.Map && RG.Map.drawBase) RG.Map.drawBase();
-      if (RG.geoEnsureBottom) RG.geoEnsureBottom();
-      if (RG.applyBasemap) RG.applyBasemap();
-      if (keys.indexOf("jpadm") >= 0 && RG.buildJPAdmin) RG.buildJPAdmin();
-      if (RG.Map && RG.Map.lod) RG.Map.lod();      // 作り直した文字に «画面px» の大きさを与える
-    }
-    if (poi) {
-      keys.forEach(function (k) { if (POI_KEYS[k] && RG.mergeExtraPois) RG.mergeExtraPois(k); });
-      if (RG.Map && RG.Map.rebuildPOI) RG.Map.rebuildPOI();
-      if (RG.resetSearchIndex) RG.resetSearchIndex();
-      if (RG.rebuildRail) RG.rebuildRail();
-      if (RG.buildGroupBar) RG.buildGroupBar();
-    }
-    if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) RG.buildWeekBar();
-    if (keys.indexOf("kuni") >= 0 && RG.kuniOn && RG.kuniOn()) RG.kuniSet(true);
-    if (keys.indexOf("support") >= 0 && RG.tipInit) RG.tipInit();
-    if (card && RG.Card && RG.Card.refresh) RG.Card.refresh();
-    if (keys.indexOf("landmarks") >= 0 && RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks();
-  } catch (e) {
-    if (window.console) console.warn("追加データの反映でつまずきました:", keys, e);
+  var T = [];
+  if (keys.indexOf("geopref") >= 0 && RG.buildGeoPref) T.push(function () { RG.buildGeoPref(); });
+  if (keys.indexOf("geomuni") >= 0 && RG.buildGeoMuni) T.push(function () { RG.buildGeoMuni(); });
+  if (base) {
+    if (RG.Map && RG.Map.drawBase) T.push(function () { RG.Map.drawBase(); });
+    T.push(function () { if (RG.geoEnsureBottom) RG.geoEnsureBottom(); if (RG.applyBasemap) RG.applyBasemap(); });
+    if (keys.indexOf("jpadm") >= 0 && RG.buildJPAdmin) T.push(function () { RG.buildJPAdmin(); });
   }
-  document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } }));
+  if (poi) {
+    keys.forEach(function (k) { if (POI_KEYS[k] && RG.mergeExtraPois) T.push(function () { RG.mergeExtraPois(k); }); });
+    if (RG.Map && RG.Map.rebuildPOI) T.push(function () { RG.Map.rebuildPOI(); });
+    T.push(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
+    if (RG.rebuildRail) T.push(function () { RG.rebuildRail(); });
+    if (RG.buildGroupBar) T.push(function () { RG.buildGroupBar(); });
+  }
+  if (base && RG.Map && RG.Map.lod) T.push(function () { RG.Map.lod(); });   // 作り直した文字に «画面px» の大きさを与える
+  if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) T.push(function () { RG.buildWeekBar(); });
+  if (keys.indexOf("kuni") >= 0) T.push(function () { if (RG.kuniOn && RG.kuniOn()) RG.kuniSet(true); });
+  if (keys.indexOf("support") >= 0 && RG.tipInit) T.push(function () { RG.tipInit(); });
+  if (card) T.push(function () { if (RG.Card && RG.Card.refresh) RG.Card.refresh(); });
+  if (keys.indexOf("landmarks") >= 0) T.push(function () { if (RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks(); });
+  T.push(function () { document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } })); });
+  runTasks(T, done);
 }
 
 /* 順番に、端末が暇なときに読む */
-function runQueue(items, onEach, done) {
+function runQueue(items, onEach, done, urgent) {
   var i = 0, failed = 0;
   function next() {
     if (i >= items.length) { done && done(failed); return; }
+    if (!urgent && busy()) { setTimeout(next, 500); return; }        // v139: 触っている間は次を読まない
     var item = items[i++];
     onEach && onEach(item, i, items.length);
     load(item.f, item.json).then(function () { refresh(item.key); })
                 .catch(function () { if (!item.opt) { failed++; (RG.dataFailed = RG.dataFailed || []).push(item.f); } /* 無くても動く。ただし数えておく（v97: 通信の失敗を黙らない）。opt はまだ無いファイル */ })
                 .then(function () {
-                  if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 700 });
+                  if (urgent) setTimeout(next, 0);
+                  else if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 1500 });
                   else setTimeout(next, 40);
                 });
   }
@@ -231,11 +254,13 @@ RG.ensureData = function (group, cb) {
     if (group === "spots" && RG.initTiles) RG.initTiles(function (meta) {
       if (meta && RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
     });
-    // まとめて反映（250ms 待たずに）
-    clearTimeout(flushT); flush();
-    if (!failed && RG.tripStatus) RG.tripStatus("✅ スポットのデータがそろいました", "ok", 2500);
-    document.dispatchEvent(new CustomEvent("rg:ondemand:" + group));
-  });
+    // まとめて反映（250ms 待たずに・小分けにして）。反映し終えてから «そろった» を知らせる
+    clearTimeout(flushT);
+    flush(true, function () {
+      if (!failed && RG.tripStatus) RG.tripStatus("✅ スポットのデータがそろいました", "ok", 2500);
+      document.dispatchEvent(new CustomEvent("rg:ondemand:" + group));
+    });
+  }, true);
 };
 RG.ensureSpots = function (cb) { RG.ensureData("spots", cb); };
 RG.spotsReady = function () { return groupState.spots === "done"; };
@@ -271,9 +296,56 @@ function armOnDemandTriggers() {
   if (st) st.addEventListener("click", go, { once: true });
 }
 
+/* v139: 第2段の読み方を «通信の速さ» で変える
+   ・ふつう: いままでどおり順に（端末が暇なとき・触っていないとき）
+   ・ゆっくり（速度制限中など）: 小さくて地図にすぐ効くもの（1）→ 地図の印・区の形（2）→ カードの中身（3）の順に «じわじわ»。
+     2・3 は 1 件ごとに 1.5 秒あけ、ほかの通信（写真など）の邪魔をしない
+   ・データセーバー: 1 だけ。残りは設定の «残りのデータも読み込む» か、使うときに */
+var PRI2 = { pois: 1, admin: 1, levechi: 1, grave: 1, whs: 1, ichinomiya: 1, shrines_jp: 1, buzz: 1, buzzauto: 1, geomuni: 1, jpadm: 1 };
+var PRI3 = { koyomi: 1, descs: 1, poi: 1, eduhist: 1, relief: 1, bldg: 1 };
+function pri(it) { return PRI3[it.key] ? 3 : PRI2[it.key] ? 2 : 1; }
+var idleLeft = null, idleDone = null, idleRunning = false;
+function runIdle(done, all) {
+  if (done) idleDone = done;
+  if (idleRunning) return;
+  var Q = RG.QOS, lite = Q && Q.lite(), save = !all && Q && Q.mode !== "full" && (Q.net === "save" || Q.mode === "lite");
+  var items = (idleLeft || IDLE).filter(function (it) { return !loaded[it.f]; });
+  if (lite) items = items.slice().sort(function (a, b) { return pri(a) - pri(b); });
+  var now = save ? items.filter(function (it) { return pri(it) === 1; }) : items;
+  idleLeft = items.filter(function (it) { return now.indexOf(it) < 0; });
+  RG.idleLeft = function () { return idleLeft ? idleLeft.length : 0; };
+  idleRunning = true;
+  var i = 0;
+  (function one() {
+    if (i >= now.length) { idleRunning = false; if (!idleLeft.length && idleDone) { var d = idleDone; idleDone = null; d(); } return; }
+    var it = now[i++];
+    var gap = lite && pri(it) > 1 ? 1500 : 0;
+    setTimeout(function () {
+      runQueue([it], null, function () { one(); });
+    }, gap);
+  })();
+}
+/* 設定の «残りのデータも読み込む»・«しっかり表示» に切り替えたとき */
+RG.loadRestData = function () { runIdle(null, true); };
+document.addEventListener("rg:qos", function (e) { if (e.detail && !e.detail.lite && idleLeft && idleLeft.length) runIdle(); });
+
 /* ===== 起動 ===== */
+/* v139: 本体の残り（assets/app.extra.js）。通信が速ければすぐ（地図の準備と並べて）、ゆっくりなら地図を描いてから読む */
+var extraP = null;
+function loadExtras() {
+  if (extraP) return extraP;
+  extraP = load("assets/app.extra.js").catch(function () {
+    return new Promise(function (res) { setTimeout(res, 3000); }).then(function () { return load("assets/app.extra.js"); });   // 1 回だけ取り直す
+  }).catch(function (e) {
+    if (RG.tripStatus) RG.tripStatus("⚠️ 一部の機能を読み込めませんでした（通信を確かめて、再読み込みしてください）", "warn", 8000);
+    throw e;
+  });
+  return extraP;
+}
+RG.extrasReady = function () { return loadExtras(); };
 RG.startApp = function (netPromise) {
   setProgress("路線図をよみこんでいます", 10);
+  if (!(RG.QOS && RG.QOS.lite())) loadExtras();
   var bad = [];
   var coreP = Promise.all(CORE.map(function (f) { return load(f).catch(function () { bad.push(f); }); }));
   Promise.all([coreP, netPromise]).then(function (r) {
@@ -287,10 +359,14 @@ RG.startApp = function (netPromise) {
   }).then(function () {
     RG.boot();
     setProgress("", 100);
+    loadExtras();                                                   // ゆっくりのときは、ここで（地図が出てから）
+    // v139: 起動の «あとで» の列が終わってから（rg:booted）。地図が出たら、端末が暇なときに残りを足す（最初の1秒は操作を邪魔しない）
+    return new Promise(function (res) { if (RG.booted) res(); else document.addEventListener("rg:booted", function () { res(); }, { once: true }); });
+  }).then(function () {
     armOnDemandTriggers();
-    // 地図が出たら、端末が暇なときに残りを足す（最初の1秒は操作を邪魔しない）
+    if (RG.QOS) RG.QOS.update();                                    // v139: 実際に届いた速さで «表示の軽さ» を決め直す
     setTimeout(function () {
-      runQueue(IDLE, null, function () {
+      runIdle(function () {
         // 保存された設定に «おとな向け» や «喫煙» があるときは、そのデータも
         if ((RG.adultOn && RG.adultOn()) || (RG.hasSmokeTicket && RG.hasSmokeTicket()) ||
             (RG.settings && RG.settings.camspot)) RG.ensureSpots();
@@ -319,11 +395,11 @@ RG.retryFailedData = function (cb) {
   if (!items.length) { cb && cb(0); return; }
   if (RG.tripStatus) RG.tripStatus("🔄 読み込めなかったデータ（" + items.length + " 件）をもう一度取りに行きます…", "info", 5000);
   runQueue(items, function (item, i, total) { setProgress(item.label + " をよみこんでいます", (i / total) * 100); }, function (failed) {
-    setProgress("", 100); clearTimeout(flushT); flush();
+    setProgress("", 100); clearTimeout(flushT); flush(true);
     if (RG.tripStatus) RG.tripStatus(failed ? "⚠️ まだ " + failed + " 件を読み込めません。通信を確認してください" : "✅ 読み込めました", failed ? "warn" : "ok", 5000);
     if (RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
     cb && cb(failed);
-  });
+  }, true);
 };
 
 })(window.RG);

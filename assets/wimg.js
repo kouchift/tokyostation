@@ -10,7 +10,8 @@
 "use strict";
 var WSTEP = [120, 250, 330, 500, 960, 1280];
 RG.WSTEP = WSTEP;
-function dpr() { return Math.min(2, window.devicePixelRatio || 1); }
+function lite() { return RG.QOS && RG.QOS.lite(); }
+function dpr() { return lite() ? 1 : Math.min(2, window.devicePixelRatio || 1); }   // v139: 通信を節約しているときは等倍
 function step(w) { for (var i = 0; i < WSTEP.length; i++) if (WSTEP[i] >= w) return WSTEP[i]; return WSTEP[WSTEP.length - 1]; }
 RG.wStep = step;
 /* "c:a/ab/Name.jpg" → URL（幅 w。元の横幅 ow より大きい幅は頼まない＝元の画像） */
@@ -31,7 +32,7 @@ RG.wmNormalize = function (url, w) {
 /* <img> を作る。cssW: 表示する幅（px）。o: {cls, alt, ow, oh, eager, sizes} */
 RG.wmImg = function (p, cssW, o) {
   o = o || {};
-  var w1 = step(cssW), w2 = step(cssW * 1.5),   // 高密度の画面でも 1.5 倍どまり（2 倍にすると 960px になり重い。見た目の差は小さい）
+  var w1 = step(cssW), w2 = lite() ? w1 : step(cssW * 1.5),     // v139: 通信を節約しているときは高密度用を読まない   // 高密度の画面でも 1.5 倍どまり（2 倍にすると 960px になり重い。見た目の差は小さい）
       src = RG.wmUrl(p, w1, o.ow);
   var srcset = w2 !== w1 && (!o.ow || o.ow > w1) ? ' srcset="' + src + " " + w1 + "w, " + RG.wmUrl(p, w2, o.ow) + " " + w2 + 'w" sizes="' + (o.sizes || cssW + "px") + '"' : "";
   var wh = o.ow && o.oh ? ' width="' + w1 + '" height="' + Math.round(w1 * o.oh / o.ow) + '"' : "";

@@ -207,6 +207,9 @@ function linksHtml(res) {
   if (res.url) out.push('<a class="enr__lnk" href="' + esc(res.url) + '" target="_blank" rel="noopener">📖 Wikipedia で読む</a>');
   return out.length ? '<div class="enr__lnks">' + out.join("") + "</div>" : "";
 }
+/* v139: 写真の大きさ。一覧の小さな四角（72〜100px）に 640px の写真を読んでいたのをやめ、枠に合う標準の幅に */
+function sz(u, w) { return RG.wmNormalize ? RG.wmNormalize(u, w) : u; }
+function lite() { return RG.QOS && RG.QOS.lite(); }
 function galleryHtml(res, o) {
   var ph = res.photos; if (!ph.length) return "";
   var hero = ph[0];
@@ -214,12 +217,12 @@ function galleryHtml(res, o) {
   var rest = showHero ? ph.slice(1) : ph;
   var h = "";
   if (showHero) {
-    h += '<figure class="enr__hero" data-i="0"><div class="enr__heroBox"><img src="' + esc(hero.u) + '" alt="' + esc(hero.t) + '" loading="lazy" decoding="async"></div>' +
+    h += '<figure class="enr__hero" data-i="0"><div class="enr__heroBox"><img src="' + esc(sz(hero.u, lite() ? 330 : 500)) + '" alt="' + esc(hero.t) + '" loading="lazy" decoding="async"></div>' +
          '<figcaption>📷 ' + esc([hero.lic, hero.by].filter(Boolean).join(" / ") || "Wikimedia Commons") + "</figcaption></figure>";
   }
   if (rest.length) {
     h += '<div class="enr__gal">' + rest.map(function (p, i) {
-      return '<button class="enr__th" type="button" data-i="' + (showHero ? i + 1 : i) + '" title="' + esc(p.t) + '"><img src="' + esc(p.u) + '" alt="' + esc(p.t) + '" loading="lazy" decoding="async"></button>';
+      return '<button class="enr__th" type="button" data-i="' + (showHero ? i + 1 : i) + '" title="' + esc(p.t) + '"><img src="' + esc(sz(p.u, lite() ? 120 : 250)) + '" alt="' + esc(p.t) + '" loading="lazy" decoding="async"></button>';
     }).join("") + "</div>";
   }
   return h;
@@ -237,7 +240,7 @@ function extractHtml(res, o) {
 }
 function lightbox(photos, i) {
   var p = photos[i]; if (!p) return;
-  var big = p.big || p.u;
+  var big = sz(p.u || p.big, 1280);                                  // v139: 原寸（数 MB のことがある）ではなく 1280px
   var box = el("div", { class: "enr__lb", role: "dialog", "aria-label": "写真" });
   box.innerHTML = '<div class="enr__lbi"><img src="' + esc(big) + '" alt="' + esc(p.t) + '"></div>' +
     '<div class="enr__lbc"><b>' + esc(p.d || p.t) + "</b><span>" + esc([p.lic || "ライセンスは画像ページ参照", p.by].filter(Boolean).join(" / ")) + "</span>" +
@@ -267,10 +270,14 @@ RG.enrich = function (host, o) {
     if (host.__enr !== my || !document.body.contains(host)) return;
     if (!res || (!res.photos.length && !res.facts.length && !res.extract)) { host.innerHTML = ""; return; }
     var head = '<div class="enr__h"><span>📸 ひと目でわかる</span>' + (res.desc ? '<em>' + esc(res.desc) + "</em>" : "") + "</div>";
-    host.innerHTML = '<div class="enr">' + head + galleryHtml(res, o) + factsHtml(res, o) + extractHtml(res, o) + linksHtml(res) +
+    var gal = galleryHtml(res, o), gate = gal && lite();             // v139: 通信を節約しているときは «押したら写真»
+    host.innerHTML = '<div class="enr">' + head + (gate ? '<button type="button" class="imgtap" data-enrgal>📷 写真を表示（' + res.photos.length + ' 枚・通信を節約中のため押したときだけ）</button>' : gal) + factsHtml(res, o) + extractHtml(res, o) + linksHtml(res) +
       '<p class="enr__credit">写真: Wikimedia Commons（ライセンス・撮影者は各写真に表示）／数値: Wikidata（CC0）／説明: Wikipedia（CC BY-SA 4.0）。' +
       "数値は編集された時点のもので、最新とは限りません。</p></div>";
-    host.querySelectorAll("[data-i]").forEach(function (b) { b.addEventListener("click", function () { lightbox(res.photos, +b.dataset.i); }); });
+    function bindPh() { host.querySelectorAll("[data-i]").forEach(function (b) { if (b.__lb) return; b.__lb = 1; b.addEventListener("click", function () { lightbox(res.photos, +b.dataset.i); }); }); }
+    bindPh();
+    var gb = host.querySelector("[data-enrgal]");
+    if (gb) gb.addEventListener("click", function () { gb.insertAdjacentHTML("afterend", gal); gb.remove(); bindPh(); });
     var more = host.querySelector(".enr__more");
     if (more) more.addEventListener("click", function () { var p = host.querySelector(".enr__p"); p.textContent = p.dataset.full; more.remove(); });
   }).catch(function () { if (host.__enr === my) host.innerHTML = ""; });

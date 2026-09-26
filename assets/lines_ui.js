@@ -727,6 +727,10 @@ function openSettings() {
       "× 鉄道会社のロゴ・シンボルマーク・キャラクター画像は<b>同梱していません</b>。" +
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
+    (RG.QOS ? '<div class="set__sec"><h4>📶 表示の軽さ</h4><p class="set__d">通信がゆっくりなとき（月末の速度制限など）や、力の弱いスマホでは、地図と駅を最優先にして、写真は押したときだけ読みます。</p>' +
+      '<select data-qos class="set__sel"><option value="auto"' + (RG.QOS.mode === "auto" ? " selected" : "") + '>自動（おすすめ）</option><option value="full"' + (RG.QOS.mode === "full" ? " selected" : "") + '>しっかり表示（通信が速いとき）</option><option value="lite"' + (RG.QOS.mode === "lite" ? " selected" : "") + '>軽く（通信を節約）</option></select>' +
+      '<p class="set__d" data-qos-now>' + esc(RG.QOS.label()) + "</p>" +
+      (RG.idleLeft && RG.idleLeft() ? '<button type="button" class="set__b" data-rest>📥 まだ読んでいない地図のデータ（' + RG.idleLeft() + ' 件）も読み込む</button>' : "") + "</div>" : "") +   // v139
     (RG.mapFocusSwitchHTML ? RG.mapFocusSwitchHTML() : "") +   // v102
     (RG.tipEntryHTML ? RG.tipEntryHTML() : "") +
     (RG.favs ? RG.favs.settingsHTML() : "") +
@@ -738,9 +742,20 @@ function openSettings() {
     '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
       '<p class="set__d">いま動いている版: <b>' + esc(RG.VERSION || "不明") + "</b>（" + esc(RG.BUILT || "?") + " 作成）" +
       ' <button id="set-state" class="set__b" type="button">くわしい状態</button></p>' +
-      ((RG.CHANGELOG || []).length ? '<ul class="set__log">' + RG.CHANGELOG.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : "") + "</div>";
+      '<ul class="set__log" data-changelog><li>読み込んでいます…</li></ul></div>';   // v139: 一覧は開いたときだけ読む（data/changelog.js）
   var m = RG.openModal("設定", html);
   var sst = $("#set-state", m); if (sst) sst.addEventListener("click", function () { if (RG.showState) RG.showState(); });
+  (function () {                                                    // v139: 変わったことの一覧
+    function fill() { var u = m.querySelector("[data-changelog]"); if (u) u.innerHTML = (RG.CHANGELOG || []).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join(""); }
+    if (RG.CHANGELOG) { fill(); return; }
+    var s2 = document.createElement("script"); s2.src = RG.withV ? RG.withV("data/changelog.js") : "data/changelog.js"; s2.async = true;
+    s2.onload = fill; s2.onerror = function () { var u = m.querySelector("[data-changelog]"); if (u) u.innerHTML = "<li>一覧を読み込めませんでした（通信を確かめてください）</li>"; };
+    document.head.appendChild(s2);
+  })();
+  var rb = m.querySelector("[data-rest]");
+  if (rb) rb.addEventListener("click", function () { if (RG.loadRestData) RG.loadRestData(); rb.disabled = true; rb.textContent = "📥 読み込んでいます（地図に順に出ます）"; });
+  var qs = m.querySelector("[data-qos]");                          // v139: 表示の軽さ
+  if (qs && RG.QOS) qs.addEventListener("change", function () { RG.QOS.set(qs.value); var d = m.querySelector("[data-qos-now]"); if (d) d.textContent = RG.QOS.label(); });
   if (RG.bindAdultSwitch) RG.bindAdultSwitch(m);
   if (RG.mapFocusSwitchBind) RG.mapFocusSwitchBind(m);   // v102
   if (RG.geoSwitchBind) RG.geoSwitchBind(m);

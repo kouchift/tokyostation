@@ -9,7 +9,7 @@
   --lb50:#F0F9FF; --lb200:#C0E4FF; --lb400:#57B8FF; --lb600:#008BF2; --lb900:#0055AD;
   --ye400:#FFC700; --ye600:#D2A400;
   --rd200:#FFBBBB; --rd600:#FE3939; --ok:#197A4B;
-  --font:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",
+  --font:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",
          "Meiryo",system-ui,sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --r:12px; --pad:12px;
@@ -1051,7 +1051,7 @@ body.secret .lbadge{min-width:25px;height:25px;font-size:11.5px;background:var(-
    v16：ベースマップ（行政区・地形・3D・ヒートマップ・白地図）
    ========================================================================= */
 .mapwrap{transform-style:preserve-3d}
-#map{transition:transform .28s ease}
+#map{transform-origin:0 0;will-change:transform}   /* v139: 動かしている間は transform で見た目だけ動かす（app.js の apply）。transition は付けない */
 .relief image{opacity:.72}
 #map.d3 .relief image{opacity:.92}
 
@@ -3180,7 +3180,7 @@ body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
   --grid:#e0e3e8; --border:#c0c7d3; --gray600:#404751; --gray800:#2d3135;
   --lb50:#f1f4f9; --lb200:#d1e4ff; --lb400:#9dcaff; --lb600:#007ac9; --lb900:#0061a1;
   --ok:#006c4b; --okbg:#6bfcc0; --amber:#8f4c00; --amberbg:#ffdcc3; --err:#ba1a1a;
-  --font:"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
+  --font:"Plus Jakarta Sans","Hiragino Sans","Hiragino Kaku Gothic ProN","BIZ UDPGothic","Yu Gothic","Meiryo",system-ui,"Noto Sans JP",sans-serif;   /* v139: 日本語は端末の書体（読みこみ 0） */
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --r:14px; --header-h:64px; --chips-h:64px;
   --sh-xs:0 1px 2px rgba(24,28,32,.06); --sh-sm:0 2px 8px rgba(24,28,32,.08); --sh-md:0 6px 20px rgba(24,28,32,.10); --sh-lg:0 -8px 24px rgba(24,28,32,.08);
@@ -3569,7 +3569,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:100 700;font-display:block;src:url(fonts/msymbols.woff2?v=106) format('woff2')}
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=139) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -4462,3 +4462,8 @@ body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2
   padding:12px;background:#FFD8D8;color:#C41E3A;border-radius:8px;
   font-size:12px;text-align:center
 }
+
+/* v139: 通信を節約しているときの «押したら写真» */
+.imgtap{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;min-height:44px;margin:4px 0 8px;padding:8px 12px;border:1px dashed #b8c4d4;border-radius:10px;background:#f4f7fb;color:#0055AD;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.imgtap small{font-size:11px;font-weight:400;color:#6b7684}
+.hkg__one{margin:0 0 4px}.hkg__one img{width:120px;height:auto;border-radius:8px;display:block}

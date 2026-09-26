@@ -64,6 +64,7 @@ RG.mapSizeAt = function (z) {
   t = Math.max(0, Math.min(1, t));
   function mix(k) { return st[i][k] + (st[i + 1][k] - st[i][k]) * t; }
   var lbl = mix("lbl"), dot = mix("dot");
+  var cut = RG.QOS && RG.QOS.weak() ? 0.75 : 1;             // v139: 力の弱い端末では、一度に描く駅・名前・印を 3 割減らす
   return {
     lbl: lbl * S.lblSmall, lblBig: lbl, lblSel: lbl * S.lblSelR,
     stroke: lbl * S.strokeR,
@@ -73,9 +74,9 @@ RG.mapSizeAt = function (z) {
     jpadm: lbl * S.jpadmR,
     poiE: lbl * S.poiER, poiEBig: lbl * S.poiEBigR,
     poiC: lbl * S.poiER * S.poiCR, poiT: lbl * S.poiTR,
-    maxDot: Math.round(mix("dots")), maxName: Math.round(mix("names")),
+    maxDot: Math.round(mix("dots") * cut), maxName: Math.round(mix("names") * cut),
     maxAdm: Math.round(mix("adm")), maxJpAdm: Math.round(mix("jpadm")),
-    maxPoi: Math.round(mix("poi"))
+    maxPoi: Math.round(mix("poi") * cut)
   };
 };
 
@@ -786,17 +787,18 @@ var Map = (function () {
     var lv = $("#zlevel");
     if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
-    if (RG.admLOD) RG.admLOD();
-    if (RG.geoLOD) RG.geoLOD();          // 先に市区町村の面と名前を決める（v82）
-    if (RG.jpAdmLOD) RG.jpAdmLOD();      // 全国地名は、面の名前と重複しないものだけ
-    if (RG.corpBubbleLOD) RG.corpBubbleLOD();
-    if (RG.terraLOD) RG.terraLOD();
-    if (RG.kuniLOD) RG.kuniLOD();
-    if (RG.airLOD) RG.airLOD();
-    if (RG.roadsLOD) RG.roadsLOD();
-    if (RG.quakeLOD) RG.quakeLOD();
-    if (RG.buzzRailRefresh) RG.buzzRailRefresh();
-    if (RG.map3DMoved) RG.map3DMoved();
+    /* v139: 駅とスポット（いちばん見たいもの）を先に画面へ出し、残りの層（行政区・地名・企業・地形…）は
+       次の手番に回す（1 回の作業を短くして、指の操作に早く反応できるように） */
+    clearTimeout(lodTail);
+    lodTail = setTimeout(function () {
+      var tail = [RG.admLOD, RG.geoLOD /* 先に市区町村の面と名前を決める（v82） */, RG.jpAdmLOD /* 全国地名は、面の名前と重複しないものだけ */,
+                  RG.corpBubbleLOD, RG.terraLOD, RG.kuniLOD, RG.airLOD, RG.roadsLOD, RG.quakeLOD, RG.buzzRailRefresh, RG.map3DMoved];
+      (function go() {
+        var t0 = performance.now();
+        while (tail.length) { var f = tail.shift(); if (f) try { f(); } catch (e) { if (window.console) console.warn(e); } if (performance.now() - t0 > 8) break; }
+        if (tail.length) lodTail = setTimeout(go, 0);
+      })();
+    }, 0);
     if ((RG.loadTilesFor || RG.zipOnMove || RG.weatherOnMove) && vb) {
       clearTimeout(tileT);
       tileT = setTimeout(function () {
@@ -809,6 +811,7 @@ var Map = (function () {
       }, 300);
     }
   }
+  var lodTail = null;
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
 
   function initViewport() {
@@ -825,40 +828,40 @@ var Map = (function () {
       if (e.target.closest(".node")) return;
       if (e.target.closest && e.target.closest(UI_SEL)) return;   // ボタンの上なら地図は動かさない
       wrap.setPointerCapture(e.pointerId);
-      drag = { x: e.clientX, y: e.clientY, vx: vb.x, vy: vb.y };
+      drag = { x: e.clientX, y: e.clientY, vx: vb.x, vy: vb.y, r: wrap.getBoundingClientRect() };   // v139: 枠の大きさは始めに 1 回だけ測る（動かすたびに測ると重い）
       wrap.classList.add("dragging");
     });
     wrap.addEventListener("pointermove", function (e) {
       if (!drag || pinch) return;
-      var r = wrap.getBoundingClientRect(), k = vb.w / r.width;
+      var r = drag.r, k = vb.w / r.width;
       vb.x = drag.vx - (e.clientX - drag.x) * k;
-      vb.y = drag.vy - (e.clientY - drag.y) * k; apply();
+      vb.y = drag.vy - (e.clientY - drag.y) * k; apply(true);
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (t) {
-      wrap.addEventListener(t, function () { drag = null; wrap.classList.remove("dragging"); });
+      wrap.addEventListener(t, function () { if (drag) endGesture(); drag = null; wrap.classList.remove("dragging"); });
     });
     wrap.addEventListener("wheel", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
-      e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.16 : 1 / 1.16);
+      e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.16 : 1 / 1.16, true);
     }, { passive: false });
     wrap.addEventListener("touchstart", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       if (e.touches.length === 2) { drag = null;
-        pinch = { d: dist(e.touches), vb: { x: vb.x, y: vb.y, w: vb.w, h: vb.h }, c: mid(e.touches) }; }
+        pinch = { d: dist(e.touches), vb: { x: vb.x, y: vb.y, w: vb.w, h: vb.h }, c: mid(e.touches), r: wrap.getBoundingClientRect() }; }
     }, { passive: true });
     wrap.addEventListener("touchmove", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       if (!pinch || e.touches.length !== 2) return;
       e.preventDefault();
-      var k = pinch.d / dist(e.touches), r = wrap.getBoundingClientRect();
+      var k = pinch.d / dist(e.touches), r = pinch.r;
       var ar = pinch.vb.h / pinch.vb.w;
       var nw = clamp(pinch.vb.w * k, U(60), VB.w * 1.6), nh = nw * ar;
       var fx = (pinch.c.x - r.left) / r.width, fy = (pinch.c.y - r.top) / r.height;
       vb.x = pinch.vb.x + (pinch.vb.w - nw) * fx;
       vb.y = pinch.vb.y + (pinch.vb.h - nh) * fy;
-      vb.w = nw; vb.h = nh; apply();
+      vb.w = nw; vb.h = nh; apply(true);
     }, { passive: false });
-    wrap.addEventListener("touchend", function (e) { if (e.touches.length < 2) pinch = null; }, { passive: true });
+    wrap.addEventListener("touchend", function (e) { if (e.touches.length < 2) { if (pinch) endGesture(); pinch = null; } }, { passive: true });
     /* v82: 画面の縦横比が変わったら（スマホのアドレスバーの出し入れ・キーボード・回転）、viewBox の縦横比も合わせ直す。
        合っていないと SVG が上下に余白を作って中央寄せになり、タップ位置と地図がずれる／使えない領域ができる */
     var arTimer = null;
@@ -878,19 +881,48 @@ var Map = (function () {
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
   function mid(t) { return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; }
-  function apply() {
-    // 余白へ行き過ぎないように収める
-    var mx2 = VB.w * 0.25, my2 = VB.h * 0.25;
+  /* v139: 指で動かしている間は «見た目だけ» 動かす。
+     viewBox を毎回変えると、SVG 全体（路線・境界・駅・スポット…数千の図形）を 1 コマごとに描き直すことになり、
+     力の弱いスマホではそれだけで 1 コマ 0.1〜0.5 秒かかっていた。
+     動かしている間は «前に描いた絵» を CSS の transform でずらす・拡大するだけ（画面の合成だけで済む＝どの端末でも滑らか）。
+     指を止めた／離したときに 1 回だけ本当に描き直し（viewBox）、駅名やスポットの間引き（lod）もそのあと 1 回だけ */
+  var cvb = null, gestT = null, gestRaf = 0, gestR = null, lastCommit = 0, GEST_IDLE = 140, GEST_MAX = 600;
+  function clampVb() {
+    var mx2 = VB.w * 0.25, my2 = VB.h * 0.25;                    // 余白へ行き過ぎないように収める
     vb.x = Math.max(-mx2, Math.min(VB.w - vb.w + mx2, vb.x));
     vb.y = Math.max(-my2, Math.min(VB.h - vb.h + my2, vb.y));
-    svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" ")); scheduleLod();
+  }
+  function commitView() {
+    clearTimeout(gestT); gestT = null; gestR = null;
+    if (gestRaf) { cancelAnimationFrame(gestRaf); gestRaf = 0; }
+    svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
+    svg.style.transform = "";
+    cvb = { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; lastCommit = performance.now();
+    scheduleLod();
     if (RG.onMapView) try { RG.onMapView(); } catch (e) {}   // v128: 地図の上の HTML の印（れきし地図）を動きに合わせる
   }
-  function zoomAt(cx, cy, k) {
-    var r = wrap.getBoundingClientRect();
+  function paintGesture() {
+    gestRaf = 0; if (!cvb || !gestR) return;
+    var s = cvb.w / vb.w, tx = (cvb.x - vb.x) * gestR.width / vb.w, ty = (cvb.y - vb.y) * gestR.height / vb.h;
+    svg.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(5) + ")";
+    if (RG.onMapView) try { RG.onMapView(); } catch (e) {}
+  }
+  function endGesture() { if (gestT) commitView(); }
+  function apply(gesture) {
+    clampVb();
+    if (!gesture || !cvb) { commitView(); return; }
+    if (!gestR) { gestR = svg.getBoundingClientRect(); lastCommit = performance.now(); }   // ここから動かし始め
+    if (!gestRaf) gestRaf = requestAnimationFrame(paintGesture);   // 1 コマに 1 回だけ
+    clearTimeout(lodTimer);                                        // 動かしている間は間引きもしない
+    clearTimeout(gestT); gestT = setTimeout(commitView, GEST_IDLE);
+    if (performance.now() - lastCommit > GEST_MAX) { gestT = null; commitView(); }   // 長く動かし続けるときは、ときどき端を描き足す
+  }
+  RG.mapCommitView = function () { if (gestT) commitView(); };
+  function zoomAt(cx, cy, k, gesture) {
+    var r = gesture && gestR ? gestR : wrap.getBoundingClientRect();
     var nw = clamp(vb.w * k, U(60), VB.w * 1.6), nh = nw * (vb.h / vb.w);
     var fx = (cx - r.left) / r.width, fy = (cy - r.top) / r.height;
-    vb.x += (vb.w - nw) * fx; vb.y += (vb.h - nh) * fy; vb.w = nw; vb.h = nh; apply();
+    vb.x += (vb.w - nw) * fx; vb.y += (vb.h - nh) * fy; vb.w = nw; vb.h = nh; apply(gesture);
   }
   function zoom(k) { var r = wrap.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, k); }
   function fitAll() { vb = { x: VB.x, y: VB.y, w: VB.w, h: VB.h }; apply(); }
@@ -2615,7 +2647,15 @@ RG.boot = function () {
      地図が出ることを何より優先する。 */
   var failed = [], timing = [];
   RG.bootTiming = timing;
-  function step(name, fn, vital) {
+  /* v139: «地図が出て触れる» までに要るものだけを先に 1 回で行い、残りは «あとで» の列に並べて、
+     端末に息つぎさせながら（1 回 8ms 程度で区切って）順に行う。
+     以前はここで 30 近い部品を一気に作っていて、力の弱いスマホでは 1〜4 秒、画面が固まっていた */
+  var later = null;
+  function step(name, fn, vital, now) {
+    if (later && !now) { later.push([name, fn, vital]); return; }
+    runStep(name, fn, vital);
+  }
+  function runStep(name, fn, vital) {
     var t0 = performance.now();
     try { fn(); }
     catch (err) {
@@ -2636,6 +2676,16 @@ RG.boot = function () {
   step("検索の索引", function () { buildIndex(); });
   step("駅カード", function () { Card.init(); });
   step("路線図の描画", function () { Map.draw(); Map.initViewport(); }, true);
+  step("地図のボタン", function () {
+    $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
+    $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
+    $("#zfit").addEventListener("click", Map.fitAll);
+    $("#zhub").addEventListener("click", function () { RG.goHere(); });   // v113: ◎ は «現在地へ»（取れないときは東京駅へ。v89 までは東京駅へ）
+    $("#zhub").setAttribute("aria-label", "現在地へ（取れないときは東京駅）"); $("#zhub").title = "現在地へ";
+    var bh = $("#btn-hub");
+    if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
+  });
+  later = [];                                                     // ここから下は «あとで»（最初の表示位置と文字の大きさだけは今）
 
   // ---- ここから下は «無くても地図は見られる» もの ----
   step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
@@ -2651,20 +2701,11 @@ RG.boot = function () {
   step("シートの操作", function () { initSheetDrag(); });
   step("出発バー", function () { if (RG.initPlannerUI) RG.initPlannerUI(); });
   step("地形・行政区", function () { Map.drawBase(); });
-  step("スポットの描画", function () { Map.buildPOI(); });
+  step("スポットの描画", function () { Map.buildPOI(); if (Map.poiLOD) Map.poiLOD(); });
   step("路線レール", function () { if (RG.initLinesUI) RG.initLinesUI(); });
   step("おでかけプラン", function () { if (RG.initPlan) RG.initPlan(); });
   step("偏差値", function () { if (RG.rebuildHensachi) RG.rebuildHensachi(); });
   step("学校", function () { if (RG.mergeEdu) RG.mergeEdu(); });
-  step("地図のボタン", function () {
-    $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
-    $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
-    $("#zfit").addEventListener("click", Map.fitAll);
-    $("#zhub").addEventListener("click", function () { RG.goHere(); });   // v113: ◎ は «現在地へ»（取れないときは東京駅へ。v89 までは東京駅へ）
-    $("#zhub").setAttribute("aria-label", "現在地へ（取れないときは東京駅）"); $("#zhub").title = "現在地へ";
-    var bh = $("#btn-hub");
-    if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
-  });
   // 升目（data/tiles）の目次は、スポットのデータを読むときに一緒に確かめる（loader.js）
   step("別スレッドの検索索引", function () {
     if (!RG.askWorker || !RG.hasWorker || !RG.hasWorker()) return;
@@ -2685,7 +2726,7 @@ RG.boot = function () {
   step("スポットのグループ", function () { if (RG.buildGroupBar) RG.buildGroupBar(); });
   step("文字の大きさ", function () {
     if (RG.settings && RG.settings.bigtext) document.documentElement.classList.add("bigtext");
-  });
+  }, false, true);
 
   var sl = $("#statline");
   if (sl) {
@@ -2698,7 +2739,7 @@ RG.boot = function () {
     if (st) { Map.focus(st.id, isTouch() && innerWidth < 560 ? 360 : 520); if (Map.select) Map.select(st.id); }
     else Map.focus(RG.HUB, isTouch() && innerWidth < 560 ? 440 : 700);
     firstViewHere();
-  });
+  }, false, true);
   /* v110: 初回の地図は «現在地» のあたり。取れない（許可なし・時間切れ・日本の外・http）ときは東京駅のまま。
      共有リンク（?st= ?from= など）で開いたとき・位置が届く前に地図を動かした／カードを開いたときは動かさない。出発地は変えない */
   function firstViewHere() {
@@ -2729,8 +2770,32 @@ RG.boot = function () {
     else ask();
   }
 
+  /* «あとで» の列を、息つぎしながら順に。終わったら rg:booted（loader.js はこれを待ってから追加データを読み始める） */
+  var Q = later; later = null;
   RG.bootFailed = failed;
-  if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);
+  RG.booted = false;
+  /* 本体の残り（app.extra.js）が要らない手順は先に。要る手順は、届くのを待ってから */
+  var NOEXTRA = { "シートの操作": 1, "メイン検索": 1, "フィルタ": 1, "出発バー": 1, "地形・行政区": 0 };
+  var extraOk = !RG.extrasReady, extraWait = false;
+  function waitExtra() {
+    if (extraWait) return; extraWait = true;
+    RG.extrasReady().then(function () { extraOk = true; setTimeout(drain, 0); }, function () { extraOk = true; setTimeout(drain, 0); });   // 読めなくても、ある部品だけで進める
+  }
+  Q.sort(function (a, b) { return (NOEXTRA[b[0]] || 0) - (NOEXTRA[a[0]] || 0); });   // 要らないものを前へ（それぞれの中の順はそのまま）
+  function drain() {
+    var t0 = performance.now();
+    while (Q.length) {
+      if (!extraOk && !NOEXTRA[Q[0][0]]) { waitExtra(); return; }
+      var it = Q.shift(); runStep(it[0], it[1], it[2]);
+      if (performance.now() - t0 > 8) break;
+    }
+    if (Q.length) { setTimeout(drain, 0); return; }
+    try { if (Map.lod) Map.lod(); } catch (e) {}                 // 後から作った層（行政区・スポット）にも画面px の大きさを
+    RG.booted = true;
+    if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);
+    document.dispatchEvent(new CustomEvent("rg:booted"));
+  }
+  drain();
   return failed;
 };
 

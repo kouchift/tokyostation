@@ -34,7 +34,7 @@ def main():
         u = used_icons(); cur = set(ICONS.split(","))
         print("used:", ",".join(u)); print("missing in ICONS:", sorted(set(u) - cur)); return
     names = ",".join(sorted(set(ICONS.split(","))))
-    css_url = ("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    css_url = ("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400..500,0..1,0"
                "&icon_names=" + names + "&display=block")
     req = urllib.request.Request(css_url, headers={"User-Agent": UA})
     css = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
