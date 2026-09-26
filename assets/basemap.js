@@ -333,6 +333,7 @@ function bindQuick() {
     if (t.closest("#qb-heat")) { B.qbHeat = !B.qbHeat; quickBar(); return; }
     if (t.closest("#qb-mini")) { B.qbMini = true; B.qbHeat = false; quickBar(); save(); return; }
     if (t.closest("#qb-open")) { B.qbMini = false; quickBar(); save(); return; }
+    if (t.closest("#qb-hist")) { if (RG.histOpen) RG.histOpen(); return; }   // v128: れきし地図
     if (t.closest("#qb-open2")) { B.qbMini = false; B.qbHeat = true; quickBar(); save(); return; }
   });
 }
@@ -349,6 +350,7 @@ function quickBar() {
     q.className = "quickbar mini";
     q.innerHTML = (RG.slimSpotHtml ? RG.slimSpotHtml() : "") +   // v103: スマホでは «📍 スポット» をここに（帯はやめた）
       '<button class="qb__open" type="button" id="qb-open">🗺️ 地図の設定</button>' +
+      '<button class="qb__open qb__open--hist" type="button" id="qb-hist">📜 れきし地図</button>' +   // v128
       (cur ? '<button class="qb__open qb__open--h" type="button" id="qb-open2">' +
         cur.e + " " + esc(cur.label) + "</button>" : "");
     return;

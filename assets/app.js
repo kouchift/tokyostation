@@ -883,6 +883,7 @@ var Map = (function () {
     vb.x = Math.max(-mx2, Math.min(VB.w - vb.w + mx2, vb.x));
     vb.y = Math.max(-my2, Math.min(VB.h - vb.h + my2, vb.y));
     svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" ")); scheduleLod();
+    if (RG.onMapView) try { RG.onMapView(); } catch (e) {}   // v128: 地図の上の HTML の印（れきし地図）を動きに合わせる
   }
   function zoomAt(cx, cy, k) {
     var r = wrap.getBoundingClientRect();
@@ -1069,6 +1070,27 @@ var Map = (function () {
       var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys), sp = Math.max(x1 - x0, y1 - y0, U(20));
       fitBox(x0 - sp * 0.06, y0 - sp * 0.06, x1 + sp * 0.3, y1 + sp * 0.12, 1.2);   // 右はズームの列、下は運行情報の帯で隠れるので、その分だけ広く
     }
+  }
+  /* v128: れきし地図・世界遺産の地点の線。lines: [{ pts:[[x,y],…], c:"#色", dash:true }]。印（番号の丸）は HTML で重ねる（RG.onMapView） */
+  var gHist = null;
+  function paintHist(lines) {
+    if (!svg || !gE) return;
+    if (gHist && gHist.parentNode) gHist.parentNode.removeChild(gHist);
+    gHist = null;
+    lines = (lines || []).filter(function (l) { return l.pts && l.pts.length > 1; });
+    if (!lines.length) return;
+    gHist = el("g", { class: "histroute", "aria-hidden": "true" });
+    lines.forEach(function (l) {
+      var d = l.pts.map(function (q, i) { return (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); }).join("");
+      gHist.appendChild(el("path", { class: "hr--glow", d: d }));
+      gHist.appendChild(el("path", { class: "hr--line" + (l.dash ? " hr--dash" : ""), d: d, style: "stroke:" + (l.c || "#B71C1C") }));
+    });
+    gE.parentNode.insertBefore(gHist, gE.nextSibling);
+  }
+  /* 地図の座標 → 地図の枠の中の画面位置（px）。枠の大きさは変わったときだけ測る */
+  function viewXY(x, y) {
+    var W = wrap.clientWidth, H = wrap.clientHeight;
+    return { x: (x - vb.x) / vb.w * W, y: (y - vb.y) / vb.h * H, W: W, H: H };
   }
   function focusDisrupt(on) { if (svg) svg.classList.toggle("dismode", !!on && !!gDis); }
   function paintWatch(ids) {
@@ -1351,7 +1373,7 @@ var Map = (function () {
   }
   return { draw: draw, initViewport: initViewport, zoom: zoom, fitAll: fitAll, focus: focus,
            select: select, screenPos: screenPos, screenPosXY: screenPosXY, paintIso: paintIso, paintPick: paintPick,
-           paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine, paintDisrupt: paintDisrupt, focusDisrupt: focusDisrupt, paintRoute: paintRoute,
+           paintFilter: paintFilter, lod: lod, highlightLine: highlightLine, fitLine: fitLine, paintDisrupt: paintDisrupt, focusDisrupt: focusDisrupt, paintRoute: paintRoute, paintHist: paintHist, viewXY: viewXY,
            drawBase: drawBase, project: project,
            flyTo: flyTo,
            viewBox: function () { return { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; },
@@ -2613,7 +2635,7 @@ RG.boot = function () {
   // ---- ここから下は «無くても地図は見られる» もの ----
   step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
   step("メイン検索", function () { if (RG.initHeroSearch) RG.initHeroSearch(); });   // v89: 東京駅から、どこへ行く？
-  step("共有リンクの復元", function () { if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl(); });   // v91: ?from=&to=
+  step("共有リンクの復元", function () { if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl(); if (RG.histFromUrl) RG.histFromUrl(); });   // v91: ?from=&to=
   step("お気に入りと履歴", function () { if (RG.favs) RG.favs.init(); });   // v92: この端末だけ（tsg.fav.v1）
   step("現地モード", function () { if (RG.onsite) RG.onsite.init(); });   // v95: 下のパネル（押したときだけ位置情報）
   step("コンビニの絞り込み", function () { if (RG.cvsFilterInit) RG.cvsFilterInit(); });   // v99: 7／F／L

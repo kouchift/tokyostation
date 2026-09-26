@@ -49,6 +49,7 @@ RG.showWHS = function (id) {
     '<div class="eh__hee"><b>💡 へぇ〜！ ちょっとした雑学</b><ul>' + w.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" +
     (w.look ? '<p class="eh__look"><b>👀 行ったら見てみよう</b>' + esc(w.look) + "</p>" : "") +
     (w.q ? '<details class="eh__q"><summary>❓ クイズ: ' + esc(w.q[0]) + "<span>こたえを見る</span></summary><p>" + esc(w.q[1]) + "</p></details>" : "") +
+    '<button class="whs__all-pts" type="button" data-whall="1">🗺️ ' + w.pts.length + " か所の地点を、地図にぜんぶ出す</button>" +   // v128: 押したときだけ印を出す
     '<h4 class="whs__h">📍 地図で見る（おもな地点）</h4><div class="whs__pts">' +
       w.pts.map(function (p, j) { return '<button class="whs__pt" type="button" data-pt="' + j + '">' + (j ? "" : "⭐ ") + esc(p[0]) + "</button>"; }).join("") + "</div>" +
     '<div class="wls"><a class="wl wl--w" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(w.wp || w.n) + '" target="_blank" rel="noopener">📖 Wikipedia</a>' +
@@ -63,6 +64,8 @@ RG.showWHS = function (id) {
     "地点はおおよその位置です。見学の時間・料金・入山や上陸の決まりは各公式でご確認ください。</p></div>";
   var m = RG.openModal("🌏 " + w.s, html);
   m.querySelectorAll("[data-to]").forEach(function (b) { b.addEventListener("click", function () { RG.showWHS(b.getAttribute("data-to")); }); });
+  var wa = m.querySelector("[data-whall]");
+  if (wa) wa.addEventListener("click", function () { if (RG.histShowPoints) RG.histShowPoints("🌏 " + w.s + "（" + w.pts.length + " か所）", w.pts, w.ty === "自然" ? "#1B7F3B" : "#0B5394"); });
   m.querySelectorAll("[data-pt]").forEach(function (b) { b.addEventListener("click", function () {
     var p = w.pts[+b.getAttribute("data-pt")]; RG.closeModal();
     RG.Map.gotoLatLng(p[1], p[2], 160);

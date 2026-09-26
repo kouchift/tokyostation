@@ -70,9 +70,15 @@ async function main() {
   if (NO_BUMP) say("   上げません（v" + nv + " のまま）");
 
   say("\n② assets/*.js をまとめ直す（assets/app.bundle.js）");
-  ensureTerser();
-  let r = spawnSync("node", [path.join(ROOT, "tools", "build_bundle.js")], { stdio: "inherit", env: { ...process.env, NODE_PATH: path.join(NODE_LIB, "node_modules") } });
-  if (r.status !== 0) throw new Error("まとめられませんでした");
+  let r;
+  // --prebuilt: まとめ済みの assets/app.bundle.js（先頭の版が今の版と同じもの）をそのまま使う（PC のメモリが足りず縮小に失敗するとき）
+  const pre = args.includes("--prebuilt") && (rd("assets/app.bundle.js").slice(0, 200).match(/ガイド (v\d+) /) || [])[1] === "v" + nv;
+  if (pre) say("   まとめ済みのファイルを使います（--prebuilt）");
+  else {
+    ensureTerser();
+    r = spawnSync("node", [path.join(ROOT, "tools", "build_bundle.js")], { stdio: "inherit", env: { ...process.env, NODE_PATH: path.join(NODE_LIB, "node_modules") } });
+    if (r.status !== 0) throw new Error("まとめられませんでした" + (args.includes("--prebuilt") ? "（--prebuilt: まとめ済みの版が v" + nv + " ではありません）" : ""));
+  }
   r = spawnSync("node", ["--check", path.join(ROOT, "assets", "app.bundle.js")], { encoding: "utf8" });
   if (r.status !== 0) throw new Error("まとめたファイルに文法の誤りがあります:\n" + r.stderr);
   for (const f of ["sw.js", "data/version.js", "data/support.js"]) {

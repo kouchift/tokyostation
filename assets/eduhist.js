@@ -22,8 +22,13 @@ RG.eduHistHtml = function (name) {
     '<div class="eh__kid">' + (e.kid || []).map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
     (e.hee && e.hee.length ? '<div class="eh__hee"><b>💡 へぇ〜！ ちょっとした雑学</b><ul>' + e.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
     (e.look ? '<p class="eh__look"><b>👀 行ったら見てみよう</b>' + esc(e.look) + "</p>" : "") +
+    (RG.histEraFromText && RG.histEraFromText(e.era) ? '<button class="eh__hist" type="button" data-hist-era="' + esc(RG.histEraFromText(e.era)) + '">📜 ' + esc(e.era) + " の出来事を地図でたどる ›</button>" : "") +   // v128
     (e.q ? '<details class="eh__q"><summary>❓ クイズ: ' + esc(e.q[0]) + '<span>こたえを見る</span></summary><p>' + esc(e.q[1]) + "</p></details>" : "") +
     '<p class="src">やさしい解説は当サイトの手書き（定説にもとづく。«〜といわれます» は言い伝えや諸説のあるもの）。見学の日時・料金は各公式サイトで。</p>' +
     "</section>";
 };
+document.addEventListener("click", function (ev) {   // v128: れきし地図へ
+  var b = ev.target && ev.target.closest && ev.target.closest("[data-hist-era]");
+  if (b && RG.histOpen) { ev.preventDefault(); RG.histOpen({ era: b.getAttribute("data-hist-era") }); }
+});
 })(window.RG);
