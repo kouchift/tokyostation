@@ -79,7 +79,7 @@ function doGet(e) {
   var byDay = {}, top = {}, sids = {}, total = { pv: 0, uv: 0, ev: 0 }, ref = {}, ua = {}, scr = {}, pages = {};
   vals.forEach(function (r) {
     var t = r[0] instanceof Date ? r[0] : new Date(r[0]); if (t < from) return;
-    var d = r[1], ev = r[3], lb = r[4], sid = r[2];
+    var d = Utilities.formatDate(t, "Asia/Tokyo", "yyyy-MM-dd"), ev = r[3], lb = r[4], sid = r[2];   // date 列はシートが日付型に変えてしまうので、time から作り直す
     var D = byDay[d] || (byDay[d] = { d: d, pv: 0, ev: 0, sids: {} });
     if (ev === "pv") { D.pv++; total.pv++; } else { D.ev++; total.ev++; }
     D.sids[sid] = 1; sids[sid] = 1;
