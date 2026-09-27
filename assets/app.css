@@ -4499,3 +4499,14 @@ body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2
 .phv__own{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .phv__own button{border:1px solid var(--border,#ccc);background:none;border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
 .phv__own [data-pown=del]{color:#D32F2F;border-color:#f3b0b0}
+
+/* v146: スクロールを軽く
+   ・長い一覧（歴オタ図鑑 100 件・れきし地図の出来事・自分の投稿など）は、画面の外の行の描画を省く（content-visibility）。
+     大きさの見込み（contain-intrinsic-size）を付けて、スクロールバーが跳ねないように
+   ・窓の後ろの «すりガラス»（backdrop-filter）は、中身をスクロールするたびに後ろの地図のぼかしを計算し直すので、
+     暗い幕の窓ではやめる（幕が 45% の濃さなので見た目はほぼ同じ）。力の弱い端末・通信の節約中は、地図の上のボタン類もやめる（色は少し濃く） */
+.hkz__list>li,.usr__list>li,.feed__list>li,.hp__list>li{content-visibility:auto;contain-intrinsic-size:auto 88px}
+.hkc__story,.hkc__deep,.hkc__look,.hkc__tl,.hkc__who{content-visibility:auto;contain-intrinsic-size:auto 400px}
+.modal{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.qos-weak *,html.qos-lite *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}

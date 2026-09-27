@@ -94,6 +94,8 @@ async function main() {
   checkCrit();
   r = spawnSync("node", [path.join(ROOT, "tools", "make_netc.mjs")], { stdio: "inherit" });   // v140: 画面が読む net.c.json と下書きの地図 net_lite.json
   if (r.status !== 0) throw new Error("data/net.c.json を作れませんでした");
+  r = spawnSync("node", [path.join(ROOT, "tools", "make_split.mjs")], { stdio: "inherit" });   // v146: 歴オタ図鑑の一覧の分・読み物 1 件ずつ（画面が読む派生ファイル）
+  if (r.status !== 0) throw new Error("歴オタ図鑑・読み物の分割ファイルを作れませんでした");
   r = spawnSync("node", [path.join(ROOT, "tools", "make_filehash.mjs")], { stdio: "inherit" });   // v139: ファイルごとの «中身の印»（sw.js が使う）
   if (r.status !== 0) throw new Error("data/filehash.json を作れませんでした");
   for (const f of ["sw.js", "data/version.js", "data/support.js"]) {

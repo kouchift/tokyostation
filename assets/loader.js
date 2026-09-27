@@ -154,7 +154,7 @@ function refresh(key) {
 /* v139: 利用者が地図を触っている間は、裏の読み込み・反映を «待つ»。
    力の弱いスマホで «指で動かしている最中に裏で重い作り直しが走ってカクッと止まる» のを防ぐ */
 var lastTouch = 0;
-["pointerdown", "pointermove", "wheel", "touchstart", "touchmove", "keydown"].forEach(function (t) {
+["pointerdown", "pointermove", "wheel", "touchstart", "touchmove", "keydown", "scroll"].forEach(function (t) {   // v146: scroll … 指を離したあとの «慣性のスクロール» の間も待つ（一覧・読み物を読んでいる最中にカクッとしない）
   document.addEventListener(t, function (e) { if (t !== "pointermove" || e.buttons) lastTouch = performance.now(); }, { passive: true, capture: true });
 });
 function busy() { return performance.now() - lastTouch < 1200; }

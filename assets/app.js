@@ -1031,9 +1031,13 @@ var Map = (function () {
     return { x: r.left + (s.x - vb.x) / vb.w * r.width, y: r.top + (s.y - vb.y) / vb.h * r.height };
   }
   function select(id) {
+    if (!id && !selected) return;                                    // v146: 何も選んでいない → 何もしない（画面のどこを触っても «閉じる» が呼ばれ、そのたびに地図の間引きを全部やり直していた＝歴オタ図鑑などのスクロールの出だしが引っかかる）
     if (selected) flagOf(selected).sel = false;
     selected = id; if (id) flagOf(id).sel = true;
-    recomputeForced(); scheduleLod();
+    recomputeForced();
+    if (id || !RG.userBusy) { scheduleLod(); return; }
+    clearTimeout(lodTimer);                                          // v146: 外を触って選択が外れた（＝一覧のスクロールの出だしなど）→ 間引きのやり直しは指が止まってから
+    lodTimer = setTimeout(function w() { if (RG.userBusy()) lodTimer = setTimeout(w, 400); else lod(); }, 400);
   }
   function paintIso(map) {
     Object.keys(flags).forEach(function (id) { flags[id].iso = null; });

@@ -1,6 +1,7 @@
 /* =========================================================================
    v134: 都道府県別 «歴オタ図鑑»（超コア）
    ・データ: data/hk/index.js（RG.HK_INDEX: 都道府県コード → 名前・件数）と data/hk/<コード>.js（RG.HK[コード] = [カード…]）
+     v146: 一覧は data/hk/<コード>.l.js（RG.HKL・tools/make_split.mjs が作る一覧の分）で先に出す
      開いた県のぶんだけ読む（全国ぶんを一度に読まない）
    ・下の窓（れきし地図と同じ窓）に: 県の切り替え／時代・種類・ランク・並び・ことばで絞る／一覧（既読の印・制覇率）
      地図には、いま絞りこんだカードの場所に印。印を押すとカード
@@ -19,7 +20,25 @@ var ERA_N = { kyuseki: "旧石器", jomon: "縄文", yayoi: "弥生", kofun: "�
 var ERA_ORD = Object.keys(ERA_N);
 var RANK_N = { S: "S 超重要", A: "A 見る価値大", B: "B 通好み" };
 function code(i) { return (i < 10 ? "0" : "") + i; }
-function D(pf) { return (RG.HK && RG.HK[pf]) || []; }
+/* v146: 一覧は «一覧の分»（data/hk/NN.l.js・約 1/10 の重さ）で先に出す。カードの本文は 10 件ずつ（data/hk/NN/K.js）に分けてあり、
+   開いたカードの組だけを読む。端末が暇なときに «画面に出ている辺り» から順に裏で読んでおく（速度制限中・通信の節約中は読まない） */
+function D(pf) { return (RG.HK && RG.HK[pf]) || (RG.HKL && RG.HKL[pf]) || []; }
+function fullOf(x) { return (RG.HKD && RG.HKD[x.id]) || (x.story ? x : null); }
+function chunkOf(x) { return "data/hk/" + String(x.id).split("_")[0] + "/" + (x.k || 0) + ".js"; }
+var PF_Q = null;
+function prefetch(pf, from) {
+  if ((RG.QOS && RG.QOS.lite()) || (RG.HK && RG.HK[pf])) return;
+  var L = (S.pf === pf && CUR.length) ? CUR : D(pf), ks = [], seen = {};   // 一覧に出ている順（上から）
+  L.slice(from || 0).concat(L.slice(0, from || 0)).forEach(function (x) { var k = x.k || 0; if (!seen[k]) { seen[k] = 1; ks.push(chunkOf(x)); } });
+  var my = PF_Q = ks;
+  var go = function () {
+    if (PF_Q !== my || !my.length || (RG.QOS && RG.QOS.lite())) return;   // 県を変えた・軽い表示になった → やめる
+    if (RG.userBusy && RG.userBusy()) { setTimeout(go, 1500); return; }    // 触っている（スクロール中）ときは待つ
+    var f = my.shift(); if (WAIT[f] === 1) { go(); return; }
+    load(f, function () { if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 600); });
+  };
+  if (window.requestIdleCallback) requestIdleCallback(function () { setTimeout(go, 800); }, { timeout: 5000 }); else setTimeout(go, 2500);
+}
 function load(f, cb) {
   if (WAIT[f] === 1) { cb(); return; }
   if (WAIT[f]) { WAIT[f].push(cb); return; }
@@ -44,7 +63,8 @@ RG.hkOpen = function (pf) {
     pf = pf || S.pf || (function () { try { return localStorage.getItem("tsg.hk.pf"); } catch (e) { return null; } })() || "13";
     if (!I[pf]) { choosePref(); return; }
     S.pf = pf; try { localStorage.setItem("tsg.hk.pf", pf); } catch (e) {}
-    load("data/hk/" + pf + ".js", function () { render(false); });
+    if (D(pf).length) { render(false); prefetch(pf); return; }
+    load("data/hk/" + pf + ".l.js", function () { render(false); prefetch(pf); });
   });
 };
 function choosePref() {
@@ -65,7 +85,7 @@ function filtered() {
   var q = S.q.trim();
   var L = D(S.pf).filter(function (x) {
     return (!S.era || x.era.indexOf(S.era) >= 0) && (!S.cat || x.cat === S.cat) && (!S.rank || x.rank === S.rank) &&
-      (!q || (x.n + x.yomi + x.hook + x.ad + (x.who || []).map(function (w) { return w[0]; }).join("")).indexOf(q) >= 0);
+      (!q || (x.n + x.yomi + x.hook + x.ad + (x.wn || (x.who || []).map(function (w) { return w[0]; }).join(""))).indexOf(q) >= 0);
   });
   var R = { S: 0, A: 1, B: 2 };
   L.sort(S.sort === "year" ? function (a, b) { return a.y - b.y; } : S.sort === "name" ? function (a, b) { return a.yomi < b.yomi ? -1 : 1; } :
@@ -172,12 +192,20 @@ RG.wpGallery = function (box, titles, likeKey, pre) {
 };
 
 /* ---------------- カード ---------------- */
-function byId(id) { var r = null; Object.keys(RG.HK || {}).some(function (pf) { return D(pf).some(function (x) { if (x.id === id) { r = x; return true; } }); }); return r; }
+function byId(id) { var r = null, ks = Object.keys(RG.HK || {}).concat(Object.keys(RG.HKL || {})); ks.some(function (pf) { return D(pf).some(function (x) { if (x.id === id) { r = x; return true; } }); }); return r; }
 RG.hkCard = function (id) {
-  var x = byId(id); if (!x) return;
+  var x0 = byId(id); if (!x0) return;
+  var x = fullOf(x0);
+  if (!x) { x = x0;                                     // v146: 本文がまだ → 見出しだけ先に出して、届いたら描き直す
+    RG.openModal("🏯 " + x.n.replace(/（.*?）/g, ""), '<div class="hkc" data-wait="' + esc(id) + '"><div class="hkc__hd"><span class="hkz__rk hkz__rk--' + x.rank + '">' + x.rank + "</span>" +
+      '<h3 class="hkc__n">' + esc(x.n) + "<small>" + esc(x.yomi || "") + "</small></h3></div>" + (x.hook ? '<p class="hp__hook">🤔 ' + esc(x.hook) + "</p>" : "") +
+      '<p class="hkg__ld">本文を読み込んでいます…</p></div>');
+    load(chunkOf(x0), function () { var m = document.querySelector(".modal.show .hkc"); if (m && m.getAttribute("data-wait") === id) RG.hkCard(id); });
+    return;
+  }
   markRead(x.id);
-  var L = CUR.length ? CUR : D(S.pf), i = L.indexOf(x);
-  var near = D(S.pf).filter(function (y) { return y !== x; }).map(function (y) { return { y: y, d: km(x.la, x.lo, y.la, y.lo) }; })
+  var L = CUR.length ? CUR : D(S.pf), i = L.map(function (y) { return y.id; }).indexOf(x.id);   // v146: 一覧の分と全部入りは別の物なので id で探す
+  var near = D(S.pf).filter(function (y) { return y.id !== x.id; }).map(function (y) { return { y: y, d: km(x.la, x.lo, y.la, y.lo) }; })
     .filter(function (o) { return o.d < 1.6; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 6);
   var rel = x.rel || {}, H = RG.HIST && RG.HIST.ev || [];
   var evs = (rel.ev || []).map(function (e) { return H.filter(function (h) { return h.id === e; })[0] || { id: e, t: e }; });

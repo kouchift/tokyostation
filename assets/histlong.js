@@ -8,16 +8,27 @@
 (function (RG) {
 "use strict";
 var esc = RG.esc, WAIT = null, THUMB = {};
-function ensure(cb) {
-  if (RG.HIST_LONG) { cb(); return; }
-  if (WAIT) { WAIT.push(cb); return; }
-  WAIT = [cb];
+/* v146: 読み物は 1 件ずつ（data/hist_long/<id>.js・約 4KB）。まず目次（index.js: どの出来事に読み物があるか）だけ。
+   以前は 58 件ぶん（約 190KB）を一度に読んでいた（速度制限中は 10 秒以上） */
+var LOADING = {};
+function script(src, cb, fail) {
+  if (LOADING[src] === 1) { cb(); return; }
+  if (LOADING[src]) { LOADING[src].push(cb); return; }
+  LOADING[src] = [cb];
   var v = document.documentElement.getAttribute("data-build") || "", s = document.createElement("script");
-  s.async = true; s.src = "data/hist_long.js" + (v ? "?v=" + v : "");
-  s.onload = function () { var w = WAIT; WAIT = null; w.forEach(function (f) { try { f(); } catch (e) { console.error(e); } }); };
-  s.onerror = function () { WAIT = null; if (RG.tripStatus) RG.tripStatus("読み物を読み込めませんでした。通信を確かめてください。", "warn", 5000); };
+  s.async = true; s.src = src + (v ? "?v=" + v : "");
+  s.onload = function () { var w = LOADING[src]; LOADING[src] = 1; w.forEach(function (f) { try { f(); } catch (e) { console.error(e); } }); };
+  s.onerror = function () { LOADING[src] = null; if (fail) fail(); if (RG.tripStatus) RG.tripStatus("読み物を読み込めませんでした。通信を確かめてください。", "warn", 5000); };
   document.head.appendChild(s);
 }
+function ensure(id, cb) {
+  script("data/hist_long/index.js", function () {
+    if (!id || !(RG.HIST_LONG_IDX || {})[id]) { cb(); return; }
+    if (RG.HIST_LONG && RG.HIST_LONG[id]) { cb(); return; }
+    script("data/hist_long/" + id + ".js", cb);
+  });
+}
+function hasLong(id) { return !!((RG.HIST_LONG_IDX || {})[id] || (RG.HIST_LONG && RG.HIST_LONG[id])); }
 var DONE = null;
 function done() { if (DONE) return DONE; try { DONE = JSON.parse(localStorage.getItem("tsg.hist.read") || "{}"); } catch (e) { DONE = {}; } return DONE; }
 function setDone(id) { done()[id] = 1; try { localStorage.setItem("tsg.hist.read", JSON.stringify(DONE)); } catch (e) {} }
@@ -62,11 +73,11 @@ function fillThumbs(root) {
   });
 }
 RG.histLong = function (id) {
-  ensure(function () {
+  ensure(id, function () {
     var x = RG.HIST_LONG && RG.HIST_LONG[id], H = RG.HIST, e = H && H.ev.filter(function (v) { return v.id === id; })[0];
     if (!x || !e) return;
     var E = H.eras.filter(function (r) { return r.id === e.era; })[0] || { n: "", c: "#6D4C41" };
-    var lv1 = H.ev.filter(function (v) { return (v.lv || 1) === 1 && RG.HIST_LONG[v.id]; }).sort(function (a, b) { return a.y - b.y; });
+    var lv1 = H.ev.filter(function (v) { return (v.lv || 1) === 1 && hasLong(v.id); }).sort(function (a, b) { return a.y - b.y; });
     var i = lv1.indexOf(e), prev = lv1[i - 1], next = lv1[i + 1], D = done(), nd = lv1.filter(function (v) { return D[v.id]; }).length;
     var html = '<div class="hl" style="--ec:' + E.c + '">' +
       '<div class="hl__bar"><b data-hlbar></b></div>' +
