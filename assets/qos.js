@@ -28,7 +28,7 @@ function measured() {
   var best = 0;
   try {
     (performance.getEntriesByType("resource") || []).forEach(function (e) {
-      if (!/net\.json|app\.bundle\.js|app\.extra\.js|app(\.min)?\.css/.test(e.name)) return;
+      if (!/net(\.c)?\.json|app\.bundle\.js|app\.extra\.js|app(\.min)?\.css/.test(e.name)) return;
       var bytes = e.transferSize || 0, ms = e.responseEnd - e.responseStart;
       if (bytes < 30000 || ms < 30) return;
       var k = bytes * 8 / ms;                                         // bit/ms = kbps

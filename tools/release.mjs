@@ -83,6 +83,8 @@ async function main() {
     r = spawnSync("node", ["--check", path.join(ROOT, "assets", b)], { encoding: "utf8" });
     if (r.status !== 0) throw new Error("まとめたファイル（" + b + "）に文法の誤りがあります:\n" + r.stderr);
   }
+  r = spawnSync("node", [path.join(ROOT, "tools", "make_netc.mjs")], { stdio: "inherit" });   // v140: 画面が読む net.c.json と下書きの地図 net_lite.json
+  if (r.status !== 0) throw new Error("data/net.c.json を作れませんでした");
   r = spawnSync("node", [path.join(ROOT, "tools", "make_filehash.mjs")], { stdio: "inherit" });   // v139: ファイルごとの «中身の印»（sw.js が使う）
   if (r.status !== 0) throw new Error("data/filehash.json を作れませんでした");
   for (const f of ["sw.js", "data/version.js", "data/support.js"]) {

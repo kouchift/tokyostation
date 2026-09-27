@@ -10,16 +10,16 @@
      中身が同じファイルは端末の中のものをそのまま使う。変わったファイルだけを読む。
    v139: 画面（index.html）は «新しいものを取りに行く。3 秒で返事が無ければ、前のもの» にした（電波が弱い所でも開ける）
    ========================================================================= */
-var CACHE = "tsg-v139";
-var V = "?v=139";     // index.html の data-build と合わせる
+var CACHE = "tsg-v140";
+var V = "?v=140";     // index.html の data-build と合わせる
 var FILES = "tsg-files";   // 中身の印つきで置く場所（版をまたいで残す）
 var META = "tsg-meta";     // data/filehash.json を置く場所
 
 /* 入れておくと効果の大きいもの（最初の1回で必ず要るもの） */
 var CORE = [
-  "./", "./index.html", "./assets/app.min.css" + V, "./assets/design_v2.css" + V,
+  "./", "./index.html", "./assets/app.min.css" + V,
   "./assets/app.bundle.js" + V, "./assets/app.extra.js" + V, "./assets/comments-v109.js" + V,
-  "./data/version.js" + V, "./data/net.json" + V, "./data/config.js" + V,
+  "./data/version.js" + V, "./data/net.c.json" + V, "./data/config.js" + V,
   "./assets/worker.js", "./assets/icons.svg" + V, "./manifest.webmanifest", "./assets/icon-192.png", "./assets/fonts/msymbols.woff2" + V, "./data/lines_meta.js" + V, "./data/genres.js" + V, "./data/score.js" + V, "./data/areas.js" + V, "./data/focus.js" + V,
   "./data/transit_tokyo.js" + V
 ];
@@ -146,7 +146,7 @@ self.addEventListener("fetch", function (e) {
   // それ以外（js / css / 画像・データ）は «あればそれを出す»。
   // 中身の印が一覧にあるファイルは «印が同じなら前のもの»（版が上がっても読み直さない）
   var p = rel(req.url), vq = url.searchParams.get("v");
-  var mine = !vq || ("?v=" + vq) === V;                              // ほかの版の画面からの頼みは、印では判断しない
+  var mine = !vq || +vq <= +V.slice(3);                              // 新しい版の画面からの頼みは、印では判断しない（古い印の一覧で古いものを出さないように）
   e.respondWith(
     caches.match(req).then(function (hit) {
       if (hit) return hit;

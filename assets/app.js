@@ -209,6 +209,12 @@ RG.stLabel = function (s) { return !s ? "" : s.ext ? s.n : s.n + "駅"; };
 RG.hereLabel = function (best) { return !best ? "現在地" : "現在地（" + RG.stLabel(best.s) + (best.km < 0.2 ? "のそば）" : "から約" + best.km.toFixed(1) + "km）"); };
 /* data/net.json（コンパクト版）を、これまでどおりの RG.NET の形に戻す */
 RG.decodeNet = function (j) {
+  if (j && j.f === 2) {                                             // v140: 列ごとの形（data/net.c.json）を、行の形に戻す
+    var st = [], a = 0, b = 0, E2 = [];
+    for (var i = 0; i < j.n.length; i++) { a += j.la[i]; b += j.lo[i]; st.push([j.id[i], j.n[i], a / 1e6, b / 1e6, j.ls[i], j.k[i]].concat(j.r[i])); }
+    for (var m = 0; m < j.e.length; m += 3) E2.push([j.e[m], j.e[m + 1], j.e[m + 2]]);
+    j = { source: j.source, area: j.area, lines: j.lines, stations: st, edges: E2 };
+  }
   var lines = j.lines.map(function (l) { return { name: l[0], color: l[1], edges: l[2] }; });
   var stations = j.stations.map(function (a) {
     var o = { id: a[0] || a[1], n: a[1], la: a[2], lo: a[3],
@@ -1140,7 +1146,7 @@ var Map = (function () {
   var pool = [], POOL_MAX = 420, poiReady = false;
 
   function rebuildPOI() {
-    poiReady = false;
+    poiReady = false; PIDX = null;
     if (gPOI && gPOI.parentNode) gPOI.parentNode.removeChild(gPOI);
     gPOI = null; pool = []; GMAP = null;
     buildPOI(); poiLOD();
@@ -1187,6 +1193,28 @@ var Map = (function () {
     }
     return OPTIN;
   }
+  /* v140: スポットの升目索引。«スポットをさがす» のデータ（約 20 万件）を読んだあと、地図を動かすたびに全部をなめていた（遅いスマホで 1 回 0.1〜0.2 秒）。
+     地図を 64 の升に切って、注目度（ti）ごとに入れておき、画面のまわりの升だけを見る */
+  var PIDX = null;
+  function poiIndex() {
+    var L = RG.MAPPOI || [];
+    if (PIDX && PIDX.src === L && PIDX.n === L.length) return PIDX;
+    var cell = VB.w / 64, T = [{}, {}, {}], all = [[], [], []];
+    for (var i = 0; i < L.length; i++) {
+      var p = L[i];
+      if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }
+      var t = p.ti > 1 ? 2 : p.ti > 0 ? 1 : 0, k = Math.floor(p.x / cell) + "," + Math.floor(p.y / cell);
+      (T[t][k] || (T[t][k] = [])).push(p); all[t].push(p);
+    }
+    return (PIDX = { src: L, n: L.length, cell: cell, T: T, all: all });
+  }
+  function poiCandidates(maxTier, allTiers, pad) {
+    var X = poiIndex(), tm = allTiers ? 2 : Math.max(0, Math.min(2, maxTier)), c = X.cell, out = [], t;
+    var c0 = Math.floor((vb.x - pad) / c), c1 = Math.floor((vb.x + vb.w + pad) / c), r0 = Math.floor((vb.y - pad) / c), r1 = Math.floor((vb.y + vb.h + pad) / c);
+    if ((c1 - c0 + 1) * (r1 - r0 + 1) > 1200) { for (t = 0; t <= tm; t++) out = out.concat(X.all[t]); return out; }   // 引いた地図（升が多い）は注目度で絞った一覧を
+    for (t = 0; t <= tm; t++) for (var cx = c0; cx <= c1; cx++) for (var cy = r0; cy <= r1; cy++) { var a = X.T[t][cx + "," + cy]; if (a) for (var j = 0; j < a.length; j++) out.push(a[j]); }
+    return out;
+  }
   var tileT = null;
   var NAME_Z = 22, NAME_MAX = 12;   // v88: 名前を出すズーム（最大 33.3 の 2 段手前から）と文字数
   function poiLOD() {
@@ -1198,9 +1226,9 @@ var Map = (function () {
     var picked = poiOn && poiOn.length;
     var hideVisited = RG.settings && RG.settings.hideVisited;
     var pad = vb.w * 0.06, cand = [];
-    var list = RG.MAPPOI || [];
     var airmode = svg.classList.contains("airmode");                  // v82: 航空路モードは空港だけ（ズームに関係なく）
     var upf = RG.userPostFilter;                                        // v108: «この人の投稿» だけを出しているとき
+    var list = poiCandidates(maxTier, !!(picked || RG.pinFilter != null || upf || airmode), pad);   // v140: 画面のまわりの升目だけ（全部で 20 万件をなめない）
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
       if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }   // あとから足されたものは、ここで座標を出す

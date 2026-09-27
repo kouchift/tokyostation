@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-build="139">
+<html lang="ja" data-build="140">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
@@ -23,14 +23,19 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kouchift.github.io/tokyostation/","url":"https://kouchift.github.io/tokyostation/","name":"東京ステーションガイド","description":"東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーで比較。全国8,000駅以上の路線図。","inLanguage":"ja"},{"@type":"WebApplication","name":"東京ステーションガイド","url":"https://kouchift.github.io/tokyostation/","applicationCategory":"TravelApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}]}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
 <!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
-<link rel="preload" href="data/net.json?v=139" as="fetch" crossorigin="anonymous">
-<link rel="preload" href="assets/app.bundle.js?v=139" as="script">
-<link rel="preload" href="data/config.js?v=139" as="script">
-<link rel="preload" href="data/lines_meta.js?v=139" as="script">
-<link rel="preload" href="data/genres.js?v=139" as="script">
-<link rel="preload" href="data/score.js?v=139" as="script">
-<link rel="preload" href="data/areas.js?v=139" as="script">
-<link rel="preload" href="data/focus.js?v=139" as="script">
+<script>
+/* v140: 下書きの地図のデータを «いちばん最初に» 取りに行く（CSS より前に置くので待たされない）。
+   2 回目以降（端末に保存済み）や、回線が速いと分かっているときは取らない */
+(function(){try{var c=navigator.connection||{},sw=navigator.serviceWorker&&navigator.serviceWorker.controller;
+function net(){return fetch("data/net.c.json?v=140",{credentials:"same-origin"}).then(function(r){if(!r.ok)throw new Error("net.c.json "+r.status);return r.json();});}
+function pre(){["assets/app.bundle.js","data/config.js","data/lines_meta.js","data/genres.js","data/score.js","data/areas.js","data/focus.js"].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.as="script";l.href=f+"?v=140";document.head.appendChild(l);});}
+if(sw||(c.effectiveType==="4g"&&!c.saveData&&c.downlink>=5)){window.__netP=net();window.__netP.catch(function(){});pre();window.__gate=Promise.resolve();return;}
+/* 下書きを先に（小さいので数秒）。本物の駅データと本体は下書きが届いてから取りに行く（細い回線を取り合わない） */
+window.__pvP=fetch("data/net_lite.json?v=140").then(function(r){return r.json();});
+window.__gate=window.__pvP.then(pre,pre);
+window.__netP=window.__pvP.then(net,net);window.__pvP.catch(function(){});window.__netP.catch(function(){});}catch(e){}})();
+</script>
+<!-- v140: 駅と路線（data/net.c.json・net.json より約 1 割軽い列ごとの形）は上の小さな script が取りに行く -->
 <!-- v139: 書体は «欧文と数字だけ» を Google Fonts から（日本語は端末の書体＝iPhone はヒラギノ・Android は Noto。数百KB の日本語書体を読まない）。
      画面の描画を待たせない読み方（media=print → 届いたら all）。通信を節約しているとき（データセーバー・2G・«軽く» を選んだ）は読まない -->
 <script>
@@ -41,8 +46,11 @@ l.href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;
 document.head.appendChild(l);}catch(e){}})();
 </script>
 <!-- v87: Material Symbols（アイコン字体）は assets/fonts/msymbols.woff2 に同梱（Google Fonts に届かない環境でもアイコンが出るように。@font-face は app.css） -->
-<link rel="stylesheet" href="assets/app.min.css?v=139"><!-- v139: app.css を縮めたもの（tools/build_bundle.js が作る。直すのは app.css） -->
-<link rel="stylesheet" href="assets/design_v2.css?v=139"><!-- v117: デザインの上書き（Wayfinding Modern） -->
+<!-- v139: app.css を縮めたもの（tools/build_bundle.js が作る。直すのは app.css）。
+     v140: 描画を待たせない読み方（preload → 届いたら stylesheet）。届くまでは «下書きの地図» と骨組みだけを見せる（下の style の html:not(.css-ok)） -->
+<link rel="preload" href="assets/app.min.css?v=140" as="style" onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.add('css-ok')" onerror="document.documentElement.classList.add('css-ok')">
+<noscript><link rel="stylesheet" href="assets/app.min.css?v=140"><style>.app{visibility:visible!important}</style></noscript>
+<!-- v140: design_v2.css（v117 のデザインの上書き）は app.min.css の後ろに入れた（1 回の通信で済むように） -->
 <style>
 /* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
 .mapwrap{min-height:52vh;background:#F5F6F8}
@@ -50,6 +58,15 @@ document.head.appendChild(l);}catch(e){}})();
 .skel i{width:34px;height:34px;border-radius:50%;border:3px solid #C0E4FF;border-top-color:#0055AD;animation:sk 1s linear infinite}
 @keyframes sk{to{transform:rotate(360deg)}}
 .skel.off{opacity:0}
+.skel span{background:rgba(255,255,255,.92);padding:4px 12px;border-radius:999px;max-width:86%;text-align:center}
+/* v140: CSS が届くまでは、下書きの地図と «用意しています» だけ（ほかは隠す） */
+html:not(.css-ok) body{margin:0;background:#F5F6F8;font-family:system-ui,sans-serif}
+html:not(.css-ok) .app{visibility:hidden}
+html:not(.css-ok) .mapwrap{visibility:visible;position:fixed;inset:0;min-height:0;overflow:hidden}
+html:not(.css-ok) .mapwrap>*{visibility:hidden}
+html:not(.css-ok) .mapwrap>.mappv,html:not(.css-ok) .mapwrap>#skel{visibility:visible}
+.mappv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mappv__st{fill:#fff;stroke:#1d2733;stroke-width:1.4;font:600 11px system-ui,sans-serif}.mappv__st text{fill:#1d2733;stroke:#fff;stroke-width:3;paint-order:stroke;text-anchor:middle}
 @media (prefers-reduced-motion:reduce){.skel i{animation:none}}
 </style>
 </head>
@@ -155,8 +172,44 @@ document.head.appendChild(l);}catch(e){}})();
 try{if(document.fonts&&document.fonts.load){document.fonts.load('20px "Material Symbols Outlined"').then(ok,ok);}}catch(e){}
 setTimeout(ok,4000);})();
 </script>
-<script src="assets/app.bundle.js?v=139" defer></script>
-<script src="assets/comments-v109.js?v=139" defer></script>
+<script>
+/* v140: «下書きの地図»。通信がゆっくり（速度制限中など）で本物の地図がまだのとき、路線の形と大きな駅だけ（data/net_lite.json・約 40KB）を先に描く。
+   本物の地図（#map の駅）が出たら消える。データは head の先頭で取りに行く（2 回目以降・速い回線では取らない） */
+(function () {
+  var wrap = document.querySelector(".mapwrap"); if (!wrap || !window.fetch) return;
+  function real() { return !!document.querySelector("#map .node"); }
+  if (!window.__pvP) return;                                         // 取りに行っていない（2 回目以降・速い回線）
+  setTimeout(function () {
+    if (real()) return;
+    window.__pvP.then(function (L) {
+      if (real()) return;
+      var W = wrap.clientWidth || 360, H = wrap.clientHeight || 500, P = L.p, R = Math.PI / 180;
+      function my(la) { return Math.log(Math.tan(Math.PI / 4 + la * R / 2)) / R; }
+      var touch = matchMedia("(hover:none)").matches, clo = 139.7671, cy = my(35.6812), k = W / (touch && W < 560 ? 0.075 : 0.107);   // 本物の地図の最初の広さ（東京駅のまわり 約 7〜10km）に合わせる
+      function X(lo) { return (lo - clo) * k + W / 2; } function Y(la) { return (cy - my(la)) * k + H * (touch ? 0.69 : 0.5); }
+      var out = [], i, j;
+      for (i = 0; i < L.g.length; i++) {
+        var g = L.g[i], d = g[1], lo = d[0] / P, la = d[1] / P, x = X(lo), y = Y(la), s = "M" + x.toFixed(1) + " " + y.toFixed(1), inb = x > -50 && x < W + 50 && y > -50 && y < H + 50;
+        for (j = 2; j < d.length; j += 2) { lo += d[j] / P; la += d[j + 1] / P; x = X(lo); y = Y(la); s += "L" + x.toFixed(1) + " " + y.toFixed(1); if (!inb && x > -50 && x < W + 50 && y > -50 && y < H + 50) inb = true; }
+        if (inb && g[0] >= 0) out.push('<path d="' + s + '" stroke="' + (L.c[g[0]] || "#9AA0A6") + '"/>');
+      }
+      var lb = [];
+      for (i = 0; i < L.s.length && lb.length < 24; i++) {
+        var t = L.s[i], sx = X(t[1] / P), sy = Y(t[2] / P);
+        if (sx < 20 || sx > W - 20 || sy < 20 || sy > H - 20) continue;
+        lb.push('<circle cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" r="3.2"/><text x="' + sx.toFixed(1) + '" y="' + (sy - 6).toFixed(1) + '">' + t[0].replace(/[<&]/g, "") + "</text>");
+      }
+      var sv = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      sv.setAttribute("class", "mappv"); sv.setAttribute("aria-hidden", "true"); sv.setAttribute("viewBox", "0 0 " + W + " " + H);
+      sv.innerHTML = '<g fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".85">' + out.join("") + '</g><g class="mappv__st">' + lb.join("") + "</g>";
+      if (!real()) wrap.insertBefore(sv, wrap.firstChild);
+      var sk = document.querySelector("#skel span"); if (sk) sk.textContent = "路線図の形を先に出しています。駅と機能を読み込んでいます…";
+    }).catch(function () {});
+  }, 500);
+})();
+</script>
+<!-- v140: 本体（assets/app.bundle.js）は下の script が入れる（細い回線では下書きの地図のあとで） -->
+<script src="assets/comments-v109.js?v=140" defer></script>
 <script>
 /* v106: コメント機能の設定を RG.COMMENTS に入れる。endpoint が空なら表示しない */
 (function() {
@@ -170,8 +223,7 @@ setTimeout(ok,4000);})();
    ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
    ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
-  var netP = fetch("data/net.json?v=139", { credentials: "same-origin" })
-    .then(function (r) { if (!r.ok) throw new Error("net.json " + r.status); return r.json(); })
+  var netP = (window.__netP || fetch("data/net.c.json?v=140", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("net.c.json " + r.status); return r.json(); }))
     .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
     if (document.querySelectorAll("#map .node").length) return;
@@ -190,12 +242,17 @@ setTimeout(ok,4000);})();
       panic("読み込みが終わりませんでした。通信状態をご確認のうえ、再読み込みしてください。");
     }, 30000);
   }
-  var sc = document.querySelector('script[src^="assets/app.bundle.js"]');   // v108: 版番号に依存しない（?v=139 決め打ちで v107 は起動しなかった）
-  if (window.RG && window.RG.startApp) go();
-  else if (sc) { sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); }); }
+  /* v140: 本体を入れる（回線が速い・2 回目以降はすぐ。ゆっくりなときは下書きの地図が届いてから） */
+  function inject() {
+    if (window.RG && window.RG.startApp) { go(); return; }
+    var sc = document.createElement("script"); sc.src = "assets/app.bundle.js?v=140";
+    sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); });
+    document.body.appendChild(sc);
+  }
+  (window.__gate || Promise.resolve()).then(inject, inject);
   // 地図の最初の駅が出たら骨組みを消す
   var mo = new MutationObserver(function () {
-    if (document.querySelector("#map .node")) { var sk = document.getElementById("skel"); if (sk) { sk.classList.add("off"); setTimeout(function () { sk.remove(); }, 400); } mo.disconnect(); }
+    if (document.querySelector("#map .node")) { var sk = document.getElementById("skel"); if (sk) { sk.classList.add("off"); setTimeout(function () { sk.remove(); }, 400); } var pv = document.querySelector(".mappv"); if (pv) pv.remove(); mo.disconnect(); }
   });
   mo.observe(document.getElementById("map"), { childList: true, subtree: true });
 })();

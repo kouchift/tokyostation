@@ -34,7 +34,7 @@ const banner = `/* 東京ステーションガイド ${ver} — assets/*.js を 
     fs.writeFileSync(path.join(root, 'assets', name), banner + out);
   }
   /* v139: 見た目の決まり（CSS）も縮める（注釈と空白を除くだけ・約 25% 軽く）。index.html は app.min.css を読む。直すのは app.css */
-  const css = fs.readFileSync(path.join(root, 'assets', 'app.css'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'assets', 'app.css'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'assets', 'design_v2.css'), 'utf8');   // v140: デザインの上書き（design_v2.css）も後ろにつなげて 1 本に
   const min = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}').trim();
   fs.writeFileSync(path.join(root, 'assets', 'app.min.css'), '/* assets/app.css を縮めたもの（tools/build_bundle.js）。直すときは app.css を */\n' + min);
   console.log('app.min.css', (css.length / 1024).toFixed(0) + 'KB →', (min.length / 1024).toFixed(0) + 'KB');
