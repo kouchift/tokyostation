@@ -1,0 +1,3 @@
+/* れきし地図の解説（reiwa）。tools/make_split.mjs が data/hist_events.js から作る。直さない */
+RG.HISTD = RG.HISTD || {};
+Object.assign(RG.HISTD, {"tokyo2020":{"kid":["新型コロナウイルスの流行で1年延期され、ほとんどの会場が無観客で開かれました。"],"hee":["同じ都市で夏のパラリンピックが2回開かれたのは、東京が世界で初めてです。"],"ph":[["c:d/df/Fogos_durante_a_abertura_de_T%C3%B3quio_2020.jpg",1150,768,"2020年東京オリンピック"],["c:7/7c/Drones_durante_a_abertura_das_Olimp%C3%ADadas_de_T%C3%B3quio.jpg",5004,3336]]},"expo25":{"kid":["大阪の人工島・夢洲（ゆめしま）で、55年ぶりに大阪で万博が開かれました。"],"hee":["会場をぐるりと囲む木造の «大屋根リング» は、世界最大の木造建築物としてギネス世界記録に認定されました。"],"ph":[["c:0/0a/Expo2025_plaza.jpg",4032,2268,"2025年日本国際博覧会"],["c:c/c9/EXPO2025_Fireworks_September_27.jpg",3840,2160],["c:4/42/Expo_2025_beverage_vending_machine.JPG",1920,2560],["c:5/59/Expo2025silver_3_o.jpg",1108,1108]]}});

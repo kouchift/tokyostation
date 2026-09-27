@@ -31,4 +31,13 @@ for (const id of Object.keys(HL)) {
   if (write("data/hist_long/" + id + ".js", "/* 読み物 1 件（tools/make_split.mjs が data/hist_long.js から作る。直さない） */\nRG.HIST_LONG = RG.HIST_LONG || {};\nRG.HIST_LONG[\"" + id + "\"] = " + JSON.stringify(HL[id]) + ";\n")) changed++;
 }
 if (write("data/hist_long/index.js", "/* 読み物のある出来事（id → 読む目安の分）。tools/make_split.mjs が作る */\nRG.HIST_LONG_IDX = " + JSON.stringify(idx) + ";\n")) changed++;
-console.log("make_split: 歴オタ図鑑 " + n + " 県・読み物 " + Object.keys(HL).length + " 件（書き換え " + changed + " ファイル）");
+/* v148: れきし地図: data/hist_events.js（約 290KB）→ data/hist_events.l.js（時代・出来事の一覧と場所・約 1/3）＋ data/hist_events/<時代>.js（解説・雑学・写真の一覧）
+   一覧と地図の印は «一覧の分» だけで出せる。出来事を開いたときに、その時代の分だけ読む */
+const HE = load("data/hist_events.js").HIST || { eras: [], ev: [] }, DET = ["kid", "hee", "ph"], per = {};
+const HL2 = { eras: HE.eras, ev: HE.ev.map(e => { const o = {}; for (const k in e) if (!DET.includes(k)) o[k] = e[k]; (per[e.era] = per[e.era] || {})[e.id] = Object.fromEntries(DET.filter(k => e[k] !== undefined).map(k => [k, e[k]])); return o; }) };
+for (const era of Object.keys(per)) {
+  if (!/^[\w-]+$/.test(era)) throw new Error("時代の id にファイル名に使えない文字: " + era);
+  if (write("data/hist_events/" + era + ".js", "/* れきし地図の解説（" + era + "）。tools/make_split.mjs が data/hist_events.js から作る。直さない */\nRG.HISTD = RG.HISTD || {};\nObject.assign(RG.HISTD, " + JSON.stringify(per[era]) + ");\n")) changed++;
+}
+if (write("data/hist_events.l.js", "/* れきし地図の一覧の分（tools/make_split.mjs が data/hist_events.js から作る。直さない。解説は data/hist_events/<時代>.js） */\nRG.HIST = " + JSON.stringify(HL2) + ";\nRG.HIST.lite = 1;\n")) changed++;
+console.log("make_split: 歴オタ図鑑 " + n + " 県・読み物 " + Object.keys(HL).length + " 件・れきし地図 " + HE.ev.length + " 件（書き換え " + changed + " ファイル）");

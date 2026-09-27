@@ -19,12 +19,27 @@ function eraOf(id) { return D().eras.filter(function (e) { return e.id === id; }
 function evOf(id) { return D().ev.filter(function (e) { return e.id === id; })[0]; }
 function sorted() { return D().ev.filter(function (e) { return (e.lv || 1) <= S.lv; }).sort(function (a, b) { return a.y - b.y || (a.lv || 1) - (b.lv || 1) || (a.era === "myth" ? -1 : 0); }); }
 function maxLv() { var m = 1; D().ev.forEach(function (e) { if ((e.lv || 1) > m) m = e.lv; }); return m; }
-function ensureData(cb) {
-  if (RG.HIST) { cb(); return; }
+/* v148: 最初は «一覧の分»（data/hist_events.l.js・約 1/3）だけ読む。解説・雑学・写真の一覧は、出来事を開いたときにその時代の分
+   （data/hist_events/<時代>.js）を読む。一覧を開いたら、その時代の分を端末が暇なときに裏で読んでおく（速度制限中・通信の節約中は読まない） */
+var WAIT = {};
+function script(f, cb, fail) {
+  if (WAIT[f] === 1) { cb(); return; }
+  if (WAIT[f]) { WAIT[f].push(cb); return; }
+  WAIT[f] = [cb];
   var v = document.documentElement.getAttribute("data-build") || "";
-  var s = document.createElement("script"); s.async = true; s.src = "data/hist_events.js" + (v ? "?v=" + v : "");
-  s.onload = function () { cb(); }; s.onerror = function () { if (RG.tripStatus) RG.tripStatus("れきし地図のデータを読み込めませんでした。通信を確かめてください。", "warn", 5000); };
+  var s = document.createElement("script"); s.async = true; s.src = f + (v ? "?v=" + v : "");
+  s.onload = function () { var w = WAIT[f]; WAIT[f] = 1; w.forEach(function (g) { try { g(); } catch (e) { console.error(e); } }); };
+  s.onerror = function () { WAIT[f] = null; if (fail) fail(); else if (RG.tripStatus) RG.tripStatus("れきし地図のデータを読み込めませんでした。通信を確かめてください。", "warn", 5000); };
   document.head.appendChild(s);
+}
+function ensureData(cb) { if (RG.HIST) { cb(); return; } script("data/hist_events.l.js", cb); }
+function hasDet(e) { return !!e.kid; }
+function merge() { var d = RG.HISTD || {}; D().ev.forEach(function (e) { var x = d[e.id]; if (x && !e.kid) { e.kid = x.kid; if (x.hee) e.hee = x.hee; if (x.ph) e.ph = x.ph; } }); }
+function loadDet(era, cb) { script("data/hist_events/" + era + ".js", function () { merge(); if (cb) cb(); }, function () { if (cb) cb(true); }); }
+function prefetchDet(era) {
+  if (!era || WAIT["data/hist_events/" + era + ".js"] === 1 || (RG.QOS && RG.QOS.lite())) return;
+  var go = function () { if (RG.userBusy && RG.userBusy()) { setTimeout(go, 1500); return; } loadDet(era); };   // 触っている（スクロール中）ときは待つ
+  if (window.requestIdleCallback) requestIdleCallback(function () { setTimeout(go, 600); }, { timeout: 4000 }); else setTimeout(go, 2000);
 }
 
 /* ---------------- v130: 出来事の舞台（旧国・都道府県）を薄くぬる ----------------
@@ -220,6 +235,7 @@ function showEra(id) {
     '<p class="src">地図の印はこの時代の出来事の場所（おおよそ）。押すと出来事の解説へ。</p></div>';
   panel.hidden = false; panel.classList.remove("hp--min");
   var tab = panel.querySelector(".hp__tab.on"); if (tab) tab.scrollIntoView({ block: "nearest", inline: "center" });
+  prefetchDet(E.id);                                                 // v148: この時代の解説を裏で読んでおく
 }
 function showEv(id) {
   var e = evOf(id); if (!e) return;
@@ -241,10 +257,7 @@ function showEv(id) {
     '<p class="hp__area"' + (AREAS.length ? "" : " hidden") + ">" + areaHtml() + "</p>" +
     '<div class="hp__pts">' + e.pts.map(function (p, j) { return '<button class="hp__pt" type="button" data-pt="' + j + '"><b style="background:' + E.c + '">' + (e.pts.length > 1 ? j + 1 : "★") + "</b>" + esc(p[0]) + "</button>"; }).join("") +
       '<button class="hp__pt hp__pt--fit" type="button" data-hfit="1">🔭 ぜんぶ見る</button></div>' +
-    '<div class="eh__kid">' + e.kid.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
-    (e.koji && e.koji.length ? '<div class="hp__koji"><b>📜 故事成語・名言・名歌</b>' + e.koji.map(function (k) {
-      return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span>" + (k.o ? "<small>" + esc(k.o) + "</small>" : "") + "</div>"; }).join("") + "</div>" : "") +
-    (e.hee && e.hee.length ? '<div class="eh__hee"><b>💡 へぇ〜！ ちょっとした雑学</b><ul>' + e.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
+    '<div class="hp__det">' + detHtml(e) + "</div>" +
     (e.wp ? '<p class="hp__more"><a href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(e.wp) + '" target="_blank" rel="noopener">📖 Wikipedia でもっと読む</a></p>' : "") +
     '<div class="hp__nav">' + (prev ? '<button class="hp__b" type="button" data-hev="' + prev.id + '"><small>‹ 前の出来事</small>' + esc(prev.ys.replace(/（.*$/, "")) + " " + esc(prev.t.split(" ―")[0]) + "</button>" : "<span></span>") +
       (next ? '<button class="hp__b hp__b--n" type="button" data-hev="' + next.id + '"><small>次の出来事 ›</small>' + esc(next.ys.replace(/（.*$/, "")) + " " + esc(next.t.split(" ―")[0]) + "</button>" : "") + "</div>" +
@@ -254,10 +267,27 @@ function showEv(id) {
   panel.hidden = false;
   panel.querySelector(".hp__body").scrollTop = 0;
   fit();
-  if (RG.wpGallery) RG.wpGallery(panel.querySelector("[data-hgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(evSpot(e)) : null, e.ph);
-  else loadImg(e.imgwp || e.wp);
+  function gal() {
+    if (RG.wpGallery) RG.wpGallery(panel.querySelector("[data-hgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(evSpot(e)) : null, e.ph);
+    else loadImg(e.imgwp || e.wp);
+  }
+  if (hasDet(e)) { gal(); if (next && next.era !== e.era) prefetchDet(next.era); }
+  else loadDet(e.era, function () {                                  // v148: 解説が届いたら、その部分と写真だけ差し込む（地図の印・位置はそのまま）
+    if (S.ev !== e.id || !panel) return;
+    var d = panel.querySelector(".hp__det"); if (d) d.innerHTML = detHtml(e);
+    gal();
+  });
   if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(panel, evSpot(e));
   if (RG.track) try { RG.track("hist", e.id); } catch (x) {}
+}
+function detHtml(e) {
+  if (!hasDet(e)) return '<p class="hkg__ld">解説を読み込んでいます…</p>' + kojiHtml(e);
+  return '<div class="eh__kid">' + e.kid.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" + kojiHtml(e) +
+    (e.hee && e.hee.length ? '<div class="eh__hee"><b>💡 へぇ〜！ ちょっとした雑学</b><ul>' + e.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "");
+}
+function kojiHtml(e) {
+  return e.koji && e.koji.length ? '<div class="hp__koji"><b>📜 故事成語・名言・名歌</b>' + e.koji.map(function (k) {
+    return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span>" + (k.o ? "<small>" + esc(k.o) + "</small>" : "") + "</div>"; }).join("") + "</div>" : "";
 }
 function evSpot(e) { return { n: "📜" + e.t.split(" ―")[0], la: e.pts[0][1], lo: e.pts[0][2], pt: "💬 みんなの補足（コメント・写真）", ph: "この出来事への補足・知っていること・行ってみた感想（300字まで）" }; }   // v134: 出来事ごとのコメントの鍵
 function areaHtml() { return AREAS.length ? "<b>🗺️ 舞台</b>" + esc(areaLabel(AREAS)) : ""; }
