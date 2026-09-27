@@ -110,6 +110,7 @@ function loadSpot(k, force) {
   var c = mem[k];
   if (c && !force && Date.now() - c.t < TTL) return Promise.resolve(c);
   if (LOADING[k] && !force) return LOADING[k];
+  ownReady();                                                          // v144: 自分の投稿を消せる受け皿か（先に聞いておく）
   return (LOADING[k] = calcMyUid().then(function (u) { return get("a=spot&k=" + encodeURIComponent(k) + (u ? "&u=" + u : "")); }).then(function (d) {
     delete LOADING[k];
     if (d.error) throw new Error(d.error);
@@ -391,8 +392,9 @@ function renderSpot(root, p, d) {
   }).join("") : '<p class="pst__ld">まだ写真がありません。最初の 1 枚をどうぞ。</p>';
   var sc = d.comments.filter(function (c) { return !c.pid; }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
   cm.innerHTML = sc.length ? '<ul class="pst__list">' + sc.map(function (c) {
-    return '<li data-cid="' + esc(c.cid) + '">' + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(RG.postKey(p), c.cid) + "<p>" + esc(c.text) + "</p></li>";
+    return '<li data-cid="' + esc(c.cid) + '"' + ownAttr(c) + ">" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(RG.postKey(p), c.cid) + "<p>" + esc(c.text) + "</p></li>";
   }).join("") + "</ul>" : "";
+  RG.ownSwipe(cm, function () { setTimeout(function () { if (document.body.contains(root) && mem[RG.postKey(p)]) renderSpot(root, p, mem[RG.postKey(p)]); }, 280); });   // v144: 自分のコメントはスワイプで削除・非公開
   Array.prototype.forEach.call(grid.querySelectorAll("[data-ph]"), function (b) { b.addEventListener("click", function () { viewer(p, ph, +b.dataset.ph); }); });
   bindWho(root);
   RG.likeFill(root, RG.postKey(p));                                 // v134: いいね
@@ -412,6 +414,106 @@ function bindWho(root) {
     b.addEventListener("click", function (e) { e.stopPropagation(); RG.showUser(b.dataset.user, b.dataset.uname); });
   });
 }
+
+/* ================================================ v144: 自分の投稿を «削除» «非公開» «公開に戻す»
+   ・自分の投稿の行（コメント・みんなの新着・自分の投稿の一覧）は、左へスワイプすると «非公開» «削除» のボタンが出る
+     （パソコンは行の右の «⋯» でも開ける）。削除は 2 回押し（まちがい防止）
+   ・本人かどうかは受け皿が端末の合いことば（tok）で確かめる（ほかの人の投稿には出さないし、消せない）
+   ・非公開にしたものは、ほかの人には見えず、自分の投稿の一覧にだけ «🔒 非公開» で残る（そこから公開に戻せる） */
+function ownAttr(x) { var id = x.pid || x.cid; return MYUID && x.uid === MYUID && id ? ' data-own="' + esc(id) + '"' + (x.self ? ' data-own-self="' + esc(x.self) + '"' : "") : ""; }
+function ownOp(id, op) {
+  return post({ a: "own", id: id, op: op, tok: tok() }).catch(function (e) {
+    if (/unknown/.test(e.message)) throw new Error("この操作は受け皿の更新（管理人の作業）が済むと使えるようになります");
+    throw e;
+  });
+}
+function forget(id, op) {                                          // 手元の一覧から外す（ほかの人に見えなくなったもの）
+  Object.keys(mem).forEach(function (k) {
+    var d = mem[k]; if (!d) return;
+    if (op === "show") { d.t = 0; return; }                         // 公開に戻した → 次に開くとき読み直す
+    d.comments = (d.comments || []).filter(function (c) { return c.cid !== id && c.pid !== id; });
+    d.photos = (d.photos || []).filter(function (x) { return x.pid !== id; });
+  });
+  if (RG.postsFeedStale) RG.postsFeedStale();
+}
+var SW_OPEN = null;
+function swClose(except) { if (SW_OPEN && SW_OPEN !== except) { SW_OPEN.__set(0); SW_OPEN = null; } }
+document.addEventListener("pointerdown", function (e) { if (SW_OPEN && !SW_OPEN.contains(e.target)) swClose(); }, true);
+function swipeRow(li, onDone) {
+  if (li.__sw) return; li.__sw = 1;
+  var id = li.getAttribute("data-own"), hid = li.getAttribute("data-own-self") === "hide";
+  li.classList.add("sw");
+  var fg = document.createElement("div"); fg.className = "sw__fg";
+  while (li.firstChild) fg.appendChild(li.firstChild);
+  var act = document.createElement("div"); act.className = "sw__act";
+  act.innerHTML = '<button type="button" class="sw__b sw__b--' + (hid ? "show" : "hide") + '" data-op="' + (hid ? "show" : "hide") + '">' + (hid ? "👁<span>公開に戻す</span>" : "🙈<span>非公開</span>") + "</button>" +
+    '<button type="button" class="sw__b sw__b--del" data-op="del">🗑<span>削除</span></button>';
+  var more = document.createElement("button"); more.type = "button"; more.className = "sw__more"; more.setAttribute("aria-label", "この投稿を削除・非公開にする"); more.textContent = "⋯";
+  fg.appendChild(more); li.appendChild(act); li.appendChild(fg);
+  var x = 0, W = 0;
+  li.__set = function (v, noAnim) {
+    x = v; fg.style.transition = noAnim ? "none" : ""; fg.style.transform = v ? "translateX(" + v + "px)" : "";
+    li.classList.toggle("sw--open", v < 0);
+  };
+  function width() { return W || (W = act.offsetWidth || 150); }
+  function open() { swClose(li); li.__set(-width()); SW_OPEN = li; }
+  more.addEventListener("click", function (e) { e.stopPropagation(); if (x < 0) { li.__set(0); SW_OPEN = null; } else open(); });
+  /* スワイプ: 横に 8px 以上・縦より横が大きいときだけ（縦のスクロールは邪魔しない。touch-action: pan-y） */
+  var st = null, moved = false;
+  fg.addEventListener("pointerdown", function (e) { if (e.button > 0) return; st = { x: e.clientX, y: e.clientY, b: x, on: false, id: e.pointerId }; moved = false; });
+  fg.addEventListener("pointermove", function (e) {
+    if (!st || e.pointerId !== st.id) return;
+    var dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if (!st.on) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { st = null; return; }
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      st.on = true; moved = true; swClose(li); try { fg.setPointerCapture(e.pointerId); } catch (er) {}
+    }
+    li.__set(Math.max(-width() - 24, Math.min(0, st.b + dx)), true);
+  });
+  function up() {
+    if (!st) return; var on = st.on; st = null; if (!on) return;
+    if (x < -width() / 2) open(); else { li.__set(0); if (SW_OPEN === li) SW_OPEN = null; }
+  }
+  fg.addEventListener("pointerup", up); fg.addEventListener("pointercancel", up);
+  fg.addEventListener("click", function (e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } else if (x < 0) { e.stopPropagation(); e.preventDefault(); li.__set(0); SW_OPEN = null; } }, true);
+  act.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-op]"); if (!b || b.disabled) return;
+    e.stopPropagation();
+    var op = b.dataset.op, lab = b.querySelector("span");
+    if (op === "del" && !b.__ok) {                                  // 削除は 2 回押し
+      b.__ok = 1; lab.textContent = "本当に削除"; b.classList.add("sw__b--sure");
+      setTimeout(function () { if (b.isConnected) { b.__ok = 0; lab.textContent = "削除"; b.classList.remove("sw__b--sure"); } }, 3500);
+      return;
+    }
+    Array.prototype.forEach.call(act.querySelectorAll("button"), function (x2) { x2.disabled = true; });
+    lab.textContent = op === "del" ? "削除中…" : "…";
+    ownOp(id, op).then(function () {
+      forget(id, op);
+      var msg = op === "del" ? "🗑 削除しました" : op === "hide" ? "🙈 非公開にしました（«自分の投稿» から公開に戻せます）" : "👁 公開に戻しました";
+      if (RG.tripStatus) RG.tripStatus(msg, "info", 3500);
+      if (onDone && onDone(id, op, li) === false) return;          // 呼んだ側が描き直す
+      li.classList.add("sw--gone"); setTimeout(function () { li.remove(); }, 260);
+    }).catch(function (er) {
+      Array.prototype.forEach.call(act.querySelectorAll("button"), function (x2) { x2.disabled = false; });
+      lab.textContent = op === "del" ? "削除" : op === "hide" ? "非公開" : "公開に戻す"; b.__ok = 0; b.classList.remove("sw__b--sure");
+      if (RG.tripStatus) RG.tripStatus("✕ " + er.message, "warn", 5000); else alert(er.message);
+    });
+  });
+}
+/* 受け皿がこの操作に対応しているか（v144 以降）。古い受け皿のうちはスワイプを出さない（押しても失敗するだけなので） */
+var OWN_P = null, OWN_V = false;
+function ownReady() {
+  if (!OWN_P) OWN_P = get("a=ping").then(function (d) { return (OWN_V = !!(d && +d.v >= 144)); }).catch(function () { OWN_P = null; return false; });
+  return OWN_P;
+}
+RG.ownSwipe = function (root, onDone) {
+  if (!root) return;
+  Promise.all([calcMyUid(), ownReady()]).then(function (a) {
+    if (!a[1]) return;
+    Array.prototype.forEach.call(root.querySelectorAll("[data-own]"), function (li) { swipeRow(li, onDone); });
+  });
+};
 
 RG.postsBind = function (m, p) {
   if (!RG.postsEnabled()) return;
@@ -669,12 +771,13 @@ function viewer(p, list, i) {
           x.loc === "here" ? "📍 写真に位置情報はありませんが、投稿者が現地（スポットから 1km 以内）で投稿したことを確認しています" :
           "📍? 写真に位置情報がありません（撮影場所を確かめられません）") + "</p>" +
         (x.cap ? '<p class="phv__cap">' + esc(x.cap) + "</p>" : "") +
-        '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return '<li data-cid="' + esc(c.cid) + '">' + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(k, c.cid) + "<p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +
+        '<ul class="pst__list">' + (cs.length ? cs.map(function (c) { return '<li data-cid="' + esc(c.cid) + '"' + ownAttr(c) + ">" + nameBtn(c) + '<span class="pst__dt">' + fmtDate(c.ts) + "</span>" + RG.likeBtn(k, c.cid) + "<p>" + esc(c.text) + "</p></li>"; }).join("") : '<li class="pst__ld">この写真へのコメントはまだありません。</li>') + "</ul>" +
         '<form class="pst__form" data-phv-form><input class="pst__hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
           '<input class="pst__name" name="name" maxlength="20" placeholder="名前（表示名）" value="' + esc(nick()) + '" required>' +
           '<textarea name="text" maxlength="300" rows="2" placeholder="この写真へのコメント" required></textarea>' +
           '<button class="pst__send" type="submit">💬 コメントする</button><span class="pst__st" data-st></span></form>' +
-        '<button type="button" class="phv__rep" data-rep>🚩 不適切な写真を報告</button>' +
+        (MYUID && x.uid === MYUID && OWN_V ? '<div class="phv__own"><button type="button" data-pown="hide">🙈 この写真を非公開にする</button><button type="button" data-pown="del">🗑 この写真を削除</button></div>' :   // v144: 自分の写真
+        '<button type="button" class="phv__rep" data-rep>🚩 不適切な写真を報告</button>') +
       "</div></div>" +
       '<button class="phv__x" type="button" aria-label="閉じる">✕</button>' +
       (list.length > 1 ? '<button class="phv__n phv__n--p" type="button" aria-label="前の写真">‹</button><button class="phv__n phv__n--n" type="button" aria-label="次の写真">›</button>' : "");
@@ -684,7 +787,22 @@ function viewer(p, list, i) {
     if (nx) nx.addEventListener("click", function () { i = (i + 1) % list.length; draw(); });
     bindWho(box);
     RG.likeFill(box, k);                                              // v134: いいね
-    box.querySelector("[data-rep]").addEventListener("click", function () {
+    RG.ownSwipe(box.querySelector(".phv__side .pst__list"), function () { setTimeout(function () { if (box.isConnected) draw(); }, 280); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-pown]"), function (b) {
+      b.addEventListener("click", function () {
+        var op = b.dataset.pown;
+        if (op === "del" && !b.__ok) { b.__ok = 1; b.textContent = "🗑 本当に削除する（もう一度押す）"; setTimeout(function () { if (b.isConnected) { b.__ok = 0; b.textContent = "🗑 この写真を削除"; } }, 3500); return; }
+        b.disabled = true;
+        ownOp(x.pid, op).then(function () {
+          forget(x.pid, op); list.splice(i, 1);
+          if (RG.tripStatus) RG.tripStatus(op === "del" ? "🗑 写真を削除しました" : "🙈 写真を非公開にしました（«自分の投稿» から公開に戻せます）", "info", 3500);
+          var root2 = document.querySelector(".modal [data-pst]"); if (root2 && mem[k] && document.body.contains(root2)) renderSpot(root2, p, mem[k]);
+          if (!list.length) return close();
+          i = Math.min(i, list.length - 1); draw();
+        }).catch(function (er) { b.disabled = false; if (RG.tripStatus) RG.tripStatus("✕ " + er.message, "warn", 5000); else alert(er.message); });
+      });
+    });
+    var rep = box.querySelector("[data-rep]"); if (rep) rep.addEventListener("click", function () {
       if (!confirm("この写真を「不適切」として報告しますか？（3 件で自動的に非表示になります）")) return;
       post({ a: "report", id: x.pid, tok: tok() }).then(function () { alert("報告しました。ありがとうございます。"); }).catch(function (e) { alert(e.message); });
     });
@@ -727,7 +845,11 @@ RG.showUser = function (u, name) {
   calcMyUid();
   var old = document.querySelector(".phv"); if (old) old.remove();
   var m = RG.openModal("👤 " + (name || "投稿者") + " " + tag(u), '<div class="usr"><p class="pst__ld">読み込んでいます…</p></div>');
-  get("a=user&u=" + encodeURIComponent(u)).then(function (d) {
+  /* v144: 自分のページは «非公開にしたもの» も出す（本人だけ・合いことばで確かめる）。古い受け皿なら公開分だけ */
+  calcMyUid().then(function (me) {
+    if (me && me === u) return post({ a: "mine", tok: tok() }).catch(function () { return get("a=user&u=" + encodeURIComponent(u)); });
+    return get("a=user&u=" + encodeURIComponent(u));
+  }).then(function (d) {
     if (d.error) throw new Error(d.error);
     var items = (d.photos || []).map(function (x) { return { type: "photo", x: x, ts: x.ts, pf: x.spot.pf || "", spot: x.spot, k: x.k }; })
       .concat((d.comments || []).map(function (c) { return { type: "comment", x: c, ts: c.ts, pf: c.spot.pf || "", spot: c.spot, k: c.k }; }));
@@ -749,9 +871,9 @@ RG.showUser = function (u, name) {
         "</div>" +
         (list.length ? '<ul class="usr__list">' + list.map(function (it, j) {
           var s = it.spot;
-          return '<li><button type="button" class="usr__it" data-it="' + j + '">' +
+          return "<li" + ownAttr(it.x) + '><button type="button" class="usr__it' + (it.x.self === "hide" ? " usr__it--hid" : "") + '" data-it="' + j + '">' +
             (it.type === "photo" ? '<img src="' + esc(thumbUrl(it.x.f, 100)) + '" alt="" loading="lazy" decoding="async">' : '<span class="usr__ic">💬</span>') +
-            '<span class="usr__tx"><b>' + esc(s.n) + '</b><small>' + esc(it.pf || "") + " ・ " + fmtDate(it.ts) + (it.type === "comment" && it.x.pid ? " ・ 写真へのコメント" : "") + "</small>" +
+            '<span class="usr__tx"><b>' + esc(s.n) + (it.x.self === "hide" ? '<i class="usr__hid">🔒 非公開</i>' : "") + (it.x.gone ? '<i class="usr__hid">⚠ 管理人が非表示</i>' : "") + '</b><small>' + esc(it.pf || "") + " ・ " + fmtDate(it.ts) + (it.type === "comment" && it.x.pid ? " ・ 写真へのコメント" : "") + "</small>" +
             (it.type === "photo" ? (it.x.cap ? "<em>" + esc(it.x.cap) + "</em>" : "") : "<em>" + esc(it.x.text) + "</em>") + "</span></button></li>";
         }).join("") + "</ul>" : '<p class="pst__ld">この条件の投稿はありません。</p>');
       Array.prototype.forEach.call(host.querySelectorAll("[data-ord]"), function (b) { b.addEventListener("click", function () { userState.order = b.dataset.ord; draw(); }); });
@@ -761,6 +883,15 @@ RG.showUser = function (u, name) {
         RG.postsMapUser(u, shownName, items.filter(function (it) { return !userState.pf || it.pf === userState.pf; }));
       });
       Array.prototype.forEach.call(host.querySelectorAll("[data-it]"), function (b) { b.addEventListener("click", function () { openSpot(list[+b.dataset.it]); }); });
+      if (u === MYUID) {
+        ownReady().then(function (ok) { if (ok && host.isConnected && !host.querySelector(".usr__tip")) host.querySelector(".usr__ctl").insertAdjacentHTML("afterend", '<p class="usr__tip">← 行を左へスワイプ（パソコンは «⋯»）で、非公開・削除・公開に戻すができます</p>'); });
+        RG.ownSwipe(host, function (id, op) {                       // 自分の一覧は描き直す（削除は消える・非公開は印が付く）
+          if (op === "del") items = items.filter(function (it) { return (it.x.pid || it.x.cid) !== id; });
+          else items.forEach(function (it) { if ((it.x.pid || it.x.cid) === id) it.x.self = op === "hide" ? "hide" : ""; });
+          setTimeout(function () { if (host.isConnected) draw(); }, 200);
+          return false;
+        });
+      }
     }
     draw();
   }).catch(function (e) { var h = m.querySelector(".usr"); if (h) h.innerHTML = '<p class="pst__err">読み込めませんでした: ' + esc(e.message) + "</p>"; });
@@ -914,7 +1045,7 @@ RG.showFeed = function (pf) {
     var L = shown(), list = host.querySelector(".feed__list");
     list.innerHTML = L.length ? L.map(function (it, j) {
       var x = it.x, ph = it.ty === "p", nw = new Date(it.ts).getTime() > seen && seen > 0;
-      return '<li class="feed__li' + (nw ? " feed__li--new" : "") + '"><button type="button" class="feed__it" data-fi="' + j + '">' +
+      return '<li class="feed__li' + (nw ? " feed__li--new" : "") + '"' + ownAttr(x) + '><button type="button" class="feed__it" data-fi="' + j + '">' +
         (ph ? '<img src="' + esc(thumbUrl(x.f, 72)) + '" alt="" loading="lazy" decoding="async" width="72" height="72">' : '<span class="feed__ic">💬</span>') +
         '<span class="feed__tx"><b>' + esc(x.spot.n) + "</b><small>" + (nw ? '<em class="feed__nw">NEW</em>' : "") + esc(areaOf(it)) + " ・ " + ago(it.ts) +
           (ph ? "" : x.pid ? " ・ 写真へのコメント" : "") + "</small>" + (ph ? (x.cap ? "<i>" + esc(x.cap) + "</i>" : "") : "<i>" + esc(x.text) + "</i>") + "</span></button>" +
@@ -922,6 +1053,7 @@ RG.showFeed = function (pf) {
     }).join("") : '<li class="pst__ld">' + (busy ? "読み込んでいます…" : "この条件の投稿はまだありません。") + "</li>";
     Array.prototype.forEach.call(list.querySelectorAll("[data-fi]"), function (b) { b.addEventListener("click", function () { var it = L[+b.dataset.fi]; openSpot({ k: it.x.k, spot: it.x.spot }); }); });
     bindWho(list);
+    RG.ownSwipe(list, function (id) { items = items.filter(function (it) { return (it.x.pid || it.x.cid) !== id; }); });   // v144: 自分の投稿はスワイプで削除・非公開
     var ft = host.querySelector(".feed__ft");
     ft.innerHTML = more ? '<button type="button" class="pst__send" data-fmore>もっと見る</button>' : L.length ? '<p class="pst__ld">ここまでです。</p>' : "";
     var mb = ft.querySelector("[data-fmore]"); if (mb) mb.addEventListener("click", function () { loadMore(mb); });

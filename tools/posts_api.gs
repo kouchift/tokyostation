@@ -42,6 +42,8 @@
  *        {a:"tip",     st, line, car, to, tok, name}                       v112: «この駅は ○号車が △ に近い»（みんなで貯める）
  *        {a:"like",    k, spot, id, on, tok}                                 v110: いいね（id: 写真 p… ／コメント c… ／カードの写真 g…）。on=false で取り消し
  *        {a:"tipvote", id, tok}                                            v112: «合ってた»（1 人 1 回）
+ *        {a:"own",     id, op:"del"|"hide"|"show", tok}                     v144: 本人の投稿を削除・非公開・公開に戻す
+ *        {a:"mine",    tok}                                               v144: 自分の投稿（非公開も含む）
  *   GET  ?a=tips&st=<駅名>                                                  v112: その駅の «便利な号車» 情報
  *   注意: loc（撮影位置の判定）とラベルの焼き込みは画面側で行う。改造した画面からは «ok» と偽れるので、
  *         ここでは 1 人・1 スポット・全体の数の上限で被害を小さくしている。
@@ -55,8 +57,8 @@ var PER_USER_SPOT = 20;                       // 1 人が 1 スポットに出�
 var PER_SPOT_DAY = 60;                        // 1 スポットに 1 日に来る写真（誰からでも）
 var PER_MINUTE_ALL = 120;                     // 全体で 1 分あたりの写真（大量の送りつけの歯止め）
 var HIDE_AT_REPORTS = 3, PER_DAY_REPORTS = 20;
-var P_COLS = ["pid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "cap", "file_id", "w", "h", "ts", "hidden", "reports", "loc", "dist", "credit", "shared"];
-var C_COLS = ["cid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "text", "pid", "ts", "hidden", "reports"];
+var P_COLS = ["pid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "cap", "file_id", "w", "h", "ts", "hidden", "reports", "loc", "dist", "credit", "shared", "self"];
+var C_COLS = ["cid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "text", "pid", "ts", "hidden", "reports", "self"];   // v144: self = "" 公開 / "hide" 本人が非公開 / "del" 本人が削除
 var R_COLS = ["id", "uid", "ts"];
 var T_COLS = ["tid", "st", "line", "car", "to", "uid", "name", "ts", "votes", "hidden"];   // v112: 便利な号車
 var TV_COLS = ["tid", "uid", "ts"];
@@ -217,7 +219,7 @@ function commentOut_(r) {
   return { cid: r.cid, k: r.k, spot: { n: r.spot_n, la: +r.la, lo: +r.lo, pf: r.pf }, uid: r.uid, name: r.name, text: r.text,
            pid: r.pid || "", ts: iso_(r.ts) };
 }
-function visible_(r) { return !(r.hidden === 1 || r.hidden === "1" || r.hidden === true) && (+r.reports || 0) < HIDE_AT_REPORTS; }
+function visible_(r) { return !(r.hidden === 1 || r.hidden === "1" || r.hidden === true) && (+r.reports || 0) < HIDE_AT_REPORTS && !r.self; }   // v144: 本人が非公開・削除したものも出さない
 /* 表示の順: 撮影位置OK → 位置情報なし → アンマッチ、同じ区分は新しい順 */
 function byPriority_(a, b) { return rank_(a) - rank_(b) || ms_(b.ts) - ms_(a.ts); }
 /* スポットの表示中の写真（上位 50 枚） */
@@ -264,7 +266,7 @@ function photo_(b, uid, name, k, spot, now, today) {
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   var dist = b.dist === "" || b.dist == null || !isFinite(+b.dist) ? "" : Math.max(0, Math.round(+b.dist / 10) * 10);   // 10m 単位
   var row = [pid, txt_(k, 200), txt_(spot.n, 80), +spot.la, +spot.lo, txt_(spot.pf, 8), uid, txt_(name, 21), txt_(b.cap, 200), file.getId(), +b.w || 0, +b.h || 0, now, "", 0,
-             loc, dist, b.credit ? 1 : 0, 1];
+             loc, dist, b.credit ? 1 : 0, 1, ""];
   sheet_("Photos").appendRow(row);
   SpreadsheetApp.flush();
   // 表示枠から押し出された写真（画面の手元の一覧を合わせるため）
@@ -279,7 +281,7 @@ function photo_(b, uid, name, k, spot, now, today) {
 function doGet(e) {
   try {
     var q = e.parameter || {}, a = q.a || "spot";
-    if (a === "ping") return json_({ ok: true, v: 138 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
+    if (a === "ping") return json_({ ok: true, v: 144 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
     ensureInit_();
     if (a === "admin") {                          // 管理ページ（admin/posts.html）用。鍵が合うときだけ撮影データの記録を返す
       if (!q.key || q.key !== adminKey_()) return json_({ error: "鍵が違います" });
@@ -355,6 +357,38 @@ function doPost(e) {
       return json_({ ok: true });
     }
 
+    /* v144: 本人の投稿を «削除» «非公開» «公開に戻す»。本人かどうかは端末の合いことば（tok）から作る uid で確かめる
+       削除 … 表示から消す（管理人の記録には残す）。写真はドライブの共有リンクを止めてゴミ箱へ（30 日で消える）
+       非公開 … ほかの人には見せない（本人の «自分の投稿» にだけ出る）。写真は共有リンクを止める ／ 公開に戻す … 元どおり */
+    if (b.a === "own") {
+      var oid = String(b.id || ""), op = b.op === "del" || b.op === "hide" || b.op === "show" ? b.op : "";
+      if (!op || !/^[pc][0-9a-f]{16}$/.test(oid)) return json_({ error: "見つかりません" });
+      var osh = oid.charAt(0) === "p" ? "Photos" : "Comments", ocl = osh === "Photos" ? P_COLS : C_COLS;
+      var orow = rows_(osh, ocl).filter(function (r) { return r[ocl[0]] === oid; })[0];
+      if (!orow || orow.self === "del") return json_({ error: "見つかりません" });
+      if (orow.uid !== uid) return json_({ error: "ご本人の投稿だけを消せます（投稿した端末・ブラウザからお試しください）" });
+      var nv = op === "del" ? "del" : op === "hide" ? "hide" : "";
+      sheet_(osh).getRange(orow._row, ocl.indexOf("self") + 1).setValue(nv);
+      if (osh === "Photos" && orow.file_id) {
+        orow.self = nv;
+        try {
+          var of = DriveApp.getFileById(orow.file_id), pub = visible_(orow);
+          if (pub) of.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); else of.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+          sheet_("Photos").getRange(orow._row, P_COLS.indexOf("shared") + 1).setValue(pub ? 1 : 0);
+          if (nv === "del") of.setTrashed(true);
+        } catch (e5) {}
+      }
+      SpreadsheetApp.flush();
+      return json_({ ok: true, id: oid, self: nv });
+    }
+    /* v144: 自分の投稿（非公開にしたものも含む。削除したものは出さない） */
+    if (b.a === "mine") {
+      function mineOut_(r, out) { var o = out(r); o.self = r.self || ""; o.gone = !(r.hidden === 1 || r.hidden === "1" || r.hidden === true) && (+r.reports || 0) < HIDE_AT_REPORTS ? 0 : 1; return o; }
+      return json_({ uid: uid,
+        photos: rows_("Photos", P_COLS).filter(function (r) { return r.uid === uid && r.self !== "del"; }).map(function (r) { return mineOut_(r, photoOut_); }),
+        comments: rows_("Comments", C_COLS).filter(function (r) { return r.uid === uid && r.self !== "del"; }).map(function (r) { return mineOut_(r, commentOut_); }) });
+    }
+
     if (b.a === "tip") {                          // v112: 便利な号車を教える
       var stn2 = clean_(b.st, 20), line = clean_(b.line, 30), to = clean_(b.to, 40), car = Math.round(+b.car);
       if (!stn2 || !line || !to || !(car >= 1 && car <= 20)) return json_({ error: "駅・路線・号車・何に近いかを入れてください" });
@@ -421,7 +455,7 @@ function doPost(e) {
       if (m2.filter(function (r) { return day_(r.ts) === today; }).length >= PER_DAY_COMMENTS) return json_({ error: "今日の投稿の上限に達しました" });
       var cid = "c" + Utilities.getUuid().replace(/-/g, "").slice(0, 16);
       var pid2 = /^p[0-9a-f]{16}$/.test(String(b.pid || "")) ? String(b.pid) : "";     // 写真の ID の形でなければ «スポットへのコメント»
-      var row2 = [cid, txt_(k, 200), txt_(spot.n, 80), +spot.la, +spot.lo, txt_(spot.pf, 8), uid, txt_(name, 21), txt_(text, 301), pid2, now, "", 0];
+      var row2 = [cid, txt_(k, 200), txt_(spot.n, 80), +spot.la, +spot.lo, txt_(spot.pf, 8), uid, txt_(name, 21), txt_(text, 301), pid2, now, "", 0, ""];
       sheet_("Comments").appendRow(row2);
       SpreadsheetApp.flush();
       var o2 = {}; for (var j = 0; j < C_COLS.length; j++) o2[C_COLS[j]] = row2[j];

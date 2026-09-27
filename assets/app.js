@@ -941,6 +941,7 @@ var Map = (function () {
     if (gestRaf) { cancelAnimationFrame(gestRaf); gestRaf = 0; }
     svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
     svg.style.transform = "";
+    if (RG.ML) RG.ML.sync();                                           // v144: 重ね層の文字も新しい表示範囲へ（位置だけ）
     if (RG.cvUnder) { RG.cvUnder.end(); RG.cvUnder.prep(vb, svg); }   // v142: 描き足しの下敷きを隠す（SVG が描き直した）・次の分を暇なときに描いておく
     cvb = { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; lastCommit = performance.now();
     scheduleLod();
@@ -950,6 +951,7 @@ var Map = (function () {
     gestRaf = 0; if (!cvb || !gestR) return;
     var s = cvb.w / vb.w, tx = (cvb.x - vb.x) * gestR.width / vb.w, ty = (cvb.y - vb.y) * gestR.height / vb.h;
     svg.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(5) + ")";
+    if (RG.ML) RG.ML.gesture(svg.style.transform);                    // v144: 文字の重ね層も一緒に動かす
     if (RG.cvUnder && (s < 0.999 || Math.abs(tx) > 2 || Math.abs(ty) > 2)) RG.cvUnder.frame(vb, gestR, svg);   // v142: 空いた端を Canvas で埋める
     if (RG.onMapView) try { RG.onMapView(); } catch (e) {}
   }
@@ -1361,7 +1363,7 @@ var Map = (function () {
       if (t.g === "buzz" || t.g === "ichinomiya" || t.g === "whs") esz = Math.max(esz, t.g === "whs" ? 15 : 13);   // 都道府県単位の目印は、引いていても読める大きさに
       // v77: 寄ったとき（街〜詳細）だけ、企業・チェーンのロゴを極小で（識別目的。商標は各社に帰属）
       var logo = (!t.isNew && z >= 7 && RG.poiLogo && RG.settings && RG.settings.logos !== false) ? RG.poiLogo(t) : null;
-      if (t.g === "levechi" && RG.LEVECHI_ICON) { logo = RG.LEVECHI_ICON; esz = Math.max(esz * 1.5, 14); }   // v87: レベチは専用の印（どのズームでも）
+      if (t.g === "levechi" && RG.LEVECHI_ICON) { logo = RG.LEVECHI_ICON; esz = Math.max(esz * 1.5, 14) * (RG.LEVECHI_PAD || 1); }   // v87: レベチは専用の印（どのズームでも）
       else if (logo) { esz = Math.max(esz * 1.35, 11); }
       /* v101: ロゴ・自分のピン・レベチの王冠以外は、Figma 由来のモノラインアイコン（<use>）。無ければ絵文字のまま */
       var ic = (!logo && !myPins.length && !t.isNew && RG.setIcon) ? RG.setIcon(e0, t.g, t.x, t.y, esz * 1.05 * uu) : null;
@@ -2743,7 +2745,7 @@ RG.boot = function () {
   step("スポットの取り込み", function () { mergeExtraPois(); });
   step("検索の索引", function () { buildIndex(); });
   step("駅カード", function () { Card.init(); });
-  step("路線図の描画", function () { Map.draw(); Map.initViewport(); }, true);
+  step("路線図の描画", function () { Map.draw(); Map.initViewport(); if (RG.mlInit) RG.mlInit(); }, true);   // v144: 文字は重ね層（maplbl.js）
   step("地図のボタン", function () {
     $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
     $("#zout").addEventListener("click", function () { Map.zoom(1.45); });

@@ -120,9 +120,11 @@ body {
   stroke-linejoin: round;
 }
 
-/* スポットの印の影（地図の単位ではなく画面の px で効く filter は、印の丸にだけ） */
-#map .poi__c {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22));
+/* スポットの印の影。v144: filter（drop-shadow）は地図を描き直すたびに «ぼかし» の計算が走り、画面の塗りの 7 割を占めていた
+   → 白いふち（poi__halo）の外側に、うすい 1px の線で輪郭を付ける（見た目はほぼ同じ・計算はほぼ無い） */
+#map .poi__halo {
+  stroke: rgba(0, 0, 0, 0.16);
+  stroke-width: var(--u, 1px);
 }
 
 /* ---- v117: 路線に負けない «ソリッド» の印（デザイン担当 AI の案 1） ----
