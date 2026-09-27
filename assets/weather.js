@@ -81,7 +81,13 @@ function hubPoint() {
   var s = RG.byId && (RG.byId[id] || RG.byId[RG.HUB]);
   return s ? { la: s.la, lo: s.lo, place: s.n + "駅" } : { la: 35.7356, lo: 139.6353, place: "中村橋駅" };
 }
-function placeName(la, lo) {
+var PN = {};
+function placeName(la, lo) {                                                    // v143: 同じあたり（約 100m）は覚えておく
+  var k = la.toFixed(3) + "," + lo.toFixed(3);
+  if (PN[k]) return PN[k];
+  var v = placeName0(la, lo); if (!/^\d|の近く$|あたり$/.test(v)) PN[k] = v; return v;   // 市区町村の面がまだのときの答えは覚えない
+}
+function placeName0(la, lo) {
   var ns = null; try { ns = RG.nearestStation && RG.nearestStation(la, lo); } catch (e) {}
   if (ns && ns.km < 1.5) return ns.t.n + "駅";                                   // 駅のそば → 駅名
   try { var mu = RG.muniAt && RG.muniAt(la, lo); if (mu && mu.n) return mu.n; } catch (e) {}   // 市区町村（面を読み込んでいれば）

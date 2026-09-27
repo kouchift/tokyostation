@@ -142,11 +142,15 @@ function setEmoji(node, e, x, y, size, urlOverride) {
   var url = urlOverride || emojiImg(e);
   if (url) {
     if (node.tagName !== "image") { var im = el("image", { class: node.getAttribute("class") }); node.parentNode.replaceChild(im, node); node = im; }
-    node.setAttribute("href", url); node.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url);
+    if (node.__u !== url) { node.setAttribute("href", url); node.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url); node.__u = url; }   // v143: 変わったときだけ書く
     if (urlOverride && !node.__errBound) { node.__errBound = 1; node.addEventListener("error", function () { var u2 = node.getAttribute("href"); if (RG.logoFail && u2 && !/^data:/.test(u2)) { RG.logoFail(u2); setEmoji(node, node.__e || "📍", +node.getAttribute("x") + +node.getAttribute("width") / 2, +node.getAttribute("y") + +node.getAttribute("height") / 2, +node.getAttribute("width")); } }); }
     node.__e = e;
-    node.setAttribute("x", (x - size / 2).toFixed(2)); node.setAttribute("y", (y - size / 2).toFixed(2));
-    node.setAttribute("width", size.toFixed(2)); node.setAttribute("height", size.toFixed(2));
+    var gk = x.toFixed(2) + "," + y.toFixed(2) + "," + size.toFixed(2);
+    if (node.__g !== gk) {
+      node.__g = gk;
+      node.setAttribute("x", (x - size / 2).toFixed(2)); node.setAttribute("y", (y - size / 2).toFixed(2));
+      node.setAttribute("width", size.toFixed(2)); node.setAttribute("height", size.toFixed(2));
+    }
   } else {
     if (node.tagName !== "text") { var tx = el("text", { class: node.getAttribute("class"), "text-anchor": "middle" }); node.parentNode.replaceChild(tx, node); node = tx; }
     node.textContent = e; node.setAttribute("x", x); node.setAttribute("y", y + size * 0.35);
@@ -155,6 +159,30 @@ function setEmoji(node, e, x, y, size, urlOverride) {
   return node;
 }
 RG.setEmoji = setEmoji;
+/* v143: 線の名前（高速・国道・街道・川・山脈・海流）。これまでは線そのものに沿わせる textPath だったが、
+   長い線に沿わせる文字は «地図を動かすたびの配置計算» がとても重かった（30 個ほどで描き直し 1 回の 6 割）。
+   いまは «画面の中で、線のまん中にいちばん近い点» に、線の向きに合わせて傾けたふつうの文字を置く。画面に線が無ければ出さない */
+RG.projPts = function (pts) { var o = []; for (var i = 0; i < pts.length; i++) { var P = RG.project(pts[i][0], pts[i][1]); o.push([P.x, P.y]); } return o; };
+RG.lineText = function (cls, name) { var t = el("text", { class: cls, "text-anchor": "middle", dy: "-0.3em" }); t.textContent = name; return t; };
+RG.lineLabel = function (t, pp, vb, at) {
+  var n = pp ? pp.length : 0; if (n < 2) return false;
+  var mx = vb.w * 0.08, my = vb.h * 0.08, x0 = vb.x + mx, x1 = vb.x + vb.w - mx, y0 = vb.y + my, y1 = vb.y + vb.h - my;
+  var mid = Math.round((n - 1) * (at == null ? 0.5 : at)), st = Math.max(1, Math.floor(n / 600)), i = -1;
+  for (var d = 0; d <= n; d += st) {
+    var a = mid - d, b = mid + d;
+    if (a >= 0 && pp[a][0] > x0 && pp[a][0] < x1 && pp[a][1] > y0 && pp[a][1] < y1) { i = a; break; }
+    if (b < n && pp[b][0] > x0 && pp[b][0] < x1 && pp[b][1] > y0 && pp[b][1] < y1) { i = b; break; }
+    if (a < 0 && b >= n) break;
+  }
+  if (i < 0) return false;
+  var k = Math.max(0, i - 2), j = Math.min(n - 1, i + 2), ang = Math.atan2(pp[j][1] - pp[k][1], pp[j][0] - pp[k][0]) * 180 / Math.PI;
+  if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;               // 逆さまにしない
+  var x = pp[i][0].toFixed(1), y = pp[i][1].toFixed(1), tr = "rotate(" + ang.toFixed(1) + " " + x + " " + y + ")", c = t.__ll || (t.__ll = {});
+  if (c.x !== x) { c.x = x; t.setAttribute("x", x); }
+  if (c.y !== y) { c.y = y; t.setAttribute("y", y); }
+  if (c.tr !== tr) { c.tr = tr; t.setAttribute("transform", tr); }
+  return true;
+};
 RG.$ = $; RG.el = el; RG.esc = esc; RG.num = num; RG.isTouch = isTouch;
 
 /* ================================================================ 索引構築 */
@@ -825,6 +853,7 @@ var Map = (function () {
     if (!WS || !WS.width) { var r = wrap.getBoundingClientRect(); WS = { width: r.width, height: r.height }; }
     return WS;
   }
+  RG.mapWrapSize = function () { return wrap ? wrapSize() : null; };   // v143: ほかの部品（区の名前など）も測り直さずに使う
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
 
   function initViewport() {

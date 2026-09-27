@@ -268,13 +268,13 @@ RG.geoLOD = function () {
   svg.classList.toggle("geo-far", z < 0.35);       // 日本全体：県境だけ
   svg.classList.toggle("geo-near", z >= 3);        // 街：市区町村の線をはっきり
   // 県名：引いているときだけ。重なるものは出さない
-  var wrap = document.querySelector(".mapwrap");
-  var r = wrap ? wrap.getBoundingClientRect() : { width: 900, height: 600 };
+  var r = (RG.mapWrapSize && RG.mapWrapSize()) || { width: 900, height: 600 };   // v143: 測り直さない
   var upx = vb.w / Math.max(320, r.width);
   var showName = z < 1.0;   // 引いているとき（36km幅より広いとき）だけ県名。寄ると市区町村名（jp_admin）に交代
   var slots = [];
   Array.prototype.forEach.call(gLbl.childNodes, function (t) {
-    var x = +t.getAttribute("x"), y = +t.getAttribute("y");
+    if (t.__x == null) { t.__x = +t.getAttribute("x"); t.__y = +t.getAttribute("y"); }
+    var x = t.__x, y = t.__y;
     var inv = showName && x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h;
     var ok = false;
     if (inv) {
@@ -283,11 +283,14 @@ RG.geoLOD = function () {
       for (var i = 0; i < slots.length; i++) { var q = slots[i]; if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; } }
       if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; }
     }
-    t.style.display = ok ? "" : "none";
-    if (ok) {
-      t.style.setProperty("font-size", (11.5 * upx).toFixed(3) + "px", "important");
-      t.style.setProperty("stroke-width", (3 * upx).toFixed(3) + "px", "important");
-      t.style.setProperty("letter-spacing", (2 * upx).toFixed(3) + "px", "important");
+    var k = ok ? (11.5 * upx).toFixed(3) + "|" + (3 * upx).toFixed(3) + "|" + (2 * upx).toFixed(3) : "none";   // v143: 前と同じなら style に触らない
+    if (t.__k !== k) {
+      t.__k = k; t.style.display = ok ? "" : "none";
+      if (ok) {
+        t.style.setProperty("font-size", (11.5 * upx).toFixed(3) + "px", "important");
+        t.style.setProperty("stroke-width", (3 * upx).toFixed(3) + "px", "important");
+        t.style.setProperty("letter-spacing", (2 * upx).toFixed(3) + "px", "important");
+      }
     }
   });
   // 寄っていたら、見えている県の詳しい境界を取りに行く

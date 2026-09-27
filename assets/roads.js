@@ -7,7 +7,7 @@
 (function (RG) {
 "use strict";
 var $ = RG.$, esc = RG.esc;
-var gRoad = null, gHwy, gKok, gIC, gKai, built = {}, ICS = [], icPool = [];
+var gRoad = null, gHwy, gKok, gIC, gKai, built = {}, ICS = [], icPool = [], HW = [], KK = [], KA = [];
 var on = { hwy: true, kok: false, kaido: true };
 function host() {
   var svg = document.getElementById("map"); if (!svg) return null;
@@ -19,21 +19,25 @@ function host() {
 function polys(pts) { return Array.isArray(pts[0][0]) ? pts : [pts]; }
 function pathOf(pl) { var d = []; pl.forEach(function (pts) { for (var i = 0; i < pts.length; i++) { var P = RG.project(pts[i][0], pts[i][1]); d.push((i ? "L" : "M") + P.x.toFixed(1) + " " + P.y.toFixed(1)); } }); return d.join(""); }
 function bboxOf(pl) { var b = [Infinity, Infinity, -Infinity, -Infinity]; pl.forEach(function (pts) { pts.forEach(function (q) { var P = RG.project(q[0], q[1]); if (P.x < b[0]) b[0] = P.x; if (P.y < b[1]) b[1] = P.y; if (P.x > b[2]) b[2] = P.x; if (P.y > b[3]) b[3] = P.y; }); }); return b; }
+function disp(n, v) { if (n.__d !== v) { n.__d = v; n.style.display = v ? "" : "none"; } }                 // v143: 変わったときだけ書く
+function sp(n, k, v) { var c = n.__sc || (n.__sc = {}); if (c[k] !== v) { c[k] = v; n.style.setProperty(k, v, "important"); } }
+function sa(n, k, v) { var c = n.__a || (n.__a = {}); if (c[k] !== v) { c[k] = v; n.setAttribute(k, v); } }
+function longestPts(pl) { var m = pl[0]; pl.forEach(function (q) { if (q.length > m.length) m = q; }); return RG.projPts(m); }
 function inView(b, vb) { return !(b[2] < vb.x || b[0] > vb.x + vb.w || b[3] < vb.y || b[1] > vb.y + vb.h); }
+var IC_MAX = 24;                                                  // v143: IC・JCT の名前は一度に 24 まで（文字は地図を動かすたびの配置計算がいちばん重い）
 var HCOL = { "高速": "#2E7D32", "都市高速": "#00695C", "自専": "#558B2F" };
 
 RG.roadsBuild = function () {
   if (!host()) return;
   if (RG.HWY && !built.hwy) {
-    built.hwy = 1; gHwy.innerHTML = "";
+    built.hwy = 1; gHwy.innerHTML = ""; HW = [];
     RG.HWY.forEach(function (h, i) {
       var pl = polys(h.pts), d = pathOf(pl), id = "rg-hw-" + i;
       var glow = RG.el("path", { class: "hw__glow", d: d });
       var p = RG.el("path", { class: "hw hw--" + (h.k === "都市高速" ? "u" : h.k === "自専" ? "j" : "k"), id: id, d: d }); p.__h = h; p.__bb = bboxOf(pl); p.__km = h.km || 0;
       var hit = RG.el("path", { class: "hw__hit", d: d }); hit.__h = h;
-      var t = RG.el("text", { class: "hw__t" }); var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = h.n; t.appendChild(tp); t.__p = p;
-      gHwy.appendChild(glow); gHwy.appendChild(p); gHwy.appendChild(hit); gHwy.appendChild(t);
+      var t = RG.lineText("hw__t", h.n); t.__p = p; p.__pp = longestPts(pl);
+      gHwy.appendChild(glow); gHwy.appendChild(p); gHwy.appendChild(hit); gHwy.appendChild(t); HW.push({ p: p, glow: glow, hit: hit, t: t });
     });
     /* v141: IC・JCT（約 2,400）は «画面に出すぶんだけ» 作る（プール）。全部を DOM に置くと、表示していなくても
        地図を動かすたびの配置計算が 0.4 秒（遅いスマホで数秒）かかっていた */
@@ -41,25 +45,23 @@ RG.roadsBuild = function () {
     (RG.HWY_IC || []).forEach(function (ic) { ICS.push({ ic: ic, P: RG.project(ic.la, ic.lo) }); });
   }
   if (RG.KOKUDO && !built.kok) {
-    built.kok = 1; gKok.innerHTML = "";
+    built.kok = 1; gKok.innerHTML = ""; KK = [];
     RG.KOKUDO.forEach(function (k, i) {
       var pl = polys(k.pts), d = pathOf(pl), id = "rg-kk-" + i;
       var p = RG.el("path", { class: "kok" + (k.no <= 58 ? " kok--main" : ""), id: id, d: d }); p.__k = k; p.__bb = bboxOf(pl);
       var hit = RG.el("path", { class: "kok__hit", d: d }); hit.__k = k;
-      var t = RG.el("text", { class: "kok__t" }); var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = "R" + k.no; t.appendChild(tp); t.__p = p;
-      gKok.appendChild(p); gKok.appendChild(hit); gKok.appendChild(t);
+      var t = RG.lineText("kok__t", "R" + k.no); t.__p = p; p.__pp = longestPts(pl);
+      gKok.appendChild(p); gKok.appendChild(hit); gKok.appendChild(t); KK.push({ p: p, hit: hit, t: t, main: k.no <= 58 });
     });
   }
   if (RG.KAIDO && !built.kai) {
-    built.kai = 1; gKai.innerHTML = "";
+    built.kai = 1; gKai.innerHTML = ""; KA = [];
     RG.KAIDO.forEach(function (k, i) {
       var pts = k.stops.map(function (s) { return [s.la, s.lo]; }), d = pathOf([pts]), id = "rg-ka-" + i;
       var p = RG.el("path", { class: "kai", id: id, d: d }); p.style.setProperty("stroke", k.c); p.__k = k; p.__bb = bboxOf([pts]);
       var hit = RG.el("path", { class: "kai__hit", d: d }); hit.__k = k;
-      var t = RG.el("text", { class: "kai__t" }); t.style.setProperty("fill", k.c); var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id); tp.setAttribute("startOffset", "30%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = "旧" + k.n; t.appendChild(tp); t.__p = p;
-      gKai.appendChild(p); gKai.appendChild(hit); gKai.appendChild(t);
+      var t = RG.lineText("kai__t", "旧" + k.n); t.style.setProperty("fill", k.c); t.__p = p; p.__pp = RG.projPts(pts);
+      gKai.appendChild(p); gKai.appendChild(hit); gKai.appendChild(t); KA.push({ p: p, hit: hit, t: t });
     });
   }
   if (!gRoad.__bound) {
@@ -84,22 +86,29 @@ RG.roadsLOD = function () {
   var pad = { x: vb.x - vb.w * 0.2, y: vb.y - vb.h * 0.2, w: vb.w * 1.4, h: vb.h * 1.4 };
   var showH = on.hwy && z >= 0.06;
   gHwy.style.display = showH ? "" : "none";
-  if (showH) Array.prototype.forEach.call(gHwy.childNodes, function (n) {
-    if (n.classList.contains("hw")) { var vis = inView(n.__bb, pad) && (z >= 0.25 || n.__km >= 60); n.style.display = vis ? "" : "none"; n.__vis = vis; n.style.setProperty("stroke-width", (Math.min(4, 1.2 + z * 0.9) * u).toFixed(2) + "px", "important"); }
-    else if (n.classList.contains("hw__glow")) { n.style.setProperty("stroke-width", (Math.min(7, 2.6 + z * 1.4) * u).toFixed(2) + "px", "important"); n.style.display = z >= 0.25 ? "" : "none"; }
-    else if (n.classList.contains("hw__hit")) n.style.setProperty("stroke-width", (12 * u).toFixed(2) + "px", "important");
-    else if (n.__p) { n.style.display = (n.__p.__vis && z >= 0.35) ? "" : "none"; n.style.setProperty("font-size", (10.5 * u).toFixed(2) + "px", "important"); }
-  });
+  /* v143: 画面の外の道は、線だけでなく «白いふち・押す所・名前» も出さない（出していると、地図を動かすたびに全部の配置計算が走る）。
+     太さ・字の大きさは、前と同じなら書かない */
+  if (showH) {
+    var hw = (Math.min(4, 1.2 + z * 0.9) * u).toFixed(2) + "px", hg = (Math.min(7, 2.6 + z * 1.4) * u).toFixed(2) + "px", hh = (12 * u).toFixed(2) + "px", hf = (10.5 * u).toFixed(2) + "px";
+    HW.forEach(function (o) {
+      var vis = inView(o.p.__bb, pad) && (z >= 0.25 || o.p.__km >= 60); o.p.__vis = vis;
+      disp(o.p, vis); disp(o.glow, vis && z >= 0.25); disp(o.hit, vis); disp(o.t, vis && z >= 0.35 && RG.lineLabel(o.t, o.p.__pp, vb));
+      if (vis) { sp(o.p, "stroke-width", hw); sp(o.hit, "stroke-width", hh); if (z >= 0.25) sp(o.glow, "stroke-width", hg); if (z >= 0.35) sp(o.t, "font-size", hf); }
+    });
+  }
   var showIC = on.hwy && z >= 1.6;
   gIC.style.display = showIC ? "" : "none";
   if (showIC) {
     var slots = [], used = 0;
-    ICS.forEach(function (o2) {
-      var P = o2.P, ic = o2.ic, inv = P.x > pad.x && P.x < pad.x + pad.w && P.y > pad.y && P.y < pad.y + pad.h;
-      if (!inv) return;
+    var ccx = vb.x + vb.w / 2, ccy = vb.y + vb.h / 2;
+    ICS.filter(function (o) { var P = o.P; return P.x > vb.x && P.x < vb.x + vb.w && P.y > vb.y && P.y < vb.y + vb.h; })
+      .sort(function (a, b) { return (Math.abs(a.P.x - ccx) + Math.abs(a.P.y - ccy)) - (Math.abs(b.P.x - ccx) + Math.abs(b.P.y - ccy)); })   // 画面のまん中から
+      .forEach(function (o2) {
+      var P = o2.P, ic = o2.ic, inv = P.x > vb.x && P.x < vb.x + vb.w && P.y > vb.y && P.y < vb.y + vb.h;   // v143: 画面の中だけ（外まで置くと配置計算が重い）
+      if (!inv || used >= IC_MAX) return;
       var g = icPool[used];
       if (!g) {
-        g = RG.el("g", {}); g.style.display = "none"; g.appendChild(RG.el("circle", { class: "ic__c", r: 1 })); g.appendChild(RG.el("text", { class: "ic__t" }));
+        g = RG.el("g", {}); disp(g, false); g.appendChild(RG.el("circle", { class: "ic__c", r: 1 })); g.appendChild(RG.el("text", { class: "ic__t" }));
         icPool.push(g); gIC.appendChild(g);
       }
       var want = inv && (z >= 4 || ic.k === "JCT" || z >= 2.5);
@@ -107,29 +116,35 @@ RG.roadsLOD = function () {
       if (want) {
         var fs = (ic.k === "JCT" ? 10.5 : 9.5) * u, w = ic.n.length * fs * 1.05 + 4 * u, h = fs * 1.3, a0 = P.x + 5 * u, a1 = a0 + w, b0 = P.y - h / 2, b1 = P.y + h / 2, bad = false;
         for (var i = 0; i < slots.length; i++) { var q = slots[i]; if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; } }
-        if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; var c = g.firstChild, t = g.lastChild; c.style.setProperty("r", (3 * u).toFixed(2) + "px", "important"); c.style.setProperty("stroke-width", (1.5 * u).toFixed(2) + "px", "important"); t.setAttribute("x", (P.x + 5 * u).toFixed(1)); t.setAttribute("y", (P.y + fs * 0.35).toFixed(1)); t.style.setProperty("font-size", fs.toFixed(2) + "px", "important"); t.style.setProperty("stroke-width", (2.5 * u).toFixed(2) + "px", "important"); }
+        if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; var c = g.firstChild, t = g.lastChild; sp(c, "r", (3 * u).toFixed(2) + "px"); sp(c, "stroke-width", (1.5 * u).toFixed(2) + "px"); sa(t, "x", (P.x + 5 * u).toFixed(1)); sa(t, "y", (P.y + fs * 0.35).toFixed(1)); sp(t, "font-size", fs.toFixed(2) + "px"); sp(t, "stroke-width", (2.5 * u).toFixed(2) + "px"); }
       }
       if (!ok) return;
       used++;
-      g.__ic = ic; g.__P = P; g.setAttribute("class", "ic ic--" + (ic.k === "JCT" ? "jct" : ic.k === "SA" || ic.k === "PA" ? "sa" : "ic")); g.style.display = "";
-      g.firstChild.setAttribute("cx", P.x.toFixed(1)); g.firstChild.setAttribute("cy", P.y.toFixed(1)); g.lastChild.textContent = ic.n;
+      g.__ic = ic; g.__P = P; sa(g, "class", "ic ic--" + (ic.k === "JCT" ? "jct" : ic.k === "SA" || ic.k === "PA" ? "sa" : "ic")); disp(g, true);
+      sa(g.firstChild, "cx", P.x.toFixed(1)); sa(g.firstChild, "cy", P.y.toFixed(1)); if (g.lastChild.__n !== ic.n) { g.lastChild.__n = ic.n; g.lastChild.textContent = ic.n; }
     });
-    for (var pi = used; pi < icPool.length; pi++) { icPool[pi].style.display = "none"; icPool[pi].__ic = null; }
+    for (var pi = used; pi < icPool.length; pi++) { disp(icPool[pi], false); icPool[pi].__ic = null; }
   }
   var showK = on.kok && z >= 0.3;
   gKok.style.display = showK ? "" : "none";
-  if (showK) Array.prototype.forEach.call(gKok.childNodes, function (n) {
-    if (n.classList.contains("kok")) { var vis = inView(n.__bb, pad) && (z >= 0.9 || n.classList.contains("kok--main")); n.style.display = vis ? "" : "none"; n.__vis = vis; n.style.setProperty("stroke-width", (Math.min(2.6, 0.9 + z * 0.5) * u).toFixed(2) + "px", "important"); }
-    else if (n.classList.contains("kok__hit")) n.style.setProperty("stroke-width", (10 * u).toFixed(2) + "px", "important");
-    else if (n.__p) { n.style.display = (n.__p.__vis && z >= 1.4) ? "" : "none"; n.style.setProperty("font-size", (9.5 * u).toFixed(2) + "px", "important"); }
-  });
+  if (showK) {
+    var kw = (Math.min(2.6, 0.9 + z * 0.5) * u).toFixed(2) + "px", kh = (10 * u).toFixed(2) + "px", kf = (9.5 * u).toFixed(2) + "px";
+    KK.forEach(function (o) {
+      var vis = inView(o.p.__bb, pad) && (z >= 0.9 || o.main); o.p.__vis = vis;
+      disp(o.p, vis); disp(o.hit, vis); disp(o.t, vis && z >= 1.4 && RG.lineLabel(o.t, o.p.__pp, vb));
+      if (vis) { sp(o.p, "stroke-width", kw); sp(o.hit, "stroke-width", kh); if (z >= 1.4) sp(o.t, "font-size", kf); }
+    });
+  }
   var showKai = on.kaido && z >= 0.1;
   gKai.style.display = showKai ? "" : "none";
-  if (showKai) Array.prototype.forEach.call(gKai.childNodes, function (n) {
-    if (n.classList.contains("kai")) { var vis = inView(n.__bb, pad); n.style.display = vis ? "" : "none"; n.__vis = vis; n.style.setProperty("stroke-width", (Math.min(4, 1.6 + z * 0.8) * u).toFixed(2) + "px", "important"); n.style.setProperty("stroke-dasharray", (8 * u).toFixed(1) + " " + (5 * u).toFixed(1), "important"); }
-    else if (n.classList.contains("kai__hit")) n.style.setProperty("stroke-width", (12 * u).toFixed(2) + "px", "important");
-    else if (n.__p) { n.style.display = (n.__p.__vis && z >= 0.3) ? "" : "none"; n.style.setProperty("font-size", (11 * u).toFixed(2) + "px", "important"); n.style.setProperty("letter-spacing", (3 * u).toFixed(2) + "px", "important"); }
-  });
+  if (showKai) {
+    var aw = (Math.min(4, 1.6 + z * 0.8) * u).toFixed(2) + "px", ad = (8 * u).toFixed(1) + " " + (5 * u).toFixed(1), ah = (12 * u).toFixed(2) + "px", af = (11 * u).toFixed(2) + "px", al = (3 * u).toFixed(2) + "px";
+    KA.forEach(function (o) {
+      var vis = inView(o.p.__bb, pad); o.p.__vis = vis;
+      disp(o.p, vis); disp(o.hit, vis); disp(o.t, vis && z >= 0.3 && RG.lineLabel(o.t, o.p.__pp, vb, 0.3));
+      if (vis) { sp(o.p, "stroke-width", aw); sp(o.p, "stroke-dasharray", ad); sp(o.hit, "stroke-width", ah); if (z >= 0.3) { sp(o.t, "font-size", af); sp(o.t, "letter-spacing", al); } }
+    });
+  }
 };
 
 /* ---- 宿場の POI ---- */

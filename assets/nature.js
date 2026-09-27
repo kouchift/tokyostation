@@ -206,6 +206,7 @@ function smoothPath(pts) {
   }
   return d;
 }
+function longest(pl) { var m = pl[0]; pl.forEach(function (q) { if (q.length > m.length) m = q; }); return m; }
 function bboxOf(pts) {
   var b = [Infinity, Infinity, -Infinity, -Infinity];
   pts.forEach(function (q) { var P = RG.project(q[0], q[1]); if (P.x < b[0]) b[0] = P.x; if (P.y < b[1]) b[1] = P.y; if (P.x > b[2]) b[2] = P.x; if (P.y > b[3]) b[3] = P.y; });
@@ -262,11 +263,7 @@ RG.terraBuild = function () {
       var pts = smooth(r.pts), d = pathOf(pts);
       var id = "rg-rng-" + i;
       var p = RG.el("path", { class: "trg", id: id, d: d }); p.__r = r; p.__bb = bboxOf(pts); p.__len = r.pts.length;
-      var t = RG.el("text", { class: "trg__t" });
-      var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id);
-      tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = r.n;
-      t.appendChild(tp); t.__p = p;
+      var t = RG.lineText("trg__t", r.n); t.__p = p; p.__pp = RG.projPts(pts);   // v143: textPath をやめた（RG.lineLabel）
       var hit = RG.el("path", { class: "trg__hit", d: d }); hit.__r = r;
       gRange.appendChild(p); gRange.appendChild(hit); gRange.appendChild(t);
     });
@@ -286,11 +283,7 @@ RG.terraBuild = function () {
       var d = ge ? polylines.map(function (pts) { return pathOf(pts); }).join("") : apx ? smoothPath(r.pts) : pathOf(r.pts), id = "rg-rv-" + i;
       var allpts = []; polylines.forEach(function (pts) { allpts = allpts.concat(pts); });
       var p = RG.el("path", { class: "trv" + (r.grade === 1 ? " trv--1" : "") + (apx ? " trv--apx" : "") + (ge ? " trv--geo" : ""), id: id, d: d }); p.__r = r; p.__bb = bboxOf(allpts); p.__apx = apx;
-      var t = RG.el("text", { class: "trv__t" });
-      var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id);
-      tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = r.n;
-      t.appendChild(tp); t.__p = p;
+      var t = RG.lineText("trv__t", r.n); t.__p = p; p.__pp = RG.projPts(longest(polylines));
       var hit = RG.el("path", { class: "trv__hit", d: d }); hit.__r = r;
       gRiver.appendChild(p); gRiver.appendChild(hit); gRiver.appendChild(t);
     });
@@ -300,8 +293,7 @@ RG.terraBuild = function () {
       var d = ge.pts.map(function (pts) { return pathOf(pts); }).join(""), id = "rg-rvt-" + j, allpts = []; ge.pts.forEach(function (pts) { allpts = allpts.concat(pts); });
       var r2 = { n: k.split("|")[0], sys: ge.sys, grade: ge.g, len: ge.km, pf: ge.pf, trib: true };
       var p = RG.el("path", { class: "trv trv--trib", id: id, d: d }); p.__r = r2; p.__bb = bboxOf(allpts); p.__trib = true;
-      var t = RG.el("text", { class: "trv__t trv__t--trib" }); var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = r2.n; t.appendChild(tp); t.__p = p;
+      var t = RG.lineText("trv__t trv__t--trib", r2.n); t.__p = p; p.__pp = RG.projPts(longest(ge.pts));
       var hit = RG.el("path", { class: "trv__hit", d: d }); hit.__r = r2;
       gRiver.appendChild(p); gRiver.appendChild(hit); gRiver.appendChild(t);
     });
@@ -320,11 +312,7 @@ RG.terraBuild = function () {
       var k = c.warm ? "warm" : "cold";
       var glow = RG.el("path", { class: "tcur__glow tcur__glow--" + k, d: d });
       var p = RG.el("path", { class: "tcur tcur--" + k, id: id, d: d, "marker-end": "url(#tcur-arrow-" + k + ")" }); p.__c = c; p.__bb = bboxOf(pts);
-      var t = RG.el("text", { class: "tcur__t tcur__t--" + k });
-      var tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
-      tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id);
-      tp.setAttribute("startOffset", "45%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = (c.warm ? "▶ " : "▶ ") + c.n;
-      t.appendChild(tp); t.__p = p;
+      var t = RG.lineText("tcur__t tcur__t--" + k, c.n); t.__p = p; p.__pp = RG.projPts(pts);   // 向きの «▶» は傾けると逆向きに見えることがあるので付けない（線の先の矢印で分かる）
       var hit = RG.el("path", { class: "tcur__hit", d: d }); hit.__c = c;
       gCur.appendChild(glow); gCur.appendChild(p); gCur.appendChild(hit); gCur.appendChild(t);
     });
@@ -357,6 +345,8 @@ RG.terraBuild = function () {
 var terraOn = { range: true, river: true, cur: true, sea: true };
 RG.terraSet = function (k, on) { terraOn[k] = on; RG.terraLOD(); };
 RG.terraGet = function (k) { return terraOn[k]; };
+function disp(n, v) { if (n.__d !== v) { n.__d = v; n.style.display = v ? "" : "none"; } }                 // v143: 変わったときだけ書く
+function sp(n, k, v) { var c = n.__sc || (n.__sc = {}); if (c[k] !== v) { c[k] = v; n.style.setProperty(k, v, "important"); } }
 RG.terraLOD = function () {
   if (!gTerra || !RG.Map || !RG.Map.viewBox) return;
   terraHost();
@@ -365,24 +355,29 @@ RG.terraLOD = function () {
   // 山脈: 引き〜中くらい（z 0.2〜8）。線幅・文字は画面px
   var showRange = terraOn.range && z >= 0.05 && z < 3.5;
   gRange.style.display = showRange ? "" : "none";
-  if (showRange) Array.prototype.forEach.call(gRange.childNodes, function (n) {
-    if (n.classList.contains("trg")) {
-      var vis = inView(n.__bb, pad) && (z >= 0.14 || n.__len >= 12);
-      n.style.display = vis ? "" : "none"; n.__vis = vis;
-      n.style.setProperty("stroke-width", (Math.min(14, 6 + z * 4) * u).toFixed(2) + "px", "important");
-    } else if (n.classList.contains("trg__hit")) { n.style.setProperty("stroke-width", (16 * u).toFixed(2) + "px", "important"); }
-    else if (n.__p) { n.style.display = n.__p.__vis ? "" : "none"; n.style.setProperty("font-size", (Math.min(14, 10 + z * 3) * u).toFixed(2) + "px", "important"); n.style.setProperty("letter-spacing", (3 * u).toFixed(2) + "px", "important"); }
-  });
+  /* v143: 画面の外の線は «押す所» も出さない（出していると地図を動かすたびに全部の配置計算が走る）。太さ・字は前と同じなら書かない */
+  if (showRange) {
+    var rw = (Math.min(14, 6 + z * 4) * u).toFixed(2) + "px", rh = (16 * u).toFixed(2) + "px", rf = (Math.min(14, 10 + z * 3) * u).toFixed(2) + "px", rl = (3 * u).toFixed(2) + "px";
+    Array.prototype.forEach.call(gRange.childNodes, function (n) {
+      if (n.classList.contains("trg")) {
+        var vis = inView(n.__bb, pad) && (z >= 0.14 || n.__len >= 12);
+        disp(n, vis); n.__vis = vis; if (vis) sp(n, "stroke-width", rw);
+      } else if (n.classList.contains("trg__hit")) { var pv = n.previousSibling && n.previousSibling.__vis; disp(n, !!pv); if (pv) sp(n, "stroke-width", rh); }
+      else if (n.__p) { var on1 = !!n.__p.__vis && RG.lineLabel(n, n.__p.__pp, vb); disp(n, on1); if (on1) { sp(n, "font-size", rf); sp(n, "letter-spacing", rl); } }
+    });
+  }
   var showRiver = terraOn.river && z >= 0.09;
   gRiver.style.display = showRiver ? "" : "none";
-  if (showRiver) Array.prototype.forEach.call(gRiver.childNodes, function (n) {
-    if (n.classList.contains("trv")) {
-      var vis = inView(n.__bb, pad) && (z >= 0.3 || n.__r.grade === 1) && !(n.__apx && z >= 1.3) && !(n.__trib && z < 0.45);   // 近似の線は街まで寄ったら消す。支流は少し寄ってから
-      n.style.display = vis ? "" : "none"; n.__vis = vis;
-      n.style.setProperty("stroke-width", (Math.min(3.2, 1.2 + z * 1.2) * u).toFixed(2) + "px", "important");
-    } else if (n.classList.contains("trv__hit")) { n.style.setProperty("stroke-width", (12 * u).toFixed(2) + "px", "important"); }
-    else if (n.__p) { n.style.display = (n.__p.__vis && z >= (n.__p.__trib ? 1.2 : 0.22)) ? "" : "none"; n.style.setProperty("font-size", ((n.__p.__trib ? 9.5 : 10.5) * u).toFixed(2) + "px", "important"); }
-  });
+  if (showRiver) {
+    var vw = (Math.min(3.2, 1.2 + z * 1.2) * u).toFixed(2) + "px", vh = (12 * u).toFixed(2) + "px", vf1 = (9.5 * u).toFixed(2) + "px", vf2 = (10.5 * u).toFixed(2) + "px";
+    Array.prototype.forEach.call(gRiver.childNodes, function (n) {
+      if (n.classList.contains("trv")) {
+        var vis = inView(n.__bb, pad) && (z >= 0.3 || n.__r.grade === 1) && !(n.__apx && z >= 1.3) && !(n.__trib && z < 0.45);   // 近似の線は街まで寄ったら消す。支流は少し寄ってから
+        disp(n, vis); n.__vis = vis; if (vis) sp(n, "stroke-width", vw);
+      } else if (n.classList.contains("trv__hit")) { var pv = n.previousSibling && n.previousSibling.__vis; disp(n, !!pv); if (pv) sp(n, "stroke-width", vh); }
+      else if (n.__p) { var on2 = n.__p.__vis && z >= (n.__p.__trib ? 1.2 : 0.22) && RG.lineLabel(n, n.__p.__pp, vb); disp(n, !!on2); if (on2) sp(n, "font-size", n.__p.__trib ? vf1 : vf2); }
+    });
+  }
   var showCur = terraOn.cur && z < 0.7;
   gCur.style.display = showCur ? "" : "none";
   if (showCur) Array.prototype.forEach.call(gCur.childNodes, function (n) {
@@ -392,7 +387,7 @@ RG.terraLOD = function () {
       n.style.setProperty("--dash", (18 * u).toFixed(1) + "px");
     } else if (n.classList.contains("tcur__glow")) { n.style.setProperty("stroke-width", (7 * u).toFixed(2) + "px", "important"); }
     else if (n.classList.contains("tcur__hit")) { n.style.setProperty("stroke-width", (14 * u).toFixed(2) + "px", "important"); }
-    else if (n.__p) { n.style.setProperty("font-size", (11 * u).toFixed(2) + "px", "important"); n.style.setProperty("letter-spacing", (2 * u).toFixed(2) + "px", "important"); }
+    else if (n.__p) { var on3 = RG.lineLabel(n, n.__p.__pp, vb, 0.45); disp(n, on3); if (on3) { sp(n, "font-size", (11 * u).toFixed(2) + "px"); sp(n, "letter-spacing", (2 * u).toFixed(2) + "px"); } }
   });
   var showSea = terraOn.sea;
   gSea.style.display = showSea ? "" : "none";
@@ -406,9 +401,9 @@ RG.terraLOD = function () {
         var w = (t.textContent.length * fs * 1.1 + 6 * u), h = fs * 1.4;
         var a0 = t.__x - w / 2, a1 = t.__x + w / 2, b0 = t.__y - h, b1 = t.__y + h * 0.4, bad = false;
         for (var i = 0; i < slots.length; i++) { var q = slots[i]; if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; } }
-        if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; t.style.setProperty("font-size", fs.toFixed(2) + "px", "important"); t.style.setProperty("letter-spacing", ((s.big ? 4 : 2) * u).toFixed(2) + "px", "important"); }
+        if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; sp(t, "font-size", fs.toFixed(2) + "px"); sp(t, "letter-spacing", ((s.big ? 4 : 2) * u).toFixed(2) + "px"); }
       }
-      t.style.display = ok ? "" : "none";
+      disp(t, ok);
     });
   }
 };

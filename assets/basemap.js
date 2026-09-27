@@ -157,13 +157,24 @@ function apply() {
    ―― これまでは45件が «いつも» 出ていました。
       遠目では大きな区だけ、寄るほど小さな区まで出します。
       面の大きさ（おおよその広がり）を «大事さ» の目安に使います。 */
+/* v143: 名前の出し入れと大きさ。前と同じなら style に触らない（触るたびに見た目の計算がやり直しになる） */
+function labelStyle(t, ok, fs, sw, ls) {
+  var k = ok ? fs + "|" + sw + "|" + ls : "none";
+  if (t.__k === k) return;
+  t.__k = k;
+  t.style.display = ok ? "" : "none";
+  if (ok) {
+    t.style.setProperty("font-size", fs + "px", "important");
+    t.style.setProperty("stroke-width", sw + "px", "important");
+    t.style.setProperty("letter-spacing", ls + "px", "important");
+  }
+}
 RG.admLOD = function () {
   var svg = $("#map");
   if (!svg || !gLabel) return;
   var vb = (RG.Map && RG.Map.viewBox) ? RG.Map.viewBox() : null;
   if (!vb) return;
-  var wrap = document.querySelector(".mapwrap");
-  var r = wrap ? wrap.getBoundingClientRect() : { width: 900, height: 600 };
+  var r = (RG.mapWrapSize && RG.mapWrapSize()) || { width: 900, height: 600 };   // v143: 測り直さない（地図全体の配置計算を起こさない）
   var W = Math.max(320, r.width), H = Math.max(240, r.height);
   var upx = vb.w / W;
   var texts = $$(".adm__t", gLabel);
@@ -173,13 +184,13 @@ RG.admLOD = function () {
   var room = SZ ? Math.max(1, Math.round(SZ.maxAdm * Math.min(1.5, Math.max(0.6, (W * H) / (1280 * 640))))) : 4;
   // 大きい区から順に置く（面の広がり＝おおよその大事さ）
   var arr = texts.map(function (t2) {
-    return { t: t2, x: +t2.getAttribute("x"), y: +t2.getAttribute("y"),
-             w: +(t2.dataset.w || 0) };
+    if (t2.__x == null) { t2.__x = +t2.getAttribute("x"); t2.__y = +t2.getAttribute("y"); t2.__w = +(t2.dataset.w || 0); t2.__n = t2.textContent.length; }
+    return { t: t2, x: t2.__x, y: t2.__y, w: t2.__w, n: t2.__n };
   }).sort(function (a, b) { return b.w - a.w; });
   var slots = [], shown = 0;
   arr.forEach(function (o) {
     var inView = o.x > vb.x && o.x < vb.x + vb.w && o.y > vb.y && o.y < vb.y + vb.h;
-    var lw = (o.t.textContent.length * 10 + 8) * upx, lh = 18 * upx;
+    var lw = (o.n * 10 + 8) * upx, lh = 18 * upx;
     var ok = false;
     if (inView && shown < room) {
       var a0 = o.x - lw / 2, a1 = o.x + lw / 2, b0 = o.y - lh, b1 = o.y + lh * 0.4;
@@ -190,13 +201,8 @@ RG.admLOD = function () {
       }
       if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; shown++; }
     }
-    o.t.style.display = ok ? "" : "none";
-    if (ok) {
-      // 画面で 12.5px に見えるように、地図の単位へ直して与える
-      o.t.style.setProperty("font-size", ((SZ ? SZ.adm : 11) * upx).toFixed(3) + "px", "important");
-      o.t.style.setProperty("stroke-width", ((SZ ? SZ.admSw : 3) * upx).toFixed(3) + "px", "important");
-      o.t.style.setProperty("letter-spacing", (1.6 * upx).toFixed(3) + "px", "important");
-    }
+    // 画面で 12.5px に見えるように、地図の単位へ直して与える（v143: 前と同じなら書かない）
+    labelStyle(o.t, ok, ((SZ ? SZ.adm : 11) * upx).toFixed(3), ((SZ ? SZ.admSw : 3) * upx).toFixed(3), (1.6 * upx).toFixed(3));
   });
   // 字の大きさも、寄るほど控えめに
   var z = (RG.LEGACY_W || 2000) / vb.w;
@@ -229,8 +235,7 @@ RG.buildJPAdmin = function () {
 RG.jpAdmLOD = function () {
   if (!gJP || !RG.Map || !RG.Map.viewBox) return;
   var vb = RG.Map.viewBox();
-  var wrap = document.querySelector(".mapwrap");
-  var r = wrap ? wrap.getBoundingClientRect() : { width: 900, height: 600 };
+  var r = (RG.mapWrapSize && RG.mapWrapSize()) || { width: 900, height: 600 };   // v143: 測り直さない（地図全体の配置計算を起こさない）
   var W = Math.max(320, r.width), H = Math.max(240, r.height);
   var upx = vb.w / W;
   var SZ = RG.__SZ || (RG.mapSizeAt ? RG.mapSizeAt(1) : null);
@@ -239,7 +244,8 @@ RG.jpAdmLOD = function () {
   var ts = gJP.childNodes;
   for (var i = 0; i < ts.length; i++) {
     var t = ts[i];
-    var x = +t.getAttribute("x"), y = +t.getAttribute("y");
+    if (t.__x == null) { t.__x = +t.getAttribute("x"); t.__y = +t.getAttribute("y"); }
+    var x = t.__x, y = t.__y;
     var inv = x > vb.x && x < vb.x + vb.w && y > vb.y && y < vb.y + vb.h;
     if (inv && RG.__muniNames && RG.__muniNames[t.textContent]) inv = false;   // v82: 市区町村の面に同じ名前が出ているなら重ねない
     var ok = false;
@@ -253,12 +259,7 @@ RG.jpAdmLOD = function () {
       }
       if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; shown++; }
     }
-    t.style.display = ok ? "" : "none";
-    if (ok) {
-      t.style.setProperty("font-size", ((SZ ? SZ.jpadm : 12) * upx).toFixed(3) + "px", "important");
-      t.style.setProperty("stroke-width", (3 * upx).toFixed(3) + "px", "important");
-      t.style.setProperty("letter-spacing", (1.8 * upx).toFixed(3) + "px", "important");
-    }
+    labelStyle(t, ok, ((SZ ? SZ.jpadm : 12) * upx).toFixed(3), (3 * upx).toFixed(3), (1.8 * upx).toFixed(3));
   }
   RG.__jpAdmInfo = { room: room, shown: shown, of: ts.length };
 };

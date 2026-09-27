@@ -166,12 +166,20 @@ function stars(v) {
 RG.stars = stars;
 
 /* いちばん近い駅と徒歩の分数 */
+/* v143: 0.1 度の升目で探す（毎回 8,000 駅を全部調べていた。天気の地名で描き直しのたびに呼ばれる）。
+   まわり 3×3 升で見つかり、しかも 7km より近ければ、それがいちばん近い（升の外の駅は 7km より遠い）。そうでなければ全部を調べる */
+var NSG = null, NSN = null;
+function nsGrid() {
+  if (NSG && NSN === RG.NET.stations) return NSG;
+  NSN = RG.NET.stations; NSG = {};
+  NSN.forEach(function (t) { var k = Math.floor(t.la * 10) + "," + Math.floor(t.lo * 10); (NSG[k] || (NSG[k] = [])).push(t); });
+  return NSG;
+}
 function nearestStation(la, lo) {
-  var best = null;
-  RG.NET.stations.forEach(function (t) {
-    var km = RG.hav([la, lo], [t.la, t.lo]);
-    if (!best || km < best.km) best = { t: t, km: km };
-  });
+  var best = null, G = nsGrid(), gy = Math.floor(la * 10), gx = Math.floor(lo * 10);
+  function look(t) { var km = RG.hav([la, lo], [t.la, t.lo]); if (!best || km < best.km) best = { t: t, km: km }; }
+  for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var c = G[(gy + dy) + "," + (gx + dx)]; if (c) c.forEach(look); }
+  if (!best || best.km > 7) { best = null; RG.NET.stations.forEach(look); }
   if (!best) return null;
   var W = RG.CONFIG.modes.walk, DT = RG.CONFIG.detour.walk;
   best.min = Math.round(best.km * DT / W.speed * 60);
