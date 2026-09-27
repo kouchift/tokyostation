@@ -62,7 +62,7 @@ RG.shinkansenHtml = function (name) {
     '<div class="sk__act"><button class="lnk" type="button" data-skfare="1"><span>🎫</span>この駅から新幹線で行ける主な駅と概算運賃</button>' +
     '<button class="lnk" type="button" data-skshop="1"><span>🛍️</span>構内・駅前のお店（ジャンル別）</button></div>' +
     '<div class="sk__more" hidden></div>' +
-    '<p class="src">停車パターン・構造・乗車人員: Wikipedia 日本語版（各路線・各駅の記事、CC BY-SA）／位置・画像: Wikidata (CC0)。' +
+    '<p class="src">' +
     "一部停車の列車は時刻表で確認を。車体アイコンは本アプリの独自描画で、各社の意匠・ロゴは使っていません。</p></div>";
 };
 

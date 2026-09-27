@@ -16,7 +16,7 @@ RG.mergeViews = function () {
     RG.MAPPOI.push({ i: "vj" + i, n: r.n, la: r.la, lo: r.lo, g: "view_jp", s: r.s || 3.5, ti: r.s >= 4.5 ? 0 : r.s >= 4 ? 1 : 2,
                      t: (r.k || "絶景") + (r.tags && r.tags.length ? "・" + r.tags[0] : ""), be: KEMO[r.k] || "🔭", bc: "#0E7C7B",
                      img: r.img || null, url: r.wp ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp) : null, sl: Math.round((r.s || 3.5) * 10),
-                     view: r, ad: (r.pf || "") + (r.mu || ""), srcNote: "絶景: Wikidata (CC0)・Wikipedia (CC BY-SA)。写真は Wikimedia Commons（各ファイルのライセンス）。" });
+                     view: r, ad: (r.pf || "") + (r.mu || ""), srcNote: "" });
   });
 };
 /* ---- v108: 全国の銭湯（data/sento_jp.js）。組合加入の銭湯は «銭湯»、それ以外は «スーパー銭湯・共同浴場»（混ぜない） ---- */
@@ -32,7 +32,7 @@ RG.mergeSento = function () {
     RG.MAPPOI.push({ i: "sj" + i, n: r.n, la: r.la, lo: r.lo, g: r.sub === 1 ? (r.onsen ? "onsen" : "sento") : "bath_x", s: r.sub === 1 ? 3.5 : 3.0, ti: 1,
                      t: (r.onsen ? "天然温泉の銭湯" : S[0]) + (r.sauna ? "・サウナあり" : ""), be: r.onsen ? "♨️" : S[1], bc: r.onsen ? "#EC6E00" : S[2], ad: r.ad || r.pf || "", url: r.web || (r.pf === "東京都" && r.v ? r.src : null), sento: r,
                      srcNote: r.v ? "銭湯: " + r.pf + "の公衆浴場業生活衛生同業組合のサイト（組合加入の銭湯）。営業時間・料金・定休日は変わることがあります。" :
-                       "公衆浴場: © OpenStreetMap contributors（ODbL）。浴場組合の名簿では確かめていません。営業の有無は現地・公式でご確認ください。" });
+                       "浴場組合の名簿では確かめていません。営業の有無は現地・公式でご確認ください。" });
   });
 };
 RG.sentoBlock = function (p) {
@@ -65,7 +65,7 @@ RG.mergeOnsen = function () {
     RG.MAPPOI.push({ i: "oj" + i, n: r.n, la: r.la, lo: r.lo, g: "onsen_jp", s: Math.min(5, star), ti: star >= 4.2 ? 0 : star >= 3.6 ? 1 : 2,
                      t: tag.join("・"), be: r.noyu ? "🌋" : r.free ? "🆓" : r.mixed ? "♨️" : r.hito ? "🏔️" : "♨️", bc: r.free ? "#2E7D32" : r.mixed ? "#C2185B" : r.hito ? "#5D4037" : "#EC6E00",
                      img: r.img || null, url: r.wp ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp) : null, sl: Math.round(star * 10),
-                     onsen: r, ad: (r.pf || "") + (r.mu || ""), srcNote: "温泉: Wikidata (CC0)・Wikipedia (CC BY-SA)。こだわり（無料・混浴・秘湯・サウナ・料金）は記事の記述からの自動判定で、古い可能性があります。" });
+                     onsen: r, ad: (r.pf || "") + (r.mu || ""), srcNote: "こだわり（無料・混浴・秘湯・サウナ・料金）は記事の記述からの自動判定で、古い可能性があります。" });
   });
 };
 
@@ -79,7 +79,7 @@ RG.mergeNearSpecial = function () {
     RG.MAPPOI.push({ i: "ns" + i, n: r.n, la: r.la, lo: r.lo, g: "near_special", s: r.img ? 3.9 : 3.4, ti: r.img ? 1 : 2,
                      t: r.a + " 圏内 " + r.km + "km" + (r.d ? "・" + r.d : ""), be: "⭐", bc: "#C9A227", img: r.img || null,
                      url: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp), ad: null, near: r,
-                     srcNote: "SPECIAL 圏内の見どころ: Wikipedia 日本語版（位置情報つき記事・CC BY-SA）。写真は記事の代表画像。" });
+                     srcNote: "" });
   });
 };
 
@@ -237,7 +237,7 @@ RG.mergeMountains = function () {
     RG.MAPPOI.push({ i: "mt" + i, n: r.n, la: r.la, lo: r.lo, g: "mountain", s: star, ti: ti, t: tags.join("・"),
                      be: (rank <= 100 || r.h === 1) ? "🗻" : "⛰️", bc: r.e >= 3000 ? "#4E342E" : r.e >= 2000 ? "#6D4C41" : r.e >= 1000 ? "#8D6E63" : "#A1887F",
                      img: r.img || null, url: r.wp ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp) : null, ad: r.pf || "",
-                     mt: r, q: r.q, srcNote: "山: Wikidata (CC0)・Wikipedia 日本語版 (CC BY-SA)。標高は Wikidata の値（三角点と異なることがあります）。" });
+                     mt: r, q: r.q, srcNote: "標高は Wikidata の値（三角点と異なることがあります）。" });
   });
 };
 RG.mergeRivers = function () {
@@ -248,7 +248,7 @@ RG.mergeRivers = function () {
     RG.MAPPOI.push({ i: "rv" + i, n: r.n, la: r.la, lo: r.lo, g: "river", s: g1 ? (r.len >= 200 ? 4.3 : 3.8) : 3.2, ti: g1 ? (r.len >= 150 ? 0 : 1) : 2,
                      t: (g1 ? "一級水系" + (r.sys && r.sys !== r.n ? "（" + r.sys + "水系）" : "") : "二級河川") + (r.len ? "・" + r.len + "km" : "") + (r.pt === "src" ? "・源流の位置" : "・河口"),
                      be: "🏞️", bc: g1 ? "#1565C0" : "#42A5F5", img: r.img || null, url: r.wp ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp) : null,
-                     ad: (r.pf || []).join("・"), river: r, q: r.q, srcNote: "川: Wikipedia 日本語版「一級水系」「二級水系」(CC BY-SA)・Wikidata (CC0)。線は Natural Earth (PD)・Commons Data (CC0)・支流の合流点からの近似。" });
+                     ad: (r.pf || []).join("・"), river: r, q: r.q, srcNote: "線は支流の合流点などからの近似です。" });
   });
 };
 
@@ -423,7 +423,7 @@ RG.showRange = function (r) {
     (peaks.length ? '<div class="terra__peaks">' + peaks.slice(0, 12).map(function (m) { return '<button class="chip" type="button" data-mt="' + esc(m.n) + '">' + (m.h === 1 ? "🗻" : "⛰️") + " " + esc(m.n) + " <i>" + m.e.toLocaleString("ja-JP") + "m</i></button>"; }).join("") + "</div>" : "") +
     '<div class="lnks">' + wpLink(r.wp) + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button>' +
     '<button class="lnk" type="button" data-mts="1"><span>⛰️</span>山を地図に出す</button></div>' +
-    '<p class="src">山脈の線は、構成する山の位置から機械的に引いた中心線です（正確な稜線ではありません）。出典: Wikidata (CC0)・Wikipedia 日本語版 (CC BY-SA)。</p></div>';
+    '<p class="src">山脈の線は、構成する山の位置から機械的に引いた中心線です（正確な稜線ではありません）。</p></div>';
   var m = RG.openModal("⛰️ " + r.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fitPts(r.pts); });
   m.querySelector("[data-mts]").addEventListener("click", function () { RG.closeModal(); if (RG.setGenreList) RG.setGenreList(["mountain"]); fitPts(r.pts); });
@@ -435,7 +435,7 @@ RG.showRiver = function (r) {
     (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") +
     '<div class="exgrid">' + (RG.exrow ? RG.exrow("📏 幹川流路延長", r.len ? r.len.toLocaleString("ja-JP") + " km" : "—", "") + RG.exrow("🗺️ 流域面積", r.area ? r.area.toLocaleString("ja-JP") + " km²" : "—", "") + RG.exrow("🏠 流れる都道府県", (r.pf || []).length + " 都道府県", (r.pf || []).join("・")) : "") + "</div>" +
     '<div class="lnks">' + wpLink(r.wp) + (r.src ? '<button class="lnk" type="button" data-src="1"><span>⛰️</span>源流へ</button>' : "") + '<button class="lnk" type="button" data-mouth="1"><span>🌊</span>河口へ</button>' + (r.pts ? '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button>' : "") + "</div>" +
-    '<p class="src">' + (r.ps === "wd" ? "川の線は支流の合流点をつないだ近似で、蛇行は再現していません。" : r.ps === "ne" ? "川の線は Natural Earth (PD)。" : r.ps === "commons" ? "川の線は Wikimedia Commons の Data (CC0)。" : "") + "出典: Wikipedia 日本語版 (CC BY-SA)・Wikidata (CC0)。</p></div>";
+    '<p class="src">' + (r.ps === "wd" ? "川の線は支流の合流点をつないだ近似で、蛇行は再現していません。" : "") + "</p></div>";
   var m = RG.openModal("🏞️ " + r.n, html);
   var b;
   if ((b = m.querySelector("[data-src]"))) b.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(r.src[0], r.src[1], 800); });
@@ -448,7 +448,7 @@ RG.showCurrent = function (c) {
     '<div class="cur__dir"><span class="cur__ani cur__ani--' + (c.warm ? "w" : "c") + '"></span><span>矢印の向きに流れます。地図の破線も同じ向きに動いています</span></div>' +
     (c.d ? '<p class="nat__d">' + esc(c.d) + "</p>" : "") +
     '<div class="lnks">' + wpLink(c.wp) + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button></div>' +
-    '<p class="src">流路は概略です（季節・年で大きく変わります）。出典: Wikipedia 日本語版 (CC BY-SA)。</p></div>';
+    '<p class="src">流路は概略です（季節・年で大きく変わります）。</p></div>';
   var m = RG.openModal((c.warm ? "🌡️ " : "🧊 ") + c.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fitPts(c.pts); });
 };
@@ -456,7 +456,7 @@ RG.showSea = function (s) {
   var html = '<div class="spotcard terra-card">' + heroImg(s.img, s.n) +
     '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#0277BD">🌊</span><div><h3>' + esc(s.n) + '</h3><p class="spotcard__k">' + esc(s.k) + "</p></div></div>" +
     (s.d ? '<p class="nat__d">' + esc(s.d) + "</p>" : "") +
-    '<div class="lnks">' + wpLink(s.wp) + "</div><p class=\"src\">出典: Wikidata (CC0)・Wikipedia 日本語版 (CC BY-SA)。</p></div>";
+    '<div class="lnks">' + wpLink(s.wp) + "</div></div>";
   RG.openModal("🌊 " + s.n, html);
 };
 
@@ -495,7 +495,7 @@ RG.showMountainRank = function (pref) {
   var html = '<div class="rkt__box"><div class="rk__ctl"><label>範囲 <select id="mk-pref"><option value="">全国</option>' + prefs.map(function (p) { return '<option value="' + esc(p) + '"' + (p === cur ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") + "</select></label>" +
     '<span class="rk__note">標高の高い順 TOP100。名前は Wikipedia、行を押すと地図へ</span></div>' +
     '<div class="rkt__wrap"><table class="rkt"><thead><tr><th>順位</th><th>山</th><th>標高</th><th>都道府県・山脈</th></tr></thead><tbody id="mk-body">' + rows() + "</tbody></table></div>" +
-    '<p class="src">出典: Wikidata (CC0)・Wikipedia 日本語版 (CC BY-SA)。標高は Wikidata の値です。</p></div>';
+    '<p class="src">標高は Wikidata の値です。</p></div>';
   var m = RG.openModal("🗻 山の標高ランキング" + (cur ? "（" + cur + "）" : "（全国）"), html);
   function bind() {
     Array.prototype.forEach.call(m.querySelectorAll(".rkt__r"), function (tr) {

@@ -30,7 +30,7 @@ RG.mergeOsmExtra = function () {
     did = 1;
     RG.KOSHIN.forEach(function (r, i) {
       RG.MAPPOI.push({ i: "ko" + i, n: r.n, la: r.la, lo: r.lo, g: "koshin", s: r.y ? 3.6 : 3.3, ti: r.y || r.ins ? 1 : 2, t: "庚申塔（" + r.k + "）" + (r.y ? "・" + r.y + "年" : ""), be: "🐒", bc: "#5D4037", koshin: r, url: r.wp ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp) : null,
-                       srcNote: "庚申塔: © OpenStreetMap contributors (ODbL 1.0)。有志が登録した位置で、全国の庚申塔のごく一部です。見つけたら OSM に登録すると、次の更新で地図に載ります。" });
+                       srcNote: "有志が登録した位置で、全国の庚申塔のごく一部です。見つけたら OSM に登録すると、次の更新で地図に載ります。" });
     });
   }
   if (RG.ZOO) {
@@ -38,14 +38,14 @@ RG.mergeOsmExtra = function () {
     var E = { "動物園": "🦁", "水族館": "🐠", "植物園": "🌺", "サファリ": "🦒" }, C = { "動物園": "#F57C00", "水族館": "#0288D1", "植物園": "#388E3C", "サファリ": "#8D6E63" };
     RG.ZOO.forEach(function (r, i) {
       RG.MAPPOI.push({ i: "zo" + i, n: r.n, la: r.la, lo: r.lo, g: "zoo", s: r.q ? 4.0 : r.web ? 3.6 : 3.2, ti: r.q ? 0 : r.web ? 1 : 2, t: r.k + (r.hours ? "・" + r.hours : ""), be: E[r.k] || "🦁", bc: C[r.k] || "#F57C00",
-                       url: r.web || null, zoo: r, q: r.q || null, srcNote: "動物園・水族館・植物園: © OpenStreetMap contributors (ODbL 1.0)。特徴・写真はカードを開いたときに Wikipedia から取得します。" });
+                       url: r.web || null, zoo: r, q: r.q || null, srcNote: "特徴・写真はカードを開いたときに Wikipedia から取得します。" });
     });
   }
   if (RG.AIR_OSM && !RG.AIRPORTS) {
     did = 1;
     RG.AIR_OSM.forEach(function (r, i) {
       RG.MAPPOI.push({ i: "ap" + i, n: r.n, la: r.la, lo: r.lo, g: "airport", s: r.iata ? 4.4 : 3.2, ti: r.iata ? 0 : 2, t: r.k + (r.iata ? "・" + r.iata : "") + (r.icao ? "/" + r.icao : ""), be: "✈️", bc: "#1A237E",
-                       url: r.web || null, airport: r, q: r.q || null, srcNote: "空港: © OpenStreetMap contributors (ODbL 1.0)。就航路線・運賃は次の版で。" });
+                       url: r.web || null, airport: r, q: r.q || null, srcNote: "" });
     });
   }
   if (did) RG.__oxMerged = 1;

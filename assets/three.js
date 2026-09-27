@@ -608,8 +608,7 @@ function showBldg(b) {
       '" target="_blank" rel="noopener"><span>🍎</span>Apple マップ</a>' +
       (near ? '<button class="lnk" type="button" data-goto="' + esc(near.t.id) + '"><span>🚉</span>' +
         esc(near.t.n) + "駅を見る</button>" : "") + "</div>" +
-    '<p class="src">高さ・階数・写真: Wikidata / Wikimedia Commons。建物の輪郭: © OpenStreetMap contributors（ODbL）。' +
-    "地面の高さ: 国土地理院 標高タイル。</p></div>";
+    '</div>';
   var m = RG.openModal(b.e + " " + b.n, html);
   // 写真の送り・戻し・サムネ
   if (pics.length > 1) {

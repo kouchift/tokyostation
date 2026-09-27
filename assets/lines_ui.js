@@ -247,7 +247,7 @@ var Rail = (function () {
         '<div class="legend__foot">' +
           '<button id="br-all" class="set__b2" type="button">ブランドの指定を解除</button>' +
           '<button id="br-cvs" class="set__b2" type="button">コンビニ3社だけ</button></div>' +
-        '<p class="src">© OpenStreetMap contributors（ODbL 1.0）。OSM の登録状況によるため、' +
+        '<p class="src">OSM の登録状況によるため、' +
         "実際の全店舗を網羅しているわけではありません。<br>" +
         "企業のロゴは商標権・著作権で守られているため同梱していません。" +
         "各社が公表しているブランドカラーと絵文字で表しています。</p>";
@@ -310,7 +310,7 @@ var Rail = (function () {
                 return '<i style="background:' + b.c + '"></i>'; }).join("") + "</span>" +
               '<span class="cc__x">›</span></button>';
           }).join("") + "</div>" +
-          '<p class="src">位置: © OpenStreetMap contributors（ODbL 1.0）。<br>' +
+          '<p class="src">' +
           "色は<b>ロゴの色の目安</b>です。企業ロゴは商標のため使わず、色と絵文字で見分けています。</p>";
         var m = RG.openModal("🏪 お店をえらぶ", html);
         $("#cp-all", m).addEventListener("click", function () { pick(null, null); });
@@ -742,7 +742,8 @@ function openSettings() {
     '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
       '<p class="set__d">いま動いている版: <b>' + esc(RG.VERSION || "不明") + "</b>（" + esc(RG.BUILT || "?") + " 作成）" +
       ' <button id="set-state" class="set__b" type="button">くわしい状態</button></p>' +
-      '<ul class="set__log" data-changelog><li>読み込んでいます…</li></ul></div>';   // v139: 一覧は開いたときだけ読む（data/changelog.js）
+      '<ul class="set__log" data-changelog><li>読み込んでいます…</li></ul>' +
+      '<p class="set__cr"><a href="credits.html" target="_blank" rel="noopener">出典・ライセンス</a></p></div>';   // v147: 出典はまとめて 1 ページに   // v139: 一覧は開いたときだけ読む（data/changelog.js）
   var m = RG.openModal("設定", html);
   var sst = $("#set-state", m); if (sst) sst.addEventListener("click", function () { if (RG.showState) RG.showState(); });
   (function () {                                                    // v139: 変わったことの一覧

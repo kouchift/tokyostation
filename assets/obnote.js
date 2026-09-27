@@ -54,7 +54,7 @@ RG.spotNoteMd = function (p) {
   if (p.wp) L.push("- [Wikipedia](" + (/^https?:/.test(p.wp) ? p.wp : "https://ja.wikipedia.org/wiki/" + encodeURIComponent(p.wp)) + ")");
   if (p.ichi && p.ichi.web && p.ichi.web !== p.url) L.push("- [公式サイト](" + p.ichi.web + ")");
   L.push("", "## メモ", "", "- [ ] 行きたい", "- 行った日: ", "- 感想: ", "");
-  if (p.srcNote) L.push("<small>出典: " + p.srcNote + "</small>");
+  if (p.srcNote) L.push("<small>" + p.srcNote + "</small>");
   return L.join("\n");
 };
 RG.sendSpotNote = function (p) { send(RG.spotNoteMd(p), safe(p.n)); };

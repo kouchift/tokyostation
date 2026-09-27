@@ -50,7 +50,7 @@ RG.showTicket = function () {
         ? '<button class="set__b2" type="button" id="tk-off">チケットを返す</button>'
         : '<button class="tkt__go" type="button" id="tk-on">🚬 0円で発券する</button>') +
     "</div>" +
-    '<p class="src">出典: © OpenStreetMap contributors（ODbL 1.0）。<br>' +
+    '<p class="src">' +
     "<b>受動喫煙防止条例と改正健康増進法により、店ごとの扱いは変わりやすいものです。" +
     "必ず現地の表示と店員さんの案内に従ってください。</b><br>" +
     "路上喫煙は多くの区で禁止され、過料が科されることがあります。" +
@@ -117,7 +117,7 @@ RG.openSmokeFilter = function () {
         '<span class="legend__t"><b>' + esc(K[k].label) + "</b><i>" + esc(K[k].d) + "</i></span>" +
         '<span class="legend__n">' + (cnt[k] || 0) + "件</span></button>";
     }).join("") + "</div>" +
-    '<p class="src">出典: © OpenStreetMap contributors（ODbL 1.0）。現地の表示を優先してください。</p>';
+    '<p class="src">現地の表示を優先してください。</p>';
   var m = RG.openModal("🚬 吸える場所をえらぶ", html);
   function pick(k) {
     RG.smokeFilter = k;
@@ -166,7 +166,7 @@ RG.showSmoke = function (s) {
     "</div>" +
     RG.outLinks({ site: s.web, map: s.la + "," + s.lo,
                   news: (s.n || "") + " 喫煙" }) +
-    '<p class="src">出典: © OpenStreetMap contributors（ODbL 1.0）。<br>' +
+    '<p class="src">' +
     "<b>お店の喫煙の扱いは変わりやすく、時間帯で違うこともあります。" +
     "必ず現地の表示と店員さんの案内に従ってください。</b><br>" +
     "路上喫煙は多くの区で禁止されています（過料が科されることがあります）。</p></div>";

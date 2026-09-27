@@ -47,7 +47,7 @@ RG.mergeAirports = function () {
     RG.MAPPOI.push({ i: "air" + i, n: (a.nick && a.nick !== a.n ? a.nick + "空港（" + a.n + "）" : a.n), la: a.la, lo: a.lo, g: "airport", s: star, ti: a.pax >= 3e6 ? 0 : rt ? 1 : 2,
                      t: (a.iata ? a.iata + "・" : "") + a.kind + (rt ? "・国内 " + rt + " 路線" : "") + (a.intl ? "・国際 " + a.intl + " 都市" : ""), be: "✈️", bc: a.intl ? "#1A237E" : "#3949AB",
                      img: a.img || null, url: a.web || null, ad: (a.pf || "") + (a.mu || ""), air: a, q: a.q, wp: a.wp,
-                     srcNote: "空港: Wikidata (CC0)・Wikipedia 日本語版 (CC BY-SA)。就航路線は記事の記載時点。運賃・便は概算の目安です。" });
+                     srcNote: "就航路線は記事の記載時点。運賃・便は概算の目安です。" });
   });
 };
 RG.mergeAirports.__after = "osmx";
@@ -243,7 +243,7 @@ RG.airRouteModal = function (fromCode, toCode) {
     (cs.length ? '<p class="nat__d nat__d--dim">共同運航（コードシェア）: ' + cs.map(function (c) { return alChip(c, true); }).join(" ") + "</p>" : "") +
     '<div class="airrt__sh"><b>🕒 ' + (when.getMonth() + 1) + "/" + when.getDate() + " " + hm(when.getHours() * 60 + when.getMinutes()) + " 以降の便" + (sch.real ? "" : "（<u>目安</u>：便数から均等に並べた推定で、実際の時刻表ではありません）") + "</b>" + schHtml + "</div>" +
     '<div class="lnks"><button class="lnk" type="button" data-airfit="1"><span>🗺️</span>地図で見る</button><button class="lnk" type="button" data-airrev="1"><span>🔁</span>逆方向</button></div>' +
-    '<p class="src">運賃は距離からの概算（' + esc((RG.AIR_FARE || {}).note || "") + "）。便数・時刻は" + (sch.real ? "登録された時刻表" : "推定") + "。必ず各社の公式サイトでご確認ください。出典: Wikipedia 日本語版 (CC BY-SA)・Wikidata (CC0)。</p></div>";
+    '<p class="src">運賃は距離からの概算（' + esc((RG.AIR_FARE || {}).note || "") + "）。便数・時刻は" + (sch.real ? "登録された時刻表" : "推定") + "。必ず各社の公式サイトでご確認ください。</p></div>";
   var m = RG.openModal("✈️ " + (a.nick || a.n) + " → " + (b.nick || b.n), html);
   m.querySelector("[data-airfit]").addEventListener("click", function () { RG.closeModal(); RG.airShowRoutes(a.code); });
   m.querySelector("[data-airrev]").addEventListener("click", function () { RG.airRouteModal(b.code, a.code); });

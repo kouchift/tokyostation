@@ -60,7 +60,7 @@ RG.showAdult = function (a) {
     "</div>" +
     '<button class="gate__more" type="button" id="ad-more">💰 くわしい情報を見る</button>' +
     RG.outLinks({ site: a.web, map: a.la + "," + a.lo }) +
-    '<p class="src">出典: © OpenStreetMap contributors（ODbL 1.0）。<br>' +
+    '<p class="src">' +
     "<b>18歳未満の方は利用できません。</b>営業の有無・料金は変わります。" +
     "現地の表示と公式情報をご確認ください。</p></div>";
   var m = RG.openModal((K.e || "🔞") + " " + a.n, html);
@@ -238,7 +238,7 @@ RG.showCamSpot = function (c) {
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
     "</div>" +
     RG.outLinks({ map: c.la + "," + c.lo }) +
-    '<p class="src">出典: © OpenStreetMap contributors（ODbL 1.0）。' +
+    '<p class="src">' +
     "地図に載っているのは登録されたものだけで、すべてではありません。</p></div>");
 };
 

@@ -446,19 +446,17 @@ RG.showSpot = function (p) {
       '<button class="lnk" type="button" data-plan="1"><span>🧳</span>立ち寄る（リストに追加）</button>' +
     "</div>" +
     RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "出発地からの道順") +
-    (p.chain && !p.shop ? '<p class="src od">出典: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">' +
-       "© OpenStreetMap contributors</a>（ODbL 1.0）<br>" +
+    (p.chain && !p.shop ? '<p class="src od">' +
        "OSM の登録状況によるため、実際の全店舗を網羅しているわけではありません。" +
        "営業時間や営業の有無は各社の公式情報でご確認ください。</p>" : "") +
-    (p.od ? '<p class="src od">出典: <a href="https://portal.data.metro.tokyo.lg.jp/" target="_blank" rel="noopener">' +
-       "東京都オープンデータカタログサイト</a>（" + esc(p.org || "") + "）／ライセンス CC BY 4.0<br>" +
+    (p.od ? '<p class="src od">' + (p.org ? esc(p.org) + "のオープンデータ。" : "") +
        "更新のタイミングは団体ごとに異なります。最新情報は各自治体の公開データでご確認ください。</p>" : "") +
     (p.srcNote ? '<p class="src">' + esc(p.srcNote) + "</p>" : "") +
     (RG.postsEnabled && RG.postsEnabled() ? RG.postsHtml(p) : RG.commentsEnabled && RG.commentsEnabled() ? RG.commentsHtml(p) : (RG.memoSpotHtml ? RG.memoSpotHtml(p) : "")) +   // v108: 写真と声   // v106: 受け皿があれば «みんなのコメント»
     (RG.reqHtml ? RG.reqHtml("spot", p.n) : "") +
     '<p class="src">☆は「行く価値のめやす」です。文化財は指定の格（国宝5.0／重要文化財4.5／史跡4.5／登録有形3.5…）、' +
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
-    "<b>レビューサイトの評価点ではありません。</b><br>出典: Wikidata (CC0 1.0) / 画像: Wikimedia Commons</p></div>";
+    "<b>レビューサイトの評価点ではありません。</b></p></div>";
   var m = modal(g.e + " " + p.n, html);
   if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), noExtract: !!p.ichi, q: p.q || null,
                                                                         wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
@@ -583,7 +581,7 @@ RG.showEvents = function () {
       '<label class="set__sw"><input id="ev-all" type="checkbox"' + (showAll ? " checked" : "") +
       "> しぼりこみをやめて全部見る</label>" +
       (body || '<p class="set__d">これから開かれる催しのデータが見つかりませんでした。</p>') +
-      '<p class="src">出典: 東京都オープンデータカタログサイト（CC BY 4.0）。' +
+      '<p class="src">' +
       "<b>規模スコアは主催者の公表値ではなく、会期の長さ・名前のことば・説明文の量などから" +
       "本アプリが機械的に推定した値です。</b>行く前に主催者の公式情報をご確認ください。</p></div>";
   }

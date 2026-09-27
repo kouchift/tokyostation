@@ -35,7 +35,7 @@ function wikiBlock(info, name) {
     (info.d ? '<div class="wk__d">' + esc(info.d) + "</div>" : "") +
     (info.x ? '<p class="wk__x">' + esc(info.x) + "</p>" : "") +
     '<p class="wk__s">出典: <a href="' + url + '" target="_blank" rel="noopener">Wikipedia 日本語版</a>' +
-    "（CC BY-SA 4.0）／一行説明は Wikidata（CC0）</p></div>";
+    "（CC BY-SA 4.0）</p></div>";
 }
 
 /* ------------------------------------------------------------- 区のカード */
@@ -66,7 +66,7 @@ RG.showWard = function (name) {
                yt: name + " 観光", map: name + " 東京都", news: name }) +
     (rows ? '<div class="sec"><div class="sec__h"><b>この区の数字</b>' +
       "<em>押すと地図が色分けされます</em></div>" + rows + "</div>" : "") +
-    '<p class="src">紋章: Wikimedia Commons。数字の出典は色分けを選ぶと凡例に出ます。</p></div>';
+    '</div>';
   var m = RG.openModal("🏙️ " + name, html);
   if (RG.focusBind) RG.focusBind(m);
   $$("[data-heat2]", m).forEach(function (b) {
@@ -149,7 +149,7 @@ RG.showLine = function (name) {
             (d && d.d ? '<span class="lcst__d">地下' + d.d + "階</span>" : "") + "</button>";
         }).join("") + "</div></div>"
       : "") +
-    '<p class="src">路線の情報: Wikidata (CC0) / Wikipedia (CC BY-SA 4.0)。' +
+    '<p class="src">' +
     "ラインカラーは各社の公表色です。</p></div>";
   var m = RG.openModal((RG.lineBadge ? "" : "") + name, html);
   if (RG.focusBind) RG.focusBind(m);

@@ -140,8 +140,7 @@ RG.showUniv = function (idx) {
                   wiki: u.t ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(u.t) : null,
                   yt: u.b + " キャンパス", map: u.la + "," + u.lo, news: u.b }) +
     (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [u.la, u.lo], "walk", "行きかたを見る") : "") +
-    '<p class="src">位置: © OpenStreetMap contributors（ODbL）。学生数・創立年: Wikidata (CC0)。' +
-    "概要: Wikipedia (CC BY-SA 4.0)。<br>" +
+    '<p class="src">' +
     "<b>偏差値は同梱していません。</b>予備校各社が調べた数字で複製が禁じられているためです。" +
     "data/user_hensachi.js にご自分で調べた値を書くと、色と順位が出ます。</p></div>";
   var m = RG.openModal("🎓 " + u.n, html);
@@ -182,7 +181,7 @@ RG.showHigh = function (idx) {
                   wiki: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(s.n),
                   map: s.la + "," + s.lo, news: s.n }) +
     (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [s.la, s.lo], "walk", "行きかたを見る") : "") +
-    '<p class="src">位置: © OpenStreetMap contributors（ODbL 1.0）。<br>' +
+    '<p class="src">' +
     "<b>偏差値は同梱していません。</b>予備校各社が調べた数字で複製が禁じられているためです。" +
     "data/user_hensachi.js にご自分で調べた値を書くと、色と順位が出ます。</p></div>");
 };

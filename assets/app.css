@@ -4510,3 +4510,17 @@ body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2
 .modal{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.qos-weak *,html.qos-lite *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}
+
+/* v147: 地図の隅の出典は «最初の 5 秒だけ全部 → ⓘ に畳む»（OSM の表示の決まり: 最初は見える・畳んでも ⓘ から見られる）。
+   文字は小さく・薄く。ただし «読める» の最低ライン（背景とのコントラスト約 3.5:1）は守る。地形を出している間は «地理院» を残す */
+.attrib{pointer-events:auto;font-size:8.5px;line-height:1.35;color:#858585;background:rgba(255,255,255,.72);padding:0 4px;border-radius:4px;max-width:min(78vw,520px);white-space:normal;overflow:visible;text-overflow:clip;display:flex;align-items:center;gap:2px}
+.attrib a{color:inherit;text-decoration:underline;text-decoration-thickness:.5px}
+.attrib__i{border:0;background:none;color:inherit;font:inherit;font-size:11px;line-height:1;padding:2px;margin:0;cursor:pointer;min-width:0;min-height:0}
+.attrib:not(.open) .attrib__t,.attrib__g,.attrib:not(.rl) .attrib__rl{display:none}
+.attrib.rl:not(.open) .attrib__g{display:inline}
+.attrib:not(.open){background:rgba(255,255,255,.35)}
+@media (max-width:560px){.attrib{font-size:8px;max-width:84vw}}
+.set__cr{font-size:10px;margin:8px 0 0;color:#858585}.set__cr a{color:inherit}
+/* カードの中の出典（Wikipedia の抜粋・写真の撮影者など、その場に残すもの）も小さく薄く */
+.wk__s,.enr__src,.hero figcaption,.cam__s,.sg__c{font-size:8.5px;color:#858585}
+.wk__s a,.enr__src a,.hero figcaption a{color:inherit}

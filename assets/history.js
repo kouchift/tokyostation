@@ -25,7 +25,7 @@ RG.mergeCastles = function () {
     RG.MAPPOI.push({ i: "cs" + i, n: r.n, la: r.la, lo: r.lo, g: "castle", s: star, ti: (top || h100) ? 0 : (z100 || r.koku >= 10 || dg.length) ? 1 : 2,
                      t: tags.join("・") || "城跡", be: top || h100 || z100 ? "🏯" : "🏰", bc: top ? "#B8860B" : h100 ? "#8A5A2B" : "#A1887F",
                      img: r.img || null, url: r.wp ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.wp) : null, ad: r.pf || "",
-                     castle: r, q: r.q, srcNote: "城: Wikidata (CC0)・Wikipedia 日本語版 (CC BY-SA)。藩・石高は幕末（慶応3年）の表高。1万石未満・支藩の石高は記事本文からの読み取りで目安です。" });
+                     castle: r, q: r.q, srcNote: "藩・石高は幕末（慶応3年）の表高。1万石未満・支藩の石高は記事本文からの読み取りで目安です。" });
   });
 };
 function fmtKoku(k) { if (k == null) return ""; return k >= 1 ? (Math.round(k * 100) / 100).toLocaleString("ja-JP") + "万石" : Math.round(k * 10000).toLocaleString("ja-JP") + "石"; }
@@ -113,7 +113,7 @@ RG.showHanRank = function (pref) {
   var html = '<div class="rkt__box"><div class="rk__ctl"><label>範囲 <select id="hk-pref"><option value="">全国</option>' + prefs.map(function (p) { return '<option value="' + esc(p) + '"' + (p === cur ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("") + "</select></label>" +
     '<span class="rk__note">幕末（慶応3年）の表高順。行を押すと居城へ</span></div>' +
     '<div class="rkt__wrap"><table class="rkt"><thead><tr><th>順位</th><th>藩</th><th>石高</th><th>藩主家・居城</th></tr></thead><tbody id="hk-body">' + rows() + "</tbody></table></div>" +
-    '<p class="src">出典: Wikipedia 日本語版「石高」「各藩の記事」(CC BY-SA)・Wikidata (CC0)。10万石以上は幕末の表高一覧、それ未満（目安）は各藩の記事からの読み取りです。</p></div>';
+    '<p class="src">10万石以上は幕末の表高一覧、それ未満（目安）は各藩の記事からの読み取りです。</p></div>';
   var m = RG.openModal("🏯 藩の石高ランキング" + (cur ? "（" + cur + "）" : "（全国）"), html);
   function bind() {
     Array.prototype.forEach.call(m.querySelectorAll(".rkt__r"), function (tr) {
@@ -256,7 +256,7 @@ RG.showKuni = function (k) {
     (k.d ? '<p class="nat__d">' + esc(k.d) + "</p>" : "") +
     '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.wp || k.n) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' +
     '<button class="lnk" type="button" data-go="1"><span>📍</span>国府のあたりへ</button></div>' +
-    '<p class="src">境界は OpenHistoricalMap (CC0) の1871年ごろの国界と、記事の「領域」節から市区町村単位で組み立てた近似です。埋立地や境界変更の前の姿と一致しないことがあります。出典: Wikipedia 日本語版 (CC BY-SA)・Wikidata (CC0)。</p></div>';
+    '<p class="src">境界は1871年ごろの国界と、記事の「領域」節から市区町村単位で組み立てた近似です。埋立地や境界変更の前の姿と一致しないことがあります。</p></div>';
   var m = RG.openModal("🗾 " + k.n, html);
   m.querySelector("[data-go]").addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(k.la, k.lo, 3000); });
 };

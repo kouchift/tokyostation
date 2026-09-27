@@ -221,7 +221,7 @@ RG.showOsm10 = function (p) {
       '"><span class="wl__e">📞</span>この番号にかける</a>' : "") +
     RG.outLinks({ site: r.webs, map: p.la + "," + p.lo, news: p.n }) +
     (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "地図アプリで行きかたを見る") : "") +
-    '<p class="src">出典: © OpenStreetMap contributors（ODbL 1.0）。' +
+    '<p class="src">' +
     (M.all ? "この種類は23区内に約" + M.all + "件ありますが、地図が見やすいように間引いて出しています。" : "") +
     "営業時間や料金は変わることがあります。行く前に公式情報をご確認ください。</p></div>";
   RG.openModal((M.e || "📍") + " " + p.n, html);
@@ -286,7 +286,7 @@ RG.showKantoLM = function (p) {
     RG.outLinks({ wiki: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.n),
                   yt: r.n, map: p.la + "," + p.lo, news: r.n }) +
     (RG.mapButtons ? RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "行きかたを見る") : "") +
-    '<p class="src">出典: Wikidata (CC0)。営業時間や休みは公式でご確認ください。</p></div>');
+    '<p class="src">営業時間や休みは公式でご確認ください。</p></div>');
   if (RG.enrichIn) RG.enrichIn(m, { name: r.n, la: p.la, lo: p.lo, kind: "spot", hasHero: false, hasIntro: false });
   if (RG.buzzBlockFill) RG.buzzBlockFill(m);   // v126
 };

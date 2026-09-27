@@ -131,7 +131,7 @@ function digest(c) {
   L.push("地図上の位置: 本社住所を町丁目の代表点に置いたもの（±数百m）。ビルの位置ではありません。");
   L.push("公式サイト: " + (c.web ? c.web : "未取得（法人番号サイトから辿れます）"));
   L.push("開示資料: 有価証券報告書（EDINET）／決算短信（TDnet）は下のリンクから。");
-  L.push("出典: JPX 東証上場銘柄一覧 (2026-08-31)、金融庁 EDINET コードリスト、Wikidata (CC0)。数値は登録時点のもの。");
+  L.push("数値は登録時点のもの。");
   L.push("※ 投資判断は必ず一次資料（有報・短信）で。ここは «入口» のダイジェストです。");
   return L;
 }
@@ -221,8 +221,7 @@ RG.showCorp = function (c) {
       '"><span>🔎</span>同じ業種（' + esc(c.i33 || "") + "）だけ表示</button>" +
       '<button class="lnk" type="button" data-bub="cap"><span>🫧</span>資本金のバブルで見る</button>' +
       '<button class="lnk" type="button" data-cnear="1"><span>🚉</span>最寄り駅を見る</button></div>' +
-    '<p class="src">市場区分・業種・証券コード: 日本取引所グループ「東証上場銘柄一覧」(2026-08-31)。所在地・資本金・決算期・法人番号: 金融庁 EDINET コードリスト。' +
-    "本社の位置: 所在地を Geolonia 住所データ（町丁目の代表点）で置いたもの。設立年・従業員数・売上高・公式サイト・ロゴ・概要: Wikidata (CC0)。" +
+    '<p class="src">本社の位置は所在地の町丁目の代表点です。' +
     "ロゴは各社の商標で、識別のために Wikimedia Commons から表示しています。従業員数・売上高は Wikidata に登録がある会社のみ（少数）で、最新とは限りません。" +
     "<b>投資の判断には必ず有価証券報告書・決算短信をご覧ください。</b></p></div>";
   var m = RG.openModal(em + " " + c.n, html);
@@ -255,7 +254,7 @@ RG.showCorpGone = function (g) {
     (RG.enrichSlot && g.wp ? RG.enrichSlot() : "") +
     '<p class="corpcard__gone">この会社はもうありません。地図には「ここにあった」という記録として、灰色で残しています。' +
     "栄枯盛衰は会社にも、まちにも、人にもあります。</p>" +
-    '<p class="src">出典: Wikidata (CC0)。解散・消滅の年は Wikidata の登録値。位置は本社（または所在地）の登録座標で、市区町村の代表点のこともあります。</p></div>';
+    '<p class="src">解散・消滅の年は Wikidata の登録値。位置は本社（または所在地）の登録座標で、市区町村の代表点のこともあります。</p></div>';
   var m = RG.openModal("🏚️ " + g.n, html);
   if (RG.enrichIn && g.wp) RG.enrichIn(m, { name: g.wp, la: g.la, lo: g.lo, kind: "spot", hasHero: false, hasIntro: !!g.d });
 };
@@ -368,7 +367,7 @@ RG.openCorpFilter = function () {
             esc(k33) + '">' + esc(k33) + '<span class="cf__n">' + (cnt33[k33] || 0) + "</span></button>";
         }).join("") + "</div></div>";
     }).join("") +
-    '<p class="src">出典: 日本取引所グループ「東証上場銘柄一覧」の33業種区分・17業種区分</p>';
+    '';
   var m = RG.openModal("🏢 業種でえらぶ", html);
   function pick(f) {
     RG.corpFilter = f;

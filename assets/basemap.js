@@ -133,6 +133,7 @@ function apply() {
   svg.classList.toggle("d3", !!B.mode3d);
   svg.classList.toggle("seeunder", !!(B.mode3d && B.seeUnder));
   gRelief.style.display = (B.relief || B.mode3d) ? "" : "none";
+  var atb = document.getElementById("attrib"); if (atb) atb.classList.toggle("rl", !!(B.relief || B.mode3d));   // v147: 地形（国土地理院）を出している間は、隅の出典に «地理院» を残す
   if (gFlood) gFlood.style.display = B.flood ? "" : "none";
   gAdmin.style.display = B.admin ? "" : "none";
   gLabel.style.display = (B.admin && B.labels) ? "" : "none";

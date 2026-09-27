@@ -272,7 +272,7 @@ RG.enrich = function (host, o) {
     var head = '<div class="enr__h"><span>📸 ひと目でわかる</span>' + (res.desc ? '<em>' + esc(res.desc) + "</em>" : "") + "</div>";
     var gal = galleryHtml(res, o), gate = gal && lite();             // v139: 通信を節約しているときは «押したら写真»
     host.innerHTML = '<div class="enr">' + head + (gate ? '<button type="button" class="imgtap" data-enrgal>📷 写真を表示（' + res.photos.length + ' 枚・通信を節約中のため押したときだけ）</button>' : gal) + factsHtml(res, o) + extractHtml(res, o) + linksHtml(res) +
-      '<p class="enr__credit">写真: Wikimedia Commons（ライセンス・撮影者は各写真に表示）／数値: Wikidata（CC0）／説明: Wikipedia（CC BY-SA 4.0）。' +
+      '<p class="enr__credit">' +
       "数値は編集された時点のもので、最新とは限りません。</p></div>";
     function bindPh() { host.querySelectorAll("[data-i]").forEach(function (b) { if (b.__lb) return; b.__lb = 1; b.addEventListener("click", function () { lightbox(res.photos, +b.dataset.i); }); }); }
     bindPh();

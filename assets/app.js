@@ -1691,7 +1691,7 @@ var Card = (function () {
       (d.d ? '<div class="wk__d">' + esc(d.d) + "</div>" : "") +
       (d.x ? '<p class="wk__x">' + esc(d.x) + "</p>" : "") +
       '<p class="wk__s">出典: <a href="' + url + '" target="_blank" rel="noopener">Wikipedia 日本語版</a>' +
-      "（CC BY-SA 4.0）／一行説明は Wikidata（CC0）</p></div>";
+      "（CC BY-SA 4.0）</p></div>";
   }
   RG.wikiIntro = wikiIntro;
 
@@ -1715,7 +1715,7 @@ var Card = (function () {
     }
     if (!out) return "";
     return '<div class="risks">' + out +
-      '<p class="mini">出典: 東京都建設局「浸水予想区域図」／東京都財務局「地価公示」（CC BY 4.0）。' +
+      '<p class="mini">' +
       "浸水は神田川・隅田川・石神井川の3流域のみのデータです。区域図が無い場所は「浸水しない」ではありません。</p></div>";
   }
 
@@ -1734,7 +1734,7 @@ var Card = (function () {
       '<span class="dep__s">地上より高い位置にホームがあります</span></div>');
     if (!t.length) return "";
     return '<div class="sec"><div class="sec__h"><b>ホームの高さ</b>' +
-      "<em>出典: OpenStreetMap (ODbL)</em></div>" + t.join("") + "</div>";
+      "</div>" + t.join("") + "</div>";
   }
 
   function summary(s) {
@@ -1758,7 +1758,7 @@ var Card = (function () {
       '<div class="splegend">' + [1,2,3,4,5].map(function (i) {
         return '<span class="spl spl--l' + i + '">' + LVTXT[i] + "</span>"; }).join("") +
       "</div>" +
-      '<p class="mini">出典: Wikidata (CC0)。乗降人員は「登録のある事業者ぶんの合計」であり、その駅の総数とは限りません。</p></div>';
+      '<p class="mini">乗降人員は「登録のある事業者ぶんの合計」であり、その駅の総数とは限りません。</p></div>';
   }
 
   var ICON = { stair: "🪜", elevator: "🛗", escalator: "🛗", gate: "🚪", toilet: "🚻", transfer: "🔀" };
@@ -2436,7 +2436,7 @@ function mergeExtraPois(key) {
                        s: k === 1 ? (r.hist === 0 ? 4.6 : 4.9) : k <= 3 ? 4.5 : 4.0, ti: k === 1 || k === 3 ? 0 : 1,
                        t: (r.kuni ? r.kuni + " " : "") + ICHI_KIND[k], be: "🎌", bc: "#8B0000", sl: 20,
                        url: r.web || null, wp: r.wp || null, q: r.q || null, ad: r.ad || r.pf || "", ichi: r,
-                       srcNote: "一之宮: Wikipedia 日本語版「一宮」と各社の記事（CC BY-SA 4.0）・Wikidata（CC0）・一の宮巡拝会（最寄り駅・御神徳）。参拝時間・行事は各社の公式で確認。" });
+                       srcNote: "参拝時間・行事は各社の公式で確認。" });
     });
     var iq = ichiQ();
     for (var j = RG.MAPPOI.length - 1; j >= 0; j--) {
@@ -2450,12 +2450,12 @@ function mergeExtraPois(key) {
       if (r.q && iq[r.q]) return;
       RG.MAPPOI.push({ i: "shm" + i, n: r.n, la: r.la, lo: r.lo, g: "shrine_major", s: 4.2, ti: 1,
                        t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null, q: r.q || null,
-                       srcNote: "主な神社: Wikidata（CC0）の別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" });
+                       srcNote: "別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" });
     });
     (RG.TEMPLE_MAJOR || []).forEach(function (r, i) {
       RG.MAPPOI.push({ i: "tmp" + i, n: r.n, la: r.la, lo: r.lo, g: "temple_major", s: Math.min(5, 3.5 + (r.sl || 0) / 30), ti: (r.sl || 0) >= 20 ? 0 : 1,
                        t: "寺院", be: "🛕", bc: "#6D4C1E", sl: r.sl || 0, url: r.wp || null,
-                       srcNote: "名刹: Wikidata（CC0）。Wikipedia の言語版数を知名度の目安にしています。拝観時間・料金は公式で確認。" });
+                       srcNote: "Wikipedia の言語版数を知名度の目安にしています。拝観時間・料金は公式で確認。" });
     });
   });
   if (RG.CAMS_JP) once("cams_jp", function () {

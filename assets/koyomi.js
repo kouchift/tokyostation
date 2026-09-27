@@ -279,9 +279,8 @@ RG.showDay = function (s) {
         encodeURIComponent((d.getMonth() + 1) + "月" + d.getDate() + "日") +
         '" target="_blank" rel="noopener"><span>📖</span>Wikipediaで見る</a>' +
     "</div>" +
-    '<p class="src">できごと・記念日の出典: Wikipedia 日本語版「' + (d.getMonth() + 1) + "月" +
-    d.getDate() + "日」（CC BY-SA 4.0）。要約・整形しています。<br>" +
-    "祝日: 内閣府「国民の祝日について」。六曜は旧暦から計算しています。</p></div>";
+    '<p class="src">できごと・記念日: Wikipedia「' + (d.getMonth() + 1) + "月" +
+    d.getDate() + "日」（CC BY-SA 4.0・要約）。六曜は旧暦から計算しています。</p></div>";
   var m = RG.openModal("📅 " + (d.getMonth() + 1) + "月" + d.getDate() + "日", html);
 
   /* 天気・月の満ち欠け・大きな行事を、カードの上のほうに並べる */

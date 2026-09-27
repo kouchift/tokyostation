@@ -244,8 +244,7 @@ RG.weatherModal = function () {
     "</div>" +
     (hours ? '<p class="set__d">この先 12 時間</p>' + hours : "") +
     RG.weatherSwitchHTML(true) +
-    '<p class="src">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>（CC BY 4.0。各国気象機関の数値予報を合成した推定値で、観測値ではありません）' +
-    "　昼夜の色: 見ている場所の太陽の高さを計算（NOAA の近似式）。参考: <a href=\"https://minitokyo3d.com/\" target=\"_blank\" rel=\"noopener\">Mini Tokyo 3D</a></p></div>";
+    '<p class="src">数値予報を合成した推定値で、観測値ではありません。</p></div>';
   var m = RG.openModal("🌤️ いまの天気", html);
   RG.weatherSwitchBind(m);
 };
