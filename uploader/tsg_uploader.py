@@ -42,6 +42,7 @@ SKIP = ["*.pyc", "__pycache__/*", ".git/*", "node_modules/*", "*.zip",
         "standalone.html", ".DS_Store", "Thumbs.db", "*.tmp", "*.log",
         "uploader/*", "*.tgz", "*_prev.js.gz", "tools/__pycache__/*",
         "CLAUDE.md", ".claude/*", "CLAUDE.local.md",
+        ".scratch/*", "tools/yt_cache/*",   # 作業メモ・APIキャッシュ（yt_cache は .gitignore で「*」指定）
         "data/auto/*"]   # v114: GitHub Actions が毎日・毎月書き換える（手元の写しで上書きしない）   # v109: Claude 向けの作業メモは公開しない   # v93: アップローダー自身（トークン入り）と作業ファイルは上げない
 
 

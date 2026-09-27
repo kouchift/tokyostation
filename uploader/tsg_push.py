@@ -65,15 +65,24 @@ def main():
             entries.append({"path": rel, "mode": "100644", "type": "blob", "sha": gh.put_blob(data)})
         if i % 25 == 0 or i == len(send): print("   %d / %d" % (i, len(send)))
     base = tree_sha
-    CH = 200
-    for i in range(0, len(entries), CH):
+    # v139: 1 回の要求に入れる量を «200 件» ではなく «中身 3MB まで» で区切る（大きなファイルが多いと GitHub が空の返事で断るため）
+    groups, cur, size = [], [], 0
+    for en in entries:
+        sz = len(en.get("content", "").encode("utf-8")) if "content" in en else 100
+        if cur and (size + sz > 3 * 1024 * 1024 or len(cur) >= 200):
+            groups.append(cur); cur, size = [], 0
+        cur.append(en); size += sz
+    if cur: groups.append(cur)
+    done = 0
+    for g in groups:
         for attempt in range(4):
             try:
-                base = gh.make_tree(base, entries[i:i + CH]); break
+                base = gh.make_tree(base, g); break
             except Exception as ex:
                 if attempt == 3: raise
                 print("   （もう一度ためします: %s）" % str(ex)[:60]); time.sleep(5 * (attempt + 1))
-        print("   反映 %d / %d" % (min(i + CH, len(entries)), len(entries)))
+        done += len(g)
+        print("   反映 %d / %d" % (done, len(entries)))
     msg = ("月次の自動更新（%s）" % ", ".join(sorted(only))) if only else "アップローダーから反映（＋%d 変更%d）" % (len(add), len(upd))
     c = gh.commit(msg, base, head_sha)
     gh.move_branch(c)
