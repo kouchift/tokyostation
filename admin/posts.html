@@ -34,6 +34,15 @@ details pre{white-space:pre-wrap;word-break:break-all;font-size:11px;max-width:4
   <div class="row"><input id="q" type="text" placeholder="しぼりこみ（名前・スポット・機種・結果… 何でも）"><button class="sec" id="csv">CSV で保存</button><a id="sheet" class="tiny" target="_blank" rel="noopener" hidden>スプレッドシートを開く ↗</a></div>
   <div id="msg" class="msg">鍵を入れて「読み込む」。鍵はこのブラウザにだけ保存します（共有 PC では使わない）。</div>
 </section>
+<section class="card" id="purge" hidden>
+  <b>🗑 完全に消す（物理削除）</b>
+  <p class="tiny">利用者の «削除» は表示しないだけ（論理削除）です。ここで行ごと消します（その投稿へのいいね・通報も。写真はドライブのゴミ箱へ・30 日で自動で空になります）。<b>元に戻せません。</b></p>
+  <div class="msg" id="pinfo"></div>
+  <div class="row"><input id="pmon" type="number" min="1" max="60" value="3" style="flex:0 0 80px"><span class="tiny">か月以上前に本人が削除したもの（最終メンテナンス日が起点）</span>
+    <button class="sec" id="pdry">対象を数える</button><button id="prun" disabled>まとめて完全に消す</button></div>
+  <div class="row"><input id="pid" type="text" placeholder="1 件だけ: 写真 p… / コメント c… の ID（状態に関係なくいつでも）"><button class="sec" id="pone">この 1 件を完全に消す</button></div>
+  <div id="plist" class="tiny"></div>
+</section>
 <div class="wrap"><table><thead><tr>
   <th>日時</th><th>結果</th><th>写真</th><th>投稿者</th><th>スポット</th><th>区分</th><th>距離</th><th>方法</th>
   <th>EXIF 位置</th><th>撮影日時</th><th>機種</th><th>ソフト</th><th>ファイル</th><th>元の大きさ</th><th>投稿時の現在地</th><th>ブラウザ</th><th>全部</th>
@@ -93,10 +102,39 @@ $("go").addEventListener("click", function () {
     if (!d.ok) throw new Error(d.error || "読めませんでした");
     LOG = d.log || []; PH = {}; (d.photos || []).forEach(function (p) { PH[p.pid] = p; });
     if (d.sheet) { $("sheet").href = d.sheet; $("sheet").hidden = false; }
+    if (d.purge) { $("purge").hidden = false; $("pinfo").textContent = "本人が削除した投稿: " + d.purge.deleted + " 件（うち 3 か月以上前: " + d.purge.older3m + " 件）"; }
     draw();
   }).catch(function (e) { $("msg").textContent = "✕ " + e.message; $("msg").className = "msg bad"; });
 });
 $("q").addEventListener("input", draw);
+/* v145: 完全に消す（物理削除）。まず «対象を数える»（dry）で中身を見てから、確認して実行 */
+function purge(body) {
+  var api = $("api").value.trim(), key = $("key").value.trim(); body.key = key; body.a = "purge";
+  if (!apiOk(api) || !key) return Promise.reject(new Error("先に «読み込む» をしてください"));
+  return fetch(api, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(body), redirect: "follow" }).then(function (r) { return r.json(); })
+    .then(function (d) { if (!d || d.error) throw new Error((d && d.error) || "できませんでした"); return d; });
+}
+function plist(d) {
+  $("plist").innerHTML = (d.items || []).map(function (i) { return "<div>" + esc(i.id) + " ・ " + esc(i.name) + " ・ " + esc(i.spot) + " ・ 削除 " + esc(String(i.at).slice(0, 10)) + " ・ " + esc(i.text || i.cap || "（写真）") + "</div>"; }).join("");
+}
+$("pdry").addEventListener("click", function () {
+  $("prun").disabled = true; $("pinfo").textContent = "数えています…";
+  purge({ months: +$("pmon").value || 3, dry: true }).then(function (d) {
+    $("pinfo").textContent = String(d.before).slice(0, 10) + " より前に本人が削除したもの: 写真 " + d.photos + " 件・コメント " + d.comments + " 件";
+    plist(d); $("prun").disabled = !(d.photos + d.comments);
+  }).catch(function (e) { $("pinfo").textContent = "✕ " + e.message; });
+});
+$("prun").addEventListener("click", function () {
+  if (!confirm("数えた投稿を完全に消します。元に戻せません。よろしいですか？")) return;
+  $("prun").disabled = true;
+  purge({ months: +$("pmon").value || 3 }).then(function (d) { $("pinfo").textContent = "✓ 完全に消しました（写真 " + d.photos + " 件・コメント " + d.comments + " 件）"; plist({ items: [] }); })
+    .catch(function (e) { $("pinfo").textContent = "✕ " + e.message; });
+});
+$("pone").addEventListener("click", function () {
+  var id = $("pid").value.trim(); if (!/^[pc][0-9a-f]{16}$/.test(id)) { $("pinfo").textContent = "ID の形が違います（p または c ＋ 16 文字）"; return; }
+  if (!confirm(id + " を完全に消します。元に戻せません。よろしいですか？")) return;
+  purge({ id: id }).then(function (d) { $("pinfo").textContent = "✓ " + id + " を完全に消しました"; $("pid").value = ""; }).catch(function (e) { $("pinfo").textContent = "✕ " + e.message; });
+});
 $("csv").addEventListener("click", function () {
   if (!LOG.length) return;
   var cols = Object.keys(LOG[0]);

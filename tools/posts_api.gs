@@ -44,6 +44,7 @@
  *        {a:"tipvote", id, tok}                                            v112: «合ってた»（1 人 1 回）
  *        {a:"own",     id, op:"del"|"hide"|"show", tok}                     v144: 本人の投稿を削除・非公開・公開に戻す
  *        {a:"mine",    tok}                                               v144: 自分の投稿（非公開も含む）
+ *        {a:"purge",   key, months|id, dry}                                 v145: 管理人の完全削除（本人が削除して months か月以上／1 件）
  *   GET  ?a=tips&st=<駅名>                                                  v112: その駅の «便利な号車» 情報
  *   注意: loc（撮影位置の判定）とラベルの焼き込みは画面側で行う。改造した画面からは «ok» と偽れるので、
  *         ここでは 1 人・1 スポット・全体の数の上限で被害を小さくしている。
@@ -57,8 +58,8 @@ var PER_USER_SPOT = 20;                       // 1 人が 1 スポットに出�
 var PER_SPOT_DAY = 60;                        // 1 スポットに 1 日に来る写真（誰からでも）
 var PER_MINUTE_ALL = 120;                     // 全体で 1 分あたりの写真（大量の送りつけの歯止め）
 var HIDE_AT_REPORTS = 3, PER_DAY_REPORTS = 20;
-var P_COLS = ["pid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "cap", "file_id", "w", "h", "ts", "hidden", "reports", "loc", "dist", "credit", "shared", "self"];
-var C_COLS = ["cid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "text", "pid", "ts", "hidden", "reports", "self"];   // v144: self = "" 公開 / "hide" 本人が非公開 / "del" 本人が削除
+var P_COLS = ["pid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "cap", "file_id", "w", "h", "ts", "hidden", "reports", "loc", "dist", "credit", "shared", "self", "self_at"];
+var C_COLS = ["cid", "k", "spot_n", "la", "lo", "pf", "uid", "name", "text", "pid", "ts", "hidden", "reports", "self", "self_at"];   // v144: self = "" 公開 / "hide" 本人が非公開 / "del" 本人が削除（論理削除）。v145: self_at = 最後に本人が操作した日時（最終メンテナンス日）
 var R_COLS = ["id", "uid", "ts"];
 var T_COLS = ["tid", "st", "line", "car", "to", "uid", "name", "ts", "votes", "hidden"];   // v112: 便利な号車
 var TV_COLS = ["tid", "uid", "ts"];
@@ -266,7 +267,7 @@ function photo_(b, uid, name, k, spot, now, today) {
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   var dist = b.dist === "" || b.dist == null || !isFinite(+b.dist) ? "" : Math.max(0, Math.round(+b.dist / 10) * 10);   // 10m 単位
   var row = [pid, txt_(k, 200), txt_(spot.n, 80), +spot.la, +spot.lo, txt_(spot.pf, 8), uid, txt_(name, 21), txt_(b.cap, 200), file.getId(), +b.w || 0, +b.h || 0, now, "", 0,
-             loc, dist, b.credit ? 1 : 0, 1, ""];
+             loc, dist, b.credit ? 1 : 0, 1, "", ""];
   sheet_("Photos").appendRow(row);
   SpreadsheetApp.flush();
   // 表示枠から押し出された写真（画面の手元の一覧を合わせるため）
@@ -278,10 +279,36 @@ function photo_(b, uid, name, k, spot, now, today) {
   return ({ ok: true, photo: photoOut_(o), dropped: dropped, uid: uid });
 }
 
+function purge_(b) {
+  var one = /^[pc][0-9a-f]{16}$/.test(String(b.id || "")) ? String(b.id) : "", months = Math.max(1, Math.min(60, Math.round(+b.months || 3)));
+  var lim = new Date(); lim.setMonth(lim.getMonth() - months);
+  var pick = function (r, id) { return one ? id === one : r.self === "del" && ms_(r.self_at) > 0 && ms_(r.self_at) <= lim.getTime(); };
+  var P = rows_("Photos", P_COLS).filter(function (r) { return pick(r, r.pid); }), C = rows_("Comments", C_COLS).filter(function (r) { return pick(r, r.cid); });
+  var ids = {}; P.forEach(function (r) { ids[r.pid] = 1; }); C.forEach(function (r) { ids[r.cid] = 1; });
+  var out = { ok: true, dry: !!b.dry, before: one ? "" : iso_(lim), photos: P.length, comments: C.length,
+              items: P.map(function (r) { return { id: r.pid, name: r.name, spot: r.spot_n, at: iso_(r.self_at), cap: r.cap }; })
+                .concat(C.map(function (r) { return { id: r.cid, name: r.name, spot: r.spot_n, at: iso_(r.self_at), text: String(r.text).slice(0, 40) }; })).slice(0, 200) };
+  if (one && !P.length && !C.length) return { error: "見つかりません" };
+  if (b.dry) return out;
+  P.forEach(function (r) { if (r.file_id) try { DriveApp.getFileById(r.file_id).setTrashed(true); } catch (e) {} });
+  function del_(name, rows) { rows.map(function (r) { return r._row; }).sort(function (x, y) { return y - x; }).forEach(function (n) { sheet_(name).deleteRow(n); }); }   // 下の行から消す（行番号がずれないように）
+  del_("Photos", P); del_("Comments", C);
+  del_("Likes", rows_("Likes", L_COLS).filter(function (r) { return ids[r.id]; }));
+  del_("Reports", rows_("Reports", R_COLS).filter(function (r) { return ids[r.id]; }));
+  SpreadsheetApp.flush();
+  return out;
+}
+/* 管理人の一覧: 本人が削除（論理削除）したものの数と、いちばん古い日 */
+function purgeInfo_() {
+  var n = 0, old = 0, lim = new Date(); lim.setMonth(lim.getMonth() - 3);
+  rows_("Photos", P_COLS).concat(rows_("Comments", C_COLS)).forEach(function (r) { if (r.self === "del") { n++; if (ms_(r.self_at) <= lim.getTime()) old++; } });
+  return { deleted: n, older3m: old };
+}
+
 function doGet(e) {
   try {
     var q = e.parameter || {}, a = q.a || "spot";
-    if (a === "ping") return json_({ ok: true, v: 144 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
+    if (a === "ping") return json_({ ok: true, v: 145 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
     ensureInit_();
     if (a === "admin") {                          // 管理ページ（admin/posts.html）用。鍵が合うときだけ撮影データの記録を返す
       if (!q.key || q.key !== adminKey_()) return json_({ error: "鍵が違います" });
@@ -289,7 +316,7 @@ function doGet(e) {
       if (last > 1) { var cnt = Math.min(n0, last - 1); X = xs.getRange(last - cnt + 1, 1, cnt, X_COLS.length).getValues().map(function (v) { var o = {}; X_COLS.forEach(function (c, j) { o[c] = v[j]; }); return o; }); }   // 新しい n 行だけ読む
       X = X.reverse().map(function (r) { var o = {}; X_COLS.forEach(function (c) { o[c] = c === "ts" ? iso_(r[c]) : r[c]; }); return o; });
       var PH = rows_("Photos", P_COLS).map(function (r) { var o = photoOut_(r); o.hidden = r.hidden; o.reports = r.reports; o.visible = visible_(r); o.shared = r.shared; return o; });
-      return json_({ ok: true, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl() });
+      return json_({ ok: true, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl(), purge: purgeInfo_() });
     }
     if (a === "spot") {
       var k = clean_(q.k, 200), me = clean_(q.u, 20), lk = {}, my = [];
@@ -333,6 +360,14 @@ function doPost(e) {
     ensureInit_();
     var b = JSON.parse(e.postData.contents || "{}");
     if (b.hp) return json_({ error: "spam" });                           // 見えない入力欄（ボット対策）
+    /* v145: 管理人の «完全に消す»（物理削除）。利用者の削除は «論理削除»（self=del・表示しないだけ）で、ここで行ごと消す
+       {a:"purge", key, months:3, dry:true} … 本人が削除してから months か月以上たったもの（self_at が起点）をまとめて。dry なら数えるだけ
+       {a:"purge", key, id:"p…|c…"}          … 1 件だけ（状態に関係なく、いつでも）
+       消すもの: その行・その投稿へのいいね（Likes）・通報（Reports）。写真はドライブのファイルもゴミ箱へ（ゴミ箱は 30 日で自動で空になる） */
+    if (b.a === "purge") {
+      if (!b.key || b.key !== adminKey_()) return json_({ error: "鍵が違います" });
+      return json_(purge_(b));
+    }
     var tok = String(b.tok || "");
     if (!/^[A-Za-z0-9]{24,64}$/.test(tok)) return json_({ error: "端末の印が正しくありません（ページを読み込み直してください）" });
     var uid = uidOf_(tok), now = new Date(), today = day_(now);
@@ -369,6 +404,7 @@ function doPost(e) {
       if (orow.uid !== uid) return json_({ error: "ご本人の投稿だけを消せます（投稿した端末・ブラウザからお試しください）" });
       var nv = op === "del" ? "del" : op === "hide" ? "hide" : "";
       sheet_(osh).getRange(orow._row, ocl.indexOf("self") + 1).setValue(nv);
+      sheet_(osh).getRange(orow._row, ocl.indexOf("self_at") + 1).setValue(now);   // v145: 最終メンテナンス日（完全に消す «3 か月» の起点）
       if (osh === "Photos" && orow.file_id) {
         orow.self = nv;
         try {
@@ -455,7 +491,7 @@ function doPost(e) {
       if (m2.filter(function (r) { return day_(r.ts) === today; }).length >= PER_DAY_COMMENTS) return json_({ error: "今日の投稿の上限に達しました" });
       var cid = "c" + Utilities.getUuid().replace(/-/g, "").slice(0, 16);
       var pid2 = /^p[0-9a-f]{16}$/.test(String(b.pid || "")) ? String(b.pid) : "";     // 写真の ID の形でなければ «スポットへのコメント»
-      var row2 = [cid, txt_(k, 200), txt_(spot.n, 80), +spot.la, +spot.lo, txt_(spot.pf, 8), uid, txt_(name, 21), txt_(text, 301), pid2, now, "", 0, ""];
+      var row2 = [cid, txt_(k, 200), txt_(spot.n, 80), +spot.la, +spot.lo, txt_(spot.pf, 8), uid, txt_(name, 21), txt_(text, 301), pid2, now, "", 0, "", ""];
       sheet_("Comments").appendRow(row2);
       SpreadsheetApp.flush();
       var o2 = {}; for (var j = 0; j < C_COLS.length; j++) o2[C_COLS[j]] = row2[j];
