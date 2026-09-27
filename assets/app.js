@@ -697,7 +697,7 @@ var Map = (function () {
      ----------------------------------------------------------------- */
   function lod() {
     var z = zl();
-    var rect = wrap.getBoundingClientRect();
+    var rect = wrapSize();                                          // v141: 大きさは覚えておいたもの（毎回測ると、そのたびに地図全体の配置計算が走る）
     var W = Math.max(320, rect.width), H = Math.max(240, rect.height);
     var area = (W * H) / (1280 * 640);          // 画面の広さ（基準に対する倍率）
 
@@ -818,10 +818,19 @@ var Map = (function () {
     }
   }
   var lodTail = null;
+  /* v141: 地図の枠の大きさを覚えておく（ResizeObserver が変わったときだけ知らせてくれる）。
+     lod・poiLOD が毎回 getBoundingClientRect で測ると、直前の描き直しを «その場で» 計算させることになり、同じ計算が 2 回走っていた */
+  var WS = null;
+  function wrapSize() {
+    if (!WS || !WS.width) { var r = wrap.getBoundingClientRect(); WS = { width: r.width, height: r.height }; }
+    return WS;
+  }
   function scheduleLod() { clearTimeout(lodTimer); lodTimer = setTimeout(lod, 90); }
 
   function initViewport() {
     wrap = $(".mapwrap"); vb = { x: VB.x, y: VB.y, w: VB.w, h: VB.h };
+    if (window.ResizeObserver) new ResizeObserver(function (en) { var c = en[0] && en[0].contentRect; if (c) WS = { width: c.width, height: c.height }; }).observe(wrap);
+    else window.addEventListener("resize", function () { WS = null; });
     apply(); lod();
     var drag = null, pinch = null;
     /* 地図の «ドラッグで動かす» 処理。
@@ -1266,7 +1275,7 @@ var Map = (function () {
     }
     cand.sort(function (a, b) { return a.ti - b.ti || b.s - a.s || (b.sl || 0) - (a.sl || 0); });
     // 画面上のマス目に1件だけ残して重なりを防ぐ
-    var wpx = Math.max(320, wrap.getBoundingClientRect().width);
+    var wpx = Math.max(320, wrapSize().width);
     // 拡大するほどアイコンは小さく（画面が埋まらないように・描画も軽くなる）
     var shrink = z >= 12 ? 0.72 : z >= 6 ? 0.86 : 1;
     var eff = poiScale * shrink;
@@ -1274,7 +1283,7 @@ var Map = (function () {
     /* 画面に «無理なく置ける数» を見積もる。
        アイコン1つにおよそ 30×30px が要るとして、画面の18%まで。
        駅名と同じ考えかたで、混みすぎないようにする。 */
-    var hpx = Math.max(240, wrap.getBoundingClientRect().height);
+    var hpx = Math.max(240, wrapSize().height);
     // 画面に置くスポットは、多くて48個まで（画面が広ければ少しだけ増やす）
     var area2 = (wpx * hpx) / (1280 * 640);
     var SZ2 = RG.__SZ || RG.mapSizeAt(1);

@@ -7,7 +7,7 @@
 (function (RG) {
 "use strict";
 var $ = RG.$, esc = RG.esc;
-var gRoad = null, gHwy, gKok, gIC, gKai, built = {};
+var gRoad = null, gHwy, gKok, gIC, gKai, built = {}, ICS = [], icPool = [];
 var on = { hwy: true, kok: false, kaido: true };
 function host() {
   var svg = document.getElementById("map"); if (!svg) return null;
@@ -35,14 +35,10 @@ RG.roadsBuild = function () {
       tp.setAttribute("href", "#" + id); tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + id); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = h.n; t.appendChild(tp); t.__p = p;
       gHwy.appendChild(glow); gHwy.appendChild(p); gHwy.appendChild(hit); gHwy.appendChild(t);
     });
-    gIC.innerHTML = "";
-    (RG.HWY_IC || []).forEach(function (ic) {
-      var P = RG.project(ic.la, ic.lo);
-      var g = RG.el("g", { class: "ic ic--" + (ic.k === "JCT" ? "jct" : ic.k === "SA" || ic.k === "PA" ? "sa" : "ic") }); g.__ic = ic; g.__P = P;
-      g.appendChild(RG.el("circle", { class: "ic__c", cx: P.x.toFixed(1), cy: P.y.toFixed(1), r: 1 }));
-      g.appendChild(RG.el("text", { class: "ic__t", x: P.x.toFixed(1), y: P.y.toFixed(1), text: ic.n }));
-      gIC.appendChild(g);
-    });
+    /* v141: IC・JCT（約 2,400）は «画面に出すぶんだけ» 作る（プール）。全部を DOM に置くと、表示していなくても
+       地図を動かすたびの配置計算が 0.4 秒（遅いスマホで数秒）かかっていた */
+    gIC.innerHTML = ""; ICS = []; icPool = [];
+    (RG.HWY_IC || []).forEach(function (ic) { ICS.push({ ic: ic, P: RG.project(ic.la, ic.lo) }); });
   }
   if (RG.KOKUDO && !built.kok) {
     built.kok = 1; gKok.innerHTML = "";
@@ -97,9 +93,15 @@ RG.roadsLOD = function () {
   var showIC = on.hwy && z >= 1.6;
   gIC.style.display = showIC ? "" : "none";
   if (showIC) {
-    var slots = [];
-    Array.prototype.forEach.call(gIC.childNodes, function (g) {
-      var P = g.__P, ic = g.__ic, inv = P.x > pad.x && P.x < pad.x + pad.w && P.y > pad.y && P.y < pad.y + pad.h;
+    var slots = [], used = 0;
+    ICS.forEach(function (o2) {
+      var P = o2.P, ic = o2.ic, inv = P.x > pad.x && P.x < pad.x + pad.w && P.y > pad.y && P.y < pad.y + pad.h;
+      if (!inv) return;
+      var g = icPool[used];
+      if (!g) {
+        g = RG.el("g", {}); g.style.display = "none"; g.appendChild(RG.el("circle", { class: "ic__c", r: 1 })); g.appendChild(RG.el("text", { class: "ic__t" }));
+        icPool.push(g); gIC.appendChild(g);
+      }
       var want = inv && (z >= 4 || ic.k === "JCT" || z >= 2.5);
       var ok = false;
       if (want) {
@@ -107,8 +109,12 @@ RG.roadsLOD = function () {
         for (var i = 0; i < slots.length; i++) { var q = slots[i]; if (a0 < q[2] && a1 > q[0] && b0 < q[3] && b1 > q[1]) { bad = true; break; } }
         if (!bad) { slots.push([a0, b0, a1, b1]); ok = true; var c = g.firstChild, t = g.lastChild; c.style.setProperty("r", (3 * u).toFixed(2) + "px", "important"); c.style.setProperty("stroke-width", (1.5 * u).toFixed(2) + "px", "important"); t.setAttribute("x", (P.x + 5 * u).toFixed(1)); t.setAttribute("y", (P.y + fs * 0.35).toFixed(1)); t.style.setProperty("font-size", fs.toFixed(2) + "px", "important"); t.style.setProperty("stroke-width", (2.5 * u).toFixed(2) + "px", "important"); }
       }
-      g.style.display = ok ? "" : "none";
+      if (!ok) return;
+      used++;
+      g.__ic = ic; g.__P = P; g.setAttribute("class", "ic ic--" + (ic.k === "JCT" ? "jct" : ic.k === "SA" || ic.k === "PA" ? "sa" : "ic")); g.style.display = "";
+      g.firstChild.setAttribute("cx", P.x.toFixed(1)); g.firstChild.setAttribute("cy", P.y.toFixed(1)); g.lastChild.textContent = ic.n;
     });
+    for (var pi = used; pi < icPool.length; pi++) { icPool[pi].style.display = "none"; icPool[pi].__ic = null; }
   }
   var showK = on.kok && z >= 0.3;
   gKok.style.display = showK ? "" : "none";
