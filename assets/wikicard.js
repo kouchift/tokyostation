@@ -159,6 +159,12 @@ RG.showLine = function (name) {
   });
   var g = m.querySelector("[data-goto]");
   if (g) g.addEventListener("click", function () { RG.closeModal(); RG.openStation(g.dataset.goto); });
+  var ls = m.querySelector(".lcst__l");                              // v149: 駅の一覧を押したらその駅へ（押しても何も起きていなかった）
+  if (ls) ls.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-st]"); if (!b) return;
+    var id = b.getAttribute("data-st"); if (!RG.byId || !RG.byId[id]) return;
+    RG.closeModal(); RG.openStation(id);
+  });
   function ex(k, v, s2) {
     return '<div class="ex"><span class="ex__k">' + esc(k) + '</span><span class="ex__v">' + esc(v) +
       "</span>" + (s2 ? '<span class="ex__s">' + esc(s2) + "</span>" : "") + "</div>";
