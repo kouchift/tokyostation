@@ -80,7 +80,8 @@ RG.iconsInit = function () {
   var v = document.documentElement.getAttribute("data-build") || "";
   var url = "assets/icons.svg" + (v ? "?v=" + v : "");
   if (!window.fetch) { failed = true; return; }
-  fetch(url, { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+  /* v142: 細い回線では、見た目の決まり（app.min.css）が届いてから（取り合わない。絵が届くまでは絵文字） */
+  (RG.cssReady ? RG.cssReady() : Promise.resolve()).then(function () { return fetch(url, { credentials: "same-origin" }); }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
     .then(inject)
     .catch(function () { failed = true; document.dispatchEvent(new CustomEvent("rg:icons", { detail: { n: 0, failed: true } })); });
 };

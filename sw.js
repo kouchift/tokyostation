@@ -10,14 +10,14 @@
      中身が同じファイルは端末の中のものをそのまま使う。変わったファイルだけを読む。
    v139: 画面（index.html）は «新しいものを取りに行く。3 秒で返事が無ければ、前のもの» にした（電波が弱い所でも開ける）
    ========================================================================= */
-var CACHE = "tsg-v141";
-var V = "?v=141";     // index.html の data-build と合わせる
+var CACHE = "tsg-v142";
+var V = "?v=142";     // index.html の data-build と合わせる
 var FILES = "tsg-files";   // 中身の印つきで置く場所（版をまたいで残す）
 var META = "tsg-meta";     // data/filehash.json を置く場所
 
 /* 入れておくと効果の大きいもの（最初の1回で必ず要るもの） */
 var CORE = [
-  "./", "./index.html", "./assets/app.min.css" + V,
+  "./", "./index.html", "./assets/crit.css" + V, "./assets/app.min.css" + V,
   "./assets/app.bundle.js" + V, "./assets/app.extra.js" + V, "./assets/comments-v109.js" + V,
   "./data/version.js" + V, "./data/net.c.json" + V, "./data/config.js" + V,
   "./assets/worker.js", "./assets/icons.svg" + V, "./manifest.webmanifest", "./assets/icon-192.png", "./assets/fonts/msymbols.woff2" + V, "./data/lines_meta.js" + V, "./data/genres.js" + V, "./data/score.js" + V, "./data/areas.js" + V, "./data/focus.js" + V,

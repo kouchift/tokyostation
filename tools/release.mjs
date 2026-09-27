@@ -3,7 +3,7 @@
 //   オプション: --no-bump（版は上げずに、まとめ直しと送信だけ） --yes（確認せずに送る） --dry（下見だけ・送らない）
 //   版の番号がある所: index.html（data-build と ?v=）・sw.js（CACHE と V）・data/version.js（VERSION と BUILT）
 import { spawnSync } from "node:child_process";
-import fs from "node:fs"; import os from "node:os"; import path from "node:path"; import readline from "node:readline";
+import fs from "node:fs"; import os from "node:os"; import crypto from "node:crypto"; import path from "node:path"; import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -32,6 +32,14 @@ function bump() {
   return nv;
 }
 
+/* v142: assets/crit.css（最初の画面の見た目の決まり）が app.css より古くないか。古くても壊れはしない（app.min.css が届いたら外す）が、作り直しを知らせる */
+function checkCrit() {
+  try {
+    const m = rd("assets/crit.css").match(/^\/\*crit:([0-9a-f]{8})/); if (!m) return;
+    const h = (crypto.createHash("md5").update(rd("assets/app.css") + "\n" + rd("assets/design_v2.css")).digest("hex")).slice(0, 8);
+    if (h !== m[1]) say("   ※ assets/crit.css が app.css より古いです（クラウドの作業場で NODE_PATH=/tmp/pw/node_modules node tools/make_critical.mjs を実行して作り直す）");
+  } catch (e) {}
+}
 function ensureTerser() {
   const mod = path.join(NODE_LIB, "node_modules", "terser");
   if (fs.existsSync(mod)) return;
@@ -83,6 +91,7 @@ async function main() {
     r = spawnSync("node", ["--check", path.join(ROOT, "assets", b)], { encoding: "utf8" });
     if (r.status !== 0) throw new Error("まとめたファイル（" + b + "）に文法の誤りがあります:\n" + r.stderr);
   }
+  checkCrit();
   r = spawnSync("node", [path.join(ROOT, "tools", "make_netc.mjs")], { stdio: "inherit" });   // v140: 画面が読む net.c.json と下書きの地図 net_lite.json
   if (r.status !== 0) throw new Error("data/net.c.json を作れませんでした");
   r = spawnSync("node", [path.join(ROOT, "tools", "make_filehash.mjs")], { stdio: "inherit" });   // v139: ファイルごとの «中身の印»（sw.js が使う）

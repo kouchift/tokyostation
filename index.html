@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-build="141">
+<html lang="ja" data-build="142">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
@@ -27,29 +27,43 @@
 /* v140: 下書きの地図のデータを «いちばん最初に» 取りに行く（CSS より前に置くので待たされない）。
    2 回目以降（端末に保存済み）や、回線が速いと分かっているときは取らない */
 (function(){try{var c=navigator.connection||{},sw=navigator.serviceWorker&&navigator.serviceWorker.controller;
-function net(){return fetch("data/net.c.json?v=141",{credentials:"same-origin"}).then(function(r){if(!r.ok)throw new Error("net.c.json "+r.status);return r.json();});}
-function pre(){["assets/app.bundle.js","data/config.js","data/lines_meta.js","data/genres.js","data/score.js","data/areas.js","data/focus.js"].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.as="script";l.href=f+"?v=141";document.head.appendChild(l);});}
+function net(){return fetch("data/net.c.json?v=142",{credentials:"same-origin"}).then(function(r){if(!r.ok)throw new Error("net.c.json "+r.status);return r.json();});}
+function pre(){["assets/app.bundle.js","data/config.js","data/lines_meta.js","data/genres.js","data/score.js","data/areas.js","data/focus.js"].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.as="script";l.href=f+"?v=142";document.head.appendChild(l);});}
 if(sw||(c.effectiveType==="4g"&&!c.saveData&&c.downlink>=5)){window.__netP=net();window.__netP.catch(function(){});pre();window.__gate=Promise.resolve();return;}
 /* 下書きを先に（小さいので数秒）。本物の駅データと本体は下書きが届いてから取りに行く（細い回線を取り合わない） */
-window.__pvP=fetch("data/net_lite.json?v=141").then(function(r){return r.json();});
+window.__pvP=fetch("data/net_lite.json?v=142").then(function(r){return r.json();});
 window.__gate=window.__pvP.then(pre,pre);
 window.__netP=window.__pvP.then(net,net);window.__pvP.catch(function(){});window.__netP.catch(function(){});}catch(e){}})();
 </script>
 <!-- v140: 駅と路線（data/net.c.json・net.json より約 1 割軽い列ごとの形）は上の小さな script が取りに行く -->
 <!-- v139: 書体は «欧文と数字だけ» を Google Fonts から（日本語は端末の書体＝iPhone はヒラギノ・Android は Noto。数百KB の日本語書体を読まない）。
-     画面の描画を待たせない読み方（media=print → 届いたら all）。通信を節約しているとき（データセーバー・2G・«軽く» を選んだ）は読まない -->
+     画面の描画を待たせない読み方（v142: 下の «後回しの読み方» と同じときに script で足す）。通信を節約しているとき（データセーバー・2G・«軽く» を選んだ）は読まない -->
 <script>
 (function(){try{var c=navigator.connection||{},m="";try{m=localStorage.getItem("tsg.qos")||"";}catch(e){}
 if(c.saveData||/(^|-)2g$/.test(c.effectiveType||"")||m==="lite"){document.documentElement.classList.add("qos-lite");return;}
-var l=document.createElement("link");l.rel="stylesheet";l.media="print";l.onload=function(){this.media="all";};
+window.__fonts=function(){var l=document.createElement("link");l.rel="stylesheet";
 l.href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap";
-document.head.appendChild(l);}catch(e){}})();
+document.head.appendChild(l);};}catch(e){}})();   /* v142: 読み始めは下の «後回しの読み方» と同じとき */
 </script>
 <!-- v87: Material Symbols（アイコン字体）は assets/fonts/msymbols.woff2 に同梱（Google Fonts に届かない環境でもアイコンが出るように。@font-face は app.css） -->
 <!-- v139: app.css を縮めたもの（tools/build_bundle.js が作る。直すのは app.css）。
-     v140: 描画を待たせない読み方（preload → 届いたら stylesheet）。届くまでは «下書きの地図» と骨組みだけを見せる（下の style の html:not(.css-ok)） -->
-<link rel="preload" href="assets/app.min.css?v=141" as="style" onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.add('css-ok')" onerror="document.documentElement.classList.add('css-ok')">
-<noscript><link rel="stylesheet" href="assets/app.min.css?v=141"><style>.app{visibility:visible!important}</style></noscript>
+     v140: 描画を待たせない読み方。v142 からは下の crit と «後回しの読み方» -->
+<!-- v142: 最初の画面に要る決まりだけを assets/crit.css（約 15KB・tools/make_critical.mjs が作る）で先に読み、app.min.css は «後回し»（下の script が、駅データが届いてから足す）。
+     細い回線では、本体と駅データが先に届く（地図が早く出る）。app.min.css が届いたら crit は外す（二重にならないように）。
+     crit.css が届くまでは «下書きの地図» と骨組みだけ（下の style の html:not(.crit-ok)） -->
+<link id="crit" rel="preload" href="assets/crit.css?v=142" as="style" onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.add('crit-ok')" onerror="document.documentElement.classList.add('crit-ok')">
+<script>
+/* v142: «後回しの読み方»。app.min.css（と欧文の書体）は、細い回線では駅データ（net.c.json）が届いてから読む（地図を先に）。
+   ただし指で触ったら、すぐ読む（ボタンや窓の見た目が要る）。2 回目以降（端末に保存済み）・速い回線は、すぐ読む */
+(function(){var done=0;function go(){if(done)return;done=1;
+var l=document.createElement("link");l.rel="stylesheet";l.href="assets/app.min.css?v=142";   /* script で足した stylesheet は描画を止めない（media=print の切り替えは、読み直しになることがあるので使わない） */
+l.onload=function(){var c=document.getElementById("crit");if(c)c.remove();document.documentElement.classList.add("css-ok","crit-ok");};
+l.onerror=function(){document.documentElement.classList.add("css-ok","crit-ok");};
+document.head.appendChild(l);if(window.__fonts)window.__fonts();}
+if(!window.__pvP){go();return;}
+(window.__netP||window.__pvP).then(go,go);addEventListener("pointerdown",go,{once:true,capture:true});setTimeout(go,20000);})();
+</script>
+<noscript><link rel="stylesheet" href="assets/app.min.css?v=142"><style>.app{visibility:visible!important}</style></noscript>
 <!-- v140: design_v2.css（v117 のデザインの上書き）は app.min.css の後ろに入れた（1 回の通信で済むように） -->
 <style>
 /* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
@@ -59,12 +73,14 @@ document.head.appendChild(l);}catch(e){}})();
 @keyframes sk{to{transform:rotate(360deg)}}
 .skel.off{opacity:0}
 .skel span{background:rgba(255,255,255,.92);padding:4px 12px;border-radius:999px;max-width:86%;text-align:center}
-/* v140: CSS が届くまでは、下書きの地図と «用意しています» だけ（ほかは隠す） */
-html:not(.css-ok) body{margin:0;background:#F5F6F8;font-family:system-ui,sans-serif}
-html:not(.css-ok) .app{visibility:hidden}
-html:not(.css-ok) .mapwrap{visibility:visible;position:fixed;inset:0;min-height:0;overflow:hidden}
-html:not(.css-ok) .mapwrap>*{visibility:hidden}
-html:not(.css-ok) .mapwrap>.mappv,html:not(.css-ok) .mapwrap>#skel{visibility:visible}
+/* v140: crit.css が届くまでは、下書きの地図と «用意しています» だけ（ほかは隠す） */
+html:not(.crit-ok) body{margin:0;background:#F5F6F8;font-family:system-ui,sans-serif}
+html:not(.crit-ok) .app{visibility:hidden}
+html:not(.crit-ok) .mapwrap{visibility:visible;position:fixed;inset:0;min-height:0;overflow:hidden}
+html:not(.crit-ok) .mapwrap>*{visibility:hidden}
+html:not(.crit-ok) .mapwrap>.mappv,html:not(.crit-ok) .mapwrap>#skel{visibility:visible}
+/* v142: app.min.css が届くまでは、crit に無い «あとから出る部品»（.app の外に足される窓など）は隠す（崩れた形を見せない） */
+html:not(.css-ok) body>:not(.app):not(#sheet):not(#scrim):not(script):not(noscript){visibility:hidden}
 .mappv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .mappv__st{fill:#fff;stroke:#1d2733;stroke-width:1.4;font:600 11px system-ui,sans-serif}.mappv__st text{fill:#1d2733;stroke:#fff;stroke-width:3;paint-order:stroke;text-anchor:middle}
 @media (prefers-reduced-motion:reduce){.skel i{animation:none}}
@@ -209,7 +225,7 @@ setTimeout(ok,4000);})();
 })();
 </script>
 <!-- v140: 本体（assets/app.bundle.js）は下の script が入れる（細い回線では下書きの地図のあとで） -->
-<script src="assets/comments-v109.js?v=141" defer></script>
+<script src="assets/comments-v109.js?v=142" defer></script>
 <script>
 /* v106: コメント機能の設定を RG.COMMENTS に入れる。endpoint が空なら表示しない */
 (function() {
@@ -223,7 +239,7 @@ setTimeout(ok,4000);})();
    ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
    ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
-  var netP = (window.__netP || fetch("data/net.c.json?v=141", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("net.c.json " + r.status); return r.json(); }))
+  var netP = (window.__netP || fetch("data/net.c.json?v=142", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("net.c.json " + r.status); return r.json(); }))
     .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
     if (document.querySelectorAll("#map .node").length) return;
@@ -245,7 +261,7 @@ setTimeout(ok,4000);})();
   /* v140: 本体を入れる（回線が速い・2 回目以降はすぐ。ゆっくりなときは下書きの地図が届いてから） */
   function inject() {
     if (window.RG && window.RG.startApp) { go(); return; }
-    var sc = document.createElement("script"); sc.src = "assets/app.bundle.js?v=141";
+    var sc = document.createElement("script"); sc.src = "assets/app.bundle.js?v=142";
     sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); });
     document.body.appendChild(sc);
   }

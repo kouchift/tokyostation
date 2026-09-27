@@ -332,9 +332,21 @@ document.addEventListener("rg:qos", function (e) { if (e.detail && !e.detail.lit
 /* ===== 起動 ===== */
 /* v139: 本体の残り（assets/app.extra.js）。通信が速ければすぐ（地図の準備と並べて）、ゆっくりなら地図を描いてから読む */
 var extraP = null;
+/* v142: 細い回線（head が «下書きの地図» を取った＝__pvP がある）では、見た目の決まり（app.min.css）を先に。
+   本体の残り（大きい）と取り合うと、ボタンや窓の見た目がそろうのが遅れる。最長 8 秒だけ待つ */
+function cssReady() {
+  return new Promise(function (res) {
+    var h = document.documentElement;
+    if (!window.__pvP || h.classList.contains("css-ok") || !window.MutationObserver) return res();
+    var mo = new MutationObserver(function () { if (h.classList.contains("css-ok")) { mo.disconnect(); res(); } });
+    mo.observe(h, { attributes: true, attributeFilter: ["class"] });
+    setTimeout(function () { mo.disconnect(); res(); }, 8000);
+  });
+}
+RG.cssReady = cssReady;
 function loadExtras() {
   if (extraP) return extraP;
-  extraP = load("assets/app.extra.js").catch(function () {
+  extraP = cssReady().then(function () { return load("assets/app.extra.js"); }).catch(function () {
     return new Promise(function (res) { setTimeout(res, 3000); }).then(function () { return load("assets/app.extra.js"); });   // 1 回だけ取り直す
   }).catch(function (e) {
     if (RG.tripStatus) RG.tripStatus("⚠️ 一部の機能を読み込めませんでした（通信を確かめて、再読み込みしてください）", "warn", 8000);

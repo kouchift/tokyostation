@@ -6,12 +6,12 @@
      ※ terser が無ければ「まとめるだけ」（縮小なし）で出力する。 */
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..');
-const ORDER = ['app', 'qos', 'icons', 'score', 'planner', 'plannerui', 'lines_ui', 'basemap', 'three', 'wikicard',
+const ORDER = ['app', 'qos', 'cvunder', 'icons', 'score', 'planner', 'plannerui', 'lines_ui', 'basemap', 'three', 'wikicard',
   'corp', 'smoking', 'adult', 'edu', 'hensachi', 'pins', 'groups', 'koyomi2', 'koyomi', 'search',
   'nav', 'traininfo', 'plan', 'logbook', 'geohelp', 'tiles', 'geo', 'zipcode', 'enrich', 'focus', 'buzz', 'eduhist', 'whs', 'wimg', 'graves', 'hkzukan', 'histlong', 'histmap', 'qr', 'inro', 'tip', 'shinkansen', 'share', 'nature', 'history', 'places', 'yt', 'air', 'pv', 'card', 'roads', 'quake', 'memo', 'comments_legacy', 'posts', 'obnote', 'sticker', 'alerts', 'weather', 'sns', 'levechi', 'poifilter', 'cvsfilter', 'tokyo', 'favs', 'onsite', 'flow', 'mapfocus', 'stats', 'loader'];
 /* v139: 2 本に分ける。«地図が出るまで» に要る部品だけ（CORE）を先に読み、残り（EXTRA）は地図が出てから読む。
    速度制限中でも、最初に待つ量を 1/3 ほどにするため。CORE に入れる部品を変えるときは、起動の順（app.js の RG.boot）も確かめる */
-const CORE = ['app', 'qos', 'icons', 'score', 'planner', 'plannerui', 'geohelp', 'loader'];
+const CORE = ['app', 'qos', 'cvunder', 'icons', 'score', 'planner', 'plannerui', 'geohelp', 'loader'];
 const pack = list => list.map(n => {
   const f = path.join(root, 'assets', n + '.js');
   return `/* ===== ${n}.js ===== */\n;` + fs.readFileSync(f, 'utf8') + '\n;';

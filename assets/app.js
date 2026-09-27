@@ -912,6 +912,7 @@ var Map = (function () {
     if (gestRaf) { cancelAnimationFrame(gestRaf); gestRaf = 0; }
     svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
     svg.style.transform = "";
+    if (RG.cvUnder) { RG.cvUnder.end(); RG.cvUnder.prep(vb, svg); }   // v142: 描き足しの下敷きを隠す（SVG が描き直した）・次の分を暇なときに描いておく
     cvb = { x: vb.x, y: vb.y, w: vb.w, h: vb.h }; lastCommit = performance.now();
     scheduleLod();
     if (RG.onMapView) try { RG.onMapView(); } catch (e) {}   // v128: 地図の上の HTML の印（れきし地図）を動きに合わせる
@@ -920,6 +921,7 @@ var Map = (function () {
     gestRaf = 0; if (!cvb || !gestR) return;
     var s = cvb.w / vb.w, tx = (cvb.x - vb.x) * gestR.width / vb.w, ty = (cvb.y - vb.y) * gestR.height / vb.h;
     svg.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(5) + ")";
+    if (RG.cvUnder && (s < 0.999 || Math.abs(tx) > 2 || Math.abs(ty) > 2)) RG.cvUnder.frame(vb, gestR, svg);   // v142: 空いた端を Canvas で埋める
     if (RG.onMapView) try { RG.onMapView(); } catch (e) {}
   }
   function endGesture() { if (gestT) commitView(); }
