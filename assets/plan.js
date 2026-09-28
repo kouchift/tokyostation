@@ -80,7 +80,7 @@ RG.mapButtons = function (from, to, mode, label) {
           '<span>🗺️</span>Google マップで開く</a>';
   var a = '<a class="mapb mapb--a" href="' + L.apple + '" target="_blank" rel="noopener">' +
           '<span>🍎</span>Apple マップで開く</a>';
-  return '<div class="mapbs">' + (L.apple_first ? a + g : g + a) +
+  return '<div class="mapbs">' + (L.apple_first ? a + g : g + a) + (RG.arBtn && to ? RG.arBtn("", to[0], to[1]) : "") +   // v150: AR で方角
     (label ? '<span class="mapbs__l">' + esc(label) + "</span>" : "") + "</div>";
 };
 

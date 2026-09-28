@@ -1955,7 +1955,9 @@ var Card = (function () {
   /* 情報の鮮度順に並べる：上＝いま使う情報／下＝変わりにくい情報 */
   function render(id, d) {
     var s = RG.byId[id]; if (!s) return "";
+    var nav = (RG.arBtn ? RG.arBtn(s.n + "駅", s.la, s.lo) : "") + (RG.indoorBtn ? RG.indoorBtn(s.la, s.lo) : "");   // v150: AR で方角・構内図
     return plate(s) +
+           (nav ? '<div class="lnks lnks--nav">' + nav + "</div>" : "") +
            (RG.whsBanner ? RG.whsBanner(s.n) : "") +
            (RG.graveBanner ? RG.graveBanner(s.la, s.lo) : "") +                                                                   // v133: 近くに眠る偉人                                                                              // v127: 世界遺産の一部なら帯
            (RG.eduHistHtml ? RG.eduHistHtml(s.n) : "") +                                                                          // v126: 教科書にでてくる場所

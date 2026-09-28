@@ -125,3 +125,7 @@ tools/build_standalone.py  単一ファイル版の生成
 - アイコン — Material Symbols Outlined（Google, Apache License 2.0）。v87 からサブセット（約 50 個）を `assets/fonts/msymbols.woff2` に同梱（Google への通信なし）。作り直しは `tools/fetch_icons.py`。
 - レベチなレストラン — 制作者本人の KML（元の一覧: リンベル 選べる体験ギフト「食を愉しむひととき」掲載店舗）。店名・住所・プラン・内容・利用時間・定休日・アクセス・公式サイト・カタログ頁は一覧作成時点のもの。評価（★）は本人の主観。`tools/import_kml.py` で `data/levechi.js` に変換。
 - 見た目の参考 — 本人が Google AI Studio で作った「Tokyo Station Wayfinding」（Station Map／Station Detail）。色・角丸・並びを参考にし、コード・画像は使っていない。
+
+## v150
+- `data/indoor/`（構内図・地下通路の案内）— 国土交通省「東京駅周辺屋内地図オープンデータ（令和2年度更新版）」（高精度測位社会プロジェクト、https://www.geospatial.jp/ckan/dataset/mlit-indoor-tokyo-r2 ）を加工して作成（`tools/build_indoor.py`）。政府標準利用規約。出典: 国土交通省 高精度測位社会プロジェクト
+- AR で方角を見る（`assets/arguide.js`）— 端末の GPS・コンパス・カメラだけを使う（外部データなし・映像や位置はどこにも送らない）

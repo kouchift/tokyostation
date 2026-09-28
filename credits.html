@@ -22,6 +22,7 @@ code{font-size:12px;background:#EEF2F7;padding:0 3px;border-radius:3px}.box{back
 <li>「国土数値情報（高速道路時系列データ）」（国土交通省）（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">https://nlftp.mlit.go.jp/ksj/</a>）をもとに東京ステーションガイドが加工して作成（N06）</li>
 <li>「国土数値情報（道路データ）」（国土交通省）（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">https://nlftp.mlit.go.jp/ksj/</a>）をもとに東京ステーションガイドが加工して作成（N01）</li>
 <li>「国土数値情報（河川データ）」（国土交通省）（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">https://nlftp.mlit.go.jp/ksj/</a>）をもとに東京ステーションガイドが加工して作成（W05）</li>
+<li>構内図・地下通路の案内: 出典: 国土交通省 高精度測位社会プロジェクト。「東京駅周辺屋内地図オープンデータ（令和2年度更新版）」（<a href="https://www.geospatial.jp/ckan/dataset/mlit-indoor-tokyo-r2" target="_blank" rel="noopener">G空間情報センター</a>）を加工して作成</li>
 <li>地形（陰影・3D の起伏）・地面の高さ: 国土地理院「標高タイル」（<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル一覧</a>）を加工して作成</li>
 <li>施設・催し・ライブカメラの一部: 東京都オープンデータカタログサイト（各局・各区市町村のデータ、<a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank" rel="noopener">CC BY 4.0</a>）を加工して作成</li>
 <li>文章の抜粋: Wikipedia 日本語版の各記事（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja" target="_blank" rel="noopener">CC BY-SA 4.0</a>）。抜粋・要約した部分は、カードの中で元の記事にリンクしています。この部分を再利用するときは同じ CC BY-SA 4.0 になります</li>
@@ -106,6 +107,11 @@ code{font-size:12px;background:#EEF2F7;padding:0 3px;border-radius:3px}.box{back
 <li>アイコン — Material Symbols Outlined（Google, Apache License 2.0）。v87 からサブセット（約 50 個）を <code>assets/fonts/msymbols.woff2</code> に同梱（Google への通信なし）。作り直しは <code>tools/fetch_icons.py</code>。</li>
 <li>レベチなレストラン — 制作者本人の KML（元の一覧: リンベル 選べる体験ギフト「食を愉しむひととき」掲載店舗）。店名・住所・プラン・内容・利用時間・定休日・アクセス・公式サイト・カタログ頁は一覧作成時点のもの。評価（★）は本人の主観。<code>tools/import_kml.py</code> で <code>data/levechi.js</code> に変換。</li>
 <li>見た目の参考 — 本人が Google AI Studio で作った「Tokyo Station Wayfinding」（Station Map／Station Detail）。色・角丸・並びを参考にし、コード・画像は使っていない。</li>
+</ul>
+<h3>v150</h3>
+<ul>
+<li><code>data/indoor/</code>（構内図・地下通路の案内）— 国土交通省「東京駅周辺屋内地図オープンデータ（令和2年度更新版）」（高精度測位社会プロジェクト、<a href="https://www.geospatial.jp/ckan/dataset/mlit-indoor-tokyo-r2" target="_blank" rel="noopener">https://www.geospatial.jp/ckan/dataset/mlit-indoor-tokyo-r2</a> ）を加工して作成（<code>tools/build_indoor.py</code>）。政府標準利用規約。出典: 国土交通省 高精度測位社会プロジェクト</li>
+<li>AR で方角を見る（<code>assets/arguide.js</code>）— 端末の GPS・コンパス・カメラだけを使う（外部データなし・映像や位置はどこにも送らない）</li>
 </ul>
 
 </main></body></html>
