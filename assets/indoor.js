@@ -133,6 +133,7 @@ function setArea(id, near) {
     S.ov.querySelector(".ind__fl").innerHTML = I.fl.map(function (f) { return '<button type="button" data-fl="' + f[0] + '" title="' + esc(f[2] || f[1]) + '">' + esc(f[1]) + "</button>"; }).join("");
     S.ov.querySelector('[data-sel="from"]').innerHTML = optHtml("from"); S.ov.querySelector('[data-sel="to"]').innerHTML = optHtml("to");
     S.ov.querySelector("[data-res]").innerHTML = "";
+    extRow();
     S.ov.classList.toggle("ind--nw", I.k === "nw");
     S.ov.querySelector(".ind__leg").innerHTML = I.k === "nw"
       ? '<i class="lw"></i>歩道 <i class="lx"></i>横断歩道 <i class="lu"></i>地下・建物 <i class="lst"></i>階段'
@@ -148,6 +149,31 @@ function setArea(id, near) {
       var n = nearestNode(x, y, null, 600); if (n >= 0) { var g = graph(); fl = flOf(g.o(n)); showFloor(fl); fitTo(g.x(n), g.y(n), I.k === "nw" ? 300 : 160); return; }
     }
     showFloor(fl);
+  });
+}
+/* v154: «駅の外» まで 1 本の道順に: 重なる歩道の地区（ほこナビ）のうち、この地区のまわり 700 m を、この地区の座標に写したもの
+   （data/indoor/<地区>__out.js・tools/build_indoor.py が作る）を読んで、通路網・行き先・線に足す。出入口と歩道はつなぎ目のリンクで結ぶ */
+function extRow() {
+  var a = areaOf(I.id), row = S.ov.querySelector(".ind__row--x"), b = S.ov.querySelector("[data-ext]");
+  row.hidden = !(a && a.xkb);
+  if (a && a.xkb) b.textContent = I._x ? "🌳 駅の外（まわりの歩道）とつないでいます" : "🌳 駅の外の目的地まで（まわりの歩道をつなぐ・" + a.xkb + "KB）";
+  b.disabled = !!I._x;
+}
+function loadExt(cb) {
+  var id = I.id; if (I._x) { if (cb) cb(); return; }
+  var b = S.ov.querySelector("[data-ext]"); b.textContent = "🌳 読み込んでいます…"; b.disabled = true;
+  script("data/indoor/" + id + "__out.js", function () {
+    var J = RG.INDOOR[id], X = RG.INDOORX && RG.INDOORX[id]; if (!J || !X || J._x) return;
+    var n0 = J.nd.length / 3, lk = J.lk.slice(), i;
+    for (i = 0; i < X.lk.length; i += 6) lk.push(X.lk[i] + n0, X.lk[i + 1] + n0, X.lk[i + 2], X.lk[i + 3], X.lk[i + 4], X.lk[i + 5]);
+    for (i = 0; i < X.cn.length; i += 3) lk.push(X.cn[i], X.cn[i + 1] + n0, X.cn[i + 2], 0, 0, 0);
+    J.nd = J.nd.concat(X.nd); J.lk = lk; J.pl = J.pl.concat(X.pl); J._xl = X.ln; J._xsrc = X.src; J._x = 1; GC[id] = null;
+    if (S.id !== id) return;
+    var f = S.ov.querySelector('[data-sel="from"]'), t = S.ov.querySelector('[data-sel="to"]'), fv = f.value, tv = t.value;
+    f.innerHTML = optHtml("from"); t.innerHTML = optHtml("to"); f.value = fv; t.value = tv;
+    extRow(); showFloor(S.fl);
+    S.ov.querySelector(".ind__note").insertAdjacentHTML("beforeend", " 駅の外の歩道: " + esc(X.src));
+    if (cb) cb();
   });
 }
 function nearPlace(x, y) {
@@ -188,6 +214,7 @@ function build() {
       '<div class="ind__row"><label>🟢 出発</label><select data-sel="from"></select><button type="button" class="ind__gps" data-gps="1" title="地上で、近くの行き先をさがす">📍</button></div>' +
       '<div class="ind__row"><label>🔴 目的地</label><select data-sel="to"></select></div>' +
       '<div class="ind__row ind__row--o"><label class="ind__bf"><input type="checkbox" data-bf="1"> ♿ 段差なし（エレベーター・スロープで）</label><button type="button" class="ind__go" data-go="1">道順を出す</button></div>' +
+      '<div class="ind__row ind__row--x" hidden><button type="button" class="ind__ext" data-ext="1"></button></div>' +
       '<div class="ind__res" data-res></div><p class="ind__note"></p></div>';
   document.body.appendChild(ov); S.ov = ov;
   ov.querySelector(".ind__x").addEventListener("click", close);
@@ -204,6 +231,7 @@ function build() {
   ov.querySelector("[data-bf]").addEventListener("change", function (e) { S.bf = e.target.checked; if (S.route) go(); });
   ov.querySelector("[data-go]").addEventListener("click", go);
   ov.querySelector("[data-gps]").addEventListener("click", gps);
+  ov.querySelector("[data-ext]").addEventListener("click", function () { loadExt(); });
   ov.querySelector("[data-res]").addEventListener("click", function (e) { var b = e.target.closest("[data-st]"); if (b) focusStep(+b.dataset.st); });
   var tip = ov.querySelector(".ind__tip");
   tip.addEventListener("click", function (e) {
@@ -227,8 +255,9 @@ function draw(D) {
   var h = D.fl.map(function (a) { return '<path class="i-fl" d="' + dec(a, 0, 1) + '"/>'; }).join("");
   var K = { w: 1, s: 1, t: 1, st: 1, ev: 1, es: 1, sl: 1, tk: 1, "if": 1, wr: 1, x: 1, o: 1, pb: 1, sm: 1, pf: 1 };
   h += D.sp.map(function (a) { return '<path class="i-' + (K[a[0]] ? a[0] : "o") + '" d="' + dec(a, 1, 1) + '"/>'; }).join("");
-  if (D.ln && D.ln.length) {                                        // 通路網だけの地区: 線の種類ごとにまとめて 1 本の path（数千本でも軽く）
-    var by = {}; D.ln.forEach(function (a) { (by[a[0]] = by[a[0]] || []).push(dec(a, 1, 0)); });
+  var LN = (D.ln || []).concat((I._xl && I._xl[flRow(S.fl)[1]]) || []);   // «駅の外» の歩道の線も
+  if (LN.length) {                                                  // 通路網だけの地区: 線の種類ごとにまとめて 1 本の path（数千本でも軽く）
+    var by = {}; LN.forEach(function (a) { (by[a[0]] = by[a[0]] || []).push(dec(a, 1, 0)); });
     ["w", "i", "u", "b", "x", "es", "st", "ev"].forEach(function (k) { if (by[k]) h += '<path class="i-l i-l' + k + '" d="' + by[k].join("") + '"/>'; });
   }
   h += I.fc.filter(function (f) { return flOf(f[1]) === S.fl; }).map(function (f) { return '<text class="i-ic" x="' + f[2] + '" y="' + f[3] + '">' + (f[0] === "ev" ? "🛗" : f[0] === "tm" ? "♿" : "🚻") + "</text>"; }).join("");
@@ -283,7 +312,11 @@ function marks() {
 function targetsOf(sp) {
   var t = {};
   if (sp.near) { I.fc.forEach(function (f) { if (f[0] === sp.near || (sp.near === "t" && f[0] === "tm")) { var n = nearestNode(f[2], f[3], f[1], 25); if (n >= 0) t[n] = 1; } }); }
-  else { var n = nearestNode(sp.x, sp.y, sp.o2, I.k === "nw" ? 250 : 60); if (n >= 0) t[n] = 1; }
+  else {
+    var lim = I.k === "nw" ? 250 : 60, n = nearestNode(sp.x, sp.y, sp.o2, lim);
+    if (n < 0) n = nearestNode(sp.x, sp.y, null, 40);                // その階に通路の点がない（出口の地上の点など）: いちばん近い点へ
+    if (n >= 0) t[n] = 1;
+  }
   return t;
 }
 function go() {

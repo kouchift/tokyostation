@@ -10,8 +10,8 @@
      中身が同じファイルは端末の中のものをそのまま使う。変わったファイルだけを読む。
    v139: 画面（index.html）は «新しいものを取りに行く。3 秒で返事が無ければ、前のもの» にした（電波が弱い所でも開ける）
    ========================================================================= */
-var CACHE = "tsg-v153";
-var V = "?v=153";     // index.html の data-build と合わせる
+var CACHE = "tsg-v154";
+var V = "?v=154";     // index.html の data-build と合わせる
 var FILES = "tsg-files";   // 中身の印つきで置く場所（版をまたいで残す）
 var META = "tsg-meta";     // data/filehash.json を置く場所
 

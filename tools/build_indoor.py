@@ -53,6 +53,8 @@ AREAS = [{"id": "tokyo", "k": "map", "src": "mlit", "n": "東京駅まわり（�
           "url": "https://www.geospatial.jp/ckan/dataset/eb79c194-3f26-4c41-9b48-6664f4684ebc/resource/d441c885-6a15-476b-836d-cddd9a5fa006/download/shapefile.zip", "page": "https://www.geospatial.jp/ckan/dataset/mlit-indoor-tokyo-r2"},
          {"id": "shinjuku", "k": "map", "src": "mlit", "n": "新宿駅まわり（構内・地下街）", "t": "新宿駅周辺屋内地図オープンデータ（令和2年度更新版）", "upd": "2021-03",
           "url": "https://www.geospatial.jp/ckan/dataset/ecabe2e2-21a9-4a72-8dee-0b34e2c34fb6/resource/f78d039e-7bb6-4b6a-9f5f-2b5a39e309d6/download/shapefile.zip", "page": "https://www.geospatial.jp/ckan/dataset/mlit-indoor-shinjuku-r2"}]
+AREAS += [{"id": "ikebukuro-station", "k": "map", "src": "osm", "n": "池袋駅（地下通路・出口）", "st1": "池袋", "bb": [35.7255, 139.7060, 35.7335, 139.7160], "upd": "",
+           "t": "© OpenStreetMap contributors（ODbL）の池袋駅の地下通路・出口（有志が登録したもので、すべての通路があるとは限りません）", "page": "https://www.openstreetmap.org/"}]
 AREAS += [{"id": i, "k": "map", "src": "hokomap", "n": "大江戸線 " + n + "駅（構内）", "st1": n, "pkg": p} for i, p, n in OEDO]
 AREAS += [{"id": i, "k": "nw", "src": "hokonw", "n": n, "pkg": p} for i, p, n in NW]
 
@@ -159,8 +161,9 @@ def osm_entrances(bb):
 class Area:
     def __init__(s, cfg, la0, lo0):
         s.cfg = cfg; s.P = Proj(la0, lo0); s.geo = collections.defaultdict(lambda: {"fl": [], "sp": [], "ln": [], "lb": []})
-        s.places = []; s.nodes = []; s.links = []; s.fc = []; s.flname = {}
-    def node(s, lo, la, o): s.nodes.append(s.P(lo, la) + [int(round(float(o) * 2))]); return len(s.nodes) - 1
+        s.places = []; s.nodes = []; s.links = []; s.fc = []; s.flname = {}; s.io = []; s.ll = []
+    def node(s, lo, la, o, io=None):
+        s.nodes.append(s.P(lo, la) + [int(round(float(o) * 2))]); s.io.append(str(io) if io is not None else ""); s.ll.append((la, lo)); return len(s.nodes) - 1
     def bbox(s):
         xs = [n[0] for n in s.nodes]; ys = [n[1] for n in s.nodes]
         f = lambda x, y: (s.P.la0 - y / Q / s.P.ky, s.P.lo0 + x / Q / s.P.kx)
@@ -251,7 +254,7 @@ def build_mlit(cfg):
         if best:
             nm = area_title(folder); A.places.append({"n": nm, "c": "施設", "k": "bldg", "o": best[0], "p": best[1]}); A.geo[best[0]]["lb"].append([nm] + best[1])
     nid = {}
-    for r in NR: nid[r["node_id"]] = A.node(r["lon"], r["lat"], r["ordinal"])
+    for r in NR: nid[r["node_id"]] = A.node(r["lon"], r["lat"], r["ordinal"], r.get("in_out"))
     _, LR = reader(lbase)
     for r in LR:
         a, b = nid.get(r["start_id"]), nid.get(r["end_id"])
@@ -303,7 +306,7 @@ def build_hokomap(cfg):
                 if c == "F108": exits.append((o, p, g["coordinates"]))
     nid = {}
     for f in N:
-        pr = f["properties"]; nid[pr["node_id"]] = A.node(pr["lon"], pr["lat"], pr["floor"])
+        pr = f["properties"]; nid[pr["node_id"]] = A.node(pr["lon"], pr["lat"], pr["floor"], pr.get("in_out"))
     for f in L:
         pr = f["properties"]; a, b = nid.get(pr["start_id"]), nid.get(pr["end_id"])
         if a is not None and b is not None: A.links.append(link_row(pr, a, b))
@@ -344,7 +347,7 @@ def build_hokonw(cfg):
         if not g: continue
         try: o = float(pr.get("floor") or 0)
         except ValueError: o = 0
-        nid[pr["node_id"]] = A.node(g["coordinates"][0], g["coordinates"][1], o)
+        nid[pr["node_id"]] = A.node(g["coordinates"][0], g["coordinates"][1], o, pr.get("in_out"))
     for f in lj:
         pr = f["properties"]; a, b = nid.get(pr["start_id"]), nid.get(pr["end_id"])
         if a is None or b is None: continue
@@ -361,6 +364,151 @@ def build_hokonw(cfg):
         A.places.append({"n": n if re.search(r"(駅|停留場|停留所)$", n) else n + "駅", "c": "駅の代表点", "k": "st", "o": 0.0, "p": P(lo, la)})
     return A
 
+# ---------------------------------------------------------------- OpenStreetMap の屋内の通路（池袋駅: 国交省・ほこナビに構内のデータがないため）
+def overpass(q, cache):
+    p = os.path.join(TMP, cache)
+    if os.path.exists(p) and os.path.getsize(p) > 100: return json.load(open(p, encoding="utf-8"))
+    err = None
+    for k in range(9):
+        url = OVERPASS_ALL[k % len(OVERPASS_ALL)]
+        try:
+            req = urllib.request.Request(url, data=urllib.parse.urlencode({"data": q}).encode(), headers={"User-Agent": "tokyostation-guide"})
+            body = urllib.request.urlopen(req, timeout=200).read(); d = json.loads(body); open(p, "wb").write(body); return d
+        except Exception as e:
+            err = e; time.sleep(8 + 4 * k)
+    raise RuntimeError("Overpass に届きませんでした: %s" % err)
+def osm_level(v):
+    try: return [float(x) for x in str(v).replace(",", ";").split(";") if x.strip() != ""]
+    except ValueError: return []
+def build_osm(cfg):
+    bb = cfg["bb"]; B = "%f,%f,%f,%f" % tuple(bb)
+    HW = "^(footway|steps|corridor|elevator|pedestrian|path)$"
+    q = ('[out:json][timeout:180];(way["highway"~"%s"]["level"](%s);way["highway"~"%s"]["indoor"](%s);way["highway"~"%s"]["tunnel"](%s);'
+         'way["indoor"~"^(room|area|corridor)$"](%s);way["railway"="platform"](%s);node["railway"~"entrance"](%s);node["highway"="elevator"](%s);node["railway"="ticket_gate"](%s););out geom;') % (HW, B, HW, B, HW, B, B, B, B, B, B)
+    OJ = overpass(q, "osm_" + cfg["id"] + ".json"); E = OJ["elements"]
+    cfg["upd"] = ((OJ.get("osm3s") or {}).get("timestamp_osm_base") or "")[:7]
+    W = [e for e in E if e["type"] == "way"]; N = [e for e in E if e["type"] == "node"]
+    la0 = (bb[0] + bb[2]) / 2; lo0 = (bb[1] + bb[3]) / 2
+    A = Area(cfg, la0, lo0); P = A.P
+    # OSM の level（日本では 0 = 地上の階）。画面の名前は 0→1F・1→2F・-1→B1 のように（«GL» は使わない）
+    lvl = {}
+    R = [w for w in W if w["tags"].get("highway")]
+    def wl(w):
+        L = osm_level(w["tags"].get("level", ""))
+        if not L: L = [-1.0] if w["tags"].get("tunnel") in ("yes", "building_passage") or w["tags"].get("indoor") else [0.0]
+        return L
+    for w in R:                                                      # 1 つの階だけの通路から、点の階を決める
+        L = wl(w)
+        if len(L) == 1:
+            for n in w["nodes"]: lvl.setdefault(n, L[0])
+    for w in R:                                                      # 階をまたぐ階段（-1;-2 など）: 決まっていない点は近い端の階
+        L = wl(w)
+        if len(L) > 1:
+            ns = w["nodes"]; a = lvl.get(ns[0], L[0]); b = lvl.get(ns[-1], L[-1] if lvl.get(ns[0]) != L[-1] else L[0])
+            for i, n in enumerate(ns): lvl.setdefault(n, a if i < len(ns) / 2 else b)
+    nid = {}
+    def nd(osmid, lat, lon):
+        if osmid not in nid: nid[osmid] = A.node(lon, lat, lvl.get(osmid, 0.0), "3")
+        return nid[osmid]
+    for w in R:
+        t = w["tags"]; g = w.get("geometry") or []; ns = w["nodes"]
+        if len(g) != len(ns) or len(ns) < 2: continue
+        ids = [nd(n, q2["lat"], q2["lon"]) for n, q2 in zip(ns, g)]
+        ty = {"steps": "6", "elevator": "4"}.get(t.get("highway"), "1")
+        if t.get("conveying"): ty = "5"
+        for a, b in zip(ids, ids[1:]):
+            d = math.hypot((A.nodes[a][0] - A.nodes[b][0]) / Q, (A.nodes[a][1] - A.nodes[b][1]) / Q)
+            A.links.append(link_row({"route_type": ty, "distance": d, "direction": "1"}, a, b))
+        pts = dp([P(q2["lon"], q2["lat"]) for q2 in g], 0.6)
+        style = "st" if ty == "6" else "ev" if ty == "4" else "es" if ty == "5" else ("i" if wl(w)[0] != 0 else "w")
+        A.geo[max(lvl.get(ns[0], 0.0), lvl.get(ns[-1], 0.0))]["ln"].append([style] + enc(pts))
+    for w in W:                                                      # ホーム・部屋の面
+        t = w["tags"]; g = w.get("geometry") or []
+        if t.get("highway") or len(g) < 3: continue
+        L = osm_level(t.get("level", "")) or [0.0]
+        k = "pf" if t.get("railway") == "platform" else "w" if t.get("indoor") in ("corridor", "area") else "o"
+        ring = dp([P(q2["lon"], q2["lat"]) for q2 in g], 0.6)
+        if len(ring) >= 3: A.geo[L[0]]["sp"].append([k] + enc(ring))
+        if k == "pf" and (t.get("ref") or t.get("name")):
+            c = [sum(q2[0] for q2 in ring) // len(ring), sum(q2[1] for q2 in ring) // len(ring)]
+            A.geo[L[0]]["lb"].append(["ホーム " + (t.get("ref") or t.get("name"))] + c)
+    for e in N:                                                      # 出口・改札
+        t = e["tags"]; ref = (t.get("ref") or "").strip(); nm = (t.get("name") or "").strip()
+        o = (osm_level(t.get("level", "")) or [lvl.get(e["id"], 0.0)])[0]
+        if "entrance" in t.get("railway", ""):
+            nm2 = re.sub(r"^池袋駅?[\s\u3000]*", "", nm); m = re.search(r"\((\d+[a-z]?)\)$", nm2)
+            if m: nm2 = m.group(1)
+            if not ref and re.match(r"^[A-Z]?\d+[a-z]?$", nm2): ref = nm2
+            lab = ("出口 " + ref) if ref else nm2
+            if not lab or re.match(r"^[A-Za-z ]+$", lab): continue          # 名前のない出入口は行き先にしない
+            A.places.append({"n": lab, "c": "池袋駅（OpenStreetMap）", "k": "exit", "o": o, "p": P(e["lon"], e["lat"])})
+            if e["id"] in nid: A.io[nid[e["id"]]] = "2"                  # 地上とつなぐ候補
+        elif t.get("railway") == "ticket_gate":
+            A.places.append({"n": "改札" + (" " + nm if nm else ""), "c": "池袋駅（OpenStreetMap）", "k": "gate", "o": o, "p": P(e["lon"], e["lat"])})
+        elif t.get("highway") == "elevator":
+            A.fc.append(["ev", int(round(o * 2))] + P(e["lon"], e["lat"]))
+    for w in W:                                                      # 名前のある地下街・通路
+        n = (w["tags"].get("name") or "").strip(); g = w.get("geometry") or []
+        if n and not re.match(r"^(Entrace|Entrance|[0-9]+$|[A-Za-z ]+$)", n) and n not in ("池袋", "池袋駅") and g:
+            m = g[len(g) // 2]; o = (osm_level(w["tags"].get("level", "")) or [0.0])[0]
+            A.places.append({"n": n, "c": "地下街・通路（OpenStreetMap）", "k": "mall", "o": o, "p": P(m["lon"], m["lat"])})
+    # 画面の階の名前（OSM: 0 = 1F）
+    A.flname = {}
+    A.osm = True
+    return A
+
+# ---------------------------------------------------------------- «駅の外» への延長（構内図の地区 ＋ 重なる歩道の地区）
+EXT_M = 700                                                        # 構内図の範囲から何 m 先まで歩道を入れるか
+def build_ext(A, nw_areas):
+    """構内図の地区 A に、重なる歩道の地区（build_hokonw の結果）の «範囲の近く» だけを A の座標に写して足す。
+       つなぎ目: A の «出入口» の点（in_out=2）から 25 m 以内の歩道の点。なければ屋外（in_out=1）の点から 12 m 以内"""
+    bb = A.bbox(); dla = EXT_M / 110574; dlo = EXT_M / (111320 * math.cos(math.radians(bb[0])))
+    box = [bb[0] - dla, bb[1] - dlo, bb[2] + dla, bb[3] + dlo]
+    xs_nodes = []; xs_links = []; xs_ln = collections.defaultdict(list); key = {}; srcs = []
+    for B in nw_areas:
+        nb = B.bbox()
+        if nb[2] < box[0] or nb[0] > box[2] or nb[3] < box[1] or nb[1] > box[3]: continue
+        srcs.append(B.cfg["t"]); m = {}
+        for i, (la, lo) in enumerate(B.ll):
+            if not (box[0] <= la <= box[2] and box[1] <= lo <= box[3]): continue
+            x, y = A.P(lo, la); o2 = B.nodes[i][2]; k = (round(x / 2), round(y / 2), o2)   # 1 m 以内・同じ階の点は同じ点に（重なる地区のだぶり）
+            if k not in key: key[k] = len(xs_nodes); xs_nodes.append([x, y, o2])
+            m[i] = key[k]
+        for l in B.links:
+            if l[0] in m and l[1] in m and m[l[0]] != m[l[1]]: xs_links.append([m[l[0]], m[l[1]]] + l[2:])
+        for o, g in B.geo.items():
+            for line in g["ln"]:
+                # 線は B の座標 → 緯度経度 → A の座標（差分の列を戻して写す）
+                x = y = 0; pts = []
+                for j in range(1, len(line), 2):
+                    x += line[j]; y += line[j + 1]
+                    la = B.P.la0 - y / Q / B.P.ky; lo = B.P.lo0 + x / Q / B.P.kx
+                    pts.append(A.P(lo, la))
+                if any(box[0] <= (A.P.la0 - py / Q / A.P.ky) <= box[2] and box[1] <= (A.P.lo0 + px / Q / A.P.kx) <= box[3] for px, py in pts[::3] + pts[-1:]):
+                    xs_ln[o].append([line[0]] + enc(pts))
+    if not xs_nodes: return None
+    # つなぎ目
+    cand = [i for i, io in enumerate(A.io) if io == "2"] or [i for i, io in enumerate(A.io) if io == "1"]
+    lim = 25 if any(io == "2" for io in A.io) else 12
+    grid = collections.defaultdict(list)
+    for j, n in enumerate(xs_nodes): grid[(n[0] // 60, n[1] // 60)].append(j)
+    cn = []
+    for i in cand:
+        x, y = A.nodes[i][0], A.nodes[i][1]; best = None; bd = lim * Q
+        for gx in (x // 60 - 1, x // 60, x // 60 + 1):
+            for gy in (y // 60 - 1, y // 60, y // 60 + 1):
+                for j in grid.get((gx, gy), []):
+                    d = math.hypot(xs_nodes[j][0] - x, xs_nodes[j][1] - y)
+                    if d < bd: bd, best = d, j
+        if best is not None: cn.append([i, best, int(round(bd / Q * 10))])
+    if not cn: return None                                           # つなぎ目がない（近くに歩道のデータがない）
+    places = []
+    for n, la, lo in stations_in(box):
+        x, y = A.P(lo, la)
+        if any((q[0] - x) ** 2 + (q[1] - y) ** 2 < (200 * Q) ** 2 for q in xs_nodes[::2]):
+            places.append([n if re.search(r"(駅|停留場|停留所)$", n) else n + "駅", "駅の外（駅の代表点）", "st", 0.0, x, y])
+    return {"nd": [v for n in xs_nodes for v in n], "lk": [v for l in xs_links for v in l], "cn": [v for c in cn for v in c], "ln": xs_ln, "pl": places, "src": srcs}
+
 # ---------------------------------------------------------------- 書き出し
 ORDER = {"gate": 0, "exit": 1, "plat": 2, "st": 3, "link": 4, "mall": 5, "bldg": 6, "door": 7}
 def dedupe(places):
@@ -371,15 +519,19 @@ def dedupe(places):
     return sorted(out, key=lambda p: (ORDER[p["k"]], p["c"], p["n"]))
 def write_area(A):
     cfg = A.cfg; aid = cfg["id"]
-    if cfg["k"] == "map": FL = sorted(o for o in A.geo if A.geo[o]["fl"] or A.geo[o]["sp"])
+    if cfg["k"] == "map":
+        FL = sorted(o for o in A.geo if A.geo[o]["fl"] or A.geo[o]["sp"] or A.geo[o]["ln"])
+        if getattr(A, "osm", False):                               # OSM: 通路の点が 5 つ未満の階（屋上など）は外す
+            c = collections.Counter(n[2] / 2 for n in A.nodes); FL = [o for o in FL if c.get(o, 0) >= 5] or FL
     else:
         c = collections.Counter(n[2] / 2 for n in A.nodes)
         FL = sorted(f for f in set(float(round(o)) for o in c) if sum(v for k, v in c.items() if round(k) == f) >= 3) or [0.0]
         for o in list(A.geo):                                            # 線は近い階へまとめる
             t = min(FL, key=lambda f: (abs(f - o), -f))
             if t != o: A.geo[t]["ln"] += A.geo[o]["ln"]; del A.geo[o]
-    names = {o: lv(o) for o in FL}
-    src = (SRC_MLIT if cfg["src"] == "mlit" else SRC_HOKO).format(t=cfg["t"])
+    if getattr(A, "ext", None) and 0.0 not in FL: FL = sorted(FL + [0.0])   # «駅の外»（地上の歩道）を描く階
+    names = {o: (("B" + fmt(-o)) if o < 0 else (fmt(o + 1) + "F")) if getattr(A, "osm", False) else lv(o) for o in FL}
+    src = {"mlit": SRC_MLIT, "osm": "{t}"}.get(cfg["src"], SRC_HOKO).format(t=cfg["t"])
     places = dedupe(A.places)
     meta = {"id": aid, "k": cfg["k"], "n": cfg["n"], "o": [A.P.la0, A.P.lo0], "kk": [A.P.kx * Q, A.P.ky * Q], "q": Q,
             "fl": [[o, names[o], A.flname.get(o, "")] for o in FL], "pl": [[p["n"], p["c"], p["k"], p["o"]] + p["p"] for p in places],
@@ -392,13 +544,22 @@ def write_area(A):
     for o in FL:
         g = A.geo[o]
         size += w(aid + "_" + names[o] + ".js", {"o": o, "fl": g["fl"], "sp": g["sp"], "ln": g["ln"], "lb": g["lb"]}, "RG.INDOORF = RG.INDOORF || {}; RG.INDOORF[" + json.dumps(aid + "/" + names[o]) + "]")
+    ext = getattr(A, "ext", None); xkb = 0
+    if ext:
+        xl = {}
+        for o, L in ext["ln"].items():                                 # 歩道の線は、この地区の近い階へ
+            t = min(FL, key=lambda f: (abs(f - o), -f)); xl.setdefault(names[t], []).extend(L)
+        xs = {"nd": ext["nd"], "lk": ext["lk"], "cn": ext["cn"], "pl": ext["pl"], "ln": xl,
+              "src": "国土交通省「" + "」「".join(ext["src"]) + "」（歩行空間ナビ・データプラットフォーム・公共データ利用規約 第1.0版）を加工して作成"}
+        xkb = w(aid + "__out.js", xs, "RG.INDOORX = RG.INDOORX || {}; RG.INDOORX[" + json.dumps(aid) + "]") // 1024
     bb = A.bbox()
     def near_net(la, lo, lim=200):                                   # 駅の代表点から 200 m 以内に通路網がある駅だけ（範囲の四角に入るだけの駅は外す）
         x, y = A.P(lo, la)
         return any((nd[0] - x) ** 2 + (nd[1] - y) ** 2 < (lim * Q) ** 2 for nd in A.nodes[::3])
     sts = [cfg["st1"]] if cfg.get("st1") else sorted(set(n for n, la, lo in stations_in(bb) if near_net(la, lo)))
     print("%-20s %-4s 階 %-30s 行き先 %4d  ノード %6d リンク %6d  %5d KB" % (aid, cfg["k"], ",".join(names[o] for o in FL), len(places), len(A.nodes), len(A.links), size // 1024))
-    return {"id": aid, "n": cfg["n"], "k": cfg["k"], "bb": bb, "st": sts, "kb": size // 1024, "upd": cfg.get("upd", ""), "t": cfg["t"], "page": cfg.get("page", "")}
+    if ext: print("%-20s     «駅の外» 歩道の点 %d・つなぎ目 %d・駅 %d  %d KB" % ("", len(ext["nd"]) // 3, len(ext["cn"]) // 3, len(ext["pl"]), xkb))
+    return {"id": aid, "n": cfg["n"], "k": cfg["k"], "bb": bb, "st": sts, "kb": size // 1024, "xkb": xkb, "upd": cfg.get("upd", ""), "t": cfg["t"], "page": cfg.get("page", "")}
 
 def main():
     want = set(sys.argv[1:])
@@ -407,13 +568,21 @@ def main():
     if os.path.exists(idx_p):
         m = re.search(r"RG\.INDOOR_AREAS = (\[.*\]);", open(idx_p, encoding="utf-8").read(), re.S)
         if m: old = {a["id"]: a for a in json.loads(m.group(1))}
-    out = []
+    out = {}
+    NWA = {}
+    need_nw = not want or any(c["k"] == "map" for c in AREAS if c["id"] in want)
+    for cfg in AREAS:                                                # 歩道の地区は、構内図の «駅の外» にも使うので先に作る
+        if cfg["src"] != "hokonw": continue
+        if want and cfg["id"] not in want and not need_nw: continue
+        NWA[cfg["id"]] = build_hokonw(dict(cfg))
     for cfg in AREAS:
         if want and cfg["id"] not in want:
-            if cfg["id"] in old: out.append(old[cfg["id"]])
+            if cfg["id"] in old: out[cfg["id"]] = old[cfg["id"]]
             continue
-        A = {"mlit": build_mlit, "hokomap": build_hokomap, "hokonw": build_hokonw}[cfg["src"]](cfg)
-        out.append(write_area(A))
+        A = NWA.get(cfg["id"]) or {"mlit": build_mlit, "hokomap": build_hokomap, "osm": build_osm}[cfg["src"]](cfg)
+        if cfg["k"] == "map": A.ext = build_ext(A, list(NWA.values()))
+        out[cfg["id"]] = write_area(A)
+    out = [out[c["id"]] for c in AREAS if c["id"] in out]
     s = ("/* v151: 構内図・通路の案内のある地区（tools/build_indoor.py が作る。直さない）\n"
          "   id / n 名前 / k map=構内図・nw=通路網だけ / bb 範囲 [南,西,北,東] / st 関係する駅 / kb 大きさ / upd データの更新 / t 元データの名前 / page 元データのページ */\n"
          "RG.INDOOR_AREAS = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n")

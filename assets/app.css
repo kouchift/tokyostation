@@ -4595,3 +4595,4 @@ body.indoor-on{overflow:hidden}
 .ind__leg .lw{background:#8E99A6}.ind__leg .lx{background:#E0A100}.ind__leg .lu{background:#3F6FBF}.ind__leg .lst{background:#8E6FD0}
 .i-pl--st{fill:#C62828;font-size:calc(12px * var(--u))}.i-pl--plat{fill:#2E7D32}
 .ind--nw .ind__svg{background:#F3F5F8}
+.ind__row--x{margin-top:2px}.ind__ext{width:100%;border:1px dashed #6A9E6F;background:#F1F8F2;color:#1B5E20;border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;cursor:pointer;text-align:left}.ind__ext:disabled{border-style:solid;opacity:.85;cursor:default}
