@@ -100,6 +100,7 @@ RG.showGrave = function (id, era) {
     '<p class="hp__hook">🤔 ' + esc(x.hook) + "</p>" +
     '<div class="eh__kid">' + x.kid.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
     '<div class="eh__hee"><b>📖 エピソード・へぇ〜！</b><ul>' + x.epi.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" +
+    (x.gx ? '<div class="grx" data-grx="' + esc(x.id) + '"><p class="hkg__ld">🧭 くわしい人生を読み込んでいます…</p></div>' : "") +   // v155: どんな人生？・関係する人物（data/graves_x/<id>.js）
     (x.koji && x.koji.length ? '<div class="hp__koji"><b>📜 名言・故事成語</b>' + x.koji.map(function (k) {
       return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span></div>"; }).join("") + "</div>" : "") +
     '<div class="grv__visit"><b>🪦 お墓はここ</b><p class="grv__gn">' + esc(x.grave) + (x.ad && x.visit.indexOf(x.ad) < 0 ? "<small>" + esc(x.ad) + "</small>" : "") + "</p>" +
@@ -121,9 +122,32 @@ RG.showGrave = function (id, era) {
   var m = RG.openModal("🪦 " + x.n.replace(/（.*?）/g, "") + " のお墓", html);
   bindCommon(m, x);
   loadImg(m, x.imgwp || x.wp, x.ip);
+  if (x.gx) loadX(m, x);
   if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(m, gSpot(x));
   if (RG.track) try { RG.track("grave", x.id); } catch (e) {}
 };
+/* v155: くわしい人生（life = [{h, p:[…]}]）と関係する人物（rp = [[名前, 関係, お墓のid]]）。{漢字|かな} はふりがな */
+var XL = {};
+function loadX(m, x) {
+  var box = m.querySelector("[data-grx]"); if (!box) return;
+  var go = function () {
+    var d = RG.GRAVEX && RG.GRAVEX[x.id]; if (!box.isConnected) return;
+    if (!d) { box.remove(); return; }
+    var rb = RG.ruby || esc;
+    box.innerHTML = '<h4 class="grx__h">🧭 どんな人生を生きた人？（くわしく）</h4>' + (d.life || []).map(function (s) {
+        return '<div class="grx__sec"><h5>' + rb(s.h) + "</h5>" + s.p.map(function (t) { return "<p>" + rb(t) + "</p>"; }).join("") + "</div>"; }).join("") +
+      (d.rp && d.rp.length ? '<h4 class="grx__h">👥 関係する人物</h4><div class="grx__rp">' + d.rp.map(function (r) {
+        var g = r[2] && r[2] !== x.id && byId(r[2]);
+        return "<div><b>" + rb(r[0]) + "</b><span>" + rb(r[1]) + "</span>" + (g ? '<button class="grv__c" type="button" data-to="' + esc(g.id) + '">🪦 ' + esc(g.n.replace(/（.*?）/g, "")) + " のお墓へ</button>" : "") + "</div>"; }).join("") + "</div>" : "");
+    box.querySelectorAll("[data-to]").forEach(function (b) { b.addEventListener("click", function () { RG.showGrave(b.getAttribute("data-to")); }); });
+  };
+  if (RG.GRAVEX && RG.GRAVEX[x.id]) { go(); return; }
+  if (XL[x.id]) { XL[x.id].push(go); return; } XL[x.id] = [go];
+  var v = document.documentElement.getAttribute("data-build") || "", s = document.createElement("script"); s.async = true;
+  s.src = "data/graves_x/" + x.id + ".js" + (v ? "?v=" + v : "");
+  s.onload = s.onerror = function () { var w = XL[x.id]; XL[x.id] = null; w.forEach(function (f) { try { f(); } catch (e) {} }); };
+  document.head.appendChild(s);
+}
 function bindCommon(m, x, era) {
   m.querySelectorAll("[data-to]").forEach(function (b) { b.addEventListener("click", function () { RG.showGrave(b.getAttribute("data-to")); }); });
   var f = m.querySelector("[data-gfly]");

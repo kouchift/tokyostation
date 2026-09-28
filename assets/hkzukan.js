@@ -193,6 +193,7 @@ RG.wpGallery = function (box, titles, likeKey, pre) {
 
 /* ---------------- カード ---------------- */
 function byId(id) { var r = null, ks = Object.keys(RG.HK || {}).concat(Object.keys(RG.HKL || {})); ks.some(function (pf) { return D(pf).some(function (x) { if (x.id === id) { r = x; return true; } }); }); return r; }
+RG.hkById = byId;
 RG.hkCard = function (id) {
   var x0 = byId(id); if (!x0) return;
   var x = fullOf(x0);
@@ -244,6 +245,7 @@ RG.hkCard = function (id) {
   var f = m.querySelector("[data-hkfly]");
   if (f) f.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(x.la, x.lo, 50); if (RG.tripStatus) RG.tripStatus("🏯 " + esc(x.n), "info", 4000); });
   m.querySelectorAll("[data-hkev]").forEach(function (b) { b.addEventListener("click", function () { RG.histOpen({ ev: b.getAttribute("data-hkev") }); }); });
+  if (RG.hkLongBtn) RG.hkLongBtn(m, x.id);   // v155: «じっくり読む»（読み物があるカードだけ）
   if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(m, P);
   // 一覧の既読の印を更新（窓が開いていれば）
   var it = document.querySelector('.hkz__it[data-hkc="' + x.id + '"]'); if (it) it.classList.add("rd");

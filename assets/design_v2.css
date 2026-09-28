@@ -600,3 +600,18 @@ body.night .hkc__story p, body.night .hkc__lead { color: #eee; } body.night .hkc
 .hl__done { display: block; width: 100%; min-height: 54px; margin: 16px 0 10px; border: 0; border-radius: 16px; font: inherit; font-size: 17px; font-weight: 900; color: #fff; background: linear-gradient(135deg, #2E7D32, #66BB6A); cursor: pointer; } .hl__done.on { background: #E8F5E9; color: #2E7D32; }
 body.night .hl__intro { background: #2c2a1c; color: #f3ecd8; } body.night .hl__sec p { color: #eee; } body.night .hl__toc, body.night .hl__wi, body.night .hl__words summary { background: #262b31; color: #eee; }
 body.night .hl__num div { background: #1a2633; color: #eee; } body.night .hl__now { background: #1f2a1a; color: #e8f5e9; } body.night .hl__moshi { background: #2a1f2d; color: #eee; } body.night .hl__q { background: #2c2a1c; color: #eee; } body.night .hl__q button { background: #262b31; color: #eee; }
+/* v155: 歴オタ図鑑の «じっくり読む»（hklong.js）・ふりがな・余談・大きめの写真 */
+.hkl ruby rt, .grx ruby rt { font-size: .55em; font-weight: 500; color: #6b7280; letter-spacing: 0; }
+.hkl .hl__sec p, .grx p { line-height: 2.15; }
+.hkl__hero { margin: 0 0 8px; } .hkl__hero img { width: 100%; height: auto; max-height: 230px; object-fit: cover; border-radius: 14px; display: block; background: #ECEFF1; }
+.hkl__fig { margin: 4px 0 12px; } .hkl__fig img { width: 100%; max-width: 420px; height: auto; max-height: 240px; object-fit: cover; border-radius: 12px; display: block; background: #ECEFF1; }
+.hkl__hero figcaption, .hkl__fig figcaption, .hkl__g figcaption { font-size: 11.5px; line-height: 1.5; color: #666; margin-top: 3px; }
+.hkl__z { background: #FFF3E0; border-left: 4px solid #FB8C00; border-radius: 10px; padding: 8px 12px; margin: 6px 0 4px; } .hkl__z b { color: #E65100; font-size: 13.5px; } .hkl__z p { font-size: 15px !important; line-height: 1.95 !important; margin: 2px 0 0 !important; }
+.hkl__gal { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; } .hkl__g { margin: 0; } .hkl__g img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; display: block; background: #ECEFF1; }
+.hkl__gv { margin-top: 4px; font-size: 12px; min-height: 30px; }
+body.night .hkl__z { background: #2d2418; color: #f3e6d4; } body.night .hkl ruby rt, body.night .grx ruby rt { color: #aab; }
+/* 偉人の墓の «どんな人生？»（graves.js・data/graves_x/） */
+.grx { margin: 10px 0; } .grx__h { font-size: 16px; margin: 14px 0 6px; } .grx__sec { background: #FAFAF7; border-radius: 12px; padding: 8px 12px; margin: 0 0 8px; } .grx__sec h5 { font-size: 15px; margin: 0 0 4px; color: var(--gc, #5D4037); }
+.grx__sec p { font-size: 15px; margin: 0 0 6px; }
+.grx__rp { display: grid; gap: 6px; } .grx__rp > div { background: #F5F7FA; border-radius: 10px; padding: 6px 10px; } .grx__rp b { font-size: 14.5px; } .grx__rp span { display: block; font-size: 13.5px; line-height: 1.7; color: #444; } .grx__rp .grv__c { margin-top: 4px; font-size: 12px; min-height: 30px; }
+body.night .grx__sec, body.night .grx__rp > div { background: #262b31; color: #eee; } body.night .grx__rp span { color: #ccc; }
