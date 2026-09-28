@@ -1955,7 +1955,7 @@ var Card = (function () {
   /* 情報の鮮度順に並べる：上＝いま使う情報／下＝変わりにくい情報 */
   function render(id, d) {
     var s = RG.byId[id]; if (!s) return "";
-    var nav = (RG.arBtn ? RG.arBtn(s.n + "駅", s.la, s.lo) : "") + (RG.indoorBtn ? RG.indoorBtn(s.la, s.lo) : "");   // v150: AR で方角・構内図
+    var nav = (RG.arBtn ? RG.arBtn(s.n + "駅", s.la, s.lo) : "") + (RG.indoorBtn ? RG.indoorBtn(s.la, s.lo, s.n) : "");   // v150: AR で方角・構内図
     return plate(s) +
            (nav ? '<div class="lnks lnks--nav">' + nav + "</div>" : "") +
            (RG.whsBanner ? RG.whsBanner(s.n) : "") +

@@ -129,3 +129,6 @@ tools/build_standalone.py  単一ファイル版の生成
 ## v150
 - `data/indoor/`（構内図・地下通路の案内）— 国土交通省「東京駅周辺屋内地図オープンデータ（令和2年度更新版）」（高精度測位社会プロジェクト、https://www.geospatial.jp/ckan/dataset/mlit-indoor-tokyo-r2 ）を加工して作成（`tools/build_indoor.py`）。政府標準利用規約。出典: 国土交通省 高精度測位社会プロジェクト
 - AR で方角を見る（`assets/arguide.js`）— 端末の GPS・コンパス・カメラだけを使う（外部データなし・映像や位置はどこにも送らない）
+
+## v153〜
+- `data/indoor/<地区>.js`・`assets/indoor_areas.js` — 国土交通省「歩行空間ネットワークデータ（池袋駅周辺 ほか各地区）」「構内地図データ（都営地下鉄大江戸線 各駅）」（歩行空間ナビ・データプラットフォーム https://www.hokonavi.go.jp/opendata/ ・公共データ利用規約 第1.0版）、国土交通省「新宿駅周辺屋内地図オープンデータ（令和2年度更新版）」（G空間情報センター・政府標準利用規約）を加工して作成（`tools/build_indoor.py`）。大江戸線の出口番号の一部は © OpenStreetMap contributors（ODbL）

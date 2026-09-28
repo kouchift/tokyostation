@@ -4585,3 +4585,13 @@ html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}
 body.indoor-on{overflow:hidden}
 .lnks--nav{margin:6px 14px 0}
 .mapbs .arb{flex:1 1 auto}
+/* v151: 構内図の地区えらび・通路網だけの地区（線で描く） */
+.ind__area{flex:1 1 160px;min-width:0;max-width:60vw;font-size:13px;font-weight:700;padding:6px;border-radius:8px;border:1px solid #C9D2DE;background:#fff}
+.ind__map.ld::after{content:"読み込んでいます…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#556;background:rgba(233,237,242,.6)}
+.i-l{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.i-lw{stroke:#8E99A6;stroke-width:calc(2.2px * var(--u))}.i-li{stroke:#5C8BD6;stroke-width:calc(2.4px * var(--u))}.i-lu{stroke:#3F6FBF;stroke-width:calc(2.6px * var(--u));stroke-dasharray:calc(5px * var(--u)) calc(3px * var(--u))}
+.i-lb{stroke:#7A6C3A;stroke-width:calc(2.6px * var(--u))}.i-lx{stroke:#E0A100;stroke-width:calc(3px * var(--u))}
+.i-lst{stroke:#8E6FD0;stroke-width:calc(3px * var(--u))}.i-les{stroke:#8E6FD0;stroke-width:calc(3px * var(--u));stroke-dasharray:calc(3px * var(--u)) calc(2px * var(--u))}.i-lev{stroke:#2E9E5B;stroke-width:calc(4px * var(--u))}
+.ind__leg .lw{background:#8E99A6}.ind__leg .lx{background:#E0A100}.ind__leg .lu{background:#3F6FBF}.ind__leg .lst{background:#8E6FD0}
+.i-pl--st{fill:#C62828;font-size:calc(12px * var(--u))}.i-pl--plat{fill:#2E7D32}
+.ind--nw .ind__svg{background:#F3F5F8}
