@@ -1,3 +1,3 @@
 /* «話題の場所» の過去の分（tools/auto_buzz.py）。毎朝の自動収集で 21 日を過ぎたものをここに残す
    場所を追ったとき（駅・スポットのカードの «この場所の話題»）だけ読み込む。見出しはニュースの見出し（引用）・url は記事 */
-RG.BUZZ_ARCHIVE = [];
+RG.BUZZ_ARCHIVE = [{"id":"gne749ff7596","d":"2026-09-25","pf":"北海道","n":"【シルバーウィーク】北海道各地の観光地にぎわう＿十勝岳の噴火警戒レベル引き上げも青い池は駐車場待ちの行列＿紅葉が見ごろ迎えた十勝岳温泉も満室＿札幌では食のイベン","pl":"news","url":"https://news.google.com/rss/articles/CBMibkFVX3lxTE5vakpabEJXSUNXTVhhclhRb2NudllQU2QtWmR6N1p5WmlqajBpSFVkWUdKcERiQmRuU3pCdF82bU1hcFRDaTBjMHY5TzZZRXlrUG9jSlBMaC12Um9Vck9fYjVneFZvT3dfTVZKdTR3?oc=5","by":"Excite エキサイト","la":43.41361,"lo":142.64278,"imp":1,"at":"十勝岳温泉","ev":"ニュースで話題（Google ニュース «話題 行列 観光»）","src":"https://news.google.com/","m":1,"ld":"2026-09-25","h":2.5,"sc":0.992}];
