@@ -151,7 +151,9 @@ function loadX(m, x) {
 function bindCommon(m, x, era) {
   m.querySelectorAll("[data-to]").forEach(function (b) { b.addEventListener("click", function () { RG.showGrave(b.getAttribute("data-to")); }); });
   var f = m.querySelector("[data-gfly]");
+  if (x && RG.modalMapTo) RG.modalMapTo({ la: x.la, lo: x.lo, z: 60, n: x.n.replace(/（.*?）/g, "") + "のお墓", reopen: function () { RG.showGrave(x.id); } });   // v156
   if (f && x) f.addEventListener("click", function () {
+    if (RG.modalPeek) { RG.modalPeek(); return; }
     RG.closeModal(); RG.Map.gotoLatLng(x.la, x.lo, 60);
     if (RG.tripStatus) RG.tripStatus("🪦 " + esc(x.n) + "（" + esc(x.grave) + "）", "info", 5000);
   });

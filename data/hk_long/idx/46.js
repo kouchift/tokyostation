@@ -1,0 +1,2 @@
+/* 歴オタ図鑑の «じっくり読む» があるカード → 読む分数（県 46・tools/build_hklong.py が作る） */
+RG.HKLONG_IDX = Object.assign(RG.HKLONG_IDX || {}, {"46_bonotsu":12,"46_chiran_tokko":13,"46_jomonsugi":12,"46_kadokura":12,"46_kagoshima_jingu":12,"46_kagoshima_jo":13,"46_kajiyacho":12,"46_kirishima_jingu":13,"46_nanshu_bochi":12,"46_satsuei":12,"46_sengan_en":13,"46_shiroyama":12,"46_shuseikan":13,"46_uenohara":12,"46_xavier":12});

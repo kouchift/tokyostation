@@ -243,7 +243,8 @@ RG.hkCard = function (id) {
   var m = RG.openModal("🏯 " + x.n.replace(/（.*?）/g, ""), html);
   RG.wpGallery(m.querySelector("[data-hkgal]"), [x.wp].concat(x.img || []), RG.postKey ? RG.postKey(P) : null, x.ph);   // v137: 前もって集めた写真
   var f = m.querySelector("[data-hkfly]");
-  if (f) f.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(x.la, x.lo, 50); if (RG.tripStatus) RG.tripStatus("🏯 " + esc(x.n), "info", 4000); });
+  if (RG.modalMapTo) RG.modalMapTo({ la: x.la, lo: x.lo, z: 50, n: x.n.replace(/（.*?）/g, ""), reopen: function () { RG.hkCard(x.id); } });   // v156
+  if (f) f.addEventListener("click", function () { if (RG.modalPeek) RG.modalPeek(); else { RG.closeModal(); RG.Map.gotoLatLng(x.la, x.lo, 50); } });
   m.querySelectorAll("[data-hkev]").forEach(function (b) { b.addEventListener("click", function () { RG.histOpen({ ev: b.getAttribute("data-hkev") }); }); });
   if (RG.hkLongBtn) RG.hkLongBtn(m, x.id);   // v155: «じっくり読む»（読み物があるカードだけ）
   if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(m, P);

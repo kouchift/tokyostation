@@ -245,9 +245,34 @@ RG.weatherModal = function () {
     (hours ? '<p class="set__d">この先 12 時間</p>' + hours : "") +
     RG.weatherSwitchHTML(true) +
     '<p class="src">数値予報を合成した推定値で、観測値ではありません。</p></div>';
+  html = '<div class="wxd" data-wxd hidden><button class="wxd__img" type="button" aria-label="天気のダッシュボードを大きく見る"></button><p class="wxd__hint">押すと大きく（スマホは横向きの全画面）</p></div>' +
+    '<details class="wxd__more"><summary>🔢 数字でくわしく・設定</summary>' + html + "</details>";
   var m = RG.openModal("🌤️ いまの天気", html);
   RG.weatherSwitchBind(m);
+  /* v156: 池袋ナイトライフの «天気ダッシュボード» と同じ絵（assets/wxdash.js・押したときだけ読む） */
+  var paint = function () {
+    var box = m.querySelector("[data-wxd]"); if (!box || !RG.wxDashSvg) return;
+    var svg = RG.wxDashSvg(cur); if (!svg) return;
+    box.querySelector(".wxd__img").innerHTML = svg; box.hidden = false;
+    box.querySelector(".wxd__img").onclick = function () { wxFull(svg); };
+  };
+  if (RG.wxDashSvg) paint();
+  else { var v = document.documentElement.getAttribute("data-build") || "", sc = document.createElement("script"); sc.src = "assets/wxdash.js" + (v ? "?v=" + v : ""); sc.async = true;
+    sc.onload = paint; sc.onerror = function () { var d = m.querySelector(".wxd__more"); if (d) d.open = true; }; document.head.appendChild(sc); }
 };
+function wxFull(svg) {
+  var ov = document.createElement("div"); ov.className = "wxfull"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "天気のダッシュボード");
+  ov.innerHTML = '<div class="wxfull__in">' + svg + '</div><button class="wxfull__x" type="button" aria-label="閉じる">×</button>';
+  var fit = function () {
+    var vw = innerWidth, vh = innerHeight, rot = vh > vw * 1.15, in_ = ov.querySelector(".wxfull__in");
+    var W = rot ? vh : vw, H = rot ? vw : vh, k = Math.min(W / 1600, H / 1200);
+    in_.style.width = 1600 * k + "px"; in_.style.height = 1200 * k + "px";
+    in_.style.transform = "translate(-50%,-50%)" + (rot ? " rotate(90deg)" : "");
+  };
+  var close = function () { removeEventListener("resize", fit); ov.remove(); };
+  ov.addEventListener("click", close); addEventListener("resize", fit);
+  document.body.appendChild(ov); fit();
+}
 
 /* ---------------------------------------------------------------- 設定 */
 RG.weatherSwitchHTML = function (inModal) {

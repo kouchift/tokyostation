@@ -1,6 +1,6 @@
 /* =========================================================================
    v155: 歴オタ図鑑の «じっくり読む»（カード 1 枚ごとの長い読み物）
-   ・中身: data/hk_long/<id>.js（RG.HKLONG[id]）。どのカードにあるかは data/hk_long/index.js（RG.HKLONG_IDX = {id: 読む分数}）
+   ・中身: data/hk_long/<id>.js（RG.HKLONG[id]）。どのカードにあるかは 県ごとの data/hk_long/idx/<県コード>.js（RG.HKLONG_IDX に {id: 読む分数} を足す。v156: 全国 4700 枚に広げるため県ごとに分けた）
      作り方: tools/build_hklong.py が tools/hk_long_src/<id>.json（手書き）から画像の場所を調べて書き出す
    ・読む人: 中高生。むずかしい漢字は {漢字|かんじ} と書くと <ruby> のふりがなになる（RG.ruby）
    ・画像: 前もって調べた Commons の画像（ip = [path, 横, 縦]）を、標準の幅の小さい縮小版で読む（遅延読み込み）
@@ -15,7 +15,7 @@ function script(src, cb) {
   LOADING[src] = [cb];
   var v = document.documentElement.getAttribute("data-build") || "", s = document.createElement("script"); s.async = true; s.src = src + (v ? "?v=" + v : "");
   s.onload = function () { var w = LOADING[src]; LOADING[src] = 1; w.forEach(function (f) { try { f(); } catch (e) { console.error(e); } }); };
-  s.onerror = function () { LOADING[src] = null; if (RG.tripStatus) RG.tripStatus("読み物を読み込めませんでした。通信を確かめてください。", "warn", 5000); };
+  s.onerror = function () { LOADING[src] = null; if (/\/idx\//.test(src)) { RG.HKLONG_IDX = RG.HKLONG_IDX || {}; return; } if (RG.tripStatus) RG.tripStatus("読み物を読み込めませんでした。通信を確かめてください。", "warn", 5000); };
   document.head.appendChild(s);
 }
 /* {漢字|かんじ} → ふりがな。先に esc してから（{ } | は esc で変わらない） */
@@ -23,10 +23,10 @@ RG.ruby = function (s) {
   return esc(s == null ? "" : String(s)).replace(/\{([^{}|]+)\|([^{}]+)\}/g, "<ruby>$1<rp>（</rp><rt>$2</rt><rp>）</rp></ruby>");
 };
 var rb = RG.ruby;
-RG.hkLongIdx = function (cb) { if (RG.HKLONG_IDX) { cb(RG.HKLONG_IDX); return; } script("data/hk_long/index.js", function () { cb(RG.HKLONG_IDX || {}); }); };
+RG.hkLongIdx = function (pf, cb) { script("data/hk_long/idx/" + pf + ".js", function () { cb(RG.HKLONG_IDX || {}); }); };
 /* 図鑑のカードに «じっくり読む» のボタンを差しこむ（カードを開いたときに hkzukan.js から呼ぶ） */
 RG.hkLongBtn = function (m, id) {
-  RG.hkLongIdx(function (I) {
+  RG.hkLongIdx(id.slice(0, 2), function (I) {
     if (!I[id] || !m.isConnected || m.querySelector("[data-hkl]")) return;
     var at = m.querySelector(".hp__hook"); if (!at) return;
     var b = document.createElement("button"); b.className = "hl__cta"; b.type = "button"; b.setAttribute("data-hkl", id);
@@ -42,17 +42,17 @@ function fig(ip, cap, cls) {
   return '<figure class="' + cls + '"><a href="' + esc(RG.wmPage(ip[0])) + '" target="_blank" rel="noopener">' + RG.wmImg(ip[0], 320, { ow: ip[1], oh: ip[2], sizes: "(max-width: 400px) 92vw, 320px" }) + "</a>" +
     (cap ? "<figcaption>" + rb(cap) + "</figcaption>" : "") + "</figure>";
 }
-function scrollParent(el) { while (el && el !== document.body) { var s = getComputedStyle(el).overflowY; if ((s === "auto" || s === "scroll") && el.scrollHeight > el.clientHeight) return el; el = el.parentElement; } return null; }
 
 RG.hkLong = function (id) {
-  RG.hkLongIdx(function (I) {
+  RG.hkLongIdx(id.slice(0, 2), function (I) {
+    var pf = id.slice(0, 2), need = RG.hkById && !RG.hkById(id) && !(RG.HKL && RG.HKL[pf]);   // v156: 図鑑の一覧（場所・ランク）がまだなら先に読む
+    (need ? function (f) { script("data/hk/" + pf + ".l.js", f); } : function (f) { f(); })(function () {
     script("data/hk_long/" + id + ".js", function () {
       var x = RG.HKLONG && RG.HKLONG[id], c = RG.hkById ? RG.hkById(id) : null;
       if (!x) return;
       var ids = Object.keys(I).filter(function (k) { return k.slice(0, 2) === id.slice(0, 2); }), D = done();
       var nd = ids.filter(function (k) { return D[k]; }).length, name = x.t || (c ? c.n : id);
       var html = '<div class="hl hkl" style="--ec:#6D4C41">' +
-        '<div class="hl__bar"><b data-hlbar></b></div>' +
         (x.hero ? fig(x.hero, x.heroc, "hkl__hero") : "") +
         '<p class="hl__meta">' + (c ? '<span style="background:#6D4C41">' + esc(c.rank) + " 級</span><span>" + esc(c.cat) + "</span><span>📍 " + esc(c.ad) + "</span>" : "") +
           "<span>⏱️ 約 " + (x.read || I[id] || 15) + " 分</span>" + (D[id] ? '<span class="hl__ok">✔ 読んだ</span>' : "") + "</p>" +
@@ -84,10 +84,8 @@ RG.hkLong = function (id) {
         '<p class="src">読み物は当サイトの手書き（定説にもとづく。«〜といわれる»«諸説»«伝承» はそう書いています）。写真は ウィキメディア・コモンズ の画像を小さくして表示。押すと元のページへ（撮影者・ライセンスはそちら）。</p></div>';
       var m = RG.openModal("📖 " + String(name).replace(/（.*?）/g, "").replace(/\{([^{}|]+)\|[^{}]+\}/g, "$1"), html);
       m.classList.add("modal--hl");
-      var body = m.querySelector(".hl"), scroller = scrollParent(body), bar = m.querySelector("[data-hlbar]");
-      if (scroller && bar) scroller.addEventListener("scroll", function () {
-        var r = scroller.scrollTop / Math.max(1, scroller.scrollHeight - scroller.clientHeight); bar.style.width = Math.round(Math.min(1, r) * 100) + "%";
-      }, { passive: true });
+      if (RG.modalReading) RG.modalReading();            // v156: 読んだ割合は見出しの下の細い線
+      if (RG.modalMapTo && c) RG.modalMapTo({ la: c.la, lo: c.lo, n: name, reopen: function () { RG.hkLong(id); } });   // v156: «🗺️ 地図» ⇄ «もどる»
       m.querySelectorAll("[data-hlgo]").forEach(function (a) { a.addEventListener("click", function (ev) {
         ev.preventDefault(); var s = m.querySelector('[data-hlsec="' + a.getAttribute("data-hlgo") + '"]'); if (s) s.scrollIntoView({ behavior: "smooth", block: "start" }); }); });
       var right = 0, answered = 0;
@@ -109,6 +107,7 @@ RG.hkLong = function (id) {
         if (RG.tripStatus) RG.tripStatus("📗 読破スタンプ " + n2 + " / " + ids.length, "info", 3500);
       });
       if (RG.track) try { RG.track("hklong", id); } catch (er) {}
+    });
     });
   });
 };

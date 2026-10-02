@@ -136,12 +136,24 @@ function modal(title, html) {
     M = document.createElement("div"); M.className = "modal";
     M.setAttribute("role", "dialog"); M.setAttribute("aria-modal", "true"); M.setAttribute("aria-labelledby", "modal-title");   // v97: 読み上げに «ダイアログ» と伝える
     M.innerHTML = '<div class="modal__box"><div class="modal__hd"><b id="modal-title"></b>' +
-      '<button class="modal__x" type="button" aria-label="閉じる">×</button></div><div class="modal__bd" tabindex="-1"></div></div>';
+      '<button class="modal__map" type="button" hidden aria-label="地図を見る（読みかけはそのまま）">🗺️ 地図</button>' +
+      '<button class="modal__x" type="button" aria-label="閉じる">×</button><i class="modal__prog" aria-hidden="true"></i></div><div class="modal__bd" tabindex="-1"></div></div>';
     document.body.appendChild(M);
     M.addEventListener("click", function (e) {
       if (e.target === M || e.target.classList.contains("modal__x")) RG.closeModal();
+      if (e.target.closest && e.target.closest(".modal__map")) RG.modalPeek();
     });
+    /* v156: 読み物の «読んだ割合» は見出しの下の細い線（本文の上に重ねない） */
+    var bd0 = $(".modal__bd", M), pg = $(".modal__prog", M), raf = 0;
+    bd0.addEventListener("scroll", function () {
+      if (!M.classList.contains("modal--read") || raf) return;
+      raf = requestAnimationFrame(function () { raf = 0; var r = bd0.scrollTop / Math.max(1, bd0.scrollHeight - bd0.clientHeight); pg.style.transform = "scaleX(" + Math.min(1, r).toFixed(3) + ")"; });
+    }, { passive: true });
   }
+  M.className = "modal";                                                              // v156: 前の画面の «読み物用» などの印を残さない
+  M.__gen = (M.__gen || 0) + 1; M.__peek = null;
+  $(".modal__map", M).hidden = true; $(".modal__prog", M).style.transform = "scaleX(0)";
+  if (RG.readBackHide) RG.readBackHide();
   if (!M.classList.contains("show")) mPrevFocus = document.activeElement;             // 閉じたら元の場所へ戻す
   $(".modal__hd b", M).textContent = title;
   $(".modal__bd", M).innerHTML = html;
@@ -156,6 +168,38 @@ RG.closeModal = function () {
   if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
 };
 RG.openModal = modal;
+/* ---- v156: 読み物 ⇄ 地図 を軽く行き来する ----
+   RG.modalMapTo({la, lo, z, n, reopen}) … いま開いている窓に «🗺️ 地図» を出す（窓を開いた直後に呼ぶ）
+   «🗺️ 地図» → 窓を隠すだけ（中身・読んでいた位置はそのまま）→ 地図をその場所へ → 下に «📖 〇〇 にもどる»
+   «もどる» → 隠した窓をそのまま出す（ほかの窓を開いて中身が替わっていたら reopen() で開き直す） */
+RG.modalMapTo = function (o) {
+  if (!M) return; M.__peek = o || null;
+  $(".modal__map", M).hidden = !(o && o.la != null);
+};
+RG.modalReading = function () { if (M) M.classList.add("modal--read"); };
+var RB = null;
+RG.modalPeek = function (o) {
+  o = o || (M && M.__peek); if (!M || !o) return;
+  var gen = M.__gen, bd = $(".modal__bd", M), top = bd.scrollTop, title = $(".modal__hd b", M).textContent;
+  RG.closeModal();
+  if (RG.heroFold) try { RG.heroFold("route"); } catch (e) {}                       // 上の大きな検索の札をたたんで地図を広く
+  if (o.la != null && RG.Map && RG.Map.gotoLatLng) RG.Map.gotoLatLng(+o.la, +o.lo, o.z || 50);
+  if (!RB) {
+    RB = document.createElement("div"); RB.className = "readback"; RB.setAttribute("role", "region"); RB.setAttribute("aria-label", "読み物にもどる");
+    RB.innerHTML = '<button class="readback__go" type="button"></button><button class="readback__x" type="button" aria-label="閉じる">×</button>';
+    document.body.appendChild(RB);
+    RB.querySelector(".readback__x").addEventListener("click", function () { RG.readBackHide(); });
+    RB.querySelector(".readback__go").addEventListener("click", function () {
+      var s = RB.__s; RG.readBackHide(); if (!s) return;
+      if (M.__gen === s.gen) { M.classList.add("show"); var b = $(".modal__bd", M); b.scrollTop = s.top; try { b.focus({ preventScroll: true }); } catch (e) {} }
+      else if (s.o.reopen) { s.o.reopen(); setTimeout(function () { var b = $(".modal__bd", M); if (b) b.scrollTop = s.top; }, 400); }
+    });
+  }
+  RB.__s = { gen: gen, top: top, o: o };
+  RB.querySelector(".readback__go").textContent = "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる";
+  RB.hidden = false; requestAnimationFrame(function () { RB.classList.add("on"); });
+};
+RG.readBackHide = function () { if (RB) { RB.classList.remove("on"); RB.hidden = true; RB.__s = null; } };
 
 /* ---------------------------------------------- ☆評価の表示 */
 function stars(v) {

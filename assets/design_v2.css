@@ -337,9 +337,6 @@ body.navon .hint, body.navon #quickbar, body.navon .heroSearch__pill { display: 
 .eh__q[open] summary span { display: none; }
 .eh__q p { margin: 0; padding: 0 12px 12px; font-size: 16px; font-weight: 800; }
 .eh__q p::before { content: "⭕ "; }
-body.night .eh { background: #2b2616; border-color: #8A6D00; }
-body.night .eh__kid p, body.night .eh__t, body.night .eh__look { color: #f3ecd8; }
-body.night .eh__hee { background: #1f1b10; }
 .bzp { margin: 12px 0; }
 .bzp h3 small { font-weight: 600; color: var(--label, #666); font-size: 12px; margin-left: 4px; }
 .bzp__sum { font-size: 12.5px; color: var(--label, #555); margin: 2px 0 6px; }
@@ -354,7 +351,6 @@ body.night .eh__hee { background: #1f1b10; }
 .bzp__h small { color: var(--label, #666); font-weight: 600; }
 .bzp__lead { font-size: 12.5px; color: var(--label, #555); margin: 0 0 6px; }
 .bz__it.hi { outline: 3px solid #FF4500; border-radius: 12px; }
-body.night .bzp__i { background: #23272c; color: #eef; border-color: #3a4048; }
 
 /* ===== v127: 世界遺産のカード ===== */
 .whs__hero { border-radius: 16px; padding: 14px 14px 10px; color: #fff; background: linear-gradient(135deg, #0B3D6E, #0B5394 60%, #2F7FC1); margin-bottom: 10px; }
@@ -381,7 +377,6 @@ body.night .bzp__i { background: #23272c; color: #eef; border-color: #3a4048; }
 .whb__t { flex: 1; font-size: 14px; line-height: 1.45; }
 .whb__t small { display: block; font-size: 11.5px; opacity: .9; }
 .whb__m { font-size: 12px; font-weight: 800; background: rgba(255,255,255,.2); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-body.night .whs__why { background: #2b2616; border-color: #8A6D00; } body.night .whs__why p { color: #f3ecd8; }
 
 /* ===== v128: れきし地図 ===== */
 .qb__open--hist { background: #FFF4E0 !important; color: #7A4B00 !important; }
@@ -448,8 +443,7 @@ body.histon .hint, body.histon #quickbar { display: none !important; }
 .hp__b--n { background: #1F2A37; color: #fff; text-align: right; }
 .hp__b--n small { color: #cfd6df; }
 .hp__back { width: 100%; min-height: 44px; border: 1px solid #D5DAE1; background: #fff; border-radius: 12px; font: inherit; font-weight: 800; cursor: pointer; }
-body.night .hp { background: #1d2126; color: #eef; } body.night .hp__ev, body.night .hp__pt, body.night .hp__back, body.night .hp__tab { background: #262b31; color: #eef; border-color: #3a4048; }
-body.night .hp__era, body.night .hp__meta span { background: #262b31; color: #dde; }
+
 .hmk span { display: none; }
 .hmk--l span, .hmk.on span { display: block; }
 body.histon .pois, body.histon .poihost { opacity: .3; }
@@ -472,13 +466,11 @@ body.histon .pois, body.histon .poihost { opacity: .3; }
 .hp__kj q { display: block; font-size: 16.5px; font-weight: 900; line-height: 1.6; quotes: "「" "」"; }
 .hp__kj span { display: block; font-size: 14px; line-height: 1.7; }
 .hp__kj small { display: block; font-size: 12px; color: #666; }
-body.night .hp__hook { background: #3a2f1c; color: #f6e3c0; } body.night .hp__koji { background: #23272c; border-color: #8a96a6; }
 
 /* ===== v130: 出来事の舞台（旧国・都道府県）===== */
 .histroute .hr--area { fill-opacity: .16; stroke-opacity: .7; stroke-width: 1.6px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
 .hp__area { margin: 0 0 8px; font-size: 13px; line-height: 1.6; background: #F7F8FA; border-radius: 10px; padding: 6px 10px; }
 .hp__area b { margin-right: 6px; }
-body.night .hp__area { background: #262b31; }
 /* v133: 偉人の墓 100 */
 .grb { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-radius: 14px; padding: 10px 12px; margin: 10px 0; text-align: left; font: inherit; color: #fff; background: linear-gradient(135deg, #3E2723, #6D4C41); cursor: pointer; min-height: 52px; }
 .grb__e { font-size: 22px; } .grb__t { flex: 1; font-size: 14px; line-height: 1.45; } .grb__t b { margin-right: 6px; } .grb__t small { display: block; font-size: 11.5px; opacity: .9; }
@@ -509,8 +501,6 @@ body.night .hp__area { background: #262b31; }
 .hp__grvb { display: block; width: 100%; min-height: 46px; border: 0; border-radius: 12px; margin: 0 0 8px; padding: 6px 12px; font: inherit; font-size: 14px; font-weight: 800; text-align: left; color: #fff; background: linear-gradient(135deg, #3E2723, #6D4C41); cursor: pointer; }
 .hp__grvb small { font-size: 11.5px; opacity: .85; margin-left: 4px; }
 .hp__ptw { display: inline-flex; gap: 2px; } .hp__gc { min-width: 40px; min-height: 40px; border: 1px solid #8D6E63; background: #EFEBE9; border-radius: 999px; font-size: 16px; cursor: pointer; }
-body.night .grv__visit { background: #2a2320; border-color: #6D4C41; } body.night .grv__visit > b, body.night .grv__gn small { color: #e9d7cf; }
-body.night .grv__c, body.night .grv__all summary, body.night .grv__manner { background: #2d2724; color: #eee; } body.night .grv__go--l { background: #262b31; color: #eee; }
 /* v134: 歴オタ図鑑・写真ギャラリー・いいね */
 .hp__hkb { display: block; width: 100%; min-height: 46px; border: 0; border-radius: 12px; margin: 0 0 8px; padding: 6px 12px; font: inherit; font-size: 14px; font-weight: 800; text-align: left; color: #FFF8E1; background: linear-gradient(135deg, #1B1B1B, #5D4037 70%, #B8860B); cursor: pointer; }
 .hp__hkb small { display: block; font-size: 11.5px; opacity: .85; }
@@ -563,8 +553,7 @@ body.night .grv__c, body.night .grv__all summary, body.night .grv__manner { back
 .lk { display: inline-flex; align-items: center; gap: 3px; min-height: 30px; min-width: 44px; border: 1px solid #F8BBD0; background: #fff; color: #C2185B; border-radius: 999px; padding: 0 9px; font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
 .lk i { font-style: normal; font-size: 15px; } .lk.on { background: #FCE4EC; border-color: #EC407A; }
 .pst__list li .lk { float: right; } .pst__lk { background: rgba(194,24,91,.85) !important; }
-body.night .hkz__it, body.night .hkz__c, body.night .hkz__q { background: #262b31; color: #eee; border-color: #3a4048; } body.night .hkz__it.rd { background: #2d2724; }
-body.night .hkc__story p, body.night .hkc__lead { color: #eee; } body.night .hkc__who div, body.night .hkc__meta span { background: #2d2724; color: #eee; } body.night .hkc__look { background: #1f2a1a; color: #e8f5e9; }
+
 /* v134: 話題のストック */
 .bz__stk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; } .bz__stk > span { font-size: 12px; font-weight: 800; color: #BF360C; margin-right: auto; }
 .bz__stk p { width: 100%; margin: 2px 0 0; font-size: 11.5px; color: #777; }
@@ -574,7 +563,6 @@ body.night .hkc__story p, body.night .hkc__lead { color: #eee; } body.night .hkc
 .hl__cta { display: flex; flex-direction: column; align-items: flex-start; width: 100%; border: 0; border-radius: 14px; padding: 10px 14px; margin: 0 0 10px; font: inherit; text-align: left; cursor: pointer; color: #fff; background: linear-gradient(135deg, #0D47A1, #1976D2 55%, #26A69A); box-shadow: 0 4px 14px rgba(13,71,161,.25); }
 .hl__cta b { font-size: 17px; } .hl__cta span { font-size: 12.5px; opacity: .92; }
 .hp__rd { font-style: normal; font-size: 10.5px; font-weight: 800; color: #0D47A1; background: #E3F2FD; border-radius: 999px; padding: 1px 6px; margin-left: 4px; }
-.hl__bar { position: sticky; top: 0; z-index: 3; height: 5px; background: #ECEFF1; margin: -4px 0 8px; border-radius: 3px; overflow: hidden; box-shadow: 0 0 0 6px #fff; } body.night .hl__bar { box-shadow: 0 0 0 6px #1d2126; } .hl__bar b { display: block; height: 100%; width: 0; background: var(--ec, #1976D2); transition: width .15s; }
 .hl__gal .hkg__f { width: 46%; max-width: 240px; } .hl__gal .hkg__f img { height: 120px; border-radius: 10px; }
 .hl__meta { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; } .hl__meta span { font-size: 12px; font-weight: 800; background: #ECEFF1; color: #333; border-radius: 999px; padding: 3px 9px; } .hl__meta span[style] { color: #fff; } .hl__ok { background: #E8F5E9 !important; color: #2E7D32 !important; }
 .hl__t { font-size: 22px; line-height: 1.4; margin: 8px 0; }
@@ -598,8 +586,6 @@ body.night .hkc__story p, body.night .hkc__lead { color: #eee; } body.night .hkc
 .hl__q button.ok { background: #C8E6C9; border-color: #43A047; font-weight: 800; } .hl__q button.ng { background: #FFCDD2; border-color: #E53935; }
 .hl__ans { font-size: 14.5px; line-height: 1.7; margin: 8px 0 0; } .hl__score { font-weight: 900; font-size: 16px; text-align: center; }
 .hl__done { display: block; width: 100%; min-height: 54px; margin: 16px 0 10px; border: 0; border-radius: 16px; font: inherit; font-size: 17px; font-weight: 900; color: #fff; background: linear-gradient(135deg, #2E7D32, #66BB6A); cursor: pointer; } .hl__done.on { background: #E8F5E9; color: #2E7D32; }
-body.night .hl__intro { background: #2c2a1c; color: #f3ecd8; } body.night .hl__sec p { color: #eee; } body.night .hl__toc, body.night .hl__wi, body.night .hl__words summary { background: #262b31; color: #eee; }
-body.night .hl__num div { background: #1a2633; color: #eee; } body.night .hl__now { background: #1f2a1a; color: #e8f5e9; } body.night .hl__moshi { background: #2a1f2d; color: #eee; } body.night .hl__q { background: #2c2a1c; color: #eee; } body.night .hl__q button { background: #262b31; color: #eee; }
 /* v155: 歴オタ図鑑の «じっくり読む»（hklong.js）・ふりがな・余談・大きめの写真 */
 .hkl ruby rt, .grx ruby rt { font-size: .55em; font-weight: 500; color: #6b7280; letter-spacing: 0; }
 .hkl .hl__sec p, .grx p { line-height: 2.15; }
@@ -609,9 +595,30 @@ body.night .hl__num div { background: #1a2633; color: #eee; } body.night .hl__no
 .hkl__z { background: #FFF3E0; border-left: 4px solid #FB8C00; border-radius: 10px; padding: 8px 12px; margin: 6px 0 4px; } .hkl__z b { color: #E65100; font-size: 13.5px; } .hkl__z p { font-size: 15px !important; line-height: 1.95 !important; margin: 2px 0 0 !important; }
 .hkl__gal { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; } .hkl__g { margin: 0; } .hkl__g img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; display: block; background: #ECEFF1; }
 .hkl__gv { margin-top: 4px; font-size: 12px; min-height: 30px; }
-body.night .hkl__z { background: #2d2418; color: #f3e6d4; } body.night .hkl ruby rt, body.night .grx ruby rt { color: #aab; }
 /* 偉人の墓の «どんな人生？»（graves.js・data/graves_x/） */
 .grx { margin: 10px 0; } .grx__h { font-size: 16px; margin: 14px 0 6px; } .grx__sec { background: #FAFAF7; border-radius: 12px; padding: 8px 12px; margin: 0 0 8px; } .grx__sec h5 { font-size: 15px; margin: 0 0 4px; color: var(--gc, #5D4037); }
 .grx__sec p { font-size: 15px; margin: 0 0 6px; }
 .grx__rp { display: grid; gap: 6px; } .grx__rp > div { background: #F5F7FA; border-radius: 10px; padding: 6px 10px; } .grx__rp b { font-size: 14.5px; } .grx__rp span { display: block; font-size: 13.5px; line-height: 1.7; color: #444; } .grx__rp .grv__c { margin-top: 4px; font-size: 12px; min-height: 30px; }
-body.night .grx__sec, body.night .grx__rp > div { background: #262b31; color: #eee; } body.night .grx__rp span { color: #ccc; }
+
+/* v156: スマホの見やすさ（読み物・図鑑・お墓） */
+.modal__hd { position: sticky; top: 0; z-index: 3; }
+.modal__hd b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal__map { margin-left: auto; flex: none; border: 1px solid #DDE3EA; background: #fff; color: #1F2933; border-radius: 999px; padding: 0 12px; height: 34px; font: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+.modal__map:active { background: #EEF2F7; }
+.modal__map:not([hidden]) + .modal__x { margin-left: 4px; }
+.modal__prog { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: #8D6E63; transform: scaleX(0); transform-origin: 0 50%; display: none; pointer-events: none; }
+.modal--read .modal__prog { display: block; }
+.hl__sec { scroll-margin-top: 64px; }
+.readback { position: fixed; z-index: 70; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; transition: transform .18s, opacity .18s; display: flex; align-items: center; background: #1F2933; color: #fff; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.28); max-width: calc(100vw - 24px); }
+.readback.on { transform: translate(-50%, 0); opacity: 1; }
+.readback__go { border: 0; background: none; color: #fff; font: inherit; font-size: 15px; font-weight: 800; padding: 12px 6px 12px 18px; min-height: 48px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.readback__x { border: 0; background: none; color: #B0BEC5; font-size: 20px; width: 44px; height: 48px; cursor: pointer; }
+@media (max-width: 759px) { .hp.hp--tall { max-height: 74vh; } }
+
+/* v156: 天気のダッシュボード（NightLife と同じ絵） */
+.wxd { margin: 0 0 10px; } .wxd__img { display: block; width: 100%; padding: 0; border: 0; border-radius: 14px; overflow: hidden; background: #0d1424; cursor: zoom-in; aspect-ratio: 4 / 3; }
+.wxd__img svg { display: block; width: 100%; height: auto; } .wxd__hint { margin: 4px 0 0; font-size: 12px; color: #52606D; text-align: center; }
+.wxd__more > summary { min-height: 44px; display: flex; align-items: center; font-weight: 800; background: #F5F7FA; border-radius: 12px; padding: 0 12px; cursor: pointer; margin: 4px 0 8px; }
+.wxfull { position: fixed; inset: 0; z-index: 2000; background: #05080f; }
+.wxfull__in { position: absolute; left: 50%; top: 50%; } .wxfull__in svg { width: 100%; height: 100%; display: block; }
+.wxfull__x { position: absolute; right: calc(10px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.18); color: #fff; font-size: 24px; }

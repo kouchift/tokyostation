@@ -233,7 +233,7 @@ function showEra(id) {
         '<small>📍 ' + esc(e.pts.map(function (p) { return p[0].replace(/（.*?）/g, ""); }).slice(0, 3).join("・") + (e.pts.length > 3 ? " ほか" : "")) + "</small></button></li>";
     }).join("") + "</ol>" +
     '<p class="src">地図の印はこの時代の出来事の場所（おおよそ）。押すと出来事の解説へ。</p></div>';
-  panel.hidden = false; panel.classList.remove("hp--min");
+  panel.hidden = false; panel.classList.remove("hp--min", "hp--tall");
   var tab = panel.querySelector(".hp__tab.on"); if (tab) tab.scrollIntoView({ block: "nearest", inline: "center" });
   prefetchDet(E.id);                                                 // v148: この時代の解説を裏で読んでおく
 }
@@ -344,7 +344,7 @@ RG.histShowPoints = function (title, pts, color, gids) {   // v133: gids=偉人�
     '<button class="hp__pt hp__pt--fit" type="button" data-hfit="1">🔭 ぜんぶ見る</button></div>' +
     (gids && S.era && RG.HIST ? '<button class="hp__back" type="button" data-hback="1">☰ ' + esc((eraOf(S.era) || {}).n || "") + " の一覧へ</button>" : "") +
     '<p class="src">' + (gids ? "📖 を押すと、その人のエピソードとお墓の案内。" : "") + '地点はおおよその位置です。閉じると地図の印も消えます。</p></div>';
-  panel.hidden = false; panel.classList.remove("hp--min");
+  panel.hidden = false; panel.classList.remove("hp--min", "hp--tall");
   var lv = panel.querySelector(".hp__lv") || panel.querySelector(".hp__lvs"); if (lv) lv.remove();
   fit();
 };
@@ -356,7 +356,7 @@ RG.histCustom = function (title, html, pts, color, onPick, keepView) {
   drawMarks(pts, color || "#6D4C41", false, false);
   var P = ensurePanel(), sc = P.querySelector(".hp__body"), top = keepView && sc ? sc.scrollTop : 0;
   P.innerHTML = head(title) + '<div class="hp__body">' + html + "</div>";
-  P.hidden = false; P.classList.remove("hp--min");
+  P.hidden = false; P.classList.remove("hp--min"); P.classList.add("hp--tall");   // v156: 歴オタ図鑑の一覧はスマホで高めに開く
   var lv = P.querySelector(".hp__lv") || P.querySelector(".hp__lvs"); if (lv) lv.remove();
   if (keepView) P.querySelector(".hp__body").scrollTop = top; else fit();
   return P;

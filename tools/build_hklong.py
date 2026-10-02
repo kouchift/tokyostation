@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 v155: 読み物のデータを作る
-  1) 歴オタ図鑑の «じっくり読む»: tools/hk_long_src/<カードid>.json（手書き）→ data/hk_long/<id>.js（RG.HKLONG[id]）＋ data/hk_long/index.js（RG.HKLONG_IDX = {id: 読む分数}）
+  1) 歴オタ図鑑の «じっくり読む»: tools/hk_long_src/<カードid>.json（手書き）→ data/hk_long/<id>.js（RG.HKLONG[id]）＋ data/hk_long/idx/<県>.js（RG.HKLONG_IDX に {id: 読む分数} を足す）
+  --check <src.json> …: 書き出さずに、形・ふりがな・画像だけ確かめる（何人かで同時に書くとき用）
   2) 偉人の墓の «どんな人生？»: tools/graves_x_src/<墓id>.json（手書き）→ data/graves_x/<id>.js（RG.GRAVEX[id]）＋ data/graves.js の該当の人に gx:1
   画像の書き方（手書きの JSON の中）: "Wikipedia の記事名"（その記事の代表の画像）／"File:ファイル名"（Commons のその画像）／"ph:N"（図鑑カードの写真 N 番目）
      → Commons の場所 [path, 横, 縦] に置きかえる（wimg.js が標準の幅の小さな縮小版を読む）。調べた結果は ~/.tsg_wpcache/hkl_img.json にためる
@@ -13,7 +14,12 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(os.path.expanduser("~"), ".tsg_wpcache", "hkl_img.json")
 os.makedirs(os.path.dirname(CACHE), exist_ok=True)
-C = json.load(open(CACHE, encoding="utf-8")) if os.path.exists(CACHE) else {}
+def load_cache():
+    try: return json.load(open(CACHE, encoding="utf-8"))
+    except Exception: return {}
+if "-h" in sys.argv or "--help" in sys.argv: print(__doc__); sys.exit(0)
+C = load_cache()
+CHECK = [os.path.abspath(a) for a in sys.argv[sys.argv.index("--check") + 1:]] if "--check" in sys.argv else None
 UA = {"User-Agent": "tsg-build/1.0 (https://kouchift.github.io/tokyostation/)"}
 
 
@@ -45,7 +51,7 @@ def resolve(names):
         pg = {p["title"]: p for p in q.get("pages", {}).values()}
         for t in ch:
             tt = mp.get(mp.get(t, t), mp.get(t, t)); p = pg.get(tt, {}); o = p.get("original")
-            C[t] = to_path(o["source"], o["width"], o["height"]) if o else None
+            if q: C[t] = to_path(o["source"], o["width"], o["height"]) if o else None   # 通信の失敗（429 など）は覚えない
     for i in range(0, len(files), 40):
         ch = files[i:i + 40]
         j = get("https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=url|size&titles=" + urllib.parse.quote("|".join(ch)))
@@ -53,8 +59,9 @@ def resolve(names):
         pg = {p["title"]: p for p in q.get("pages", {}).values()}
         for t in ch:
             p = pg.get(mp.get(t, t), {}); ii = (p.get("imageinfo") or [None])[0]
-            C[t] = to_path(ii["url"], ii["width"], ii["height"]) if ii else None
-    json.dump(C, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
+            if q: C[t] = to_path(ii["url"], ii["width"], ii["height"]) if ii else None
+    D = load_cache(); D.update(C); C.update(D)                          # 何人かで同時に動かしても壊れないように: 読み直して足してから置きかえる
+    tmp = CACHE + ".%d.tmp" % os.getpid(); json.dump(C, open(tmp, "w", encoding="utf-8"), ensure_ascii=False); os.replace(tmp, CACHE)
 
 
 def load_rg(path, var):
@@ -64,6 +71,7 @@ def load_rg(path, var):
 
 
 def write(path, text):
+    if CHECK is not None: return 0
     p = os.path.join(ROOT, path); os.makedirs(os.path.dirname(p), exist_ok=True)
     old = open(p, encoding="utf-8").read() if os.path.exists(p) else None
     if old != text: open(p, "w", encoding="utf-8", newline="\n").write(text); return 1
@@ -126,6 +134,7 @@ for f in glob.glob(os.path.join(ROOT, "data", "hk", "[0-9][0-9].js")):
     for c in json.JSONDecoder().raw_decode(s[m.end():])[0]: cards[c["id"]] = c
 
 srcs = sorted(glob.glob(os.path.join(ROOT, "tools", "hk_long_src", "*.json")))
+if CHECK is not None: srcs = [f for f in srcs if os.path.abspath(f) in CHECK]
 docs, errs = {}, []
 for f in srcs:
     d = json.load(open(f, encoding="utf-8")); id_ = os.path.splitext(os.path.basename(f))[0]
@@ -137,7 +146,23 @@ for id_, d in docs.items():
 resolve([n for n in names if isinstance(n, str)])
 
 
+BADIMG = re.compile(r"Ka%C5%8D|Kaou|Kao_|_kao|%E8%8A%B1%E6%8A%BC|Signature|signature|Monogram|Flag_of|Emblem|Logo|logo", re.I)
+_gs = open(os.path.join(ROOT, "data", "graves.js"), encoding="utf-8").read(); _gm = re.search(r"RG\.GRAVES\s*=\s*", _gs)
+GRAVE_IP = {}
+for g in json.JSONDecoder().raw_decode(_gs[_gm.end():])[0]:
+    if g.get("ip"):
+        for k in (g.get("wp"), g.get("n"), re.sub(r"（.*?）", "", g.get("n", ""))): GRAVE_IP.setdefault(k, g["ip"])
+
+
 def ip_of(id_, n):
+    """画像: 偉人の墓 100 の肖像を優先 → 記事の代表画像（花押・紋・旗・ロゴは使わない）"""
+    if not n: return None
+    if n in GRAVE_IP: return GRAVE_IP[n]
+    v = ip_of0(id_, n)
+    return None if v and BADIMG.search(v[0]) else v
+
+
+def ip_of0(id_, n):
     if not n: return None
     if n.startswith("ph:"):
         ph = cards[id_].get("ph") or []; k = int(n[3:]); return ph[k][:3] if k < len(ph) else None
@@ -173,13 +198,17 @@ for id_, d in docs.items():
     o["read"] = d.get("read") or max(5, round(txt / 450))
     idx[id_] = o["read"]
     changed += write("data/hk_long/" + id_ + ".js", "/* 歴オタ図鑑の読み物（tools/build_hklong.py が tools/hk_long_src/" + id_ + ".json から作る。直さない） */\nRG.HKLONG = RG.HKLONG || {};\nRG.HKLONG[" + json.dumps(id_) + "] = " + json.dumps(o, ensure_ascii=False, separators=(",", ":")) + ";\n")
-changed += write("data/hk_long/index.js", "/* 歴オタ図鑑の «じっくり読む» があるカード → 読む分数（tools/build_hklong.py が作る） */\nRG.HKLONG_IDX = " + json.dumps(idx, ensure_ascii=False, separators=(",", ":")) + ";\n")
+for pf in sorted(set(k[:2] for k in idx)):
+    sub = {k: v for k, v in sorted(idx.items()) if k[:2] == pf}
+    changed += write("data/hk_long/idx/" + pf + ".js", "/* 歴オタ図鑑の «じっくり読む» があるカード → 読む分数（県 " + pf + "・tools/build_hklong.py が作る） */\nRG.HKLONG_IDX = Object.assign(RG.HKLONG_IDX || {}, " + json.dumps(sub, ensure_ascii=False, separators=(",", ":")) + ");\n")
+if os.path.exists(os.path.join(ROOT, "data", "hk_long", "index.js")): os.remove(os.path.join(ROOT, "data", "hk_long", "index.js"))
 
 # ---------- 2) 偉人の墓 ----------
 gs, gm, (G, gend) = load_rg("data/graves.js", "GRAVES")
 gids = {g["id"] for g in G}
 has = set()
 for f in sorted(glob.glob(os.path.join(ROOT, "tools", "graves_x_src", "*.json"))):
+    if CHECK is not None and os.path.abspath(f) not in CHECK: continue
     d = json.load(open(f, encoding="utf-8")); id_ = os.path.splitext(os.path.basename(f))[0]
     if id_ not in gids: errs.append("墓 " + id_ + ": 一覧にない人"); continue
     check_text("墓 " + id_, d, errs)
@@ -194,6 +223,7 @@ for g in G:
 changed += write("data/graves.js", gs[:gm.end()] + json.dumps(G, ensure_ascii=False, separators=(",", ":")) + gs[gm.end() + gend:])
 
 print("build_hklong: 読み物 %d 件・墓 %d 人・書き直し %d ファイル" % (len(idx), len(has), changed))
+if CHECK is not None: print("（--check: 書き出していません）")
 for x in miss: print("  画像が見つからない:", x)
 for x in errs: print("  ⚠", x)
-sys.exit(1 if errs else 0)
+sys.exit(1 if errs or (CHECK is not None and miss) else 0)

@@ -1,0 +1,2 @@
+/* 歴オタ図鑑の «じっくり読む» があるカード → 読む分数（県 20・tools/build_hklong.py が作る） */
+RG.HKLONG_IDX = Object.assign(RG.HKLONG_IDX || {}, {"20_fukushima_sekisho":13,"20_hachimanbara":12,"20_kaichi":13,"20_matsumoto_jo":13,"20_matsushiro_daihonei":13,"20_matsushiro_jo":13,"20_narai":13,"20_nojiriko":12,"20_suwa_taisha":13,"20_takato_jo":13,"20_togakushi":13,"20_togariishi":12,"20_tsumago":13,"20_ueda_jo":12,"20_zenkoji":13});

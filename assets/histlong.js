@@ -80,7 +80,6 @@ RG.histLong = function (id) {
     var lv1 = H.ev.filter(function (v) { return (v.lv || 1) === 1 && hasLong(v.id); }).sort(function (a, b) { return a.y - b.y; });
     var i = lv1.indexOf(e), prev = lv1[i - 1], next = lv1[i + 1], D = done(), nd = lv1.filter(function (v) { return D[v.id]; }).length;
     var html = '<div class="hl" style="--ec:' + E.c + '">' +
-      '<div class="hl__bar"><b data-hlbar></b></div>' +
       '<div class="hkc__gal hl__gal" data-hlgal="1"></div>' +
       '<p class="hl__meta"><span style="background:' + E.c + '">' + esc(E.n) + "</span><span>📅 " + esc(e.ys) + "</span>" + (e.gg ? "<span>🏷️ " + esc(e.gg) + "</span>" : "") +
         "<span>⏱️ 約 " + (x.read || 10) + " 分</span>" + (D[id] ? '<span class="hl__ok">✔ 読んだ</span>' : "") + "</p>" +
@@ -114,14 +113,12 @@ RG.histLong = function (id) {
       '<p class="src">読み物は当サイトの手書き（定説にもとづく。«〜といわれる»«諸説»«伝承» はそう書いています）。写真は Wikipedia・ウィキメディア・コモンズの画像で、押すと元の記事へ（撮影者・ライセンスはそちら）。</p></div>';
     var m = RG.openModal("📖 " + e.t.split(" ―")[0], html);
     m.classList.add("modal--hl");
-    var body = m.querySelector(".hl"), scroller = scrollParent(body);
+    var body = m.querySelector(".hl");
     RG.wpGallery && RG.wpGallery(m.querySelector("[data-hlgal]"), [e.imgwp || e.wp, e.wp].filter(function (t, j, a) { return t && a.indexOf(t) === j; }), RG.postKey ? RG.postKey(spot(e)) : null, e.ph);
     thumbs(x.sec.filter(function (s) { return !s.ip; }).map(function (s) { return s.img; }).concat((x.who || []).filter(function (w) { return !w[3]; }).map(function (w) { return w[2] || w[0]; })), function () { if (body.isConnected) fillThumbs(body); });
     // 読んだ割合のバー
-    var bar = m.querySelector("[data-hlbar]");
-    if (scroller && bar) scroller.addEventListener("scroll", function () {
-      var r = scroller.scrollTop / Math.max(1, scroller.scrollHeight - scroller.clientHeight); bar.style.width = Math.round(Math.min(1, r) * 100) + "%";
-    }, { passive: true });
+    if (RG.modalReading) RG.modalReading();              // v156: 読んだ割合は見出しの下の細い線（本文の上に重ねない）
+    if (RG.modalMapTo && e.pts && e.pts[0]) RG.modalMapTo({ la: e.pts[0][1], lo: e.pts[0][2], z: 40, n: e.t.split(" ―")[0], reopen: function () { RG.histLong(id); } });
     m.querySelectorAll("[data-hlgo]").forEach(function (a) { a.addEventListener("click", function (ev) {
       ev.preventDefault(); var s = m.querySelector('[data-hlsec="' + a.getAttribute("data-hlgo") + '"]'); if (s) s.scrollIntoView({ behavior: "smooth", block: "start" }); }); });
     // クイズ
@@ -143,7 +140,7 @@ RG.histLong = function (id) {
       d.classList.add("on"); d.textContent = "✔ 読みました（大項目 " + n2 + " / " + lv1.length + " 読破）";
       if (RG.tripStatus) RG.tripStatus(n2 === lv1.length ? "🏆 大項目をぜんぶ読破！ 歴史マスターです" : "📗 読破スタンプ " + n2 + " / " + lv1.length, "info", 3500);
     });
-    m.querySelector("[data-hlmap]").addEventListener("click", function () { RG.histOpen({ ev: id }); });
+    m.querySelector("[data-hlmap]").addEventListener("click", function () { if (RG.modalPeek) RG.modalPeek({ n: e.t.split(" ―")[0], reopen: function () { RG.histLong(id); } }); RG.histOpen({ ev: id }); });   // v156: 地図の出来事へ → «もどる» で読みかけへ
     m.querySelectorAll("[data-hlto]").forEach(function (b) { b.addEventListener("click", function () { RG.histLong(b.getAttribute("data-hlto")); }); });
     if (RG.postsEnabled && RG.postsEnabled() && RG.postsBind) RG.postsBind(m, spot(e));
     if (RG.track) try { RG.track("histlong", id); } catch (er) {}

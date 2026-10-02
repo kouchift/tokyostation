@@ -1,0 +1,2 @@
+/* 歴オタ図鑑の «じっくり読む» があるカード → 読む分数（県 32・tools/build_hklong.py が作る） */
+RG.HKLONG_IDX = Object.assign(RG.HKLONG_IDX || {}, {"32_gassan_toda":12,"32_iwami_ginzan":12,"32_izumo_kokufu":13,"32_izumo_taisha":12,"32_kamo_iwakura":12,"32_kamosu":13,"32_koizumi_yakumo":12,"32_kojindani":12,"32_kumano_taisha":13,"32_matsue_jo":12,"32_nishidani":12,"32_okadayama":12,"32_oki_jinja":12,"32_oki_kokubunji":13,"32_sugaya_tatara":12});

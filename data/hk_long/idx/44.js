@@ -1,0 +1,2 @@
+/* 歴オタ図鑑の «じっくり読む» があるカード → 読む分数（県 44・tools/build_hklong.py が作る） */
+RG.HKLONG_IDX = Object.assign(RG.HKLONG_IDX || {}, {"44_ao_no_domon":13,"44_fukiji":14,"44_fukuzawa_kyukyo":13,"44_hetsugigawa":12,"44_ishigakibaru":13,"44_kangien":13,"44_kumano_magaibutsu":14,"44_nakatsu_jo":14,"44_oka_jo":13,"44_otomo_iseki":13,"44_sozudai":13,"44_usa_jingu":13,"44_usa_kokutai":13,"44_usuki_jo":13,"44_usuki_sekibutsu":13});
