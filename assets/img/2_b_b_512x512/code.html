@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Base quiet gradient (#f7f9ff to #eef3fa) -->
+    <linearGradient id="bgIcon512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f7f9ff"/>
+      <stop offset="60%" stop-color="#f1f5fb"/>
+      <stop offset="100%" stop-color="#e6eff8"/>
+    </linearGradient>
+
+    <linearGradient id="tomboIconFade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0061a1" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#006c4b" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: Pristine calm base -->
+  <rect width="512" height="512" fill="url(#bgIcon512)"/>
+  <rect width="512" height="512" fill="url(#tomboIconFade)"/>
+
+  <!-- ========================================================
+       トンボ（四隅の二重コーナートンボ・天地左右のセンタートンボ・版下アタリ線）
+       案2-B改改準拠: しっかり視認できる濃度（不透明度0.40〜0.45）
+       ======================================================== -->
+  <g stroke="#0061a1" stroke-width="1.3" stroke-linecap="square">
+    
+    <!-- 1. 左上コーナートンボ -->
+    <g opacity="0.45">
+      <line x1="16" y1="36" x2="52" y2="36"/>
+      <line x1="36" y1="16" x2="36" y2="52"/>
+      <line x1="16" y1="26" x2="52" y2="26" stroke-dasharray="1.5,2.5"/>
+      <line x1="26" y1="16" x2="26" y2="52" stroke-dasharray="1.5,2.5"/>
+      <circle cx="36" cy="36" r="5" fill="none" stroke-width="0.9"/>
+    </g>
+
+    <!-- 2. 右上コーナートンボ -->
+    <g opacity="0.45">
+      <line x1="460" y1="36" x2="496" y2="36"/>
+      <line x1="476" y1="16" x2="476" y2="52"/>
+      <line x1="460" y1="26" x2="496" y2="26" stroke-dasharray="1.5,2.5"/>
+      <line x1="486" y1="16" x2="486" y2="52" stroke-dasharray="1.5,2.5"/>
+      <circle cx="476" cy="36" r="5" fill="none" stroke-width="0.9"/>
+    </g>
+
+    <!-- 3. 左下コーナートンボ -->
+    <g opacity="0.45">
+      <line x1="16" y1="476" x2="52" y2="476"/>
+      <line x1="36" y1="460" x2="36" y2="496"/>
+      <line x1="16" y1="486" x2="52" y2="486" stroke-dasharray="1.5,2.5"/>
+      <line x1="26" y1="460" x2="26" y2="496" stroke-dasharray="1.5,2.5"/>
+      <circle cx="36" cy="476" r="5" fill="none" stroke-width="0.9"/>
+    </g>
+
+    <!-- 4. 右下コーナートンボ -->
+    <g opacity="0.45">
+      <line x1="460" y1="476" x2="496" y2="476"/>
+      <line x1="476" y1="460" x2="476" y2="496"/>
+      <line x1="460" y1="486" x2="496" y2="486" stroke-dasharray="1.5,2.5"/>
+      <line x1="486" y1="460" x2="486" y2="496" stroke-dasharray="1.5,2.5"/>
+      <circle cx="476" cy="476" r="5" fill="none" stroke-width="0.9"/>
+    </g>
+
+    <!-- 5. センタートンボ (天地左右) -->
+    <g opacity="0.40">
+      <!-- 上 -->
+      <line x1="256" y1="10" x2="256" y2="40"/>
+      <line x1="241" y1="25" x2="271" y2="25"/>
+      <circle cx="256" cy="25" r="5" fill="none" stroke-width="0.9"/>
+      <!-- 下 -->
+      <line x1="256" y1="472" x2="256" y2="502"/>
+      <line x1="241" y1="487" x2="271" y2="487"/>
+      <circle cx="256" cy="487" r="5" fill="none" stroke-width="0.9"/>
+      <!-- 左 -->
+      <line x1="10" y1="256" x2="40" y2="256"/>
+      <line x1="25" y1="241" x2="25" y2="271"/>
+      <circle cx="25" cy="256" r="5" fill="none" stroke-width="0.9"/>
+      <!-- 右 -->
+      <line x1="472" y1="256" x2="502" y2="256"/>
+      <line x1="487" y1="241" x2="487" y2="271"/>
+      <circle cx="487" cy="256" r="5" fill="none" stroke-width="0.9"/>
+    </g>
+
+    <!-- 6. トンボと呼応する版下アタリ基準十字線 -->
+    <g opacity="0.22">
+      <line x1="60" y1="256" x2="452" y2="256" stroke-dasharray="2,5"/>
+      <line x1="256" y1="60" x2="256" y2="452" stroke-dasharray="2,5"/>
+    </g>
+  </g>
+
+  <!-- ========================================================
+       日本列島（512x512の中央に、北海道上端から鹿児島南端までダイナミックにフィット）
+       中心基準：x=256, y=256, scale=1.9
+       ======================================================== -->
+  <g transform="translate(262, 256) scale(1.9)">
+    
+    <!-- 北海道 (Hokkaido: y ≒ -110*1.9 = -209 -> キャンバスy ≒ 47px、上端トンボに美しく収まる) -->
+    <path d="M48,-110 
+             C58,-116 76,-107 88,-104 
+             C94,-98 102,-94 98,-86 
+             C94,-80 78,-80 70,-72 
+             C66,-66 54,-68 46,-76 
+             C42,-80 38,-98 48,-110 Z" 
+          fill="#e2ecf8" stroke="#0061a1" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- 本州 (Honshu: 東北〜関東〜中部〜関西〜中国地方) -->
+    <path d="M52,-62 
+             C56,-44 50,-22 42,-4 
+             C36,10 30,24 14,32 
+             C2,38 -16,44 -38,50 
+             C-58,56 -78,62 -94,68 
+             C-98,63 -88,56 -74,50 
+             C-50,40 -26,28 -10,20 
+             C2,14 14,2 22,-12 
+             C30,-26 38,-46 42,-62 
+             C46,-66 49,-65 52,-62 Z" 
+          fill="#e2ecf8" stroke="#0061a1" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- 四国 (Shikoku) -->
+    <path d="M-36,62 
+             C-24,58 -14,61 -12,68 
+             C-11,74 -22,80 -34,81 
+             C-44,80 -46,71 -36,62 Z" 
+          fill="#e2ecf8" stroke="#0061a1" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- 九州・鹿児島 (Kyushu: y ≒ 110*1.9 = 209 -> キャンバスy ≒ 465px、下端トンボに美しく収まる) -->
+    <path d="M-88,74 
+             C-78,69 -70,72 -68,80 
+             C-66,90 -71,104 -80,110 
+             C-88,112 -98,104 -100,94 
+             C-102,84 -94,77 -88,74 Z" 
+          fill="#e2ecf8" stroke="#0061a1" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- 航路・名店接続ルート（点線） -->
+    <path d="M68,-86 Q38,-28 24,14 Q-28,54 -80,88" 
+          fill="none" stroke="#007ac9" stroke-width="1.5" stroke-dasharray="3,4" stroke-opacity="0.55"/>
+
+    <!-- 灯火ピン：札幌 -->
+    <g transform="translate(68, -86)">
+      <circle cx="0" cy="0" r="7.5" fill="none" stroke="#006c4b" stroke-opacity="0.35" stroke-width="1.2"/>
+      <circle cx="0" cy="0" r="4" fill="#006c4b"/>
+      <circle cx="0" cy="0" r="1.5" fill="#ffffff"/>
+    </g>
+
+    <!-- 灯火ピン：仙台 -->
+    <g transform="translate(47, -34)">
+      <circle cx="0" cy="0" r="5.5" fill="none" stroke="#0061a1" stroke-opacity="0.3" stroke-width="1"/>
+      <circle cx="0" cy="0" r="3" fill="#0061a1"/>
+      <circle cx="0" cy="0" r="1.2" fill="#ffffff"/>
+    </g>
+
+    <!-- 灯火ピン：東京 (キーステーション) -->
+    <g transform="translate(24, 14)">
+      <circle cx="0" cy="0" r="11" fill="none" stroke="#0061a1" stroke-opacity="0.25" stroke-width="1.4"/>
+      <circle cx="0" cy="0" r="7" fill="none" stroke="#0061a1" stroke-opacity="0.45" stroke-width="1.4"/>
+      <circle cx="0" cy="0" r="4.2" fill="#0061a1"/>
+      <circle cx="0" cy="0" r="1.6" fill="#ffffff"/>
+    </g>
+
+    <!-- 灯火ピン：京都・大阪 -->
+    <g transform="translate(-20, 40)">
+      <circle cx="0" cy="0" r="7" fill="none" stroke="#007ac9" stroke-opacity="0.35" stroke-width="1.2"/>
+      <circle cx="0" cy="0" r="3.6" fill="#007ac9"/>
+      <circle cx="0" cy="0" r="1.4" fill="#ffffff"/>
+    </g>
+
+    <!-- 灯火ピン：福岡・九州 -->
+    <g transform="translate(-80, 88)">
+      <circle cx="0" cy="0" r="7" fill="none" stroke="#006c4b" stroke-opacity="0.35" stroke-width="1.2"/>
+      <circle cx="0" cy="0" r="3.6" fill="#006c4b"/>
+      <circle cx="0" cy="0" r="1.4" fill="#ffffff"/>
+    </g>
+  </g>
+</svg>
