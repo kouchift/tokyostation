@@ -146,7 +146,7 @@ for id_, d in docs.items():
 resolve([n for n in names if isinstance(n, str)])
 
 
-BADIMG = re.compile(r"Ka%C5%8D|Kaou|Kao_|_kao|%E8%8A%B1%E6%8A%BC|Signature|signature|Monogram|Flag_of|Emblem|Logo|logo", re.I)
+BADIMG = re.compile(r"Ka%C5%8D|Kaou|(?<![a-z])Kao_|_kao(?![a-z])|%E8%8A%B1%E6%8A%BC|Signature|signature|Monogram|Flag_of|Emblem|Logo|logo", re.I)
 _gs = open(os.path.join(ROOT, "data", "graves.js"), encoding="utf-8").read(); _gm = re.search(r"RG\.GRAVES\s*=\s*", _gs)
 GRAVE_IP = {}
 for g in json.JSONDecoder().raw_decode(_gs[_gm.end():])[0]:
