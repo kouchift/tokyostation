@@ -186,6 +186,12 @@ RG.lineLabel = function (t, pp, vb, at) {
   return true;
 };
 RG.$ = $; RG.el = el; RG.esc = esc; RG.num = num; RG.isTouch = isTouch;
+/* v166: 路線色の札の文字色。明るい色（黄・黄緑・橙）には黒、暗い色には白（白と白・薄い色に白 を防ぐ） */
+RG.lineFg = function (hex) {
+  var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim()); if (!m) return "#fff";
+  var n = parseInt(m[1], 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) > 0.18 ? "#111" : "#fff";
+};
 
 /* ================================================================ 索引構築 */
 var VB = { x: 0, y: 0, w: 2000, h: 1400 };
@@ -579,14 +585,15 @@ var Map = (function () {
       ev.stopPropagation();
       if (RG.showLine) RG.showLine(t.dataset.line);
     });
+    /* v166: 路線にマウスを乗せても ふきだしは出さない（線を太くするだけ）。路線のカードは押したときだけ */
     gE.addEventListener("pointerover", function (ev) {
       var t = ev.target;
       if (!t || !t.dataset || !t.dataset.line) return;
-      hoverLine(t.dataset.line, ev.clientX, ev.clientY);
+      hiLine(t.dataset.line);
     });
     gE.addEventListener("pointerout", function (ev) {
       var t = ev.target;
-      if (t && t.dataset && t.dataset.line) hideLineTip();
+      if (t && t.dataset && t.dataset.line) hiLine(null);
     });
     gE.addEventListener("keydown", function (ev) {
       var t = ev.target;
@@ -611,15 +618,16 @@ var Map = (function () {
       var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
       ev.preventDefault(); Card.open(g.__id, ev);
     });
+    /* v166: マウスを乗せただけではカードを出さない（押したときだけ）。乗せたときは丸を少し強調するだけ */
     if (!isTouch()) {
       gN.addEventListener("mouseover", function (ev) {
         var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
-        if (g.__hover) return; g.__hover = 1; Card.hover(g.__id, ev);
+        g.classList.add("hov");
       });
       gN.addEventListener("mouseout", function (ev) {
         var g = ev.target.closest && ev.target.closest(".node"); if (!g) return;
         var to = ev.relatedTarget; if (to && g.contains(to)) return;
-        g.__hover = 0; Card.unhover(ev);
+        g.classList.remove("hov");
       });
     }
   }
@@ -1009,6 +1017,11 @@ var Map = (function () {
   }
   /* 路線名のふきだし（マウスを乗せたとき） */
   var lineTip = null, lineTipT = null;
+  function hiLine(name) {
+    Object.keys(edgeByLine).forEach(function (k) {
+      edgeByLine[k].forEach(function (p) { p.classList.toggle("hi", k === name); });
+    });
+  }
   function hoverLine(name, cx, cy) {
     clearTimeout(lineTipT);
     if (!lineTip) {
@@ -1238,7 +1251,7 @@ var Map = (function () {
     n.addEventListener("click", function (ev) { ev.stopPropagation(); if (n.__p) RG.showSpot(n.__p); });
     // ホバーのふきだしはマウス／ペンだけ。指のタップでは出さない（タップは click → カードを開く。
     // v74: Android で指の下にふきだしが出て click を横取りし、0.5秒で消える不具合の修正）
-    n.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch" && n.__p) RG.spotTip(n.__p, { x: n.__p.x, y: n.__p.y }); });
+    /* v166: 乗せただけでは ふきだしを出さない（押したときだけカードを開く） */
     n.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") RG.spotTip(null); });
     n.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && n.__p) RG.showSpot(n.__p); });
     gPOI.appendChild(n); pool.push(n);
@@ -1473,7 +1486,7 @@ var Map = (function () {
       g.appendChild(el("circle", { class: "lm__hit", cx: P.x, cy: P.y, r: 12 }));
       var open = function (ev) { ev && ev.stopPropagation(); RG.showLandmark(L); };
       g.addEventListener("click", open);
-      g.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch") RG.spotTip(L, project(L.la, L.lo), true); });
+      /* v166: 乗せただけでは ふきだしを出さない */
       g.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") RG.spotTip(null); });
       g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") open(e); });
       gLM.appendChild(g); lmNode[L.id] = g;
@@ -1618,7 +1631,7 @@ var Card = (function () {
     var lineName = L ? esc((m && m.o ? m.o + " " : "") + L) : "";
     var wx = RG.weatherNow && RG.weatherNow(), wxc = wx && wx.data && wx.data.current, wxi = wxc && RG.wxIcon ? RG.wxIcon(wxc.weather_code) : null;
     return '<div class="plate__id">' +
-      '<div class="plate__code" style="--lc:' + col + '"' + (k ? "" : ' data-empty="1"') + '>' + (k ? '<b>' + esc(k) + "</b>" : '<span class="ms">directions_subway</span>') + "</div>" +
+      '<div class="plate__code" style="--lc:' + col + ';--lfg:' + RG.lineFg(col) + '"' + (k ? "" : ' data-empty="1"') + '>' + (k ? '<b>' + esc(k) + "</b>" : '<span class="ms">directions_subway</span>') + "</div>" +
       '<div class="plate__names"><div class="plate__name">' + esc(s.n) + "</div>" +
         (s.k ? '<div class="plate__kana">' + esc(s.k) + "</div>" : "") +
         ((place || lineName) ? '<div class="plate__tags">' + (place ? '<span class="ptag">' + esc(place) + "</span>" : "") + (lineName ? '<span class="plate__line">' + lineName + "</span>" : "") + "</div>" : "") +
@@ -1669,7 +1682,7 @@ var Card = (function () {
     (s.ls || []).forEach(function (L) { if (!onNet[L]) ord.push(L); });
     var ls = ord.map(function (L) {
       return '<button class="lchip lchip--go" type="button" data-launch="' + esc(L) + '" ' +
-        'aria-expanded="false" style="--lc:' + (RG.lineColor[L] || "#9AA0A6") + ';background:' + (RG.lineColor[L] || "#9AA0A6") + '">' +
+        'aria-expanded="false" style="--lc:' + (RG.lineColor[L] || "#9AA0A6") + ';--lfg:' + RG.lineFg(RG.lineColor[L] || "#9AA0A6") + ';background:' + (RG.lineColor[L] || "#9AA0A6") + '">' +
         (RG.lineBadge ? RG.lineBadge(L) : "") + esc(L) + '<i class="lchip__x">▾</i></button>';
     }).join("");
     var seen = {}, hops = [];
@@ -2056,7 +2069,7 @@ var Card = (function () {
       var L = rp.segs && rp.segs.length ? rp.segs[0].line : "", m = L && RG.LINEMETA && (RG.LINEMETA[L] || RG.LINEMETA[L.replace(/^(西武|東武|京王|小田急|東急|京成|京急|相鉄|近鉄|阪急|阪神|南海|京阪|名鉄)鉄道/, "$1")]), k = (m && m.k) || "", col = (m && m.conf !== "なし" && m.c) || RG.lineColor[L] || "#2d3135";
       var via = rp.segs && rp.segs.length > 1 ? RG.byId[rp.segs[1].ids[0]] : null;
       rows.push('<button class="term" type="button" data-termto="' + esc(x.t.id) + '">' +
-        '<span class="term__bd" style="--lc:' + col + '">' + (k ? esc(k) : '<span class="ms">directions_subway</span>') + "</span>" +
+        '<span class="term__bd" style="--lc:' + col + ';--lfg:' + RG.lineFg(col) + '">' + (k ? esc(k) : '<span class="ms">directions_subway</span>') + "</span>" +
         '<span class="term__nm"><b>' + esc(x.t.n) + "方面</b><small>" + esc(L ? L.replace(/^(JR|ＪＲ)(東日本|西日本|東海|北海道|四国|九州)/, "JR") : "") + (via ? "・" + esc(via.n) + "乗換" : "") + "</small></span>" +
         '<span class="term__t"><i>約</i>' + Math.round(rp.minutes) + "<i>分</i></span>" +
         '<span class="term__ft"><span class="term__x' + (rp.transfers ? "" : " term__x--0") + '">' + (rp.transfers ? "乗換 " + rp.transfers + "回" : "直通・乗換0回") + "</span>" + (rp.yen ? '<span class="term__y">IC ' + Math.round(rp.yen).toLocaleString("ja-JP") + "円</span>" : "") + "</span></button>");
@@ -2193,47 +2206,31 @@ var Card = (function () {
   }
 
   function open2(x) { open(x); }
-  function hoverShow(id, ev) {
-    hover.innerHTML = '<div class="card__scroll" style="max-height:74vh">' + render(id, null) + "</div>";
-    hover.classList.add("show"); position(ev); bind(hover, id, null);
-    loadDetail(RG.byId[id].n, function (d) {
-      if (!hover.classList.contains("show")) return;
-      hover.innerHTML = '<div class="card__scroll" style="max-height:74vh">' + render(id, d) + "</div>";
-      bind(hover, id, d);
-    });
-  }
-  function position(ev) {
-    var w = 372, m = 12, x = (ev && ev.clientX ? ev.clientX : innerWidth / 2) + 18;
-    var y = (ev && ev.clientY ? ev.clientY : 120) - 40;
-    if (x + w + m > innerWidth) x = (ev && ev.clientX ? ev.clientX : innerWidth / 2) - w - 18;
-    var h = hover.offsetHeight || 420;
-    if (y + h + m > innerHeight) y = Math.max(m, innerHeight - h - m);
-    hover.style.left = Math.max(m, x) + "px"; hover.style.top = Math.max(m, y) + "px";
-  }
+  /* v166: 駅のカードは スポットのカード（RG.openCard）と «同じ窓» に出す。
+     置き場所・大きさ・閉じ方はぜんぶ openCard 側がひとつで決める（PC は画面の真ん中・スマホは下からのシート）。
+     前は PC が #hovercard（カーソルのそば）・スマホが #sheet で、スポットと出る場所がちがっていた */
   function open(id, ev) {
     var s = RG.byId[id]; if (!s) return;
     cur = id; Map.select(id); Map.focus(id, 260);
-    if (!isTouch()) {
-      pinned = true;
-      var p = Map.screenPos(id) || {};
-      hoverShow(id, ev && ev.clientX ? ev : { clientX: p.x, clientY: p.y });
-      return;
-    }
-    var host = sheet.querySelector(".card__scroll");
-    host.innerHTML = render(id, null); bind(sheet, id, null);
-    sheet.classList.add("show"); sheet.classList.remove("full"); scrim.classList.add("show");
-    loadDetail(s.n, function (d) { if (cur !== id) return; host.innerHTML = render(id, d); bind(sheet, id, d); });
+    var opener = RG.openCard || RG.openModal; if (!opener) return;
+    var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + render(id, null) + "</div>");
+    m.__card = id;
+    bind(m, id, null);
+    loadDetail(s.n, function (d) {
+      if (cur !== id || m.__card !== id) return;
+      var host = m.querySelector(".card__scroll"), top = host ? host.scrollTop : 0;
+      if (!host) return;
+      host.innerHTML = render(id, d); bind(m, id, d); host.scrollTop = top;
+    });
   }
   function close() {
-    cur = null; pinned = false; Map.select(null);
-    hover.classList.remove("show");
-    sheet.classList.remove("show", "full"); scrim.classList.remove("show");
+    var was = cur; cur = null; pinned = false; Map.select(null);
+    var m = document.querySelector(".modal");
+    if (was && m && m.__card === was) { m.__card = null; if (RG.closeModal) RG.closeModal(); }
   }
-  function init() { hover = $("#hovercard"); sheet = $("#sheet"); scrim = $("#scrim"); }
+  function init() {}
   return { init: init, open: open, refresh: function () { if (cur) open(cur); }, close: close, current: function () { return cur; },
-    hover: function (id, ev) { if (isTouch() || pinned) return;
-      clearTimeout(timer); timer = setTimeout(function () { hoverShow(id, ev); }, 150); },
-    unhover: function () { if (pinned) return; clearTimeout(timer); hover.classList.remove("show"); } };
+    hover: function () {}, unhover: function () {} };   // v166: マウスを乗せただけでは出さない（残してあるのは古い呼び出しが壊れないため）
 })();
 RG.Card = Card;
 RG.openStation = function (id) { Card.open(id); };
@@ -2344,22 +2341,11 @@ function initChips() {
 }
 
 function initSheetDrag() {
-  var sheet = $("#sheet"), grab = $("#grab"), st = null;
-  grab.addEventListener("pointerdown", function (e) {
-    grab.setPointerCapture(e.pointerId); st = { y: e.clientY, full: sheet.classList.contains("full") }; });
-  grab.addEventListener("pointerup", function (e) {
-    if (!st) return; var dy = e.clientY - st.y;
-    if (dy < -40) sheet.classList.add("full");
-    else if (dy > 60) { if (st.full) sheet.classList.remove("full"); else Card.close(); }
-    else sheet.classList.toggle("full");
-    st = null;
-  });
-  $("#scrim").addEventListener("click", Card.close);
+  /* v166: 駅カードは openCard の窓になったので、#sheet のつまみは無い。外を押したとき・Esc で閉じる処理だけ残す */
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { Card.close(); if (RG.closeModal) RG.closeModal(); } });
   document.addEventListener("pointerdown", function (e) {
-    // v74: スマホの駅カードは #sheet。ここに #sheet が無かったため、シートの中を触った（スクロールした）瞬間に閉じていた
-    if (e.target.closest("#hovercard") || e.target.closest("#sheet") || e.target.closest(".node") || e.target.closest(".hdr") ||
+    if (e.target.closest(".node") || e.target.closest(".hdr") ||
         e.target.closest(".chips") || e.target.closest(".modal") || e.target.closest("#tripbar") ||
         e.target.closest(".bublegend") || e.target.closest(".zipchip") || e.target.closest(".poipop") || e.target.closest(".rebirth")) return;
     Card.close();

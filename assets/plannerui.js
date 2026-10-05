@@ -151,6 +151,7 @@ function modal(title, html) {
     }, { passive: true });
   }
   M.className = "modal";                                                              // v156: 前の画面の «読み物用» などの印を残さない
+  if (M.__card && RG.Card) { M.__card = null; RG.Card.close(); }                        // v166: 駅カードの上に別の窓を開くとき、駅の選択を外す
   M.__gen = (M.__gen || 0) + 1; M.__peek = null;
   $(".modal__map", M).hidden = true; $(".modal__prog", M).style.transform = "scaleX(0)";
   if (RG.readBackHide) RG.readBackHide();
@@ -164,6 +165,7 @@ function modal(title, html) {
 RG.closeModal = function () {
   if (!M || !M.classList.contains("show")) return;
   M.classList.remove("show");
+  if (M.__card && RG.Card) { M.__card = null; RG.Card.close(); }                        // v166: × で閉じたら駅の選択も外す
   var p = mPrevFocus; mPrevFocus = null;
   if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
 };

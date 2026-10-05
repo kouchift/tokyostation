@@ -4840,3 +4840,61 @@ body.gesturing .poipop{visibility:hidden}
 .modal--dark .mapb,.card--dark .mapb{color:#0061a1}
 .modal--dark .cmini,.card--dark .cmini{background:var(--control2);border-color:var(--border)}
 .modal--dark .spotcard__g{background:var(--control2);color:var(--text)}
+
+/* =========================================================================
+   v166 ■4: マウスを乗せただけでは出さない。乗せた駅の丸・路線は少し強調するだけ（カードは押したとき）
+   ========================================================================= */
+.node.hov .st-dot{stroke-width:5}
+.node.hov .st-lbl{font-weight:700}
+/* 路線は «太い透明な線»（.ln__hit）で押す。見える線が上に重なって押せない所があったので、見える線は押せないようにする */
+svg path.ln{pointer-events:none}
+/* =========================================================================
+   v166 ■2: 駅カードもスポットと同じ窓（RG.openCard = .modal--dark）に出す → .card--dark 向けの決まりを .modal--dark にも
+   ========================================================================= */
+.modal--dark .stcard{max-height:none;overflow:visible}
+.modal--dark .plate__kana,.modal--dark .plate__line,.modal--dark .plate__hl{color:var(--label)}
+.modal--dark .plate__tag,.modal--dark .plate__wx{background:var(--control2);color:var(--text)}
+.modal--dark .plate__wx small{color:var(--label)}
+.modal--dark .plate__close{display:none}                                  /* 窓の × があるので二重にしない */
+.modal--dark .tabs button,.modal--dark .ctab{color:var(--label)}
+.modal--dark .tabs button[aria-selected=true],.modal--dark .ctab[aria-selected=true]{color:var(--text)}
+.modal--dark .cardq__in{color:var(--text)}
+.modal--dark .cardq__sug button,.modal--dark .cardq__sug .n{color:var(--text)}
+/* 駅カードの中のタブ・応援ボタン */
+.modal--dark .tabs .tab{background:var(--control);color:var(--label);border-color:var(--border)}
+.modal--dark .tabs .tab.on,.modal--dark .tabs .tab[aria-selected=true]{background:var(--control2);color:var(--text)}
+/* =========================================================================
+   v166 ■1: 白と白・暗と暗 の重なり（自動コントラスト検査で 3:1 未満だったところ）を直す
+   ・路線色の札は RG.lineFg が --lfg（黒か白）を決める
+   ・濃い窓の中の «明るい小さな面» は :is(...) の一覧に入れて、中の文字だけ暗く戻す
+   ========================================================================= */
+/* 路線色の札：明るい色には黒い字（RG.lineFg が --lfg を決める） */
+.plate__code,.plate__code b,.plate__code .ms,.term__bd,.term__bd .ms{color:var(--lfg,#fff)}
+button.lchip.lchip--go,button.lchip.lchip--sk{color:var(--lfg,#fff) !important}      /* design_v2.css の color:#fff !important より強く */
+/* スポットのカード：«ここから» と «同じジャンル» */
+.modal--dark .fromhere{background:var(--control);border-color:var(--border);color:var(--text)}
+.modal--dark .fromhere__v,.modal--dark .fromhere b{color:var(--text)}
+.modal--dark .sgbtn{background:var(--control);border-color:var(--border);color:var(--text)}
+.modal--dark .sgbtn:hover{background:var(--control2);border-color:var(--lb400)}
+.modal--dark .sgbtn__ph{background:var(--control2)}
+.modal--dark .sgbtn__n{color:var(--text)}.modal--dark .sgbtn__m{color:var(--label)}
+/* 駅のカード：メモ・東京駅の囲み・ホームの深さ・混雑の目安 */
+.modal--dark .mm__hl--zero{color:var(--label)}.modal--dark .mm__hl-go{color:var(--link)}
+.modal--dark .mm__cap{color:var(--label)}.modal--dark .mm__cap b{color:var(--text)}
+.modal--dark .mm__lst{background:var(--control2);color:var(--link);border-color:var(--border)}
+.modal--dark :is(.sec--tokyo,.dep,.nat,.lvc,.handy__i,.cam__k,.focus,.car,.eh__hee,.grx__sec,.grx__rp,.grv__visit,.grv__manner,.hl__sec,.wl){
+  --text:#181c20;--label:#404751;--muted:#707882;--gray600:#404751;--gray800:#2d3135;--grid:#e0e3e8;--border:#c0c7d3;--link:#0061a1;--highlight:#0061a1;
+  color:var(--text);color-scheme:light}
+.modal--dark .tk__ride button.tk__pill--sk,.modal--dark .tk__ride button.tk__pill--sk small{color:#fff}   /* 上の :is(...) は (0,2,1) なのでそれより強く */
+.modal--dark .axoff .why,.card--dark .axoff .why{color:#7A5600}
+.sp--l1{--l-fg:#5F6B78}.sp--l5{--l-fg:#9A6500}
+.spl--l1,.spl--l2{color:#10223A}
+.spot__c{color:#6B7280}
+/* 設定：ジャンルの絵文字の印（白地に白い字になっていた） */
+.gmk--e span,.gmk--e{color:#181c20}
+/* お墓・偉人のカード：濃い面の本文は明るく、白い囲みの中は暗く */
+.modal--dark .eh__kid p,.modal--dark .eh__kid{color:var(--text)}
+.modal--dark .grx__sec p,.modal--dark .grx__sec h5,.modal--dark .grx__rp span,.modal--dark .grv__visit p{color:var(--text)}
+.modal--dark :is(.grx__sec,.hl__sec) ruby rt{color:#5b6470}
+.focus__cheerb{color:#1a1a1a}
+.modal--dark .grv__all summary,.modal--dark .grv__all summary *{color:#181c20}

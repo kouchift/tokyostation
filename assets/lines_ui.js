@@ -451,9 +451,7 @@ var Rail = (function () {
         showGenre(b.dataset.genre, b);
         clearTimeout(popTimer); popTimer = setTimeout(hide, 4000);
       });
-      b.addEventListener("mouseenter", function () { showGenre(b.dataset.genre, b); });
-      b.addEventListener("mouseleave", hide);
-      b.addEventListener("focus", function () { showGenre(b.dataset.genre, b); });
+      b.addEventListener("mouseleave", hide);                       // v166: 乗せただけでは出さない（押したときだけ・上の pointerdown）
       b.addEventListener("blur", hide);
     });
     syncGenreButtons();
@@ -470,9 +468,8 @@ var Rail = (function () {
         if (RG.Base.heat) { RG.Base.admin = true; RG.Base.blank = false; }
         RG.applyBasemap(); syncMapButtons();
       });
-      b.addEventListener("mouseenter", function () { showHeat(b.dataset.heat, b); });
+      b.addEventListener("pointerdown", function () { showHeat(b.dataset.heat, b); clearTimeout(popTimer); popTimer = setTimeout(hide, 4000); });   // v166: 押したときだけ
       b.addEventListener("mouseleave", hide);
-      b.addEventListener("focus", function () { showHeat(b.dataset.heat, b); });
       b.addEventListener("blur", hide);
     });
     $$("[data-bm]", box).forEach(function (b) {
@@ -516,10 +513,8 @@ var Rail = (function () {
       if (RG.tripStatus) RG.tripStatus("🚉 " + ps.value + " の路線に切り替えました。", "info", 2500);
     });
     $$(".lr__i[data-line]", box).forEach(function (b) {      // ジャンルのボタン（.lr__i--g）はここでは扱わない（v73: 全部が押された表示になる不具合の修正）
-      b.addEventListener("click", function () { toggle(b.dataset.line); });
-      b.addEventListener("mouseenter", function (e) { show(b.dataset.line, b); });
+      b.addEventListener("click", function () { toggle(b.dataset.line); show(b.dataset.line, b); clearTimeout(popT); popT = setTimeout(function () { if (!popOver) pop.style.display = "none"; }, 4000); });   // v166: 押したときだけ ふきだし（4 秒で消える）
       b.addEventListener("mouseleave", hide);
-      b.addEventListener("focus", function () { show(b.dataset.line, b); });
       b.addEventListener("blur", hide);
     });
       $(".lr__all", box).addEventListener("click", function () { toggle(null); RG.clearGenres(); });
