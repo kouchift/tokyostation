@@ -184,13 +184,13 @@ function officeUrl(k) { return B + "warning/#lang=ja&area_type=offices&area_code
 RG.showAlert = function (p) {
   var a = p.alert, html;
   if (a.kind === "volcano") {
-    html = '<div class="alc"><p class="alc__lv">🌋 噴火警報 レベル ' + a.v.lv + "（" + esc(a.v.name) + "）</p>" +
+    html = '<div class="alcw"><p class="alc__lv">🌋 噴火警報 レベル ' + a.v.lv + "（" + esc(a.v.name) + "）</p>" +
       '<p class="alc__t">' + esc(a.v.n) + " ・ 発表 " + esc(fmt(a.v.at)) + "</p>" +
       '<p class="alc__d">火口のまわりや登山道が規制されていることがあります。必ず気象庁と地元自治体の情報を確かめてください。</p>' +
       '<div class="lnks"><a class="lnk" href="' + B + 'volcano/" target="_blank" rel="noopener"><span>🏛️</span>気象庁の火山の情報</a></div>' +
       '<p class="src">出典: 気象庁（噴火警報・予報）。地図の位置は火山の代表地点です。</p></div>';
   } else {
-    html = '<div class="alc"><ul class="alc__l">' + a.kinds.map(function (x) {
+    html = '<div class="alcw"><ul class="alc__l">' + a.kinds.map(function (x) {
       return '<li class="alc__k alc__k--' + x.lv + '"><b>' + esc(x.name) + "</b><small>" + esc(x.st) + "</small></li>"; }).join("") + "</ul>" +
       '<p class="alc__t">' + esc(a.area) + " ・ 発表 " + esc(fmt(a.at)) + "</p>" +
       (a.head ? '<p class="alc__d">' + esc(a.head) + "</p>" : "") +
@@ -212,7 +212,7 @@ RG.showAlerts = function () {
                     : '<li class="alc__k alc__k--' + cls + (a.seen ? " alc__k--seen" : "") + '">' + head + "</li>");
   });
   var nVol = ST.vol.length;
-  var m = RG.openModal("🚨 いま出ている防災情報", '<div class="alc"><p class="alc__d">いま見ている地図のまわりと現在地の府県の気象警報（設定のレベルで絞っています）、津波警報・注意報です。10 分おきに取り直します。' +
+  var m = RG.openModal("🚨 いま出ている防災情報", '<div class="alcw"><p class="alc__d">いま見ている地図のまわりと現在地の府県の気象警報（設定のレベルで絞っています）、津波警報・注意報です。10 分おきに取り直します。' +
     (nVol ? " 噴火警報（レベル 2 以上）は地図の 🌋 を押してください（" + nVol + " 火山）。" : "") + "</p>" +
     (rows.length ? '<ul class="alc__l alc__l--all">' + rows.join("") + "</ul>" : '<p class="alc__d">いま出ているものはありません。</p>') +
     '<div class="alc__ctl"><label>帯に出す警報 <select id="al-min" class="set__sel">' + RG.ALERT_LEVELS.map(function (L) {
