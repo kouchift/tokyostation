@@ -27,7 +27,7 @@ async function run(name, geo, perms, initScript, expect) {
   log(/取得中|取れました|取れませんでした/.test(pending), "押した直後に状態の行（headless では一瞬で決まることがある）: " + pending.slice(0, 40));
   await page.waitForFunction(() => RG.pvLastSpec && RG.pvLastSpec.hereDone, null, { timeout: 40000 });
   const sec = ((Date.now() - t0) / 1000).toFixed(1);
-  const r = await page.evaluate(() => ({ here: RG.pvLastSpec.here, why: RG.pvLastSpec.hereWhy, line: RG.pvLastSpec.hereLine, startCap: RG.pvLastSpec.startCap, status: document.querySelector("#pv-here").textContent, cls: document.querySelector("#pv-here").className }));
+  const r = await page.evaluate(() => ({ here: RG.pvLastSpec.here, why: RG.pvLastSpec.hereWhy, line: RG.pvLastSpec.hereLine, addr: RG.pvLastSpec.hereAddrLine, startCap: RG.pvLastSpec.startCap, status: document.querySelector("#pv-here").textContent, cls: document.querySelector("#pv-here").className }));
   expect(r, sec);
   for (const [t, nm] of [[1.9, "intro"], [6.5, "map"]]) {
     const dataUrl = await page.evaluate(([t]) => { const cv = document.createElement("canvas"); cv.width = 1280; cv.height = 720; const c = cv.getContext("2d"); RG.pvDrawer(RG.pvLastSpec)(c, t); return cv.toDataURL("image/png"); }, [t]);
@@ -42,7 +42,8 @@ async function run(name, geo, perms, initScript, expect) {
 await run("a_near", { latitude: 35.7373, longitude: 139.6395, accuracy: 35 }, ["geolocation"], null, (r, sec) => {
   log(r.here && r.here.real && !r.here.far && r.here.acc === 35, "現在地が入る（±35m・ルートの近く）" + " " + sec + " 秒");
   log(/取れました（±35m）/.test(r.status) && !/pv__here--no/.test(r.cls), "状態の行: " + r.status);
-  log(r.startCap === "📍 いまここから出発" && r.line === "📍 現在地を入れました（±35m）", "最初の字幕と冒頭の 1 行: " + r.line);
+  log(/^📍 いまここから出発/.test(r.startCap) && r.line === "📍 現在地を入れました（±35m）", "最初の字幕と冒頭の 1 行: " + r.startCap + " ／ " + r.line);
+  log(/^📍 いまここ：.+中村橋駅から \d+m$/.test(r.addr || ""), "住所の 1 行（v169）: " + r.addr);
 });
 await run("b_far", { latitude: 35.35, longitude: 139.6395, accuracy: 1200 }, ["geolocation"], null, (r, sec) => {
   log(r.here && r.here.real && r.here.far && r.here.km >= 35 && r.here.dir === "南", "ルートから遠い（" + (r.here && r.here.km) + "km " + (r.here && r.here.dir) + "）→ 端に札");

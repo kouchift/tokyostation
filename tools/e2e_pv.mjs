@@ -9,6 +9,7 @@ const BASE = process.env.TSG_BASE || "http://127.0.0.1:8765/index.html";
 const OUT = process.env.TSG_OUT || "/tmp";
 const HERE = { latitude: 35.7373, longitude: 139.6395 };          // 中村橋のあたり
 const DAY = "2026-10-12", DAY_TXT = "10月12日（月）";
+const RG_tl = sp => sp.steps.length * 2.2 + 3 + 6 <= sp.dur + 24;   // 区間が多いほど長い（上限あり）
 let fails = 0; const log = (ok, msg) => { console.log((ok ? "  ✓ " : "  ✕ ") + msg); if (!ok) fails++; };
 const today = (() => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
 const browser = await chromium.launch();
@@ -30,13 +31,17 @@ async function run(name, vp, mobile) {
     const o = r.options.filter(o => o.id === "train")[0]; RG.addRouteToPlan(o, r, RG.Trip.label, RG.stLabel(s), id); }, ike);
 
   /* ---- 素材（字幕・日付・リンク） */
-  const spec = await page.evaluate(([day, la, lo]) => { const sp = RG.pvSpecFromPlan(null, { date: day, here: { la, lo, real: true }, vertical: false });
-    return { caps: sp.caps, dayText: sp.dayText, dayStr: sp.dayStr, link: sp.link, routeLine: sp.routeLine, here: sp.here, startCap: sp.startCap, fromId: sp.fromId, toId: sp.toId, minutes: sp.minutes }; }, [DAY, HERE.latitude, HERE.longitude]);
+  const spec = await page.evaluate(async ([day, la, lo]) => { const ad = await new Promise(res => RG.pvAddr({ la, lo, real: true, acc: 35 }, res)); const sp = RG.pvSpecFromPlan(null, { date: day, here: { la, lo, real: true }, hereAddr: ad, vertical: false });
+    return { caps: sp.caps, dayText: sp.dayText, dayStr: sp.dayStr, link: sp.link, routeLine: sp.routeLine, here: sp.here, startCap: sp.startCap, fromId: sp.fromId, toId: sp.toId, minutes: sp.minutes, steps: sp.steps, transfers: sp.transfers, dur: sp.dur, hl: sp.hl, hereAddrLine: sp.hereAddrLine }; }, [DAY, HERE.latitude, HERE.longitude]);
   log(spec.dayText === DAY_TXT && spec.dayStr === DAY, "移動予定日: " + spec.dayText);
-  log(/^① .+駅から .+ に乗る$/.test(spec.caps[0] || ""), "字幕 ①: " + spec.caps[0]);
-  log(spec.caps.slice(1, -1).every(c => /^[②-⑳] .+駅で .+ に乗り換え$/.test(c)), "字幕 乗り換え: " + (spec.caps.slice(1, -1).join(" ／ ") || "（なし）"));
+  log(/^① .+駅から .+に乗る・\d+ 駅$/.test(spec.caps[0] || ""), "字幕 ①（会社つき・駅数つき）: " + spec.caps[0]);
+  log(spec.caps.slice(1, -1).every(c => /^[②-⑳] .+駅で .+（.+）に乗り換え・\d+ 駅$/.test(c)), "字幕 乗り換え（会社つき）: " + (spec.caps.slice(1, -1).join(" ／ ") || "（なし）"));
+  /* v169: 区間（steps）・乗り物の印・会社と路線の札・住所・長さ・見どころ */
+  log(spec.dur >= 20 && spec.dur <= 40 && RG_tl(spec), "長さ " + spec.dur + " 秒（区間 " + spec.steps.length + "）");
+  log(/^📍 いまここ：(東京都)?練馬区.+（〒\d{3}-\d{4}）・中村橋駅から \d+m$/.test(spec.hereAddrLine || ""), "現在地の住所（〒・町名・最寄り駅）: " + spec.hereAddrLine);
+  log(spec.steps.length >= 2 && spec.steps[0].kind === "walk" && spec.steps[1].kind === "rail" && spec.steps[1].op.s === "西武" && spec.steps[1].code === "池袋線", "区間（徒歩 → 西武 池袋線）: " + spec.steps.map(st => st.kind + (st.op && st.op.s ? "/" + st.op.s : "") + (st.code ? "/" + st.code : "")).join(" → "));
+  log(/^📍 いまここから出発（.+）$/.test(spec.startCap) && spec.here && spec.here.real, "最初の字幕（町名つき）: " + spec.startCap);
   log(/^[②-⑳] .+駅で降りる/.test(spec.caps[spec.caps.length - 1] || ""), "字幕 末尾: " + spec.caps[spec.caps.length - 1]);
-  log(spec.startCap === "📍 いまここから出発" && spec.here && spec.here.real, "最初の字幕: " + spec.startCap);
   log(/\?from=[^&]+&to=[^&]+&pv=1&d=2026-10-12&m=train$/.test(spec.link), "共有リンク: " + spec.link);
   log(!!spec.routeLine, "冒頭のルート: " + spec.routeLine);
   const noHere = await page.evaluate(([day]) => RG.pvSpecFromPlan(null, { date: day, here: null }).startCap, [DAY]);
@@ -47,10 +52,13 @@ async function run(name, vp, mobile) {
     const o = r.options.filter(o => o.id === "train")[0]; const keep = RG.Plan.items.slice();
     RG.Plan.items = []; RG.addRouteToPlan(o, r, RG.Trip.label, RG.stLabel(s), s.id); const one = RG.pvSpecFromPlan(null, { here: null });
     RG.Plan.items = keep.concat(RG.Plan.items); const two = RG.pvSpecFromPlan(null, { here: null });
-    RG.Plan.items = keep; return { one: one.caps, line: one.routeLine, two: two.caps, link2: two.link };
+    RG.Plan.items = keep; return { one: one.caps, line: one.routeLine, two: two.caps, link2: two.link, steps: one.steps, transfers: one.transfers, hl: one.hl, dur: one.dur };
   });
-  log(tx.one.some(c => /に乗り換え$/.test(c)) && tx.one.length >= 3, "乗り換えの字幕（中村橋 → 東京）: " + tx.one.join(" ／ "));
+  log(tx.one.some(c => /に乗り換え・\d+ 駅$/.test(c)) && tx.one.length >= 3, "乗り換えの字幕（中村橋 → 東京）: " + tx.one.join(" ／ "));
   log(/ → /.test(tx.line), "冒頭のルート（乗り換えあり）: " + tx.line);
+  log(tx.steps.some(st => st.transfer && st.op && st.op.s && st.code) && tx.transfers >= 1 && tx.transfers === tx.steps.filter(st => st.transfer).length, "乗り換えの区間（会社・路線の札つき）: " + tx.steps.map(st => st.kind + (st.op && st.op.s ? "/" + st.op.s : "") + (st.code ? "/" + st.code : "") + (st.transfer ? "(乗換)" : "")).join(" → ") + "　乗り換え " + tx.transfers + " 回");
+  log(Array.isArray(tx.hl) && tx.hl.length >= 1 && tx.hl[0].n.indexOf("東京駅") === 0 && tx.hl.filter(h => /レベチ/.test(h.note || "")).length <= 1, "東京駅の見どころ（名所が先・レストランは 1 つまで。スポットのデータを読む前は定番の 1 件だけ）: " + tx.hl.map(h => h.e + h.n).join("・"));
+  log(tx.dur > 20 && tx.dur <= 40, "乗り換えありの長さ " + tx.dur + " 秒（区間 " + tx.steps.length + "）");
   log(tx.two.length === spec.caps.length + tx.one.length && /^③/.test(tx.two[2]) && !/&m=/.test(tx.link2), "2 区間のプランで番号が続く（" + tx.two.length + " 枚・リンクに手段なし）");
   const yr = await page.evaluate(() => [RG.pvFmtDay("2027-01-03"), RG.pvFmtDay("まちがい")]);
   log(yr[0] === "2027年1月3日（日）" && yr[1] === RG_today(), "年のつけ方・読めない日付は今日: " + yr.join(" / "));

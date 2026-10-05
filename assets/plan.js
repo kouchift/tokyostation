@@ -470,7 +470,7 @@ RG.openPlan = function () {
         esc(P.memo) + "</textarea></label>" +
       '<div class="pl__share">' +
         '<button id="pl-share" class="pl__b1" type="button">📤 このプランを共有する</button>' +
-        '<button id="pl-pv" class="set__b2" type="button">🎬 20秒のルートPVを作る</button>' +
+        '<button id="pl-pv" class="set__b2" type="button">🎬 ルートPVを作る（20〜40秒）</button>' +
         '<button id="pl-pvl" class="set__b2" type="button">🎞️ 作ったPV</button>' +
         '<button id="pl-copy" class="set__b2" type="button">📋 テキストをコピー</button>' +
         '<button id="pl-prev" class="set__b2" type="button">👀 送る内容を見る</button>' +

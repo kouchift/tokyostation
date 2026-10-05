@@ -80,7 +80,7 @@ RG.logToMarkdown = function (g) {
          (hasA ? " → **実際 " + yen(sumA) + "**" : ""));
   if (g.rating) L.push("> 満足度 " + "★".repeat(g.rating) + "☆".repeat(5 - g.rating));
   L.push("");
-  if (g.pv) { var ex = new Date(g.pv.expires); L.push("🎬 ルート PV: `" + g.pv.name + "`（端末に保存した20秒動画。保有期限 " + ex.getFullYear() + "/" + (ex.getMonth() + 1) + "/" + ex.getDate() + "、投げ銭の有無にかかわらず期限後は消える可能性があります）"); L.push(""); }
+  if (g.pv) { var ex = new Date(g.pv.expires); L.push("🎬 ルート PV: `" + g.pv.name + "`（端末に保存した 20〜40秒動画。保有期限 " + ex.getFullYear() + "/" + (ex.getMonth() + 1) + "/" + ex.getDate() + "、投げ銭の有無にかかわらず期限後は消える可能性があります）"); L.push(""); }
   L.push("## 行程");
   L.push("");
   g.items.forEach(function (it) {
