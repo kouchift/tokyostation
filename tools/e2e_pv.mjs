@@ -87,6 +87,18 @@ async function run(name, vp, mobile) {
   log(/pv=1&d=2026-10-12/.test(done.link), "できた画面の共有リンク: " + done.link);
   await page.screenshot({ path: `${OUT}/pv_${name}_done.png` });
 
+  /* ---- 端末に残る（IndexedDB）→ 「作ったPV」の一覧に出る → 開き直せる */
+  await page.evaluate(() => RG.pvList());
+  await page.waitForSelector(".modal.show [data-pv]", { timeout: 15000 }).catch(() => {});
+  const listed = await page.evaluate(() => [...document.querySelectorAll(".modal.show [data-pv]")].map(b => b.textContent));
+  log(listed.length >= 1 && /10月12日/.test(listed[0] || ""), "作った PV が一覧に残る: " + (listed[0] || "（なし）"));
+  if (listed.length) {
+    await page.click(".modal.show [data-pv]");
+    await page.waitForSelector("#pv-v", { timeout: 15000 });
+    const re = await page.evaluate(() => ({ day: (document.querySelector(".pv__dayline") || {}).textContent || "", src: document.querySelector("#pv-v").getAttribute("src") || "", again: !!document.querySelector("#pv-again") }));
+    log(/^blob:/.test(re.src) && re.day.indexOf(DAY_TXT) >= 0 && !re.again, "一覧から開き直せる（動画・移動予定日あり・作り直しボタンなし）");
+  }
+
   /* ---- 共有リンクで開き直す → 同じ日付・字幕の PV が自動で始まる */
   await page.goto(BASE + "?" + done.link.split("?")[1], { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#pv-day", { timeout: 90000 });

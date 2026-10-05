@@ -46,6 +46,13 @@ function db() {
 }
 function put(rec) { return db().then(function (d) { return new Promise(function (res, rej) { var t = d.transaction("pv", "readwrite"); t.objectStore("pv").put(rec); t.oncomplete = res; t.onerror = function () { rej(t.error); }; }); }); }
 function all() { return db().then(function (d) { return new Promise(function (res, rej) { var t = d.transaction("pv", "readonly"), q = t.objectStore("pv").getAll(); q.onsuccess = function () { res(q.result || []); }; q.onerror = function () { rej(q.error); }; }); }); }
+/* v166: 保存できる形（関数・DOM の参照を除いた plain object）にしてから入れる。前は again（関数）が入っていて構造化クローンに失敗し、一覧に残らなかった */
+function storable(rec) {
+  var o = {};
+  Object.keys(rec).forEach(function (k) { var v = rec[k]; if (typeof v === "function" || (v && typeof v === "object" && v.nodeType)) return; o[k] = v; });
+  try { if (window.structuredClone) structuredClone(o); } catch (e) { if (window.console) console.warn("PV: この記録は端末に保存できない形です", e && e.message); return null; }
+  return o;
+}
 function del(id) { return db().then(function (d) { return new Promise(function (res) { var t = d.transaction("pv", "readwrite"); t.objectStore("pv").delete(id); t.oncomplete = res; t.onerror = res; }); }); }
 RG.pvSweep = function () { if (!window.indexedDB) return; all().then(function (rs) { rs.forEach(function (r) { if (r.expires < Date.now()) del(r.id); }); }).catch(function () {}); };
 
@@ -470,7 +477,7 @@ RG.pvFlow = function (kind, proceed, items, opts) {
     var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime), vertical: !!spec.vertical, tags: spec.tags || [],
                 day: spec.dayStr, dayText: spec.dayText, link: spec.link, caps: spec.caps,
                 again: function () { var o = Object.assign({}, opts, { vertical: !spec.vertical, date: spec.dayStr }); RG.pvFlow(kind, proceed, items, o); } };
-    put(rec).catch(function () {});
+    var sv = storable(rec); if (sv) put(sv).catch(function (e) { if (window.console) console.warn("PV: 端末への保存に失敗（動画はこのまま使えます）", e && e.message); });
     RG.pvShow(rec, kind, proceed);
   }).catch(function () { if (spec.__cancel) return; live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
 };
