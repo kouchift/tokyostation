@@ -45,6 +45,7 @@
  *        {a:"own",     id, op:"del"|"hide"|"show", tok}                     v144: 本人の投稿を削除・非公開・公開に戻す
  *        {a:"mine",    tok}                                               v144: 自分の投稿（非公開も含む）
  *        {a:"purge",   key, months|id, dry}                                 v145: 管理人の完全削除（本人が削除して months か月以上／1 件）
+ *        {a:"purge",   key, xids:[x…], photos:true|false, dry}              v166: 管理ページの一覧（ExifLog）の行をまとめて消す。photos なら ひもづく写真（p…）も完全に消す
  *   GET  ?a=tips&st=<駅名>                                                  v112: その駅の «便利な号車» 情報
  *   注意: loc（撮影位置の判定）とラベルの焼き込みは画面側で行う。改造した画面からは «ok» と偽れるので、
  *         ここでは 1 人・1 スポット・全体の数の上限で被害を小さくしている。
@@ -68,7 +69,7 @@ var PER_DAY_LIKES = 500;
 var PER_DAY_TIPS = 20;
 var X_COLS = ["ts", "result", "pid", "uid", "name", "k", "spot_n", "spot_la", "spot_lo", "loc", "dist_m", "method", "cam",
               "gps_la", "gps_lo", "datetime_original", "make", "model", "software", "file_name", "file_size", "file_type", "file_modified",
-              "orig_w", "orig_h", "geo_la", "geo_lo", "geo_acc_m", "geo_at", "geo_km", "ua", "meta_json"];
+              "orig_w", "orig_h", "geo_la", "geo_lo", "geo_acc_m", "geo_at", "geo_km", "ua", "meta_json", "xid"];   // v166: xid = 行を 1 件だけ指す id（管理ページの削除に使う。古い行には admin の読み込み時に補う）
 var LOC_RANK = { ok: 0, here: 1, none: 2, far: 3 };   // 表示の順（小さいほど先）
 var MAX_EDGE = 1600;                          // 画面側で縮める長辺（これより大きい写真は受けない）
 var META_MAX = 8000;                          // ExifLog に残す元データ（JSON）の長さ。本物は 1〜2KB
@@ -158,9 +159,16 @@ function logExif_(result, pid, uid, name, k, spot, loc, dist, meta) {
       txt_(loc, 8), dist === "" ? "" : num_(dist), txt_(meta.method, 8), meta.cam ? 1 : 0,
       num_(gp.la), num_(gp.lo), txt_(ex.DateTimeOriginal || ex.DateTime, 40), txt_(ex.Make, 60), txt_(ex.Model, 60), txt_(ex.Software, 60),
       txt_(f.name, 120), num_(f.size), txt_(f.type, 40), txt_(f.lastModified, 40), num_(o.w), num_(o.h),
-      num_(g.la), num_(g.lo), num_(g.acc), txt_(g.at, 40), num_(g.km), txt_(meta.ua, 200), txt_(js, META_MAX + 10)]);
+      num_(g.la), num_(g.lo), num_(g.acc), txt_(g.at, 40), num_(g.km), txt_(meta.ua, 200), txt_(js, META_MAX + 10),
+      "x" + Utilities.getUuid().replace(/-/g, "").slice(0, 16)]);
   } catch (e) {}
 }
+/* v166: 古い行（xid が無い）に、中身と行番号から決まる id を補う。同じ中身の行が 2 つあっても行番号が違うので別の id になる */
+function sha_(s) { var d = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8), h = ""; for (var i = 0; i < d.length; i++) h += ("0" + (d[i] & 255).toString(16)).slice(-2); return h; }
+function xidFor_(o, row) { return "x" + sha_([ms_(o.ts), o.pid, o.uid, o.name, o.file_name, row].join("|")).slice(0, 16); }
+function isXid_(v) { return /^x[0-9a-f]{16}$/.test(String(v || "")); }
+/* 行をまとめて消す（下の行から消す: 行番号がずれないように） */
+function delRows_(name, rows) { rows.map(function (r) { return r._row; }).sort(function (x, y) { return y - x; }).forEach(function (n) { sheet_(name).deleteRow(n); }); }
 /* 断った投稿の記録は、1 人 1 日・全体 1 時間の数まで（それ以上は記録しない。受け付けた投稿は必ず記録） */
 function rejectLogAllowed_(uid) {
   try {
@@ -291,10 +299,24 @@ function purge_(b) {
   if (one && !P.length && !C.length) return { error: "見つかりません" };
   if (b.dry) return out;
   P.forEach(function (r) { if (r.file_id) try { DriveApp.getFileById(r.file_id).setTrashed(true); } catch (e) {} });
-  function del_(name, rows) { rows.map(function (r) { return r._row; }).sort(function (x, y) { return y - x; }).forEach(function (n) { sheet_(name).deleteRow(n); }); }   // 下の行から消す（行番号がずれないように）
-  del_("Photos", P); del_("Comments", C);
-  del_("Likes", rows_("Likes", L_COLS).filter(function (r) { return ids[r.id]; }));
-  del_("Reports", rows_("Reports", R_COLS).filter(function (r) { return ids[r.id]; }));
+  delRows_("Photos", P); delRows_("Comments", C);
+  delRows_("Likes", rows_("Likes", L_COLS).filter(function (r) { return ids[r.id]; }));
+  delRows_("Reports", rows_("Reports", R_COLS).filter(function (r) { return ids[r.id]; }));
+  SpreadsheetApp.flush();
+  return out;
+}
+/* v166: 管理ページの一覧（ExifLog）の行を xid でまとめて消す。photos が真なら、その行にひもづく写真（pid）も purge_ で完全に消す
+   {a:"purge", key, xids:["x…", …], photos:true|false, dry:true} → { ok, rows: 消した行, missing: 見つからなかった id の数, photos: 消した写真 } */
+function purgeLog_(b) {
+  var want = {}, n = 0;
+  (Array.isArray(b.xids) ? b.xids : []).slice(0, 500).forEach(function (x) { if (isXid_(x) && !want[x]) { want[x] = 1; n++; } });
+  if (!n) return { error: "消す行の id がありません" };
+  var X = rows_("ExifLog", X_COLS).filter(function (r) { return want[r.xid]; });
+  var pids = {}; X.forEach(function (r) { if (/^p[0-9a-f]{16}$/.test(String(r.pid || ""))) pids[r.pid] = 1; });
+  var out = { ok: true, dry: !!b.dry, rows: X.length, missing: n - X.length, photos: 0, withPhoto: Object.keys(pids).length };
+  if (b.dry) return out;
+  if (b.photos) Object.keys(pids).forEach(function (pid) { var r = purge_({ id: pid }); if (r && r.ok) out.photos += r.photos; });   // 写真・いいね・通報・ドライブのファイル
+  delRows_("ExifLog", X);
   SpreadsheetApp.flush();
   return out;
 }
@@ -308,15 +330,19 @@ function purgeInfo_() {
 function doGet(e) {
   try {
     var q = e.parameter || {}, a = q.a || "spot";
-    if (a === "ping") return json_({ ok: true, v: 145 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
+    if (a === "ping") return json_({ ok: true, v: 146 });          // 準備（setup）はしない: 置くときの確認中に setup と重ならないように
     ensureInit_();
     if (a === "admin") {                          // 管理ページ（admin/posts.html）用。鍵が合うときだけ撮影データの記録を返す
       if (!q.key || q.key !== adminKey_()) return json_({ error: "鍵が違います" });
-      var n0 = Math.max(1, Math.min(1000, +q.n || 500)), xs = sheet_("ExifLog"), last = xs.getLastRow(), X = [];
-      if (last > 1) { var cnt = Math.min(n0, last - 1); X = xs.getRange(last - cnt + 1, 1, cnt, X_COLS.length).getValues().map(function (v) { var o = {}; X_COLS.forEach(function (c, j) { o[c] = v[j]; }); return o; }); }   // 新しい n 行だけ読む
+      var n0 = Math.max(1, Math.min(1000, +q.n || 500)), xs = sheet_("ExifLog"), last = xs.getLastRow(), X = [], xc = X_COLS.indexOf("xid") + 1;
+      if (last > 1) {                             // 新しい n 行だけ読む
+        var cnt = Math.min(n0, last - 1), start = last - cnt + 1, vals = xs.getRange(start, 1, cnt, X_COLS.length).getValues(), fill = false;
+        X = vals.map(function (v, i) { var o = {}; X_COLS.forEach(function (c, j) { o[c] = v[j]; }); if (!isXid_(o.xid)) { o.xid = xidFor_(o, start + i); v[xc - 1] = o.xid; fill = true; } return o; });
+        if (fill) { xs.getRange(start, xc, cnt, 1).setValues(vals.map(function (v) { return [v[xc - 1]]; })); SpreadsheetApp.flush(); }   // v166: xid の無い古い行に補って書き戻す（1 回だけ）
+      }
       X = X.reverse().map(function (r) { var o = {}; X_COLS.forEach(function (c) { o[c] = c === "ts" ? iso_(r[c]) : r[c]; }); return o; });
       var PH = rows_("Photos", P_COLS).map(function (r) { var o = photoOut_(r); o.hidden = r.hidden; o.reports = r.reports; o.visible = visible_(r); o.shared = r.shared; return o; });
-      return json_({ ok: true, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl(), purge: purgeInfo_() });
+      return json_({ ok: true, v: 146, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl(), purge: purgeInfo_() });
     }
     if (a === "spot") {
       var k = clean_(q.k, 200), me = clean_(q.u, 20), lk = {}, my = [];
@@ -366,7 +392,7 @@ function doPost(e) {
        消すもの: その行・その投稿へのいいね（Likes）・通報（Reports）。写真はドライブのファイルもゴミ箱へ（ゴミ箱は 30 日で自動で空になる） */
     if (b.a === "purge") {
       if (!b.key || b.key !== adminKey_()) return json_({ error: "鍵が違います" });
-      return json_(purge_(b));
+      return json_(b.xids ? purgeLog_(b) : purge_(b));             // v166: xids があれば管理ページの一覧の行を消す
     }
     var tok = String(b.tok || "");
     if (!/^[A-Za-z0-9]{24,64}$/.test(tok)) return json_({ error: "端末の印が正しくありません（ページを読み込み直してください）" });

@@ -24,6 +24,11 @@ tr.rej td{background:#fff7f7}.tag{display:inline-block;border-radius:6px;padding
 .t-ok{background:#e6f4ea;color:var(--ok)}.t-here{background:#e0f2f1;color:#00695c}.t-none{background:#fff8e1;color:#8a6d00}.t-far{background:#ffebee;color:var(--bad)}
 .tiny{font-size:11.5px;color:var(--sub)}
 details pre{white-space:pre-wrap;word-break:break-all;font-size:11px;max-width:420px;margin:4px 0}
+/* v166: 一覧の行を選んで消す */
+td.c,th.c{text-align:center}td.c input,th.c input{width:18px;height:18px;min-height:0;flex:none;margin:0;cursor:pointer}
+button.del1{padding:2px 9px;min-height:26px;font-size:11px;background:#fff;color:var(--bad);border-color:var(--bad)}button.danger{background:var(--bad);border-color:var(--bad)}
+button:disabled{opacity:.45;cursor:not-allowed}.undo{background:#fff8e1;border:1px solid #ffcc80;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:6px}.undo button{margin-left:8px}
+label.chk{display:inline-flex;align-items:center;gap:6px}label.chk input{width:16px;height:16px;min-height:0;flex:none;margin:0}
 </style>
 </head>
 <body>
@@ -43,9 +48,15 @@ details pre{white-space:pre-wrap;word-break:break-all;font-size:11px;max-width:4
   <div class="row"><input id="pid" type="text" placeholder="1 件だけ: 写真 p… / コメント c… の ID（状態に関係なくいつでも）"><button class="sec" id="pone">この 1 件を完全に消す</button></div>
   <div id="plist" class="tiny"></div>
 </section>
+<section class="card" id="selbar" hidden>
+  <div class="row"><b id="selcnt">選択 0 件</b><button id="delsel" class="danger" disabled>選択した 0 件を削除</button>
+    <label class="chk tiny"><input id="delph" type="checkbox"> ひもづく公開写真も完全に消す（写真のある行だけ。いいね・通報も消え、写真はドライブのゴミ箱へ）</label></div>
+  <p class="tiny" style="margin:4px 0 0">行の左のチェックで選んで消します（見出しのチェックで表示中の全部）。消したあと 10 秒は「元に戻す」で取り消せます。10 秒たつと受け皿（スプレッドシート）から消えて、元に戻せません。</p>
+  <div id="undo" class="undo" hidden></div>
+</section>
 <div class="wrap"><table><thead><tr>
-  <th>日時</th><th>結果</th><th>写真</th><th>投稿者</th><th>スポット</th><th>区分</th><th>距離</th><th>方法</th>
-  <th>EXIF 位置</th><th>撮影日時</th><th>機種</th><th>ソフト</th><th>ファイル</th><th>元の大きさ</th><th>投稿時の現在地</th><th>ブラウザ</th><th>全部</th>
+  <th class="c"><input id="all" type="checkbox" aria-label="表示中の行を全部選ぶ"></th><th>日時</th><th>結果</th><th>写真</th><th>投稿者</th><th>スポット</th><th>区分</th><th>距離</th><th>方法</th>
+  <th>EXIF 位置</th><th>撮影日時</th><th>機種</th><th>ソフト</th><th>ファイル</th><th>元の大きさ</th><th>投稿時の現在地</th><th>ブラウザ</th><th>全部</th><th>消す</th>
 </tr></thead><tbody id="tb"></tbody></table></div>
 </main>
 <script>window.RG = window.RG || {};</script>
@@ -54,6 +65,7 @@ details pre{white-space:pre-wrap;word-break:break-all;font-size:11px;max-width:4
 (function () {
 "use strict";
 var $ = function (id) { return document.getElementById(id); }, LOG = [], PH = {};
+var SEL = {}, PEND = null, UNDO_T = null, NEW_API = false;   // v166: 選んだ行の xid ／ 送るのを待っている削除 ／ 受け皿が xid に対応しているか
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ""; localStorage.setItem(k, v); } catch (e) { return ""; } }
 /* 鍵を送ってよい受け皿: サイトに書いてある URL（data/support.js）が最優先。まだ無いときだけ Apps Script の URL の形のものを使う。
@@ -78,8 +90,8 @@ function draw() {
   var q = $("q").value.trim().toLowerCase();
   var rows = LOG.filter(function (r) { return !q || JSON.stringify(r).toLowerCase().indexOf(q) >= 0; });
   $("tb").innerHTML = rows.map(function (r) {
-    var p = PH[r.pid] || {};
-    return '<tr class="' + (r.result === "ok" ? "" : "rej") + '"><td>' + esc(String(r.ts).replace("T", " ").slice(0, 19)) + "</td><td>" + esc(r.result) + (p.pid && !p.visible ? "<br><b>非表示</b>（通報 " + esc(p.reports) + "）" : "") + "</td>" +
+    var p = PH[r.pid] || {}, x = String(r.xid || "");
+    return '<tr class="' + (r.result === "ok" ? "" : "rej") + '"><td class="c"><input type="checkbox" class="sel" data-xid="' + esc(x) + '"' + (x && NEW_API ? (SEL[x] ? " checked" : "") : " disabled") + ' aria-label="この行を選ぶ"></td><td>' + esc(String(r.ts).replace("T", " ").slice(0, 19)) + "</td><td>" + esc(r.result) + (p.pid && !p.visible ? "<br><b>非表示</b>（通報 " + esc(p.reports) + "）" : "") + "</td>" +
       "<td>" + (p.f ? '<a target="_blank" rel="noopener" href="' + esc(thumb(p.f).replace("sz=w200", "sz=w1600")) + '"><img src="' + esc(thumb(p.f)) + '" alt=""></a>' : esc(r.pid)) + "</td>" +
       "<td>" + esc(r.name) + '<br><span class="tiny">' + esc(r.uid) + "</span></td><td class=w>" + esc(r.spot_n) + '<br><span class="tiny">' + map(r.spot_la, r.spot_lo) + "</span></td>" +
       '<td><span class="tag t-' + esc(r.loc) + '">' + esc(r.loc) + "</span></td><td>" + (r.dist_m === "" ? "" : esc(r.dist_m) + "m") + "</td><td>" + esc(r.method) + (r.cam ? " 📸" : "") + "</td>" +
@@ -87,11 +99,67 @@ function draw() {
       "<td class=w>" + esc(r.file_name) + '<br><span class="tiny">' + (r.file_size ? (r.file_size / 1048576).toFixed(1) + "MB " : "") + esc(r.file_type) + " " + esc(r.file_modified) + "</span></td>" +
       "<td>" + (r.orig_w ? esc(r.orig_w) + "×" + esc(r.orig_h) : "") + "</td>" +
       "<td>" + map(r.geo_la, r.geo_lo) + (r.geo_acc_m !== "" && r.geo_acc_m != null ? '<br><span class="tiny">±' + esc(r.geo_acc_m) + "m ・ スポットから " + esc(r.geo_km) + "km ・ " + esc(r.geo_at) + "</span>" : "") + "</td>" +
-      '<td class="w tiny">' + esc(r.ua) + "</td><td><details><summary>表示</summary><pre>" + esc(r.meta_json) + "</pre></details></td></tr>";
+      '<td class="w tiny">' + esc(r.ua) + "</td><td><details><summary>表示</summary><pre>" + esc(r.meta_json) + "</pre></details></td>" +
+      '<td><button class="del1" type="button" data-xid="' + esc(x) + '"' + (x && NEW_API ? "" : " disabled") + ">削除</button></td></tr>";
   }).join("");
-  $("msg").textContent = "記録 " + LOG.length + " 件（表示 " + rows.length + " 件）。新しい順。";
+  $("msg").textContent = "記録 " + LOG.length + " 件（表示 " + rows.length + " 件）。新しい順。" + (NEW_API ? "" : " この受け皿は古い版（行の id なし）なので、ここからは消せません。tools/posts_deploy.bat で公開し直すと消せるようになります。");
   $("msg").className = "msg ok";
+  $("selbar").hidden = !NEW_API || !LOG.length;
+  syncSel();
 }
+/* ---- v166: 行を選んで消す。消す前に確認 → 画面からすぐ消す → 10 秒は «元に戻す» → 受け皿へ {a:"purge", xids} を送る ---- */
+function selected() { return LOG.filter(function (r) { return SEL[r.xid]; }).map(function (r) { return r.xid; }); }
+function syncSel() {
+  var n = selected().length, boxes = Array.prototype.slice.call(document.querySelectorAll("#tb .sel:not(:disabled)"));
+  $("selcnt").textContent = "選択 " + n + " 件"; $("delsel").textContent = "選択した " + n + " 件を削除"; $("delsel").disabled = !n;
+  $("all").checked = boxes.length > 0 && boxes.every(function (b) { return b.checked; });
+}
+function title(r) { return [r.spot_n, r.name, String(r.ts).replace("T", " ").slice(0, 16)].filter(Boolean).join(" ・ "); }
+function byNew(a, b) { return String(b.ts).localeCompare(String(a.ts)); }
+function hasPhoto(r) { return /^p[0-9a-f]{16}$/.test(String(r.pid || "")); }
+function flush(unloading) {                     // 待っている削除を受け皿へ送る
+  var p = PEND; if (!p) return Promise.resolve();
+  PEND = null; clearInterval(UNDO_T); $("undo").hidden = true;
+  var api = $("api").value.trim(), key = $("key").value.trim();
+  var body = JSON.stringify({ a: "purge", key: key, xids: p.xids, photos: !!p.photos });
+  return fetch(api, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body, redirect: "follow", keepalive: !!unloading }).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || d.error) throw new Error((d && d.error) || "できませんでした");
+    $("msg").textContent = "✓ " + d.rows + " 件を消しました" + (d.photos ? "（写真 " + d.photos + " 件も完全に消去）" : "") + (d.missing ? "。" + d.missing + " 件は受け皿に見つかりませんでした（すでに消えていたか、一覧が古い）" : "") + "。";
+    $("msg").className = "msg ok";
+  }).catch(function (e) {
+    LOG = LOG.concat(p.rows).sort(byNew); draw();
+    $("msg").textContent = "✕ 消せませんでした（一覧に戻しました）: " + e.message; $("msg").className = "msg bad";
+  });
+}
+function undo() {
+  var p = PEND; if (!p) return;
+  PEND = null; clearInterval(UNDO_T); $("undo").hidden = true;
+  LOG = LOG.concat(p.rows).sort(byNew); draw();
+  $("msg").textContent = "↩ " + p.rows.length + " 件を元に戻しました（受け皿には送っていません）。"; $("msg").className = "msg ok";
+}
+function remove(xids, photos) {
+  var rows = LOG.filter(function (r) { return xids.indexOf(r.xid) >= 0; }); if (!rows.length) return;
+  var withPhoto = rows.filter(hasPhoto).length;
+  var ask = rows.length + " 件を消します。\n" + rows.slice(0, 3).map(title).join("\n") + (rows.length > 3 ? "\n…ほか " + (rows.length - 3) + " 件" : "") +
+    (photos && withPhoto ? "\n\n※ ひもづく公開写真 " + withPhoto + " 件も完全に消します（サイトから消え、元に戻せません）" : "") + "\n\nよろしいですか？（10 秒以内なら「元に戻す」で取り消せます）";
+  if (!confirm(ask)) return;
+  flush(false);                                 // 前の削除がまだ待っていたら、先に送る
+  LOG = LOG.filter(function (r) { return xids.indexOf(r.xid) < 0; }); rows.forEach(function (r) { delete SEL[r.xid]; }); draw();
+  PEND = { xids: xids, photos: !!photos, rows: rows };
+  var left = 10, u = $("undo"); u.hidden = false;
+  function show() { u.innerHTML = rows.length + " 件を一覧から消しました。受け皿には <b>" + left + " 秒後</b>に送ります。<button class=\"sec\" type=\"button\" id=\"undo-b\">↩ 元に戻す</button>"; $("undo-b").addEventListener("click", undo); }
+  show();
+  UNDO_T = setInterval(function () { left--; if (left <= 0) { flush(false); return; } var b = u.querySelector("b"); if (b) b.textContent = left + " 秒後"; }, 1000);
+}
+$("tb").addEventListener("change", function (e) { var t = e.target; if (!t.classList.contains("sel")) return; if (t.checked) SEL[t.dataset.xid] = 1; else delete SEL[t.dataset.xid]; syncSel(); });
+$("tb").addEventListener("click", function (e) { var t = e.target.closest ? e.target.closest(".del1") : null; if (t && !t.disabled) remove([t.dataset.xid], $("delph").checked); });
+$("all").addEventListener("change", function () {
+  var on = $("all").checked;
+  Array.prototype.forEach.call(document.querySelectorAll("#tb .sel:not(:disabled)"), function (b) { b.checked = on; if (on) SEL[b.dataset.xid] = 1; else delete SEL[b.dataset.xid]; });
+  syncSel();
+});
+$("delsel").addEventListener("click", function () { remove(selected(), $("delph").checked); });
+window.addEventListener("beforeunload", function () { if (PEND) flush(true); });   // 待っている削除があれば、閉じる前に送る
 $("go").addEventListener("click", function () {
   var api = $("api").value.trim(), key = $("key").value.trim();
   if (!api || !key) { $("msg").textContent = "受け皿の URL と鍵を入れてください"; $("msg").className = "msg bad"; return; }
@@ -101,6 +169,8 @@ $("go").addEventListener("click", function () {
   fetch(api + (api.indexOf("?") >= 0 ? "&" : "?") + "a=admin&n=1000&key=" + encodeURIComponent(key), { redirect: "follow" }).then(function (r) { return r.json(); }).then(function (d) {
     if (!d.ok) throw new Error(d.error || "読めませんでした");
     LOG = d.log || []; PH = {}; (d.photos || []).forEach(function (p) { PH[p.pid] = p; });
+    NEW_API = +d.v >= 146 && LOG.every(function (r) { return /^x[0-9a-f]{16}$/.test(String(r.xid || "")); });   // v166: 行の id（xid）がある受け皿だけ、ここから消せる
+    SEL = {}; if (PEND) flush(false);
     if (d.sheet) { $("sheet").href = d.sheet; $("sheet").hidden = false; }
     if (d.purge) { $("purge").hidden = false; $("pinfo").textContent = "本人が削除した投稿: " + d.purge.deleted + " 件（うち 3 か月以上前: " + d.purge.older3m + " 件）"; }
     draw();
