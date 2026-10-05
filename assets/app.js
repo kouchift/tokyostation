@@ -585,14 +585,15 @@ var Map = (function () {
       ev.stopPropagation();
       if (RG.showLine) RG.showLine(t.dataset.line);
     });
+    /* v166: 路線にマウスを乗せても ふきだしは出さない（線を太くするだけ）。路線のカードは押したときだけ */
     gE.addEventListener("pointerover", function (ev) {
       var t = ev.target;
       if (!t || !t.dataset || !t.dataset.line) return;
-      hoverLine(t.dataset.line, ev.clientX, ev.clientY);
+      hiLine(t.dataset.line);
     });
     gE.addEventListener("pointerout", function (ev) {
       var t = ev.target;
-      if (t && t.dataset && t.dataset.line) hideLineTip();
+      if (t && t.dataset && t.dataset.line) hiLine(null);
     });
     gE.addEventListener("keydown", function (ev) {
       var t = ev.target;
@@ -617,15 +618,16 @@ var Map = (function () {
       var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
       ev.preventDefault(); Card.open(g.__id, ev);
     });
+    /* v166: マウスを乗せただけではカードを出さない（押したときだけ）。乗せたときは丸を少し強調するだけ */
     if (!isTouch()) {
       gN.addEventListener("mouseover", function (ev) {
         var g = ev.target.closest && ev.target.closest(".node"); if (!g || !g.__id) return;
-        if (g.__hover) return; g.__hover = 1; Card.hover(g.__id, ev);
+        g.classList.add("hov");
       });
       gN.addEventListener("mouseout", function (ev) {
         var g = ev.target.closest && ev.target.closest(".node"); if (!g) return;
         var to = ev.relatedTarget; if (to && g.contains(to)) return;
-        g.__hover = 0; Card.unhover(ev);
+        g.classList.remove("hov");
       });
     }
   }
@@ -1015,6 +1017,11 @@ var Map = (function () {
   }
   /* 路線名のふきだし（マウスを乗せたとき） */
   var lineTip = null, lineTipT = null;
+  function hiLine(name) {
+    Object.keys(edgeByLine).forEach(function (k) {
+      edgeByLine[k].forEach(function (p) { p.classList.toggle("hi", k === name); });
+    });
+  }
   function hoverLine(name, cx, cy) {
     clearTimeout(lineTipT);
     if (!lineTip) {
@@ -1244,7 +1251,7 @@ var Map = (function () {
     n.addEventListener("click", function (ev) { ev.stopPropagation(); if (n.__p) RG.showSpot(n.__p); });
     // ホバーのふきだしはマウス／ペンだけ。指のタップでは出さない（タップは click → カードを開く。
     // v74: Android で指の下にふきだしが出て click を横取りし、0.5秒で消える不具合の修正）
-    n.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch" && n.__p) RG.spotTip(n.__p, { x: n.__p.x, y: n.__p.y }); });
+    /* v166: 乗せただけでは ふきだしを出さない（押したときだけカードを開く） */
     n.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") RG.spotTip(null); });
     n.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && n.__p) RG.showSpot(n.__p); });
     gPOI.appendChild(n); pool.push(n);
@@ -1479,7 +1486,7 @@ var Map = (function () {
       g.appendChild(el("circle", { class: "lm__hit", cx: P.x, cy: P.y, r: 12 }));
       var open = function (ev) { ev && ev.stopPropagation(); RG.showLandmark(L); };
       g.addEventListener("click", open);
-      g.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch") RG.spotTip(L, project(L.la, L.lo), true); });
+      /* v166: 乗せただけでは ふきだしを出さない */
       g.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") RG.spotTip(null); });
       g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") open(e); });
       gLM.appendChild(g); lmNode[L.id] = g;

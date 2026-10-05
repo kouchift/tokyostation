@@ -4839,6 +4839,13 @@ body.gesturing .poipop{visibility:hidden}
 .modal--dark .spotcard__g{background:var(--control2);color:var(--text)}
 
 /* =========================================================================
+   v166 ■4: マウスを乗せただけでは出さない。乗せた駅の丸・路線は少し強調するだけ（カードは押したとき）
+   ========================================================================= */
+.node.hov .st-dot{stroke-width:5}
+.node.hov .st-lbl{font-weight:700}
+/* 路線は «太い透明な線»（.ln__hit）で押す。見える線が上に重なって押せない所があったので、見える線は押せないようにする */
+svg path.ln{pointer-events:none}
+/* =========================================================================
    v166 ■2: 駅カードもスポットと同じ窓（RG.openCard = .modal--dark）に出す → .card--dark 向けの決まりを .modal--dark にも
    ========================================================================= */
 .modal--dark .stcard{max-height:none;overflow:visible}
