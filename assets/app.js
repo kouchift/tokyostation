@@ -887,10 +887,23 @@ var Map = (function () {
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (t) {
       wrap.addEventListener(t, function () { if (drag) endGesture(); drag = null; wrap.classList.remove("dragging"); });
     });
+    /* v165: ホイールは 1 コマ（rAF）にまとめる（連続イベントのたびに zoomAt すると、速いホイールで 1 コマに何回も計算していた） */
+    var wheelAcc = 0, wheelPt = null, wheelRaf = 0;
     wrap.addEventListener("wheel", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
-      e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.16 : 1 / 1.16, true);
+      e.preventDefault();
+      wheelAcc += e.deltaY; wheelPt = { x: e.clientX, y: e.clientY };
+      if (wheelRaf) return;
+      wheelRaf = requestAnimationFrame(function () {
+        wheelRaf = 0; var f = Math.pow(1.16, Math.max(-3, Math.min(3, wheelAcc / 100))); wheelAcc = 0;
+        if (f !== 1 && wheelPt) zoomAt(wheelPt.x, wheelPt.y, f, true);
+      });
     }, { passive: false });
+    /* v165: iOS Safari が自分でやるピンチ拡大・長押しメニュー・2 回タップ拡大は、地図の上だけ止める（地図のピンチと二重にならないように） */
+    ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) {
+      wrap.addEventListener(t, function (e) { if (!(e.target && e.target.closest && e.target.closest(UI_SEL))) e.preventDefault(); }, { passive: false });
+    });
+    wrap.addEventListener("contextmenu", function (e) { if (e.target === svg || (e.target.closest && e.target.closest("#map"))) e.preventDefault(); });
     wrap.addEventListener("touchstart", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       if (e.touches.length === 2) { drag = null;
@@ -940,7 +953,7 @@ var Map = (function () {
     vb.y = Math.max(-my2, Math.min(VB.h - vb.h + my2, vb.y));
   }
   function commitView() {
-    clearTimeout(gestT); gestT = null; gestR = null;
+    clearTimeout(gestT); gestT = null; gestR = null; document.body.classList.remove("gesturing");
     if (gestRaf) { cancelAnimationFrame(gestRaf); gestRaf = 0; }
     svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
     svg.style.transform = "";
@@ -962,11 +975,13 @@ var Map = (function () {
   function apply(gesture) {
     clampVb();
     if (!gesture || !cvb) { commitView(); return; }
-    if (!gestR) { gestR = svg.getBoundingClientRect(); lastCommit = performance.now(); }   // ここから動かし始め
+    if (!gestR) { gestR = svg.getBoundingClientRect(); lastCommit = performance.now(); document.body.classList.add("gesturing"); }   // ここから動かし始め（v165: 動かしている間は小さなふきだしを隠す）
     if (!gestRaf) gestRaf = requestAnimationFrame(paintGesture);   // 1 コマに 1 回だけ
     clearTimeout(lodTimer);                                        // 動かしている間は間引きもしない
     clearTimeout(gestT); gestT = setTimeout(commitView, GEST_IDLE);
-    if (performance.now() - lastCommit > GEST_MAX) { gestT = null; commitView(); }   // 長く動かし続けるときは、ときどき端を描き足す
+    // 長く動かし続けるときは、ときどき端を描き足す。v165: ピンチ（拡大率が変わっている最中）は描き足さない
+    // （描き直しのたびに 0.5 秒止まり、指の動きに付いてこなかった。ピンチでは端が空くより止まらないほうが大事。離したときに 1 回描く）
+    if (performance.now() - lastCommit > GEST_MAX && Math.abs(cvb.w / vb.w - 1) < 0.03) { gestT = null; commitView(); }
   }
   RG.mapCommitView = function () { if (gestT) commitView(); };
   function zoomAt(cx, cy, k, gesture) {
@@ -2239,7 +2254,7 @@ RG.placePop = function (pop, anchor, opt) {
   // 狭い画面では、位置を細かく合わせるより «下から出す板» のほうが押しやすい
   if (narrow && !opt.noSheet) {
     pop.classList.add("pop--sheet");
-    pop.style.left = ""; pop.style.top = ""; pop.style.right = ""; pop.style.bottom = "";
+    pop.style.left = ""; pop.style.top = ""; pop.style.right = ""; pop.style.bottom = ""; pop.style.transform = "";
     return "sheet";
   }
   var w = pop.offsetWidth || 240, h = pop.offsetHeight || 120;
@@ -2252,9 +2267,10 @@ RG.placePop = function (pop, anchor, opt) {
   else if (below + h <= vh - m) { top = below; pop.classList.add("pop--below"); }
   else { top = Math.max(m, Math.min(vh - h - m, ay - h / 2)); }
   if (shortH) { pop.style.maxHeight = (vh - m * 2) + "px"; pop.style.overflowY = "auto"; }
-  pop.style.left = Math.min(vw - w - m, Math.max(m, ax - w / 2)) + "px";
-  pop.style.top = top + "px";
-  pop.style.right = ""; pop.style.bottom = "";
+  /* v165: 位置は left/top ではなく transform で（配置の計算をやり直させない） */
+  var lx = Math.min(vw - w - m, Math.max(m, ax - w / 2));
+  pop.style.left = "0"; pop.style.top = "0"; pop.style.right = ""; pop.style.bottom = "";
+  pop.style.transform = "translate3d(" + Math.round(lx) + "px," + Math.round(top) + "px,0)";
   return "float";
 };
 
