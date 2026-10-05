@@ -168,6 +168,8 @@ RG.closeModal = function () {
   if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
 };
 RG.openModal = modal;
+/* v166: スポット・駅・案内の «カード» は濃いめの半透明（.modal--dark）。設定など入力の多い画面は openModal（白）のまま */
+RG.openCard = function (title, html) { var m = modal(title, html); m.classList.add("modal--dark"); return m; };
 /* ---- v156: 読み物 ⇄ 地図 を軽く行き来する ----
    RG.modalMapTo({la, lo, z, n, reopen}) … いま開いている窓に «🗺️ 地図» を出す（窓を開いた直後に呼ぶ）
    «🗺️ 地図» → 窓を隠すだけ（中身・読んでいた位置はそのまま）→ 地図をその場所へ → 下に «📖 〇〇 にもどる»
@@ -501,7 +503,7 @@ RG.showSpot = function (p) {
     '<p class="src">☆は「行く価値のめやす」です。文化財は指定の格（国宝5.0／重要文化財4.5／史跡4.5／登録有形3.5…）、' +
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
     "<b>レビューサイトの評価点ではありません。</b></p></div>";
-  var m = modal(g.e + " " + p.n, html);
+  var m = RG.openCard(g.e + " " + p.n, html);
   if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), noExtract: !!p.ichi, q: p.q || null,
                                                                         wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
   if (RG.reqBind) RG.reqBind(m);
@@ -573,7 +575,7 @@ RG.showPlace = function (r) {
       '<button class="lnk" type="button" data-dest="1"><span>🧭</span>ここへ行く（手段をくらべる）</button></div>' : "") +
     RG.mapButtons(RG.Trip.origin, [r.la, r.lo], "walk", "地図アプリで答え合わせ") +
     '<p class="src">' + esc(r.licence || "座標: このアプリの索引") + "</p></div>";
-  var m = modal("📍 " + r.n, html);
+  var m = RG.openCard("📍 " + r.n, html);
   var gb = m.querySelector("[data-goto]");
   if (gb) gb.addEventListener("click", function () { RG.closeModal(); RG.openStation(gb.dataset.goto); });
   var db = m.querySelector("[data-dest]");

@@ -257,7 +257,7 @@ RG.showKuni = function (k) {
     '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.wp || k.n) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' +
     '<button class="lnk" type="button" data-go="1"><span>📍</span>国府のあたりへ</button></div>' +
     '<p class="src">境界は1871年ごろの国界と、記事の「領域」節から市区町村単位で組み立てた近似です。埋立地や境界変更の前の姿と一致しないことがあります。</p></div>';
-  var m = RG.openModal("🗾 " + k.n, html);
+  var m = RG.openCard("🗾 " + k.n, html);
   m.querySelector("[data-go]").addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(k.la, k.lo, 3000); });
 };
 

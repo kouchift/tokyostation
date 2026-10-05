@@ -139,7 +139,7 @@ U.openDetail = function () {
   var r = route(), names = [];
   if (r) r.legs.forEach(function (L) { names.push(RG.byId[L.from].n, RG.byId[L.to].n); });
   names = names.filter(function (x, i, a) { return a.indexOf(x) === i; });
-  var m = RG.openModal("🧭 移動の詳細", '<div class="nd"><p class="lvt">しらべています…</p></div>');
+  var m = (RG.openCard || RG.openModal)("🧭 移動の詳細", '<div class="nd"><p class="lvt">しらべています…</p></div>');
   detailOpen = true; var gen = m.__gen;
   loadAll(names, function (D) {
     if (!detailOpen || m.__gen !== gen || !m.classList.contains("show")) return;

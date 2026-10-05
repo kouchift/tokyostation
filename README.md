@@ -342,6 +342,7 @@ v164 から、案内中の «移動の詳細» が `tracks`（乗り場・番線
 - **タブ帯**（`assets/lines_ui.js`・`app.css` の v165 の節）: スマホでは白い面に分離し、選んでいるタブはアイコンの塗りピル＋太字＋下線（`.lr__ind`、transform で移動・`prefers-reduced-motion` では動かない）。切り替え時は中身を 160ms のフェードで入れ替え、Android では `navigator.vibrate(8)`（無い端末は何もしない）。«解除» は枠だけ、«×／えらぶ» は塗り。`env(safe-area-inset-bottom)` を足す
 - **ガラスの決まり**（`:root` の `--glass-*`）: スポットのふきだし（`.poipop`）・お知らせ（`.tb__status`）・案内の帯（`.navbar`・blur なし）・AR の帯・モーダルの頭だけに使う。`backdrop-filter` が無い環境はベタ塗り（`@supports not`）。文字のコントラストは `tools/` の試験で実測（見出し 8.9:1・補助 5.5:1）
 - **地図**（`assets/app.js`）: ピンチ中は途中の描き直しをしない（離したときに 1 回）。ホイールは 1 コマにまとめる。iOS の自前ピンチ・長押しメニューは地図の上だけ止める。ふきだしは transform で置き、動かしている間は隠す（`body.gesturing`）
+- **濃いカード**: スポットのカード・駅のカード（`#sheet`・`#hovercard` の `card--dark`）・移動の詳細は `RG.openCard`（`.modal--dark`）で濃い配色（blur なし・頭だけ blur）。部品は CSS 変数の差し替え。中の «明るい小さな面»（自分のピン・教科書の囲み・投稿など）は面の色を残して文字だけ暗く戻す。設定など入力の多い画面は `RG.openModal`（白）のまま。確認は `tools/shots_cards.mjs`（コントラスト実測つき）
 - **見た目のトークン**: `--r-sm/md/lg`・`--sp-1..4`・`--shadow-1/2`。押したときの手ごたえは transform の scale(.96) だけ（配置は変えない）
 
 ## 5. モバイル対応

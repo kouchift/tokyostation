@@ -4760,3 +4760,80 @@ body.gesturing .poipop{visibility:hidden}
 .nav__cands{overscroll-behavior-x:contain}
 /* ふきだしの «ジャンルの行»（div.pp__b）は、同じ名前のボタン（.pp__a .pp__b）の決まりを受けない */
 .poipop div.pp__b{background:transparent;border:0;height:auto;border-radius:0;font-weight:400;font-size:11.5px;cursor:default;color:var(--glass-fg2)}
+/* =========================================================================
+   v166: スポットのカード・駅のカード・案内の詳細を «濃いめ・半透明» に（大きい面なので blur は使わない。頭だけ blur）
+   ・RG.openCard（plannerui.js）が .modal--dark を付ける。設定など入力の多い画面は白のまま
+   ・部品は CSS 変数の差し替えで暗色に。ベタ塗りの #fff を持つ部品だけ下で個別に直す
+   ========================================================================= */
+.modal--dark .modal__box,.card--dark{
+  --surface:#141C2B;--bg:rgba(16,24,40,.94);--control:rgba(255,255,255,.08);--control2:rgba(255,255,255,.12);--control3:rgba(255,255,255,.15);
+  --text:#F3F6FA;--label:rgba(243,246,250,.72);--muted:rgba(243,246,250,.62);--gray600:rgba(243,246,250,.72);--gray800:#F3F6FA;
+  --grid:rgba(255,255,255,.12);--border:rgba(255,255,255,.22);--link:#9CC9FF;--highlight:#9CC9FF;
+  --lb50:rgba(156,201,255,.12);--lb200:rgba(156,201,255,.24);--lb400:#9CC9FF;--lb600:#9CC9FF;
+  --ok:#5ED9A3;--okbg:rgba(94,217,163,.18);--amber:#FFD98A;--amberbg:rgba(255,194,77,.16);--ye600:rgba(255,194,77,.5);--err:#FF8A80;
+  color-scheme:dark;background:rgba(16,24,40,.94);color:var(--text)
+}
+.modal.modal--dark .modal__box{background:rgba(16,24,40,.94) !important;color:var(--text);border:1px solid var(--glass-bd);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl)}   /* design_v2.css の白より強く */
+.modal--dark .modal__hd{background:rgba(16,24,40,.80);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
+.modal--dark .modal__bd{background:transparent}
+.card.card--dark.sheet,.card.card--dark.hovercard{background:rgba(16,24,40,.94) !important;color:var(--text);border:1px solid var(--glass-bd)}
+.card--dark.sheet{box-shadow:0 -12px 40px rgba(0,0,0,.45)}
+.card--dark .sheet__grab i,.card--dark .sheet__grab span{background:rgba(255,255,255,.3)}
+/* ベタ塗りの白を持つ部品 */
+.modal--dark .cmini,.card--dark .cmini,.modal--dark .spotcard__g,.modal--dark .mini code,.card--dark .mini code,.modal--dark .cardq__l,.card--dark .cardq__l,.modal--dark .cardq__sug,.card--dark .cardq__sug,
+.modal--dark .nd .lvb,.modal--dark .nd__cands .nav__cand,.modal--dark .nd__sub,.modal--dark .opt,.card--dark .opt,.modal--dark .opt__b--nav,.card--dark .opt__b--nav,
+.modal--dark .set__b2,.card--dark .set__b2,.modal--dark .lr__c,.card--dark .lr__c{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .cact,.card--dark .cact{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .cact--p,.card--dark .cact--p{background:var(--lb900);color:#fff;border-color:var(--lb900)}
+.modal--dark .cact small,.card--dark .cact small{color:var(--label)}
+.modal--dark .cact--p small,.card--dark .cact--p small{color:rgba(255,255,255,.8)}
+.modal--dark .lnk,.card--dark .lnk{background:var(--control3);color:var(--text);border-color:var(--border)}
+.modal--dark .lnk:hover,.card--dark .lnk:hover{background:rgba(255,255,255,.22)}
+.modal--dark .ex,.card--dark .ex{background:var(--control)}
+.modal--dark .ex--hot,.card--dark .ex--hot{background:var(--lb50);box-shadow:inset 0 0 0 1px var(--lb200)}
+.modal--dark .ex__v,.card--dark .ex__v{color:var(--text)}
+.modal--dark .ex__k,.modal--dark .ex__s,.card--dark .ex__k,.card--dark .ex__s{color:var(--label)}
+.modal--dark .src,.card--dark .src{color:var(--label);border-top-color:var(--grid)}
+.modal--dark .mini,.card--dark .mini{color:var(--label)}
+.modal--dark a,.card--dark a{color:var(--link)}
+.modal--dark .stars,.card--dark .stars{color:var(--glass-star)}
+.modal--dark .stars b,.card--dark .stars b{color:var(--text)}
+.modal--dark .spotcard__st{background:rgba(255,194,77,.16);border:1px solid rgba(255,194,77,.35);color:var(--text)}
+.modal--dark .spotcard__why{color:#FFD98A}
+.modal--dark .spotcard__k,.modal--dark .spotcard__pht,.card--dark .plate__kana,.card--dark .plate__line,.card--dark .plate__hl{color:var(--label)}
+.modal--dark .spotcard__phn{color:var(--text)}
+.modal--dark .spotcard__i{border-radius:18px;border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.modal--dark .spotcard__ph{background:var(--control)}
+.modal--dark .spotcard__phl{background:rgba(255,255,255,.9)}
+.modal--dark .spotcard__g{color:var(--text)}.modal--dark .spotcard__g i{color:var(--link)}
+.modal--dark .nd__na{background:rgba(255,194,77,.16);color:#FFD98A}.modal--dark .nd__na b{color:#FFD98A}
+.modal--dark .nd__step{background:var(--control)}
+.modal--dark .nd .lvt{color:var(--label)}.modal--dark .nd .lvt--ng{color:#FFB4A8}
+.modal--dark .nd .lvb--x{color:#FFB4A8}
+.modal--dark .nd__t span,.modal--dark .nd__more{color:var(--label)}
+.modal--dark .nd__cands .nav__cand.on{background:var(--glass-link);border-color:var(--glass-link);color:#10223A}
+.modal--dark .nd__now,.modal--dark .nd__car{background:rgba(255,255,255,.14)}
+.card--dark .plate__tag,.card--dark .plate__wx{background:var(--control2);color:var(--text)}
+.card--dark .plate__wx small{color:var(--label)}
+.card--dark .plate__close{background:var(--control2);color:var(--text)}
+.card--dark .tabs button,.card--dark .ctab{color:var(--label)}
+.card--dark .tabs button[aria-selected=true],.card--dark .ctab[aria-selected=true]{color:var(--text)}
+.card--dark .cardq__in{color:var(--text)}
+.card--dark .cardq__sug button,.card--dark .cardq__sug .n{color:var(--text)}
+.modal--dark input,.modal--dark select,.modal--dark textarea,.card--dark input,.card--dark select,.card--dark textarea{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .alc__k,.modal--dark .alc__go{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .alc__k small,.modal--dark .alc__go small,.modal--dark .alc__t{color:var(--label)}
+/* 濃いカードの中の «明るい小さな面»（自分のピン・教科書の囲み・投稿・街の人の声・リクエスト・ランキングの札など）は、
+   面の色はそのままにして文字だけ暗く戻す（読みやすさ優先。面ごとの色は意味を持つので、ぜんぶ暗くはしない） */
+.modal--dark :is(.pins,.pst,.req__b,.tk__pill,.tk__side,.tk__q,.tk__note,.mm__local,.mm__cheer,.term,.nsp,.trn,.skf,.sk__more,.ax,.todo,.sp,.risk,.spot,.bzp__i,.bzp__w,.eh,.whs__why,.sec--sk,.sec--score,.mapb,.lbadge,.gbadge,.spotcard__phl,.hp__x,.mini code),
+.card--dark :is(.pins,.pst,.req__b,.tk__pill,.tk__side,.tk__q,.tk__note,.mm__local,.mm__cheer,.term,.nsp,.trn,.skf,.sk__more,.ax,.todo,.sp,.risk,.spot,.bzp__i,.bzp__w,.eh,.whs__why,.sec--sk,.sec--score,.mapb,.lbadge,.gbadge,.spotcard__phl,.hp__x,.mini code){
+  --text:#181c20;--label:#404751;--muted:#707882;--gray600:#404751;--gray800:#2d3135;--grid:#e0e3e8;--border:#c0c7d3;--link:#0061a1;--highlight:#0061a1;
+  --lb50:#f1f4f9;--lb200:#d1e4ff;--lb400:#9dcaff;--ok:#006c4b;--amber:#8f4c00;--amberbg:#ffdcc3;--control:#f1f4f9;--control2:#ebeef4;--control3:#e5e8ee;--surface:#fff;
+  color:var(--text);color-scheme:light
+}
+.modal--dark :is(.pins,.pst,.req__b,.eh,.whs__why,.sec--sk,.sec--score,.bzp__i) a,.card--dark :is(.pins,.pst,.req__b,.eh,.whs__why,.sec--sk,.sec--score,.bzp__i) a{color:#0061a1}
+.modal--dark .pin,.card--dark .pin{background:#fff;color:#181c20}
+.modal--dark .pin.on,.card--dark .pin.on{background:#C8880F;color:#fff}
+.modal--dark .mapb,.card--dark .mapb{color:#0061a1}
+.modal--dark .cmini,.card--dark .cmini{background:var(--control2);border-color:var(--border)}
+.modal--dark .spotcard__g{background:var(--control2);color:var(--text)}

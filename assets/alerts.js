@@ -199,7 +199,7 @@ RG.showAlert = function (p) {
       '<a class="lnk" href="' + B + 'risk/" target="_blank" rel="noopener"><span>🗺️</span>キキクル（危険度分布）</a></div>' +
       '<p class="src">出典: 気象庁（防災気象情報）。注意報は数が多いので地図には出していません。地図の位置は地域のだいたいの中心です。</p></div>';
   }
-  RG.openModal(p.be + " " + p.n.replace(/^\S+\s/, ""), html);
+  RG.openCard(p.be + " " + p.n.replace(/^\S+\s/, ""), html);
 };
 /* いま出ているもの一覧（帯と同じレベルで絞る。«確認した» で既読に。レベルはここでも変えられる） */
 RG.showAlerts = function () {
