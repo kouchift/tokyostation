@@ -174,12 +174,7 @@ html:not(.css-ok) body>:not(.app):not(#sheet):not(#scrim):not(script):not(noscri
   <nav id="chips" class="chips" aria-label="表示フィルタ"></nav>
 </div>
 
-<div id="hovercard" class="card hovercard card--dark" role="dialog" aria-label="駅の詳細"></div>
-<div id="scrim" class="scrim"></div>
-<div id="sheet" class="card sheet card--dark role="dialog" aria-label="駅の詳細" aria-modal="false">
-  <div id="grab" class="sheet__grab"><i></i></div>
-  <div class="card__scroll"></div>
-</div>
+<!-- v166: 駅カードはスポットと同じ窓（RG.openCard）に出す。#hovercard / #sheet は廃止 -->
 
 <!-- ▼ 本体：assets/*.js を tools/build_bundle.js で1本にまとめたもの（直すときは元ファイルを） -->
 <script>

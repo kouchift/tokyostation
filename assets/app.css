@@ -4839,6 +4839,21 @@ body.gesturing .poipop{visibility:hidden}
 .modal--dark .spotcard__g{background:var(--control2);color:var(--text)}
 
 /* =========================================================================
+   v166 ■2: 駅カードもスポットと同じ窓（RG.openCard = .modal--dark）に出す → .card--dark 向けの決まりを .modal--dark にも
+   ========================================================================= */
+.modal--dark .stcard{max-height:none;overflow:visible}
+.modal--dark .plate__kana,.modal--dark .plate__line,.modal--dark .plate__hl{color:var(--label)}
+.modal--dark .plate__tag,.modal--dark .plate__wx{background:var(--control2);color:var(--text)}
+.modal--dark .plate__wx small{color:var(--label)}
+.modal--dark .plate__close{display:none}                                  /* 窓の × があるので二重にしない */
+.modal--dark .tabs button,.modal--dark .ctab{color:var(--label)}
+.modal--dark .tabs button[aria-selected=true],.modal--dark .ctab[aria-selected=true]{color:var(--text)}
+.modal--dark .cardq__in{color:var(--text)}
+.modal--dark .cardq__sug button,.modal--dark .cardq__sug .n{color:var(--text)}
+/* 駅カードの中のタブ・応援ボタン */
+.modal--dark .tabs .tab{background:var(--control);color:var(--label);border-color:var(--border)}
+.modal--dark .tabs .tab.on,.modal--dark .tabs .tab[aria-selected=true]{background:var(--control2);color:var(--text)}
+/* =========================================================================
    v166 ■1: 白と白・暗と暗 の重なり（自動コントラスト検査で 3:1 未満だったところ）を直す
    ・路線色の札は RG.lineFg が --lfg（黒か白）を決める
    ・濃い窓の中の «明るい小さな面» は :is(...) の一覧に入れて、中の文字だけ暗く戻す

@@ -2199,47 +2199,31 @@ var Card = (function () {
   }
 
   function open2(x) { open(x); }
-  function hoverShow(id, ev) {
-    hover.innerHTML = '<div class="card__scroll" style="max-height:74vh">' + render(id, null) + "</div>";
-    hover.classList.add("show"); position(ev); bind(hover, id, null);
-    loadDetail(RG.byId[id].n, function (d) {
-      if (!hover.classList.contains("show")) return;
-      hover.innerHTML = '<div class="card__scroll" style="max-height:74vh">' + render(id, d) + "</div>";
-      bind(hover, id, d);
-    });
-  }
-  function position(ev) {
-    var w = 372, m = 12, x = (ev && ev.clientX ? ev.clientX : innerWidth / 2) + 18;
-    var y = (ev && ev.clientY ? ev.clientY : 120) - 40;
-    if (x + w + m > innerWidth) x = (ev && ev.clientX ? ev.clientX : innerWidth / 2) - w - 18;
-    var h = hover.offsetHeight || 420;
-    if (y + h + m > innerHeight) y = Math.max(m, innerHeight - h - m);
-    hover.style.left = Math.max(m, x) + "px"; hover.style.top = Math.max(m, y) + "px";
-  }
+  /* v166: 駅のカードは スポットのカード（RG.openCard）と «同じ窓» に出す。
+     置き場所・大きさ・閉じ方はぜんぶ openCard 側がひとつで決める（PC は画面の真ん中・スマホは下からのシート）。
+     前は PC が #hovercard（カーソルのそば）・スマホが #sheet で、スポットと出る場所がちがっていた */
   function open(id, ev) {
     var s = RG.byId[id]; if (!s) return;
     cur = id; Map.select(id); Map.focus(id, 260);
-    if (!isTouch()) {
-      pinned = true;
-      var p = Map.screenPos(id) || {};
-      hoverShow(id, ev && ev.clientX ? ev : { clientX: p.x, clientY: p.y });
-      return;
-    }
-    var host = sheet.querySelector(".card__scroll");
-    host.innerHTML = render(id, null); bind(sheet, id, null);
-    sheet.classList.add("show"); sheet.classList.remove("full"); scrim.classList.add("show");
-    loadDetail(s.n, function (d) { if (cur !== id) return; host.innerHTML = render(id, d); bind(sheet, id, d); });
+    var opener = RG.openCard || RG.openModal; if (!opener) return;
+    var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + render(id, null) + "</div>");
+    m.__card = id;
+    bind(m, id, null);
+    loadDetail(s.n, function (d) {
+      if (cur !== id || m.__card !== id) return;
+      var host = m.querySelector(".card__scroll"), top = host ? host.scrollTop : 0;
+      if (!host) return;
+      host.innerHTML = render(id, d); bind(m, id, d); host.scrollTop = top;
+    });
   }
   function close() {
-    cur = null; pinned = false; Map.select(null);
-    hover.classList.remove("show");
-    sheet.classList.remove("show", "full"); scrim.classList.remove("show");
+    var was = cur; cur = null; pinned = false; Map.select(null);
+    var m = document.querySelector(".modal");
+    if (was && m && m.__card === was) { m.__card = null; if (RG.closeModal) RG.closeModal(); }
   }
-  function init() { hover = $("#hovercard"); sheet = $("#sheet"); scrim = $("#scrim"); }
+  function init() {}
   return { init: init, open: open, refresh: function () { if (cur) open(cur); }, close: close, current: function () { return cur; },
-    hover: function (id, ev) { if (isTouch() || pinned) return;
-      clearTimeout(timer); timer = setTimeout(function () { hoverShow(id, ev); }, 150); },
-    unhover: function () { if (pinned) return; clearTimeout(timer); hover.classList.remove("show"); } };
+    hover: function () {}, unhover: function () {} };   // v166: マウスを乗せただけでは出さない（残してあるのは古い呼び出しが壊れないため）
 })();
 RG.Card = Card;
 RG.openStation = function (id) { Card.open(id); };
@@ -2350,22 +2334,11 @@ function initChips() {
 }
 
 function initSheetDrag() {
-  var sheet = $("#sheet"), grab = $("#grab"), st = null;
-  grab.addEventListener("pointerdown", function (e) {
-    grab.setPointerCapture(e.pointerId); st = { y: e.clientY, full: sheet.classList.contains("full") }; });
-  grab.addEventListener("pointerup", function (e) {
-    if (!st) return; var dy = e.clientY - st.y;
-    if (dy < -40) sheet.classList.add("full");
-    else if (dy > 60) { if (st.full) sheet.classList.remove("full"); else Card.close(); }
-    else sheet.classList.toggle("full");
-    st = null;
-  });
-  $("#scrim").addEventListener("click", Card.close);
+  /* v166: 駅カードは openCard の窓になったので、#sheet のつまみは無い。外を押したとき・Esc で閉じる処理だけ残す */
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { Card.close(); if (RG.closeModal) RG.closeModal(); } });
   document.addEventListener("pointerdown", function (e) {
-    // v74: スマホの駅カードは #sheet。ここに #sheet が無かったため、シートの中を触った（スクロールした）瞬間に閉じていた
-    if (e.target.closest("#hovercard") || e.target.closest("#sheet") || e.target.closest(".node") || e.target.closest(".hdr") ||
+    if (e.target.closest(".node") || e.target.closest(".hdr") ||
         e.target.closest(".chips") || e.target.closest(".modal") || e.target.closest("#tripbar") ||
         e.target.closest(".bublegend") || e.target.closest(".zipchip") || e.target.closest(".poipop") || e.target.closest(".rebirth")) return;
     Card.close();
