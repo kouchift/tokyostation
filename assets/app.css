@@ -4655,3 +4655,108 @@ body.indoor-on{overflow:hidden}
 .alc__a{font-weight:600;color:#444;font-size:12px;margin-left:4px}
 .alc__k .alc__go{border:0;background:transparent;padding:0;min-height:0;font-weight:700}
 .alc__go small{display:block;font-weight:500}
+/* =========================================================================
+   v165: 見た目の決まり（トークン）・下のタブ帯・ダークガラスのふきだし
+   ========================================================================= */
+:root{
+  --r-sm:8px;--r-md:14px;--r-lg:24px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;
+  --shadow-1:var(--sh-sm);--shadow-2:var(--sh-md);
+  /* 濃いめ・半透明のガラス（小さなカード・帯に使う。大きなシートは白のまま） */
+  --glass-bg:rgba(16,24,40,.80);--glass-solid:rgba(16,24,40,.95);--glass-bd:rgba(255,255,255,.14);--glass-hl:rgba(255,255,255,.08);
+  --glass-fg:#F3F6FA;--glass-fg2:rgba(243,246,250,.72);--glass-chip:rgba(255,255,255,.10);--glass-star:#FFC24D;--glass-link:#9CC9FF;
+  --glass-sh:0 12px 32px rgba(0,0,0,.35);
+}
+/* ---- 押したときの手ごたえ（transform だけ・配置は変えない） */
+.lr__tab,.lr__all,.lr__t,.lr__c,.lr__i,.chip,.nav__cand,.nav__x,.nd .lvb,.set__b,.set__b2,.alertchip,.zoombar button,.heroAction,.pp__c,.pp__a .pp__b,.arv__x{transition:transform .08s ease,filter .12s ease}
+.lr__tab:active,.lr__all:active,.lr__t:active,.lr__c:active,.lr__i:active,.chip:active,.nav__cand:active,.nav__x:active,.nd .lvb:active,.set__b:active,.set__b2:active,.alertchip:active,.zoombar button:active,.heroAction:active,.pp__c:active,.pp__a .pp__b:active,.arv__x:active{transform:scale(.96)}
+/* ---- 下の帯（路線／スポット／話題）：独立した面にして、どれを選んでいるか一目で分かるように */
+.linerail{background:#fff;border-top:1px solid var(--grid);box-shadow:0 -4px 16px rgba(24,28,32,.10)}
+.linerail .lr__bar{padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:content-box}
+.lr__tabs{position:relative;border:0;border-radius:0;overflow:visible;flex:1 1 auto}
+.lr__tab{position:relative;border:0;background:transparent;color:var(--label);font:inherit;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lr__tab:hover{color:var(--text)}
+.lr__ind{position:absolute;left:0;bottom:1px;height:3px;width:40px;border-radius:999px;background:var(--lb900);transform:translateX(0);transition:transform .16s ease,width .16s ease;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.lr__ind{transition:none}.lr__tab .ms{transition:none}}
+/* スマホ：縦並び（アイコンの上に塗りのピル＋太字のラベル）。PC：横並びのピルのまま */
+@media (max-width:720px){
+  .lr__tabs{display:flex;justify-content:space-around;gap:0}
+  .lr__tab{min-height:56px;min-width:72px;padding:4px 8px 7px;border-radius:var(--r-md);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px}
+  .lr__tab .ms{font-size:24px;line-height:1;padding:3px 14px;border-radius:999px;transition:background .16s ease,color .16s ease}
+  .lr__tab .lr__tl{font-size:12px;line-height:1.2}
+  .lr__tab[aria-pressed=true]{color:var(--lb900);font-weight:800;background:transparent}
+  .lr__tab[aria-pressed=true] .ms{background:var(--lb900);color:#fff;font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24}
+}
+@media (min-width:721px){
+  .lr__tab[aria-pressed=true]{background:var(--lb200);color:#001d35;font-weight:800}
+  .lr__tab[aria-pressed=true] .ms{font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24}
+  .lr__ind{display:none}
+}
+/* 「解除」は枠だけ（選択を外す）、「×／えらぶ」は塗り（帯そのものを閉じる・開く）：役割がちがうので見た目を分ける */
+.lr__all{background:transparent;border:1.5px solid var(--border);color:var(--label)}
+.lr__all:hover{background:var(--control);filter:none}
+.lr__t{background:var(--text);color:#fff}
+.lr__t[aria-expanded=true]{background:var(--text);color:#fff}
+/* 中身の入れ替え：短いフェード＋少し上がる。見出し（最初の行）が一瞬だけ強調 */
+.lr__rows.lr__rows--in{animation:lrIn .16s ease-out}
+@keyframes lrIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lr__rows.lr__rows--in>:first-child{animation:lrHead .9s ease-out}
+@keyframes lrHead{0%,35%{background:var(--lb200);border-radius:8px}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.lr__rows.lr__rows--in,.lr__rows.lr__rows--in>:first-child{animation:none}}
+@media (max-width:720px){
+  .app>.linerail.open{height:calc(var(--chips-h) + env(safe-area-inset-bottom,0px));background:#fff}
+  .lr__tab{min-width:72px}
+  .lr__all,.lr__t{width:42px;height:42px}
+  .linerail.open .lr__all{width:auto;border:1.5px solid var(--border);background:#fff}
+}
+/* ---- ダークガラスのふきだし（スポット）・トースト・案内バー・AR の帯 */
+.glass{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);border-radius:var(--r-md);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl);color:var(--glass-fg)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--glass-solid)}}
+.poipop{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);border-radius:var(--r-md);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl);color:var(--glass-fg);will-change:transform}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.poipop{background:var(--glass-solid)}}
+.poipop .pp__h b{font-size:14.5px;font-weight:700;color:var(--glass-fg)}
+.poipop .pp__e{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--glass-chip);font-size:16px;flex:0 0 auto}
+.poipop .pp__e.gic{padding:6px;box-sizing:border-box;color:#fff}
+.poipop .pp__b,.poipop .pp__n,.poipop .pp__t{color:var(--glass-fg2)}
+.poipop .pp__d{color:var(--glass-fg)}
+.poipop .pp__v{color:#9BE7C4}
+.poipop .pp__cam{color:var(--glass-link)}
+.poipop .stars{color:var(--glass-star)}
+.poipop .stars b{color:var(--glass-fg2)}
+.poipop a{color:var(--glass-link)}
+.poipop .pp__t{background:var(--glass-chip)}
+.poipop .pp__ph{background:var(--glass-chip);color:#fff}
+.poipop .pp__a{background:rgba(255,255,255,.06);border-top:1px solid var(--glass-bd)}
+.poipop .pp__a .pp__b{color:var(--glass-fg);background:rgba(255,255,255,.12);border:1px solid var(--glass-bd);border-radius:999px;padding:6px 12px;font-weight:700}
+.poipop .pp__c{background:transparent;border:1px solid var(--glass-bd);color:var(--glass-fg)}
+.pop--above::after{border-top-color:rgba(16,24,40,.88)}
+.pop--below::after{border-bottom-color:rgba(16,24,40,.88)}
+body.gesturing .poipop{visibility:hidden}
+/* トースト（画面の上の短い知らせ）：同じガラス。種類は左の色の線で */
+.tb__status{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);color:var(--glass-fg);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl);border-left:4px solid #9CC9FF}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.tb__status{background:var(--glass-solid)}}
+.tb__status.ok{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#5ED9A3;color:var(--glass-fg)}
+.tb__status.warn{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#FFC24D;color:var(--glass-fg)}
+.tb__status.info{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#9CC9FF;color:var(--glass-fg)}
+.tb__status.night{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#FFD86B;color:var(--glass-fg)}
+/* 案内の帯（大きい面なので blur なし・不透明に近い） */
+.navbar{background:var(--glass-solid);color:var(--glass-fg);border-bottom:1px solid var(--glass-bd)}
+.nav__cands,.nav__step{background:transparent}
+.nav__more{color:var(--glass-link)}
+.nav__cand.on{background:var(--glass-link);border-color:var(--glass-link);color:#10223A}
+/* AR の帯 */
+.arv__x{background:var(--glass-bg);border:1px solid var(--glass-bd);color:var(--glass-fg);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.arv__acc{background:var(--glass-bg);color:var(--glass-fg);border:1px solid var(--glass-bd)}
+.arv__acc.warn{background:rgba(90,59,0,.85);color:#FFE9A8}
+.arv__panel{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);color:var(--glass-fg);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl)}
+.arv__arrow{background:rgba(255,255,255,.10)}
+.arv__n{color:var(--glass-fg)}.arv__d{color:var(--glass-link)}.arv__h{color:var(--glass-fg2)}
+/* 大きなシート（モーダル）は白のまま。頭の帯だけ同じ色にしてつながりを出す */
+.modal__hd{background:var(--glass-solid);color:var(--glass-fg);border-bottom:1px solid var(--glass-bd)}
+.modal__hd b{color:var(--glass-fg)}
+.modal__x,.modal__map{color:var(--glass-fg)}
+.modal__hd .modal__x{background:rgba(255,255,255,.10);border-color:transparent}
+/* ---- 長い一覧は画面の外の行を描かない */
+.rk__list>li,.lu__l>li,.legend__r,.alc__l>li{content-visibility:auto;contain-intrinsic-size:auto 52px}
+.nav__cands{overscroll-behavior-x:contain}
+/* ふきだしの «ジャンルの行»（div.pp__b）は、同じ名前のボタン（.pp__a .pp__b）の決まりを受けない */
+.poipop div.pp__b{background:transparent;border:0;height:auto;border-radius:0;font-weight:400;font-size:11.5px;cursor:default;color:var(--glass-fg2)}

@@ -185,6 +185,7 @@ var Rail = (function () {
           '<button class="lr__tab" data-tab="line" type="button" aria-pressed="true"><span class="ms">directions_subway</span><span class="lr__tl">路線</span></button>' +
           '<button class="lr__tab" data-tab="poi" type="button" aria-pressed="false"><span class="ms">place</span><span class="lr__tl">スポット</span></button>' +
           '<button class="lr__tab" data-tab="buzz" type="button" aria-pressed="false"><span class="ms">local_fire_department</span><span class="lr__tl">話題</span></button>' +
+          '<i class="lr__ind" aria-hidden="true"></i>' +   // v165: 選んでいるタブの下を走る線
         "</span>" +
         '<button class="lr__all" type="button" title="路線・ジャンルの選択を解除"><span class="ms">close</span><span class="lr__tl">解除</span></button>' +
         '<button id="lr-toggle" class="lr__t" type="button" aria-expanded="' + (ST.railOpen ? "true" : "false") +
@@ -201,20 +202,39 @@ var Rail = (function () {
         pane0.insertBefore(chips, pane0.firstChild); pane0.insertBefore(h, chips);
       }
     }
+    var lastTab = null;
     function showTab(t) {
       ST.railTab = t; save();
+      var changed = lastTab !== null && lastTab !== t; lastTab = t;
       $$(".lr__tab", box).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.tab === t)); });
-      $$("[data-pane]", box).forEach(function (p) { p.hidden = p.dataset.pane !== t; });
+      $$("[data-pane]", box).forEach(function (p) {
+        p.hidden = p.dataset.pane !== t;
+        p.classList.remove("lr__rows--in");                                     // v165: 切り替わったことが分かるように、中身を短いフェードで入れ替える
+        if (changed && !p.hidden) { void p.offsetWidth; p.classList.add("lr__rows--in"); }
+      });
+      moveInd();
+      if (changed) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {} }   // Android: ほんの少しの振動（無い端末は何もしない）
       if (t === "buzz" && RG.buzzRailRefresh) RG.buzzRailRefresh(true);
       if (t === "poi") refreshGenreCounts();   // v122: 開いたときに件数を数え直す
     }
+    /* v165: 選んでいるタブの下の線を、そのタブの位置へ動かす（transform だけ） */
+    function moveInd() {
+      var ind = $(".lr__ind", box), on = box.querySelector(".lr__tab[aria-pressed=true]"); if (!ind || !on) return;
+      var w = on.offsetWidth, x = on.offsetLeft;
+      if (!w) return;
+      var iw = Math.max(28, Math.round(w * 0.5));
+      ind.style.width = iw + "px"; ind.style.transform = "translateX(" + Math.round(x + (w - iw) / 2) + "px)";
+    }
+    RG.railMoveInd = moveInd;
     $$(".lr__tab", box).forEach(function (b) {
       b.addEventListener("click", function () {
         showTab(b.dataset.tab); ST.railOpen = true; save();
         if (RG.paintRailToggle) RG.paintRailToggle();
+        requestAnimationFrame(moveInd);
       });
     });
     showTab(ST.railTab || "line");
+    requestAnimationFrame(moveInd); window.addEventListener("resize", moveInd);
     var ga = $("[data-gall]", box);
     if (ga) ga.addEventListener("click", function () { ST.genres = []; save(); syncGenreButtons(); });
     var gn = $("[data-gnone]", box);
@@ -466,6 +486,7 @@ var Rail = (function () {
       var t = $("#lr-toggle", box);
       if (!t) return;
       box.classList.toggle("open", !!ST.railOpen);
+      if (RG.railMoveInd) requestAnimationFrame(RG.railMoveInd);   // v165: 帯が見えてから線の位置を合わせる
       t.setAttribute("aria-expanded", String(!!ST.railOpen));
       var zr2 = document.getElementById("zrail"); if (zr2) { zr2.classList.toggle("on", !!ST.railOpen); zr2.setAttribute("aria-expanded", String(!!ST.railOpen)); zr2.innerHTML = '<span class="ms">' + (ST.railOpen ? "close" : "tune") + "</span>"; }
       t.innerHTML = '<span class="ms">' + (ST.railOpen ? "close" : "tune") + '</span><span class="lr__tl">' + (ST.railOpen ? "とじる" : "えらぶ") + "</span>";
