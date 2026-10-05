@@ -1,296 +1,175 @@
-# 本番反映の手順（帰宅後）
+# 🚀 本番反映ワークフロー（GitHub 直接実行版）
 
-## 📋 準備（1回だけ）
-
-### 1️⃣ Claude App をインストール
-
-1. https://github.com/apps/claude/installations/select_target にアクセス
-2. **kouchift/tokyostation** を選択
-3. インストール完了
-
-### 2️⃣ このファイルに「入れた」と記録
-
-このドキュメントの下部にある **「Claude App インストール状態」** セクションに日時を記入。
-記入すると、GitHub Actions が自動で検出します。
+> このファイルを GitHub 上で更新して commit するだけで、Claude が自動で子セッションを立ち上げ、PR を作成します。
+> あなたが PR をマージすれば、GitHub Pages に数分で反映されます。
 
 ---
 
-## 🔄 作業フロー（毎回）
+## 1. 目標
 
-### ステップ 1: サイトを修正・テスト
+帰宅後に、次の手順を最短で実行できます。
 
-ローカルで修正して、動作確認後に git へ：
+1. GitHub で Claude App をインストール
+2. 本番反映のための作業メモを更新
+3. Claude が子セッションでブランチ作成・PR 作成まで進める
+4. PR をマージすると GitHub Pages に反映
 
-```bash
-git add <ファイル>
-git commit -m "Fix: <簡潔な説明>"
-git push origin <branch名>
-```
+---
 
-### ステップ 2: このドキュメントを更新（Claude が検出）
+## 2. 初回だけ実施すること
 
-下の **「作業中の変更」** セクションに、修正内容を記入：
+### Claude App をインストール
+
+1. https://github.com/apps/claude/installations/select_target にアクセス
+2. `kouchift/tokyostation` を選択
+3. インストール完了
+
+その後、次の状態をこれからの運用では「完了」にして使います。
+
+---
+
+## 3. 毎回の本番反映手順
+
+### ステップ A: GitHub 上で作業内容を記録する
+
+このファイルの下部にある「作業中の変更」セクションを更新して、commit して push します。
+
+例:
 
 ```markdown
 ## 作業中の変更
 
-**日時:** 2026-10-05 18:30
-**担当:** あなたの名前
-**内容:**
-- スポットの説明を 50 件追加
-- 路線アイコンの表示バグ修正
-- パフォーマンス最適化（読み込み 2 秒短縮）
+**日時:** 2026-10-05 20:00
+**担当:** @kouchift
+**優先度:** 🟡 中
 
-**状態:** ✅ ローカルテスト完了・push 済み
+**変更内容:**
+- ✅ ルート計算のバグ修正
+- ✅ 検索後の UI 表示改善
+- ✅ 画像の遅延読み込み追加
+
+**テスト:** ✅ ローカル確認済み
 ```
 
-### ステップ 3: Claude の子セッションが自動で PR を作成
+### ステップ B: Claude が自動で進めること
 
-ファイルが更新されたら、自動で：
+更新後、Claude の子セッションが自動的に次を実行します。
 
-1. **新しいブランチを作成** → `release/<日時>`
-2. **変更をコミット** → バンドル、バージョンアップ
-3. **ドラフト PR を作成**
-4. **PR の説明に実績を記載**
+- ブランチ作成
+- 必要な修正を反映
+- バージョン番号更新
+- CHANGELOG 更新
+- Draft PR の作成
 
-```
-### 📝 自動生成の PR 例
+### ステップ C: PR を merge する
 
-タイトル: `Chore: Release v164 — スポット説明追加・バグ修正`
+PR を確認して、必要ならレビューしたうえで merge します。
 
-本文:
-- ✅ assets/*.js をバンドル
-- ✅ data/version.js を v164 に更新
-- ✅ 文法チェック OK
-- ✅ CHANGELOG に記述済み
-- 🔗 変更内容: <このドキュメントのリンク>
-- ⏱️ 自動生成時刻: 2026-10-05 18:35 JST
-```
+merge 後、GitHub Pages が自動でビルドされ、数分で反映されます。
 
-### ステップ 4: あなたが PR をレビュー＆マージ
+URL 例:
 
-帰宅後、PR を開いて：
+https://kouchift.github.io/tokyostation/
 
-1. **変更を確認** → 想定通りか確認
-2. **「Merge」をクリック**
-3. **数分で GitHub Pages に反映** ✨
+---
 
-```
-自動で:
-- main ブランチに入る
-- GitHub Pages がビルド開始
-- 🌍 https://kouchift.github.io/tokyostation/?v=164 で公開
+## 4. 自動化の対象
+
+GitHub 上で更新があったとき、Claude は次を自動で進めます。
+
+```text
+検知: 「作業中の変更」が更新された
+→ ブランチを作成
+→ 必要な修正を手順に従って適用
+→ バンドル/テストを実施
+→ Draft PR を作成
+→ 進捗をコメント
 ```
 
 ---
 
-## 🤖 自動化される作業
+## 5. 実行されるコマンド例
 
-### Claude の子セッション（このドキュメント更新時に自動開始）
+```bash
+# 版を上げて公開
+node tools/release.mjs --yes
 
-```
-✅ 検出: 「作業中の変更」セクションが更新された
-→ PR ブランチ release/<日時> を作成
-→ バンドル実行: node tools/build_bundle.js
-→ バージョンアップ: data/version.js
-→ CHANGELOG 更新: data/changelog.js
-→ ドラフト PR 作成
-→ 進捗報告をコメント
-```
+# バンドルだけ再作成
+node tools/build_bundle.js
 
-### GitHub Actions（PR マージ時に自動実行）
-
-```
-✅ PR が main にマージされた
-→ assets/app.bundle.js が最新か確認
-→ テスト実行（npm test など）
-→ GitHub Pages ビルド開始
-→ 数分で https://... に反映
+# 生成物の確認
+node --check assets/app.bundle.js
+node --check data/version.js
 ```
 
 ---
 
-## 📝 「作業中の変更」セクション（このファイルに追記）
+## 6. 作業中の変更
 
 このセクションを更新すると、Claude が自動で子セッションを開始します。
-
-### テンプレート
 
 ```markdown
 ## 作業中の変更
 
 **日時:** YYYY-MM-DD HH:MM (JST)
-**担当:** <あなたの名前>
+**担当:** @username
 **優先度:** 🔴 高 / 🟡 中 / 🟢 低
 
-### 変更内容
+**変更内容:**
+- [ ] 変更点 1
+- [ ] 変更点 2
 
-**機能追加:**
-- [ ] 項目 1
-- [ ] 項目 2
-
-**バグ修正:**
-- [ ] 項目 1
-- [ ] 項目 2
-
-**パフォーマンス:**
-- [ ] 項目 1
-
-### テスト状況
-
-- [ ] ローカルで動作確認
-- [ ] ブラウザ互換性確認
-- [ ] 変更ファイルをコミット済み
-
-### 自動公開希望
-
-- [ ] はい（PR 作成後に自動マージを希望）
-- [ ] いいえ（PR をレビューしてから手動マージ）
-
----
-```
-
-### 例
-
-```markdown
-## 作業中の変更 #1
-
-**日時:** 2026-10-05 18:30
-**担当:** @kouchift
-**優先度:** 🟡 中
-
-### 変更内容
-
-**機能追加:**
-- [x] 銀座線の駅 3 件に写真追加
-- [x] スポット「東京国立博物館」の説明を 500 字に拡張
-
-**バグ修正:**
-- [x] 路線アイコンが高 DPI ディスプレイで割れる問題を修正
-
-### テスト状況
-
-- [x] ローカルで動作確認（iPhone SE・iPad・PC）
-- [x] ブラウザ互換性確認（Chrome・Safari・Firefox）
-- [x] 変更ファイルをコミット済み（3 ファイル）
-
-### 自動公開希望
-
-- [x] はい（PR 作成後に自動マージを希望）
+**テスト:** ✅ ローカル確認済み
 ```
 
 ---
 
-## ⚙️ GitHub Actions の設定
+## 7. 現在の状況
 
-### `release-on-merge.yml`（main マージで自動公開）
+### Claude App インストール状態
 
-このファイルは `.github/workflows/` に配置されます：
+| 項目 | 状態 |
+|------|------|
+| Claude App インストール | 🔴 未実施 |
+| 対象リポジトリ | `kouchift/tokyostation` |
 
-```yaml
-name: Auto Release on Merge
+以下を実行済みなら、状態を ✅ に更新してください。
 
-on:
-  pull_request:
-    types: [closed]
-    branches: [main]
+- https://github.com/apps/claude/installations/select_target
+- `kouchift/tokyostation` を選択してインストール済み
 
-jobs:
-  release:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: ✅ Build & Test
-        run: |
-          node --check assets/app.bundle.js
-          node --check data/version.js
-      
-      - name: 📦 Run tests (if any)
-        run: npm test || true
-      
-      - name: 🚀 Publish to GitHub Pages
-        run: |
-          echo "✅ PR をマージしました"
-          echo "GitHub Pages ビルドは自動で開始されます"
-          echo "数分で反映: https://kouchift.github.io/tokyostation"
+---
 
-  notify:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-      - name: 📢 Notify
-        run: |
-          echo "🎉 v$(grep VERSION data/version.js | sed 's/.*v//;s/".*//' | head -1) を公開しました"
+## 8. 参考リンク
+
+- [.cursorrules](.cursorrules)
+- [CLAUDE.md](CLAUDE.md)
+- [data/version.js](data/version.js)
+- [data/changelog.js](data/changelog.js)
+
+---
+
+## 9. 実行の最短フロー
+
+```text
+1. このファイルを GitHub で開く
+2. 「作業中の変更」を更新
+3. Commit → push
+4. Claude が PR を作成
+5. PR を merge
+6. GitHub Pages に反映
 ```
 
 ---
 
-## 🔐 セキュリティ上の注意
+## 10. 今すぐやること
 
-- **秘密ファイルは送信しない**: `~/.tsg_uploader.json` など
-- **このドキュメントには機密情報を書かない**
-- **PR のコメント欄にもトークンを��らない**
+帰宅後に、最初にこの作業だけやれば OK です。
 
----
+1. Claude App をインストールする
+2. このファイルを開いて「作業中の変更」を最初の記録として追加する
+3. push する
+4. Claude が PR まで進める
 
-## 🐛 ���ラブル時の対応
-
-### Q: PR が作られない
-
-**A:** 以下を確認
-- [ ] Claude App がインストール済みか（下記参照）
-- [ ] このドキュメントに「作業中の変更」セクションが追加されたか
-- [ ] ファイルの文法は正しいか（`- [ ]` の形式など）
-
-### Q: マージ後に公開されない
-
-**A:** 以下を確認
-- [ ] GitHub Pages は有効か（Settings → Pages で確認）
-- [ ] main ブランチが publish source に設定されているか
-- [ ] 数分待った（初回は 5 分かかる場合がある）
-
-### Q: 手動で公開したい
-
-**A:** ローカルで実行
-```bash
-node tools/release.mjs --yes
-```
-
----
-
-## ✅ Claude App インストール状態
-
-| 項目 | 状態 | 日時 |
-|------|------|------|
-| Claude App インストール | 🔴 未実施 | — |
-| インストール確認 | — | — |
-
-**手順:**
-1. https://github.com/apps/claude/installations/select_target で **kouchift/tokyostation** を選択
-2. インストール完了後、下の表を編集して日時を記入
-3. このファイルをコミット・push
-
-```markdown
-| Claude App インストール | ✅ 完了 | 2026-10-05 18:00 JST |
-```
-
----
-
-## 📚 関連リンク
-
-- [.cursorrules](.cursorrules) — Claude の自動化ルール
-- [CLAUDE.md](CLAUDE.md) — 開発者向けメモ
-- [data/version.js](data/version.js) — 現在のバージョン
-- [data/changelog.js](data/changelog.js) — 変更履歴
-
----
-
-**最終更新:** 2026-10-05  
-**作成者:** Claude  
-**目的:** 帰宅後の本番反映を完全自動化
+これで、帰宅後に手動でいちいちコマンドを打たずに、
+GitHub 側で本番反映の流れを回せます。
