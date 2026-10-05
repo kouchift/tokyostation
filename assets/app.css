@@ -2965,6 +2965,9 @@ html.kuni-on .geo__pn{display:none!important}
 .lnk--s{font-size:11px;padding:3px 8px}.opt__lnks{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px}
 .tsx{margin-left:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);color:inherit;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 .pv__bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin:6px 0}.pv__bar i{display:block;height:100%;background:#1A237E;width:0;transition:width .2s}
+/* v166 ルート PV: 移動予定日の入力・日付とリンクの行 */
+.pv__day{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:13px;font-weight:700}.pv__day input{font:inherit;padding:4px 8px;border:1px solid #c9d3df;border-radius:8px;background:#fff;color:inherit}
+.pv__dayline{font-size:12.5px;margin:6px 0;line-height:1.6}.pv__dayline small{color:#666}.pv__lnk{font:inherit;font-size:12px;font-weight:700;border:1px solid #c9d3df;background:#fff;color:#0B5394;border-radius:999px;padding:2px 10px;cursor:pointer;vertical-align:middle}
 .pv__cv,.pv__v{width:100%;max-height:52vh;border-radius:10px;background:#000;display:block}.pv__exp{background:#fff3e0;border:1px solid #ffcc80;border-radius:10px;padding:8px 10px;font-size:12.5px;margin:8px 0}
 /* v79 ルートカード */
 .act--card{background:#fff;border:1px solid #c9d3df;color:#0B5394}
