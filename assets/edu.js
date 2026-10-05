@@ -143,7 +143,7 @@ RG.showUniv = function (idx) {
     '<p class="src">' +
     "<b>偏差値は同梱していません。</b>予備校各社が調べた数字で複製が禁じられているためです。" +
     "data/user_hensachi.js にご自分で調べた値を書くと、色と順位が出ます。</p></div>";
-  var m = RG.openModal("🎓 " + u.n, html);
+  var m = RG.openCard("🎓 " + u.n, html);
   var hb = m.querySelector("[data-hs]");
   if (hb) hb.addEventListener("click", function () { RG.showHensachiEdit(hb.dataset.hs); });
   $$("[data-camp]", m).forEach(function (b) {
@@ -163,7 +163,7 @@ RG.showHigh = function (idx) {
   var F = (RG.EDU_FOUND || {})[s.f] || {};
   var h = RG.hensachiColor(s.n);
   var near = RG.nearestStation ? RG.nearestStation(s.la, s.lo) : null;
-  RG.openModal("🏫 " + s.n, '<div class="uni">' +
+  RG.openCard("🏫 " + s.n, '<div class="uni">' +
     '<div class="uni__hd" style="--lc:' + (F.c || "#888") + '">' +
       '<span class="uni__e">🏫</span>' +
       "<div><h3>" + esc(s.n) + '</h3><p class="uni__k">' +

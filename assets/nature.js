@@ -424,7 +424,7 @@ RG.showRange = function (r) {
     '<div class="lnks">' + wpLink(r.wp) + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button>' +
     '<button class="lnk" type="button" data-mts="1"><span>⛰️</span>山を地図に出す</button></div>' +
     '<p class="src">山脈の線は、構成する山の位置から機械的に引いた中心線です（正確な稜線ではありません）。</p></div>';
-  var m = RG.openModal("⛰️ " + r.n, html);
+  var m = RG.openCard("⛰️ " + r.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fitPts(r.pts); });
   m.querySelector("[data-mts]").addEventListener("click", function () { RG.closeModal(); if (RG.setGenreList) RG.setGenreList(["mountain"]); fitPts(r.pts); });
   Array.prototype.forEach.call(m.querySelectorAll("[data-mt]"), function (b) { b.addEventListener("click", function () { var p = (RG.MAPPOI || []).filter(function (x) { return x.g === "mountain" && x.n === b.dataset.mt; })[0]; if (p) { RG.closeModal(); RG.Map.gotoLatLng(p.la, p.lo, 600); RG.showSpot(p); } }); });
@@ -436,7 +436,7 @@ RG.showRiver = function (r) {
     '<div class="exgrid">' + (RG.exrow ? RG.exrow("📏 幹川流路延長", r.len ? r.len.toLocaleString("ja-JP") + " km" : "—", "") + RG.exrow("🗺️ 流域面積", r.area ? r.area.toLocaleString("ja-JP") + " km²" : "—", "") + RG.exrow("🏠 流れる都道府県", (r.pf || []).length + " 都道府県", (r.pf || []).join("・")) : "") + "</div>" +
     '<div class="lnks">' + wpLink(r.wp) + (r.src ? '<button class="lnk" type="button" data-src="1"><span>⛰️</span>源流へ</button>' : "") + '<button class="lnk" type="button" data-mouth="1"><span>🌊</span>河口へ</button>' + (r.pts ? '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button>' : "") + "</div>" +
     '<p class="src">' + (r.ps === "wd" ? "川の線は支流の合流点をつないだ近似で、蛇行は再現していません。" : "") + "</p></div>";
-  var m = RG.openModal("🏞️ " + r.n, html);
+  var m = RG.openCard("🏞️ " + r.n, html);
   var b;
   if ((b = m.querySelector("[data-src]"))) b.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(r.src[0], r.src[1], 800); });
   if ((b = m.querySelector("[data-mouth]"))) b.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(r.la, r.lo, 800); });
@@ -449,7 +449,7 @@ RG.showCurrent = function (c) {
     (c.d ? '<p class="nat__d">' + esc(c.d) + "</p>" : "") +
     '<div class="lnks">' + wpLink(c.wp) + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button></div>' +
     '<p class="src">流路は概略です（季節・年で大きく変わります）。</p></div>';
-  var m = RG.openModal((c.warm ? "🌡️ " : "🧊 ") + c.n, html);
+  var m = RG.openCard((c.warm ? "🌡️ " : "🧊 ") + c.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fitPts(c.pts); });
 };
 RG.showSea = function (s) {
@@ -457,7 +457,7 @@ RG.showSea = function (s) {
     '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#0277BD">🌊</span><div><h3>' + esc(s.n) + '</h3><p class="spotcard__k">' + esc(s.k) + "</p></div></div>" +
     (s.d ? '<p class="nat__d">' + esc(s.d) + "</p>" : "") +
     '<div class="lnks">' + wpLink(s.wp) + "</div></div>";
-  RG.openModal("🌊 " + s.n, html);
+  RG.openCard("🌊 " + s.n, html);
 };
 
 /* ---- 山のカードブロック・ランキング ---- */

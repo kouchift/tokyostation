@@ -4596,3 +4596,244 @@ body.indoor-on{overflow:hidden}
 .i-pl--st{fill:#C62828;font-size:calc(12px * var(--u))}.i-pl--plat{fill:#2E7D32}
 .ind--nw .ind__svg{background:#F3F5F8}
 .ind__row--x{margin-top:2px}.ind__ext{width:100%;border:1px dashed #6A9E6F;background:#F1F8F2;color:#1B5E20;border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;cursor:pointer;text-align:left}.ind__ext:disabled{border-style:solid;opacity:.85;cursor:default}
+/* v164: 案内中の画面（navui.js）— 帯を押すと «移動の詳細»、候補のチップ、やり直し、📷 AR */
+.nav__main{display:flex;align-items:center;gap:9px;flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer}
+.nav__main .nav__t{flex:1}
+.nav__more{font-size:10.5px;font-weight:700;text-decoration:none;color:#9CD3FF;margin-left:4px;white-space:nowrap}
+.nav__x--ar{border-color:#57B8FF;color:#CDEBFF}
+.nav__cands{display:flex;gap:6px;padding:0 10px 8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;background:#0F1A2B}
+.nav__cands::-webkit-scrollbar{display:none}
+.nav__cand{flex:0 0 auto;height:30px;padding:0 10px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.nav__cand b{font-weight:800}
+.nav__cand.on{background:#57B8FF;border-color:#57B8FF;color:#0F1A2B}
+.nav__cand--redo{border-style:dashed;margin-left:auto}
+.nd{font-size:13px;line-height:1.6}
+.nd__hd{margin-bottom:8px}
+.nd__route{font-size:14px}
+.nd__sum{font-size:12.5px;color:var(--gray600);margin:2px 0 8px}
+.nd__tools{display:flex;flex-wrap:wrap;gap:6px}
+.nd .lvb{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--border,#D9DFE8);background:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.nd .lvb:hover{background:var(--lb50,#EAF3FF);border-color:var(--lb400,#57B8FF)}
+.nd .lvb--x{color:#B71C1C}
+.nd .lvt{display:block;font-size:11px;color:var(--gray600,#626264);font-weight:400}
+.nd .lvt--ng{color:#B71C1C}
+.nd__cands{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.nd__cands .nav__cand{border-color:var(--border,#D9DFE8);background:#fff;color:#10223A}
+.nd__cands .nav__cand.on{background:#0F1A2B;border-color:#0F1A2B;color:#fff}
+.nd__now{background:#0F1A2B;color:#fff;border-radius:10px;padding:8px 12px;font-weight:700;margin:8px 0 10px}
+.nd__step{position:relative;padding:8px 10px 8px 16px;border-left:4px solid #B0BEC5;margin:0 0 8px;background:var(--control,#F4F6FA);border-radius:0 10px 10px 0}
+.nd__step--rail{border-left-color:var(--c,#9AA0A6)}
+.nd__t{font-weight:800;font-size:13.5px}
+.nd__sw{display:inline-block;width:.75em;height:.75em;border-radius:3px;margin-right:5px;vertical-align:-.02em}
+.nd__t span{font-weight:500;font-size:12px;color:var(--gray600,#626264);margin-left:4px}
+.nd__sub{margin:6px 0;padding:6px 8px;background:#fff;border-radius:8px}
+.nd__sub>b{display:block;margin-bottom:2px}
+.nd__car{display:inline-block;background:#0F1A2B;color:#fff;font-weight:900;border-radius:6px;padding:1px 8px;font-family:var(--mono)}
+.nd__cars,.nd__tracks,.nd__exit{margin:4px 0}
+.nd__more{font-size:11.5px;color:var(--gray600,#626264)}
+.nd__na{font-size:12px;color:#7A4B00;background:#FFF6D9;border-radius:6px;padding:4px 8px;margin:4px 0}
+.nd__na b{color:#7A4B00}
+.nd__step .lvb{margin-top:4px;height:30px;font-size:12px}
+/* v164: AR を案内中に使うとき（arguide.js） */
+.arv__nav{background:rgba(15,26,43,.85);color:#fff;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arv__tools{position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 132px);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.arv__step{flex:1 1 100%;background:rgba(15,26,43,.85);color:#fff;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arv__x--stop{color:#FFCDD2}
+/* v164: 警報の帯（× で確認ずみに） */
+.alertwrap{position:absolute;left:50%;transform:translateX(-50%);bottom:64px;z-index:40;display:flex;gap:3px;max-width:calc(100% - 24px)}
+.alertwrap[hidden]{display:none}
+.alertwrap .alertchip{position:static;transform:none;max-width:none;min-width:0;border-radius:999px 0 0 999px;padding-right:10px}
+.alertwrap .alertchip__x{border-radius:0 999px 999px 0;padding:0 12px;font-size:17px;line-height:1;background:#8E1B1B}
+.alertwrap--tsu .alertchip{background:#0D47A1;animation:alertPulse 1.6s ease-in-out infinite}
+.alertwrap--tsu .alertchip__x{background:#082F6B;animation:none}
+.alertwrap--sp .alertchip{background:#6A1B9A}.alertwrap--sp .alertchip__x{background:#45106A}
+.alertwrap--adv .alertchip{background:#E65100}.alertwrap--adv .alertchip__x{background:#A33A00}
+.alc__ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0;font-size:12.5px}
+.alc__ctl label{display:flex;align-items:center;gap:6px}
+.alc__k--0{background:#FFF8E1;border-left-color:#F9A825}
+.alc__k--seen{opacity:.6}
+.alc__a{font-weight:600;color:#444;font-size:12px;margin-left:4px}
+.alc__k .alc__go{border:0;background:transparent;padding:0;min-height:0;font-weight:700}
+.alc__go small{display:block;font-weight:500}
+/* =========================================================================
+   v165: 見た目の決まり（トークン）・下のタブ帯・ダークガラスのふきだし
+   ========================================================================= */
+:root{
+  --r-sm:8px;--r-md:14px;--r-lg:24px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;
+  --shadow-1:var(--sh-sm);--shadow-2:var(--sh-md);
+  /* 濃いめ・半透明のガラス（小さなカード・帯に使う。大きなシートは白のまま） */
+  --glass-bg:rgba(16,24,40,.80);--glass-solid:rgba(16,24,40,.95);--glass-bd:rgba(255,255,255,.14);--glass-hl:rgba(255,255,255,.08);
+  --glass-fg:#F3F6FA;--glass-fg2:rgba(243,246,250,.72);--glass-chip:rgba(255,255,255,.10);--glass-star:#FFC24D;--glass-link:#9CC9FF;
+  --glass-sh:0 12px 32px rgba(0,0,0,.35);
+}
+/* ---- 押したときの手ごたえ（transform だけ・配置は変えない） */
+.lr__tab,.lr__all,.lr__t,.lr__c,.lr__i,.chip,.nav__cand,.nav__x,.nd .lvb,.set__b,.set__b2,.alertchip,.zoombar button,.heroAction,.pp__c,.pp__a .pp__b,.arv__x{transition:transform .08s ease,filter .12s ease}
+.lr__tab:active,.lr__all:active,.lr__t:active,.lr__c:active,.lr__i:active,.chip:active,.nav__cand:active,.nav__x:active,.nd .lvb:active,.set__b:active,.set__b2:active,.alertchip:active,.zoombar button:active,.heroAction:active,.pp__c:active,.pp__a .pp__b:active,.arv__x:active{transform:scale(.96)}
+/* ---- 下の帯（路線／スポット／話題）：独立した面にして、どれを選んでいるか一目で分かるように */
+.linerail{background:#fff;border-top:1px solid var(--grid);box-shadow:0 -4px 16px rgba(24,28,32,.10)}
+.linerail .lr__bar{padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:content-box}
+.lr__tabs{position:relative;border:0;border-radius:0;overflow:visible;flex:1 1 auto}
+.lr__tab{position:relative;border:0;background:transparent;color:var(--label);font:inherit;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lr__tab:hover{color:var(--text)}
+.lr__ind{position:absolute;left:0;bottom:1px;height:3px;width:40px;border-radius:999px;background:var(--lb900);transform:translateX(0);transition:transform .16s ease,width .16s ease;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.lr__ind{transition:none}.lr__tab .ms{transition:none}}
+/* スマホ：縦並び（アイコンの上に塗りのピル＋太字のラベル）。PC：横並びのピルのまま */
+@media (max-width:720px){
+  .lr__tabs{display:flex;justify-content:space-around;gap:0}
+  .lr__tab{min-height:56px;min-width:72px;padding:4px 8px 7px;border-radius:var(--r-md);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px}
+  .lr__tab .ms{font-size:24px;line-height:1;padding:3px 14px;border-radius:999px;transition:background .16s ease,color .16s ease}
+  .lr__tab .lr__tl{font-size:12px;line-height:1.2}
+  .lr__tab[aria-pressed=true]{color:var(--lb900);font-weight:800;background:transparent}
+  .lr__tab[aria-pressed=true] .ms{background:var(--lb900);color:#fff;font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24}
+}
+@media (min-width:721px){
+  .lr__tab[aria-pressed=true]{background:var(--lb200);color:#001d35;font-weight:800}
+  .lr__tab[aria-pressed=true] .ms{font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24}
+  .lr__ind{display:none}
+}
+/* 「解除」は枠だけ（選択を外す）、「×／えらぶ」は塗り（帯そのものを閉じる・開く）：役割がちがうので見た目を分ける */
+.lr__all{background:transparent;border:1.5px solid var(--border);color:var(--label)}
+.lr__all:hover{background:var(--control);filter:none}
+.lr__t{background:var(--text);color:#fff}
+.lr__t[aria-expanded=true]{background:var(--text);color:#fff}
+/* 中身の入れ替え：短いフェード＋少し上がる。見出し（最初の行）が一瞬だけ強調 */
+.lr__rows.lr__rows--in{animation:lrIn .16s ease-out}
+@keyframes lrIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lr__rows.lr__rows--in>:first-child{animation:lrHead .9s ease-out}
+@keyframes lrHead{0%,35%{background:var(--lb200);border-radius:8px}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.lr__rows.lr__rows--in,.lr__rows.lr__rows--in>:first-child{animation:none}}
+@media (max-width:720px){
+  .app>.linerail.open{height:calc(var(--chips-h) + env(safe-area-inset-bottom,0px));background:#fff}
+  .lr__tab{min-width:72px}
+  .lr__all,.lr__t{width:42px;height:42px}
+  .linerail.open .lr__all{width:auto;border:1.5px solid var(--border);background:#fff}
+}
+/* ---- ダークガラスのふきだし（スポット）・トースト・案内バー・AR の帯 */
+.glass{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);border-radius:var(--r-md);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl);color:var(--glass-fg)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--glass-solid)}}
+.poipop{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);border-radius:var(--r-md);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl);color:var(--glass-fg);will-change:transform}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.poipop{background:var(--glass-solid)}}
+.poipop .pp__h b{font-size:14.5px;font-weight:700;color:var(--glass-fg)}
+.poipop .pp__e{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--glass-chip);font-size:16px;flex:0 0 auto}
+.poipop .pp__e.gic{padding:6px;box-sizing:border-box;color:#fff}
+.poipop .pp__b,.poipop .pp__n,.poipop .pp__t{color:var(--glass-fg2)}
+.poipop .pp__d{color:var(--glass-fg)}
+.poipop .pp__v{color:#9BE7C4}
+.poipop .pp__cam{color:var(--glass-link)}
+.poipop .stars{color:var(--glass-star)}
+.poipop .stars b{color:var(--glass-fg2)}
+.poipop a{color:var(--glass-link)}
+.poipop .pp__t{background:var(--glass-chip)}
+.poipop .pp__ph{background:var(--glass-chip);color:#fff}
+.poipop .pp__a{background:rgba(255,255,255,.06);border-top:1px solid var(--glass-bd)}
+.poipop .pp__a .pp__b{color:var(--glass-fg);background:rgba(255,255,255,.12);border:1px solid var(--glass-bd);border-radius:999px;padding:6px 12px;font-weight:700}
+.poipop .pp__c{background:transparent;border:1px solid var(--glass-bd);color:var(--glass-fg)}
+.pop--above::after{border-top-color:rgba(16,24,40,.88)}
+.pop--below::after{border-bottom-color:rgba(16,24,40,.88)}
+body.gesturing .poipop{visibility:hidden}
+/* トースト（画面の上の短い知らせ）：同じガラス。種類は左の色の線で */
+.tb__status{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);color:var(--glass-fg);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl);border-left:4px solid #9CC9FF}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.tb__status{background:var(--glass-solid)}}
+.tb__status.ok{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#5ED9A3;color:var(--glass-fg)}
+.tb__status.warn{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#FFC24D;color:var(--glass-fg)}
+.tb__status.info{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#9CC9FF;color:var(--glass-fg)}
+.tb__status.night{background:var(--glass-bg);border-color:var(--glass-bd);border-left-color:#FFD86B;color:var(--glass-fg)}
+/* 案内の帯（大きい面なので blur なし・不透明に近い） */
+.navbar{background:var(--glass-solid);color:var(--glass-fg);border-bottom:1px solid var(--glass-bd)}
+.nav__cands,.nav__step{background:transparent}
+.nav__more{color:var(--glass-link)}
+.nav__cand.on{background:var(--glass-link);border-color:var(--glass-link);color:#10223A}
+/* AR の帯 */
+.arv__x{background:var(--glass-bg);border:1px solid var(--glass-bd);color:var(--glass-fg);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.arv__acc{background:var(--glass-bg);color:var(--glass-fg);border:1px solid var(--glass-bd)}
+.arv__acc.warn{background:rgba(90,59,0,.85);color:#FFE9A8}
+.arv__panel{background:var(--glass-bg);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-bd);color:var(--glass-fg);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl)}
+.arv__arrow{background:rgba(255,255,255,.10)}
+.arv__n{color:var(--glass-fg)}.arv__d{color:var(--glass-link)}.arv__h{color:var(--glass-fg2)}
+/* 大きなシート（モーダル）は白のまま。頭の帯だけ同じ色にしてつながりを出す */
+.modal__hd{background:var(--glass-solid);color:var(--glass-fg);border-bottom:1px solid var(--glass-bd)}
+.modal__hd b{color:var(--glass-fg)}
+.modal__x,.modal__map{color:var(--glass-fg)}
+.modal__hd .modal__x{background:rgba(255,255,255,.10);border-color:transparent}
+/* ---- 長い一覧は画面の外の行を描かない */
+.rk__list>li,.lu__l>li,.legend__r,.alc__l>li{content-visibility:auto;contain-intrinsic-size:auto 52px}
+.nav__cands{overscroll-behavior-x:contain}
+/* ふきだしの «ジャンルの行»（div.pp__b）は、同じ名前のボタン（.pp__a .pp__b）の決まりを受けない */
+.poipop div.pp__b{background:transparent;border:0;height:auto;border-radius:0;font-weight:400;font-size:11.5px;cursor:default;color:var(--glass-fg2)}
+/* =========================================================================
+   v166: スポットのカード・駅のカード・案内の詳細を «濃いめ・半透明» に（大きい面なので blur は使わない。頭だけ blur）
+   ・RG.openCard（plannerui.js）が .modal--dark を付ける。設定など入力の多い画面は白のまま
+   ・部品は CSS 変数の差し替えで暗色に。ベタ塗りの #fff を持つ部品だけ下で個別に直す
+   ========================================================================= */
+.modal--dark .modal__box,.card--dark{
+  --surface:#141C2B;--bg:rgba(16,24,40,.94);--control:rgba(255,255,255,.08);--control2:rgba(255,255,255,.12);--control3:rgba(255,255,255,.15);
+  --text:#F3F6FA;--label:rgba(243,246,250,.72);--muted:rgba(243,246,250,.62);--gray600:rgba(243,246,250,.72);--gray800:#F3F6FA;
+  --grid:rgba(255,255,255,.12);--border:rgba(255,255,255,.22);--link:#9CC9FF;--highlight:#9CC9FF;
+  --lb50:rgba(156,201,255,.12);--lb200:rgba(156,201,255,.24);--lb400:#9CC9FF;--lb600:#9CC9FF;
+  --ok:#5ED9A3;--okbg:rgba(94,217,163,.18);--amber:#FFD98A;--amberbg:rgba(255,194,77,.16);--ye600:rgba(255,194,77,.5);--err:#FF8A80;
+  color-scheme:dark;background:rgba(16,24,40,.94);color:var(--text)
+}
+.modal.modal--dark .modal__box{background:rgba(16,24,40,.94) !important;color:var(--text);border:1px solid var(--glass-bd);box-shadow:var(--glass-sh),inset 0 1px 0 var(--glass-hl)}   /* design_v2.css の白より強く */
+.modal--dark .modal__hd{background:rgba(16,24,40,.80);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
+.modal--dark .modal__bd{background:transparent}
+.card.card--dark.sheet,.card.card--dark.hovercard{background:rgba(16,24,40,.94) !important;color:var(--text);border:1px solid var(--glass-bd)}
+.card--dark.sheet{box-shadow:0 -12px 40px rgba(0,0,0,.45)}
+.card--dark .sheet__grab i,.card--dark .sheet__grab span{background:rgba(255,255,255,.3)}
+/* ベタ塗りの白を持つ部品 */
+.modal--dark .cmini,.card--dark .cmini,.modal--dark .spotcard__g,.modal--dark .mini code,.card--dark .mini code,.modal--dark .cardq__l,.card--dark .cardq__l,.modal--dark .cardq__sug,.card--dark .cardq__sug,
+.modal--dark .nd .lvb,.modal--dark .nd__cands .nav__cand,.modal--dark .nd__sub,.modal--dark .opt,.card--dark .opt,.modal--dark .opt__b--nav,.card--dark .opt__b--nav,
+.modal--dark .set__b2,.card--dark .set__b2,.modal--dark .lr__c,.card--dark .lr__c{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .cact,.card--dark .cact{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .cact--p,.card--dark .cact--p{background:var(--lb900);color:#fff;border-color:var(--lb900)}
+.modal--dark .cact small,.card--dark .cact small{color:var(--label)}
+.modal--dark .cact--p small,.card--dark .cact--p small{color:rgba(255,255,255,.8)}
+.modal--dark .lnk,.card--dark .lnk{background:var(--control3);color:var(--text);border-color:var(--border)}
+.modal--dark .lnk:hover,.card--dark .lnk:hover{background:rgba(255,255,255,.22)}
+.modal--dark .ex,.card--dark .ex{background:var(--control)}
+.modal--dark .ex--hot,.card--dark .ex--hot{background:var(--lb50);box-shadow:inset 0 0 0 1px var(--lb200)}
+.modal--dark .ex__v,.card--dark .ex__v{color:var(--text)}
+.modal--dark .ex__k,.modal--dark .ex__s,.card--dark .ex__k,.card--dark .ex__s{color:var(--label)}
+.modal--dark .src,.card--dark .src{color:var(--label);border-top-color:var(--grid)}
+.modal--dark .mini,.card--dark .mini{color:var(--label)}
+.modal--dark a,.card--dark a{color:var(--link)}
+.modal--dark .stars,.card--dark .stars{color:var(--glass-star)}
+.modal--dark .stars b,.card--dark .stars b{color:var(--text)}
+.modal--dark .spotcard__st{background:rgba(255,194,77,.16);border:1px solid rgba(255,194,77,.35);color:var(--text)}
+.modal--dark .spotcard__why{color:#FFD98A}
+.modal--dark .spotcard__k,.modal--dark .spotcard__pht,.card--dark .plate__kana,.card--dark .plate__line,.card--dark .plate__hl{color:var(--label)}
+.modal--dark .spotcard__phn{color:var(--text)}
+.modal--dark .spotcard__i{border-radius:18px;border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.modal--dark .spotcard__ph{background:var(--control)}
+.modal--dark .spotcard__phl{background:rgba(255,255,255,.9)}
+.modal--dark .spotcard__g{color:var(--text)}.modal--dark .spotcard__g i{color:var(--link)}
+.modal--dark .nd__na{background:rgba(255,194,77,.16);color:#FFD98A}.modal--dark .nd__na b{color:#FFD98A}
+.modal--dark .nd__step{background:var(--control)}
+.modal--dark .nd .lvt{color:var(--label)}.modal--dark .nd .lvt--ng{color:#FFB4A8}
+.modal--dark .nd .lvb--x{color:#FFB4A8}
+.modal--dark .nd__t span,.modal--dark .nd__more{color:var(--label)}
+.modal--dark .nd__cands .nav__cand.on{background:var(--glass-link);border-color:var(--glass-link);color:#10223A}
+.modal--dark .nd__now,.modal--dark .nd__car{background:rgba(255,255,255,.14)}
+.card--dark .plate__tag,.card--dark .plate__wx{background:var(--control2);color:var(--text)}
+.card--dark .plate__wx small{color:var(--label)}
+.card--dark .plate__close{background:var(--control2);color:var(--text)}
+.card--dark .tabs button,.card--dark .ctab{color:var(--label)}
+.card--dark .tabs button[aria-selected=true],.card--dark .ctab[aria-selected=true]{color:var(--text)}
+.card--dark .cardq__in{color:var(--text)}
+.card--dark .cardq__sug button,.card--dark .cardq__sug .n{color:var(--text)}
+.modal--dark input,.modal--dark select,.modal--dark textarea,.card--dark input,.card--dark select,.card--dark textarea{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .alc__k,.modal--dark .alc__go{background:var(--control);color:var(--text);border-color:var(--border)}
+.modal--dark .alc__k small,.modal--dark .alc__go small,.modal--dark .alc__t{color:var(--label)}
+/* 濃いカードの中の «明るい小さな面»（自分のピン・教科書の囲み・投稿・街の人の声・リクエスト・ランキングの札など）は、
+   面の色はそのままにして文字だけ暗く戻す（読みやすさ優先。面ごとの色は意味を持つので、ぜんぶ暗くはしない） */
+.modal--dark :is(.pins,.pst,.req__b,.tk__pill,.tk__side,.tk__q,.tk__note,.mm__local,.mm__cheer,.term,.nsp,.trn,.skf,.sk__more,.ax,.todo,.sp,.risk,.spot,.bzp__i,.bzp__w,.eh,.whs__why,.sec--sk,.sec--score,.mapb,.lbadge,.gbadge,.spotcard__phl,.hp__x,.mini code),
+.card--dark :is(.pins,.pst,.req__b,.tk__pill,.tk__side,.tk__q,.tk__note,.mm__local,.mm__cheer,.term,.nsp,.trn,.skf,.sk__more,.ax,.todo,.sp,.risk,.spot,.bzp__i,.bzp__w,.eh,.whs__why,.sec--sk,.sec--score,.mapb,.lbadge,.gbadge,.spotcard__phl,.hp__x,.mini code){
+  --text:#181c20;--label:#404751;--muted:#707882;--gray600:#404751;--gray800:#2d3135;--grid:#e0e3e8;--border:#c0c7d3;--link:#0061a1;--highlight:#0061a1;
+  --lb50:#f1f4f9;--lb200:#d1e4ff;--lb400:#9dcaff;--ok:#006c4b;--amber:#8f4c00;--amberbg:#ffdcc3;--control:#f1f4f9;--control2:#ebeef4;--control3:#e5e8ee;--surface:#fff;
+  color:var(--text);color-scheme:light
+}
+.modal--dark :is(.pins,.pst,.req__b,.eh,.whs__why,.sec--sk,.sec--score,.bzp__i) a,.card--dark :is(.pins,.pst,.req__b,.eh,.whs__why,.sec--sk,.sec--score,.bzp__i) a{color:#0061a1}
+.modal--dark .pin,.card--dark .pin{background:#fff;color:#181c20}
+.modal--dark .pin.on,.card--dark .pin.on{background:#C8880F;color:#fff}
+.modal--dark .mapb,.card--dark .mapb{color:#0061a1}
+.modal--dark .cmini,.card--dark .cmini{background:var(--control2);border-color:var(--border)}
+.modal--dark .spotcard__g{background:var(--control2);color:var(--text)}

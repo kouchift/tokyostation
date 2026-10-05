@@ -63,7 +63,7 @@ RG.showAdult = function (a) {
     '<p class="src">' +
     "<b>18歳未満の方は利用できません。</b>営業の有無・料金は変わります。" +
     "現地の表示と公式情報をご確認ください。</p></div>";
-  var m = RG.openModal((K.e || "🔞") + " " + a.n, html);
+  var m = RG.openCard((K.e || "🔞") + " " + a.n, html);
   var b = $("#ad-more", m);
   if (b) b.addEventListener("click", function () {
     RG.openModal("🚧 くわしい情報は工事中です", '<div class="gate">' +
@@ -226,7 +226,7 @@ RG.mergeCamSpot = function () {
 /* 防犯カメラ1件のカード */
 RG.showCamSpot = function (c) {
   var near = RG.nearestStation ? RG.nearestStation(c.la, c.lo) : null;
-  RG.openModal("📷 " + (c.n || "防犯カメラ"), '<div class="smk">' +
+  RG.openCard("📷 " + (c.n || "防犯カメラ"), '<div class="smk">' +
     '<div class="smk__hd" style="--lc:#5A6472"><span class="smk__e">📷</span>' +
     "<div><h3>" + esc(c.n || "防犯カメラ") + '</h3><p class="smk__k">設置場所の記録</p></div></div>' +
     '<p class="smk__d">まちに置かれている防犯カメラの位置です。' +

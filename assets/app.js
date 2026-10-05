@@ -34,7 +34,9 @@ RG.MAPSIZE = {
     /* 引きぐあい  駅名   丸の半径  丸   名前  区名  地名  スポット */
     { z:  1,      lbl: 5.0,  dot: 1.7,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  4 },
     { z:  4,      lbl: 9.0,  dot: 3.2,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
-    { z: 22,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
+    { z: 22,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 },
+    /* v164: 最大ズームを 2.4 倍に上げたぶんの段（駅前よりさらに寄る）。大きさは変えず、置ける印の数だけ少し増やす */
+    { z: 60,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 28 }
   ],
   /* 上の «駅名» と «丸» は «大きい駅» のときの大きさです。
      ふつうの駅・選んだ駅は、それに対する «割合» で決めます。 */
@@ -59,7 +61,7 @@ RG.mapSizeAt = function (z) {
   var S = RG.MAPSIZE, st = S.steps;
   var u = Math.log(Math.max(1, z)) / Math.LN2;          // ×1→0 ×4→2 ×22→4.46
   var us = st.map(function (x) { return Math.log(Math.max(1, x.z)) / Math.LN2; });
-  var i = (u <= us[1]) ? 0 : 1;
+  var i = 0; while (i < st.length - 2 && u > us[i + 1]) i++;   // v164: 段が 4 つ以上でも使えるように
   var t = (u - us[i]) / Math.max(0.0001, us[i + 1] - us[i]);
   t = Math.max(0, Math.min(1, t));
   function mix(k) { return st[i][k] + (st[i + 1][k] - st[i][k]) * t; }
@@ -486,6 +488,7 @@ RG.lineSequence = function (fromId, line, limit) {
 var Map = (function () {
   var svg, gE, gN, selected = null, vb, wrap, lodTimer = null;
   function U(w) { return w * (RG.K || 1); }                 // 23区版の幅 → 実際の単位
+  var ZMIN = 25;   // v164: いちばん寄ったときの viewBox の幅（23区版の単位）。60 → 25 で約 2.4 倍まで寄れる。丸・文字・印は画面 px 基準なので大きくならない
   function zl() { return (RG.LEGACY_W || VB.w) / vb.w; }    // 23区版のズーム段階（1 = 23区が画面いっぱい）
   RG.zoomLevel = function () { return vb ? zl() : 1; };
 
@@ -884,10 +887,23 @@ var Map = (function () {
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (t) {
       wrap.addEventListener(t, function () { if (drag) endGesture(); drag = null; wrap.classList.remove("dragging"); });
     });
+    /* v165: ホイールは 1 コマ（rAF）にまとめる（連続イベントのたびに zoomAt すると、速いホイールで 1 コマに何回も計算していた） */
+    var wheelAcc = 0, wheelPt = null, wheelRaf = 0;
     wrap.addEventListener("wheel", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
-      e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.16 : 1 / 1.16, true);
+      e.preventDefault();
+      wheelAcc += e.deltaY; wheelPt = { x: e.clientX, y: e.clientY };
+      if (wheelRaf) return;
+      wheelRaf = requestAnimationFrame(function () {
+        wheelRaf = 0; var f = Math.pow(1.16, Math.max(-3, Math.min(3, wheelAcc / 100))); wheelAcc = 0;
+        if (f !== 1 && wheelPt) zoomAt(wheelPt.x, wheelPt.y, f, true);
+      });
     }, { passive: false });
+    /* v165: iOS Safari が自分でやるピンチ拡大・長押しメニュー・2 回タップ拡大は、地図の上だけ止める（地図のピンチと二重にならないように） */
+    ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) {
+      wrap.addEventListener(t, function (e) { if (!(e.target && e.target.closest && e.target.closest(UI_SEL))) e.preventDefault(); }, { passive: false });
+    });
+    wrap.addEventListener("contextmenu", function (e) { if (e.target === svg || (e.target.closest && e.target.closest("#map"))) e.preventDefault(); });
     wrap.addEventListener("touchstart", function (e) {
       if (e.target && e.target.closest && e.target.closest(UI_SEL)) return;
       if (e.touches.length === 2) { drag = null;
@@ -899,7 +915,7 @@ var Map = (function () {
       e.preventDefault();
       var k = pinch.d / dist(e.touches), r = pinch.r;
       var ar = pinch.vb.h / pinch.vb.w;
-      var nw = clamp(pinch.vb.w * k, U(60), VB.w * 1.6), nh = nw * ar;
+      var nw = clamp(pinch.vb.w * k, U(ZMIN), VB.w * 1.6), nh = nw * ar;
       var fx = (pinch.c.x - r.left) / r.width, fy = (pinch.c.y - r.top) / r.height;
       vb.x = pinch.vb.x + (pinch.vb.w - nw) * fx;
       vb.y = pinch.vb.y + (pinch.vb.h - nh) * fy;
@@ -937,7 +953,7 @@ var Map = (function () {
     vb.y = Math.max(-my2, Math.min(VB.h - vb.h + my2, vb.y));
   }
   function commitView() {
-    clearTimeout(gestT); gestT = null; gestR = null;
+    clearTimeout(gestT); gestT = null; gestR = null; document.body.classList.remove("gesturing");
     if (gestRaf) { cancelAnimationFrame(gestRaf); gestRaf = 0; }
     svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
     svg.style.transform = "";
@@ -959,16 +975,18 @@ var Map = (function () {
   function apply(gesture) {
     clampVb();
     if (!gesture || !cvb) { commitView(); return; }
-    if (!gestR) { gestR = svg.getBoundingClientRect(); lastCommit = performance.now(); }   // ここから動かし始め
+    if (!gestR) { gestR = svg.getBoundingClientRect(); lastCommit = performance.now(); document.body.classList.add("gesturing"); }   // ここから動かし始め（v165: 動かしている間は小さなふきだしを隠す）
     if (!gestRaf) gestRaf = requestAnimationFrame(paintGesture);   // 1 コマに 1 回だけ
     clearTimeout(lodTimer);                                        // 動かしている間は間引きもしない
     clearTimeout(gestT); gestT = setTimeout(commitView, GEST_IDLE);
-    if (performance.now() - lastCommit > GEST_MAX) { gestT = null; commitView(); }   // 長く動かし続けるときは、ときどき端を描き足す
+    // 長く動かし続けるときは、ときどき端を描き足す。v165: ピンチ（拡大率が変わっている最中）は描き足さない
+    // （描き直しのたびに 0.5 秒止まり、指の動きに付いてこなかった。ピンチでは端が空くより止まらないほうが大事。離したときに 1 回描く）
+    if (performance.now() - lastCommit > GEST_MAX && Math.abs(cvb.w / vb.w - 1) < 0.03) { gestT = null; commitView(); }
   }
   RG.mapCommitView = function () { if (gestT) commitView(); };
   function zoomAt(cx, cy, k, gesture) {
     var r = gesture && gestR ? gestR : wrap.getBoundingClientRect();
-    var nw = clamp(vb.w * k, U(60), VB.w * 1.6), nh = nw * (vb.h / vb.w);
+    var nw = clamp(vb.w * k, U(ZMIN), VB.w * 1.6), nh = nw * (vb.h / vb.w);
     var fx = (cx - r.left) / r.width, fy = (cy - r.top) / r.height;
     vb.x += (vb.w - nw) * fx; vb.y += (vb.h - nh) * fy; vb.w = nw; vb.h = nh; apply(gesture);
   }
@@ -1091,7 +1109,7 @@ var Map = (function () {
     var r = wrap.getBoundingClientRect(), ar = r.height / r.width, k = pad || 1.15;
     if (k > 0 && k < 1) k = 1 + k;
     var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    var w = Math.max((x1 - x0) * k, (y1 - y0) * k / ar, U(60));
+    var w = Math.max((x1 - x0) * k, (y1 - y0) * k / ar, U(ZMIN));
     vb.w = w; vb.h = w * ar; vb.x = cx - w / 2; vb.y = cy - vb.h / 2;
     apply();
   }
@@ -2236,7 +2254,7 @@ RG.placePop = function (pop, anchor, opt) {
   // 狭い画面では、位置を細かく合わせるより «下から出す板» のほうが押しやすい
   if (narrow && !opt.noSheet) {
     pop.classList.add("pop--sheet");
-    pop.style.left = ""; pop.style.top = ""; pop.style.right = ""; pop.style.bottom = "";
+    pop.style.left = ""; pop.style.top = ""; pop.style.right = ""; pop.style.bottom = ""; pop.style.transform = "";
     return "sheet";
   }
   var w = pop.offsetWidth || 240, h = pop.offsetHeight || 120;
@@ -2249,9 +2267,10 @@ RG.placePop = function (pop, anchor, opt) {
   else if (below + h <= vh - m) { top = below; pop.classList.add("pop--below"); }
   else { top = Math.max(m, Math.min(vh - h - m, ay - h / 2)); }
   if (shortH) { pop.style.maxHeight = (vh - m * 2) + "px"; pop.style.overflowY = "auto"; }
-  pop.style.left = Math.min(vw - w - m, Math.max(m, ax - w / 2)) + "px";
-  pop.style.top = top + "px";
-  pop.style.right = ""; pop.style.bottom = "";
+  /* v165: 位置は left/top ではなく transform で（配置の計算をやり直させない） */
+  var lx = Math.min(vw - w - m, Math.max(m, ax - w / 2));
+  pop.style.left = "0"; pop.style.top = "0"; pop.style.right = ""; pop.style.bottom = "";
+  pop.style.transform = "translate3d(" + Math.round(lx) + "px," + Math.round(top) + "px,0)";
   return "float";
 };
 

@@ -244,7 +244,7 @@ RG.airRouteModal = function (fromCode, toCode) {
     '<div class="airrt__sh"><b>🕒 ' + (when.getMonth() + 1) + "/" + when.getDate() + " " + hm(when.getHours() * 60 + when.getMinutes()) + " 以降の便" + (sch.real ? "" : "（<u>目安</u>：便数から均等に並べた推定で、実際の時刻表ではありません）") + "</b>" + schHtml + "</div>" +
     '<div class="lnks"><button class="lnk" type="button" data-airfit="1"><span>🗺️</span>地図で見る</button><button class="lnk" type="button" data-airrev="1"><span>🔁</span>逆方向</button></div>' +
     '<p class="src">運賃は距離からの概算（' + esc((RG.AIR_FARE || {}).note || "") + "）。便数・時刻は" + (sch.real ? "登録された時刻表" : "推定") + "。必ず各社の公式サイトでご確認ください。</p></div>";
-  var m = RG.openModal("✈️ " + (a.nick || a.n) + " → " + (b.nick || b.n), html);
+  var m = RG.openCard("✈️ " + (a.nick || a.n) + " → " + (b.nick || b.n), html);
   m.querySelector("[data-airfit]").addEventListener("click", function () { RG.closeModal(); RG.airShowRoutes(a.code); });
   m.querySelector("[data-airrev]").addEventListener("click", function () { RG.airRouteModal(b.code, a.code); });
 };

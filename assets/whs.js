@@ -62,7 +62,7 @@ RG.showWHS = function (id) {
       (i < list.length - 1 ? '<button class="whs__b" type="button" data-to="' + esc(list[i + 1].id) + '">' + esc(list[i + 1].s) + " ›</button>" : "") + "</div>" +
     '<p class="src">やさしい解説は当サイトの手書き（定説にもとづく。«〜といわれます» は言い伝え・諸説のあるもの）。件数は2026年7月の «飛鳥・藤原の宮都» 登録時点。' +
     "地点はおおよその位置です。見学の時間・料金・入山や上陸の決まりは各公式でご確認ください。</p></div>";
-  var m = RG.openModal("🌏 " + w.s, html);
+  var m = RG.openCard("🌏 " + w.s, html);
   m.querySelectorAll("[data-to]").forEach(function (b) { b.addEventListener("click", function () { RG.showWHS(b.getAttribute("data-to")); }); });
   var wa = m.querySelector("[data-whall]");
   if (wa) wa.addEventListener("click", function () { if (RG.histShowPoints) RG.histShowPoints("🌏 " + w.s + "（" + w.pts.length + " か所）", w.pts, w.ty === "自然" ? "#1B7F3B" : "#0B5394"); });

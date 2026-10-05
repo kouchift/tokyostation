@@ -119,7 +119,7 @@ RG.showGrave = function (id, era) {
     '<details class="grv__all"><summary>🪦 偉人の墓 100（時代順）</summary>' + listHtml(x) + "</details>" +
     '<p class="src">解説は当サイトの手書き（定説にもとづく。«〜といわれます・伝わります» は言い伝えや諸説のあるもの）。肖像・写真は Wikipedia の記事の画像（ライセンスは各ファイルのページ）。' +
       "お墓の位置はおおよそ。同じ人のお墓が複数あるときは代表的な1か所です。</p></div>";
-  var m = RG.openModal("🪦 " + x.n.replace(/（.*?）/g, "") + " のお墓", html);
+  var m = RG.openCard("🪦 " + x.n.replace(/（.*?）/g, "") + " のお墓", html);
   bindCommon(m, x);
   loadImg(m, x.imgwp || x.wp, x.ip);
   if (x.gx) loadX(m, x);

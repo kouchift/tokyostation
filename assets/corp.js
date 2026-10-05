@@ -224,7 +224,7 @@ RG.showCorp = function (c) {
     '<p class="src">本社の位置は所在地の町丁目の代表点です。' +
     "ロゴは各社の商標で、識別のために Wikimedia Commons から表示しています。従業員数・売上高は Wikidata に登録がある会社のみ（少数）で、最新とは限りません。" +
     "<b>投資の判断には必ず有価証券報告書・決算短信をご覧ください。</b></p></div>";
-  var m = RG.openModal(em + " " + c.n, html);
+  var m = RG.openCard(em + " " + c.n, html);
   if (RG.enrichIn && c.wp) RG.enrichIn(m, { name: c.wp, la: c.la, lo: c.lo, kind: "spot", hasHero: !!c.logo, hasIntro: !!c.d });
   var ib = m.querySelector("[data-ind]");
   if (ib) ib.addEventListener("click", function () {
@@ -255,7 +255,7 @@ RG.showCorpGone = function (g) {
     '<p class="corpcard__gone">この会社はもうありません。地図には「ここにあった」という記録として、灰色で残しています。' +
     "栄枯盛衰は会社にも、まちにも、人にもあります。</p>" +
     '<p class="src">解散・消滅の年は Wikidata の登録値。位置は本社（または所在地）の登録座標で、市区町村の代表点のこともあります。</p></div>';
-  var m = RG.openModal("🏚️ " + g.n, html);
+  var m = RG.openCard("🏚️ " + g.n, html);
   if (RG.enrichIn && g.wp) RG.enrichIn(m, { name: g.wp, la: g.la, lo: g.lo, kind: "spot", hasHero: false, hasIntro: !!g.d });
 };
 

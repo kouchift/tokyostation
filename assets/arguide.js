@@ -39,16 +39,24 @@ function supported() { return !!(navigator.geolocation); }
 RG.arOpen = function (o) {
   if (S) close();
   if (!supported()) { if (RG.tripStatus) RG.tripStatus("この端末では現在地が取れないため、AR の方角案内は使えません。", "warn", 5000); return; }
-  S = { n: o.n || "目的地", la: +o.la, lo: +o.lo, pos: null, acc: null, head: null, hs: null, beta: null, stream: null, watch: null, raf: 0, gotHead: false, t0: Date.now() };
+  S = { n: o.n || "目的地", la: +o.la, lo: +o.lo, nav: !!o.nav, pos: null, acc: null, head: null, hs: null, beta: null, stream: null, watch: null, raf: 0, gotHead: false, t0: Date.now() };
   var ov = document.createElement("div"); ov.className = "arv"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "AR で方角を見る");
   ov.innerHTML = '<video class="arv__v" playsinline muted autoplay></video>' +
     '<div class="arv__pin" hidden><b></b><span></span></div>' +
-    '<div class="arv__top"><button class="arv__x" type="button" aria-label="閉じる">✕ 地図に戻る</button><span class="arv__acc">📡 現在地を調べています…</span></div>' +
+    '<div class="arv__top"><button class="arv__x" type="button" aria-label="閉じる">' + (S.nav ? "🗺️ 地図に戻る" : "✕ 地図に戻る") + '</button><span class="arv__acc">📡 現在地を調べています…</span>' +
+      (S.nav ? '<span class="arv__nav">🧭 案内は続いています。つぎの目印：<b class="arv__tn">' + esc(S.n) + "</b></span>" : "") + "</div>" +
     '<div class="arv__panel"><div class="arv__arrow" aria-hidden="true"><i></i></div>' +
       '<div class="arv__txt"><div class="arv__n">' + esc(S.n) + '</div><div class="arv__d">—</div><div class="arv__h">スマホを立てて、周りを見わたしてください</div></div></div>' +
-    '<p class="arv__note">直線の方角と距離です（道なりではありません）。位置は GPS、向きはスマホのコンパスで測っています。</p>';
+    (S.nav ? '<div class="arv__tools"><div class="arv__step"></div>' +
+      '<button class="arv__x" type="button" data-arv="detail">📋 移動の詳細</button>' +
+      '<button class="arv__x arv__x--stop" type="button" data-arv="stop">案内をやめる</button></div>' : "") +
+    '<p class="arv__note">直線の方角と距離です（道なりではありません）。位置は GPS、向きはスマホのコンパスで測っています。' + (S.nav ? "屋内や地下では取れないので、分かりにくいときは地図に戻ってください。" : "") + "</p>";
   document.body.appendChild(ov); S.ov = ov;
-  ov.querySelector(".arv__x").addEventListener("click", close);
+  ov.querySelector(".arv__x").addEventListener("click", function () { close(); if (S === null && o.nav && RG.tripStatus) RG.tripStatus("地図に戻りました。案内は続いています。", "info", 2500); });
+  /* v164: 案内中（navui.js から）は «移動の詳細» と «案内をやめる» も置く。閉じても案内（nav.js）は続く */
+  var bd = ov.querySelector('[data-arv="detail"]'); if (bd) bd.addEventListener("click", function () { close(); if (RG.NavUI) RG.NavUI.openDetail(); });
+  var bs = ov.querySelector('[data-arv="stop"]'); if (bs) bs.addEventListener("click", function () { close(); if (RG.stopNav) RG.stopNav(); });
+  if (S.nav) stepText();
   /* 1) コンパス（iPhone は押したこの手番で許可を求める） */
   var DOE = window.DeviceOrientationEvent;
   if (DOE && typeof DOE.requestPermission === "function") {
@@ -59,8 +67,9 @@ RG.arOpen = function (o) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
       if (!S) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
       S.stream = st; var v = ov.querySelector(".arv__v"); v.srcObject = st; var p = v.play(); if (p && p.catch) p.catch(function () {});
-    }).catch(function () { ov.classList.add("arv--nocam"); });
-  } else ov.classList.add("arv--nocam");
+    }).catch(function () { ov.classList.add("arv--nocam"); noCam(); });
+  } else { ov.classList.add("arv--nocam"); noCam(); }
+  function noCam() { var a = ov.querySelector(".arv__note"); if (a) a.textContent = "カメラを使えませんでした（許可がないか、この端末では使えません）。矢印と距離だけ出します。分かりにくいときは «地図に戻る» を押してください。"; }
   /* 3) GPS */
   S.watch = navigator.geolocation.watchPosition(function (p) {
     if (!S) return; S.pos = [p.coords.latitude, p.coords.longitude]; S.acc = p.coords.accuracy; paint();
@@ -99,7 +108,7 @@ function paint() {
   var ov = S.ov, a = ov.querySelector(".arv__acc"), d = ov.querySelector(".arv__d"), h = ov.querySelector(".arv__h"), ar = ov.querySelector(".arv__arrow i"), pin = ov.querySelector(".arv__pin");
   if (!S.pos) return;
   var m = km(S.pos[0], S.pos[1], S.la, S.lo) * 1000, b = bearing(S.pos[0], S.pos[1], S.la, S.lo), acc = Math.round(S.acc || 0);
-  a.textContent = "📡 位置の精度 ±" + acc + " m" + (acc > 100 ? "（低い: 屋内・ビルの谷間では大きくずれます）" : "");
+  a.textContent = "📡 位置の精度 ±" + acc + " m" + (acc > 100 ? (S.nav ? "（低い: 屋内かもしれません。地図のほうが確実です）" : "（低い: 屋内・ビルの谷間では大きくずれます）") : "");
   a.classList.toggle("warn", acc > 100);
   var near = m < Math.max(30, acc);
   d.textContent = near ? "このあたりです（位置の精度の範囲内）" : "直線で " + fmtDist(m) + "・" + dir8(b) + "の方角" + (m < 3000 ? "（歩いて約 " + Math.max(1, Math.round(m * 1.3 / 80)) + " 分）" : "");
@@ -118,6 +127,18 @@ function paint() {
     pin.querySelector("b").textContent = "📍 " + S.n; pin.querySelector("span").textContent = fmtDist(m);
   } else pin.hidden = true;
 }
+/* v164: 案内中に «つぎの目印» が進んだら、矢印の先を変える（navui.js の update から） */
+function stepText() { if (!S || !S.nav) return; var e = S.ov.querySelector(".arv__step"); if (e && RG.NavUI && RG.NavUI.nextStepText) e.textContent = RG.NavUI.nextStepText(); }
+RG.arRetarget = function (n, la, lo) {
+  if (!S || !S.nav) return;
+  if (S.n !== n || S.la !== +la || S.lo !== +lo) {
+    S.n = n || S.n; S.la = +la; S.lo = +lo;
+    S.ov.querySelector(".arv__n").textContent = S.n;
+    var tn = S.ov.querySelector(".arv__tn"); if (tn) tn.textContent = S.n;
+  }
+  stepText(); paint();
+};
+RG.arIsOpen = function () { return !!S; };
 function close() {
   if (!S) return;
   var s = S; S = null;
