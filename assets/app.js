@@ -2730,6 +2730,7 @@ RG.restoreRouteFromUrl = function () {
     document.body.classList.add("route-active");
     var inp = $("#hero-q"); if (inp) inp.value = RG.byId[to].n;
     if (RG.showRoutes) RG.showRoutes(to);
+    if (q.get("pv")) { var pp = { from: f.id, to: to, d: q.get("d") || "", m: q.get("m") || "" }; if (RG.pvFromLink) RG.pvFromLink(pp); else RG.pvPending = pp; }   // v166: ルート PV の共有リンク（同じ日付・字幕で作る。pv.js）
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
   }, 700);
   return true;

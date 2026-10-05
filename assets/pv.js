@@ -6,6 +6,8 @@
      動画はサーバーには送らない
    ・動画の末尾と画面で «保有期限は 1 週間。応援の有無にかかわらず消える可能性» を示し、再生が終わると応援画面へ
    ・共有・メール・Obsidian へ送るときに先に作る（作れない環境ではそのまま送る）
+   ・v166: 「このルートで行くよ」と伝えるための動画に。現在地の «📍 いまここ» の印、乗る線・乗り換える駅の字幕（区間に合わせて切り替え）、
+     移動予定日（冒頭と右上に常時）。共有リンク ?from=&to=&pv=1&d= で、相手の端末でも同じ日付・字幕の PV を作る（現在地はリンクに載せない）
    ========================================================================= */
 (function (RG) {
 "use strict";
@@ -14,6 +16,25 @@ var W = 1280, H = 720, DUR = 20, FPS = 30, KEEP_DAYS = 7;          // 横（YouT
 function dims(spec) { return spec && spec.vertical ? { W: 1080, H: 1920 } : { W: 1280, H: 720 }; }
 var SITE = "https://kouchift.github.io/tokyostation/";
 var CREDIT = "～この世知辛い世の、喉の渇きを潤したい～";
+
+/* ---- v166: 移動予定日（日付だけ。時刻は持たない） ---- */
+var WD = "日月火水木金土";
+function parseDay(v) {
+  var d = null, n = new Date();
+  if (v instanceof Date) d = new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  else if (typeof v === "string" && /^\d{4}-\d{1,2}-\d{1,2}$/.test(v)) { var p = v.split("-"); d = new Date(+p[0], +p[1] - 1, +p[2]); }
+  else if (typeof v === "number" && v > 0) { var x = new Date(v); d = new Date(x.getFullYear(), x.getMonth(), x.getDate()); }
+  if (!d || isNaN(d.getTime()) || d.getFullYear() < 2000 || d.getFullYear() > 2100) d = new Date(n.getFullYear(), n.getMonth(), n.getDate());   // 読めないときは今日
+  return d;
+}
+function dayStr(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+function fmtDay(d) { var n = new Date(); return (d.getFullYear() !== n.getFullYear() ? d.getFullYear() + "年" : "") + (d.getMonth() + 1) + "月" + d.getDate() + "日（" + WD[d.getDay()] + "）"; }   // 「10月12日（月）」。年は今年以外だけ
+RG.pvFmtDay = function (v) { return fmtDay(parseDay(v)); };
+/* 字幕に使う駅の名前（空港・港は «駅» を付けない）と、名前 → 駅 ID、座標 → 近くの駅 ID */
+function stN(id) { var s = RG.byId && RG.byId[id]; return s ? s.n + (s.ext ? "" : "駅") : String(id || ""); }
+function nameId(label) { var n = String(label || "").replace(/駅$/, ""); var s = (RG.byName && RG.byName[n] || [])[0]; return s ? s.id : null; }
+function nearId(p) { if (!p || !RG.NET || !RG.hav) return null; var best = null, bk = 3; RG.NET.stations.forEach(function (s) { var km = RG.hav(p, [s.la, s.lo]); if (km < bk) { bk = km; best = s; } }); return best ? best.id : null; }
+function placeN(label) { var n = String(label || "").replace(/^現在地.*/, "現在地"); return n !== "現在地" && nameId(n) ? n.replace(/駅$/, "") + "駅" : n; }
 
 /* ---- IndexedDB（保有期限つき） ---- */
 function db() {
@@ -43,30 +64,53 @@ function gatherCaptions(itemsAll, opts) {
   return parts.join("\n");
 }
 RG.pvSpecFromPlan = function (itemsIn, opts) {
-  var P = RG.Plan || {}, itemsAll = itemsIn || P.items || [], items = itemsAll.filter(function (x) { return x.k === "route"; });
+  var P = RG.Plan || {}, o = opts || {}, itemsAll = itemsIn || P.items || [], items = itemsAll.filter(function (x) { return x.k === "route"; });
   if (!items.length) return null;
   var legs = [], first = items[0], last = items[items.length - 1];
   items.forEach(function (it) {
     var from = (it.fla != null ? [it.fla, it.flo] : null) || stationLL(it.from) || (RG.Trip && RG.Trip.origin) || null;
     var to = (it.la != null ? [it.la, it.lo] : null) || stationLL(it.to) || null;
-    var path = null, kind = it.id === "flight" ? "flight" : it.id === "train" ? "rail" : it.id;
+    var path = null, kind = it.id === "flight" ? "flight" : it.id === "train" ? "rail" : it.id, rp = null, A = null, B = null;
     if (from && to && kind === "rail" && RG.Planner && RG.Planner.railPath) {
-      try { var rp = RG.Planner.railPath(from, to, new Date(it.at || Date.now())); if (rp && rp.ids.length > 1) { path = rp.ids.map(function (id) { var s = RG.byId[id]; return [s.la, s.lo]; }); if (rp.shinkansen) kind = "shinkansen"; } } catch (e) {}
+      try { rp = RG.Planner.railPath(from, to, new Date(it.at || Date.now())); if (rp && rp.ids.length > 1) { path = rp.ids.map(function (id) { var s = RG.byId[id]; return [s.la, s.lo]; }); if (rp.shinkansen) kind = "shinkansen"; } else rp = null; } catch (e) { rp = null; }
     }
-    if (from && to && kind === "flight" && it.air && RG.airportOf) {
-      var A = RG.airportOf(it.air.a), B = RG.airportOf(it.air.b);
-      if (A && B) path = [from, [A.la, A.lo]].concat(arc([A.la, A.lo], [B.la, B.lo])).concat([[B.la, B.lo], to]);
-    }
+    if (kind === "flight" && it.air && RG.airportOf) { A = RG.airportOf(it.air.a); B = RG.airportOf(it.air.b); }
+    if (from && to && A && B) path = [from, [A.la, A.lo]].concat(arc([A.la, A.lo], [B.la, B.lo])).concat([[B.la, B.lo], to]);
     if (!path && from && to) path = [from, to];
-    legs.push({ kind: kind, label: it.label, mode: it.mode, emoji: it.emoji, minutes: it.min, yen: it.yen, from: from, to: to, path: path, detail: it.detail || [] });
+    var leg = { kind: kind, label: it.label, mode: it.mode, emoji: it.emoji, minutes: it.min, yen: it.yen, from: from, to: to, path: path, detail: it.detail || [], caps: [] };
+    /* v166: 区間ごとの字幕。at = 経路の何点目から出すか（地図の進み具合に合わせて切り替える） */
+    var fN = placeN(it.from), tN = placeN(it.to);
+    if (rp && rp.segs && rp.segs.length) {
+      rp.segs.forEach(function (g, k) {
+        leg.caps.push({ at: Math.max(0, rp.ids.indexOf(g.ids[0])), line: g.line, text: stN(g.ids[0]) + (k ? "で " + g.line + " に乗り換え" : "から " + g.line + " に乗る") });
+      });
+      var walk = (it.detail || []).join("\n").match(/下車（徒歩\s*(\d+)\s*分）/);
+      leg.caps.push({ at: path.length - 1, end: true, text: stN(rp.alight) + "で降りる" + (walk && +walk[1] > 0 ? " → 徒歩 " + walk[1] + " 分" : "") });
+    } else if (A && B) {
+      leg.caps.push({ at: 0, line: "飛行機", text: A.n + "から 飛行機 で " + B.n + " へ" });
+    } else {
+      leg.caps.push({ at: 0, line: it.mode || "", text: fN + "から " + (it.mode || "移動") + " で " + tN + " へ" });
+    }
+    legs.push(leg);
   });
+  var n = 0, NUM = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳", caps = [], lines = [];
+  legs.forEach(function (l) { l.caps.forEach(function (cp) { cp.text = (NUM[n] || (n + 1) + ".") + " " + cp.text; n++; caps.push(cp.text); if (cp.line && lines.indexOf(cp.line) < 0) lines.push(cp.line); }); });
   var tmin = legs.reduce(function (a, l) { return a + (l.minutes || 0); }, 0), tyen = legs.reduce(function (a, l) { return a + (l.yen || 0); }, 0);
   var fromN = String(first.from || "出発地").replace(/^現在地.*/, "現在地"), toN = String(last.to || "目的地");
   var spots = itemsAll.filter(function (x) { return x.k === "spot" && x.label; }).map(function (x) { return x.label; }).slice(0, 4);
   var tags = ["東京ステーションガイド", fromN.replace(/駅$/, ""), toN.replace(/駅$/, "")].concat(spots.slice(0, 2)).map(function (t) { return "#" + String(t).replace(/[\s・\/#（）()]/g, ""); })
     .filter(function (t, i, a) { return t.length > 1 && t !== "#現在地" && a.indexOf(t) === i; });
-  return { title: fromN + " → " + toN, fromN: fromN, toN: toN, spots: spots, tags: tags, legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()), captions: gatherCaptions(itemsAll, opts),
-           vertical: opts && opts.vertical != null ? !!opts.vertical : (RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent)) };
+  /* v166: 現在地は呼び出し側が作る時点で 1 回だけ決めて渡す（o.here）。移動予定日は o.date（YYYY-MM-DD）。無ければ予定の出発日（今日以降のとき）か今日 */
+  var here = o.here && o.here.la != null ? { la: +o.here.la, lo: +o.here.lo, real: !!o.here.real } : null;
+  var at0 = first.at ? +first.at : 0, today = parseDay(Date.now());
+  var day = parseDay(o.date != null && o.date !== "" ? o.date : (at0 >= today.getTime() ? at0 : Date.now()));
+  var spec = { title: fromN + " → " + toN, fromN: fromN, toN: toN, spots: spots, tags: tags, legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()), captions: gatherCaptions(itemsAll, opts),
+           vertical: opts && opts.vertical != null ? !!opts.vertical : (RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent)),
+           here: here, day: day, dayStr: dayStr(day), dayText: fmtDay(day), caps: caps, lines: lines, routeLine: lines.join(" → "),
+           startCap: here && here.real ? "📍 いまここから出発" : "出発地から出発",
+           fromId: nameId(first.from) || nearId(legs[0].from), toId: last.toId || nameId(last.to) || nearId(legs[legs.length - 1].to), modeId: items.length === 1 ? String(first.id || "") : "" };
+  spec.link = RG.pvShareUrl(spec);
+  return spec;
 };
 function arc(a, b) {
   var out = [], n = 24;
@@ -109,12 +153,13 @@ function makeDrawer(spec) {
   var rings = decodePref();
   // 経路全体の範囲
   var pts = []; spec.legs.forEach(function (l) { (l.path || []).forEach(function (p) { pts.push(p); }); });
+  if (spec.here) pts.push([spec.here.la, spec.here.lo]);                   // v166: «いまここ» も画面に入れる
   if (!pts.length) pts = [[35.68, 139.76]];
   var la0 = Math.min.apply(null, pts.map(function (p) { return p[0]; })), la1 = Math.max.apply(null, pts.map(function (p) { return p[0]; }));
   var lo0 = Math.min.apply(null, pts.map(function (p) { return p[1]; })), lo1 = Math.max.apply(null, pts.map(function (p) { return p[1]; }));
   var padLa = Math.max(0.08, (la1 - la0) * 0.35), padLo = Math.max(0.1, (lo1 - lo0) * 0.35);
   la0 -= padLa; la1 += padLa; lo0 -= padLo; lo1 += padLo;
-  var hasCap = !!(spec.captions && spec.captions.trim());
+  var hasMemo = !!(spec.captions && spec.captions.trim()), hasCap = true;      // v166: ルートの字幕は必ず出す。メモの字幕（hasMemo）は «まとめ» の場面に
   var MX = 40, MY = hasCap ? 70 : 90, MW = 760, MH = hasCap ? 500 : 560;      // 字幕があるときは下に帯の場所を空ける
   if (V) { MX = 40; MY = 150; MW = W - 80; MH = 1020; }                        // 縦: 地図を上に大きく、要点は下に
   var kx = MW / (lo1 - lo0), ky = MH / ((la1 - la0) * 1.22), k = Math.min(kx, ky);
@@ -122,8 +167,8 @@ function makeDrawer(spec) {
   var total = spec.legs.reduce(function (a, l) { return a + Math.max(1, (l.path || []).length - 1); }, 0);
   var exp = new Date(Date.now() + KEEP_DAYS * 864e5);
   var expStr = exp.getFullYear() + "/" + (exp.getMonth() + 1) + "/" + exp.getDate();
-  /* 字幕: 3〜17 秒の 14 秒間に、2 行ずつ順番に出す。1 コマ最短 2.2 秒。入りきらない分は最後に「…」 */
-  var CAP_FONT = 30, CAP_W = W - 120, capSched = null;
+  /* メモの字幕: v166 から «まとめ» の 14〜17 秒に、2 行ずつ順番に出す。1 コマ最短 1.5 秒。入りきらない分は最後に「…」 */
+  var CAP_FONT = 30, CAP_W = W - 120, capSched = null, NAVY = "rgba(13,27,62,0.92)";   // v166: 帯は濃紺＋白文字（4.5:1 以上）
   function wrapLines(c, text) {
     c.font = "700 " + CAP_FONT + "px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
     var lines = [];
@@ -137,10 +182,10 @@ function makeDrawer(spec) {
   }
   function schedule(c) {
     if (capSched) return capSched;
-    if (!hasCap) return (capSched = []);
+    if (!hasMemo) return (capSched = []);
     var lines = wrapLines(c, spec.captions), pages = [];
     for (var i = 0; i < lines.length; i += 2) pages.push(lines.slice(i, i + 2));
-    var T0 = 3, T1 = 17, MIN = 2.2, maxPages = Math.floor((T1 - T0) / MIN);
+    var T0 = 14, T1 = 17, MIN = 1.5, maxPages = Math.floor((T1 - T0) / MIN);
     if (pages.length > maxPages) { pages = pages.slice(0, maxPages); var lp = pages[maxPages - 1]; lp[lp.length - 1] = lp[lp.length - 1].slice(0, -1) + "…"; }
     var dur = (T1 - T0) / pages.length;
     capSched = pages.map(function (pg, i) { return { from: T0 + i * dur, to: T0 + (i + 1) * dur, lines: pg }; });
@@ -153,9 +198,48 @@ function makeDrawer(spec) {
     var fade = Math.min(1, (t - cur.from) / 0.25, (cur.to - t) / 0.25 + 0.001);
     var lh = CAP_FONT * 1.45, bh = cur.lines.length * lh + 26, by = H - 24 - bh;
     c.save(); c.globalAlpha = Math.max(0, Math.min(1, fade));
-    roundRect(c, 40, by, W - 80, bh, 14); c.fillStyle = "rgba(0,0,0,0.58)"; c.fill();
+    roundRect(c, 40, by, W - 80, bh, 14); c.fillStyle = NAVY; c.fill();
     cur.lines.forEach(function (ln, i) { txt(c, ln, W / 2, by + 13 + lh * (i + 0.5), CAP_FONT, "#fff", "center", 700); });
     c.restore();
+  }
+  /* v166: 地図の進み具合（prog = 何点目まで描いたか）から、いま出す区間の字幕を選ぶ */
+  function capAt(prog) {
+    var done = 0, cur = null;
+    for (var i = 0; i < spec.legs.length; i++) {
+      var l = spec.legs[i], p = l.path || [], segs = Math.max(1, p.length - 1);
+      if (prog < done) break;
+      var idx = Math.min(p.length - 1, Math.floor(prog - done + 1e-6));
+      for (var j = 0; j < l.caps.length; j++) if (l.caps[j].at <= idx) cur = l.caps[j];
+      done += segs;
+    }
+    return cur;
+  }
+  function drawRouteCap(c, t, prog, total) {
+    var fin = prog >= total - 1e-6, cp = t < 4.4 ? null : capAt(prog);
+    var l1 = cp ? cp.text : spec.startCap, l2 = fin ? "ぜんぶで およそ " + fmtMin(spec.minutes) : "";
+    var lh = CAP_FONT * 1.45, bh = (l2 ? 2 : 1) * lh + 26, by = H - 24 - bh;
+    c.save(); roundRect(c, 40, by, W - 80, bh, 14); c.fillStyle = NAVY; c.fill();
+    fit(c, l1, W / 2, by + 13 + lh * 0.5, CAP_FONT, CAP_W, "#fff", 800);
+    if (l2) fit(c, l2, W / 2, by + 13 + lh * 1.5, CAP_FONT - 4, CAP_W, "#ffe082", 700);
+    c.restore();
+  }
+  function drawDate(c) {                                                       // 右上に常時
+    var s = "📅 " + spec.dayText; c.font = "700 24px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
+    var tw = c.measureText(s).width + 28, x = W - 24 - tw, y = 16;
+    c.save(); c.globalAlpha = 1;
+    roundRect(c, x, y, tw, 38, 12); c.fillStyle = NAVY; c.fill(); c.strokeStyle = "rgba(255,255,255,0.35)"; c.lineWidth = 1; c.stroke();
+    txt(c, s, x + tw / 2, y + 19, 24, "#fff", "center", 700);
+    c.restore();
+  }
+  function drawHere(c, t) {                                                    // 地図の上に «📍 いまここ»（作る時点の位置で固定）
+    if (!spec.here) return;
+    var q = pj([spec.here.la, spec.here.lo]), r = 10 + 5 * (0.5 + 0.5 * Math.sin(t * 5));
+    c.beginPath(); c.arc(q[0], q[1], r + 8, 0, Math.PI * 2); c.fillStyle = "rgba(26,115,232,0.22)"; c.fill();
+    c.beginPath(); c.arc(q[0], q[1], 9, 0, Math.PI * 2); c.fillStyle = "#1A73E8"; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 3; c.stroke();
+    var s = "📍 いまここ"; c.font = "800 22px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
+    var tw = c.measureText(s).width + 20, bx = Math.max(MX, Math.min(MX + MW - tw, q[0] - tw / 2)), by = q[1] - 52;
+    roundRect(c, bx, by, tw, 34, 10); c.fillStyle = "rgba(255,255,255,0.95)"; c.fill(); c.strokeStyle = "#1A73E8"; c.lineWidth = 2; c.stroke();
+    txt(c, s, bx + tw / 2, by + 17, 22, "#0d47a1", "center", 800);
   }
   return function draw(c, t) {
     // 背景
@@ -166,11 +250,13 @@ function makeDrawer(spec) {
     c.globalAlpha = 1;
     if (t < 3) {
       var a = ease(t / 0.8), a2 = ease((t - 0.6) / 0.8);
-      c.globalAlpha = a; txt(c, "ROUTE PV", W / 2, OY + 200, 34, "#9fd3c7", "center", 800);
-      fit(c, spec.title, W / 2, OY + 300, 56, W - 80, "#fff", 900); c.globalAlpha = a2;
-      txt(c, (spec.date.getMonth() + 1) + "/" + spec.date.getDate() + " 出発・所要 " + fmtMin(spec.minutes) + "・" + yen(spec.yen), W / 2, OY + 380, 30, "#e0f2f1", "center", 600);
-      if (spec.spots && spec.spots.length) fit(c, "立ち寄り: " + spec.spots.join("・"), W / 2, OY + 440, 28, W - 100, "#ffe0b2", 700);
-      txt(c, "東京ステーションガイド", W / 2, OY + 560, 26, "#80cbc4", "center", 700); c.globalAlpha = 1; return;
+      c.globalAlpha = a; txt(c, "ROUTE PV", W / 2, OY + 170, 34, "#9fd3c7", "center", 800);
+      fit(c, spec.title, W / 2, OY + 260, 56, W - 80, "#fff", 900); c.globalAlpha = a2;
+      fit(c, "移動予定：" + spec.dayText, W / 2, OY + 345, 40, W - 80, "#ffe082", 900);                       // v166
+      fit(c, "ルート：" + (spec.routeLine || spec.legs.map(function (l) { return l.mode || ""; }).join(" → ")), W / 2, OY + 410, 30, W - 100, "#e0f2f1", 700);
+      txt(c, "所要 およそ " + fmtMin(spec.minutes) + "・" + yen(spec.yen), W / 2, OY + 465, 26, "#b2dfdb", "center", 600);
+      if (spec.spots && spec.spots.length) fit(c, "立ち寄り: " + spec.spots.join("・"), W / 2, OY + 515, 26, W - 100, "#ffe0b2", 700);
+      txt(c, "東京ステーションガイド", W / 2, OY + 580, 26, "#80cbc4", "center", 700); c.globalAlpha = 1; return;
     }
     if (t < 14) {
       var u = ease((t - 3) / 0.6);
@@ -208,6 +294,7 @@ function makeDrawer(spec) {
         roundRect(c, bx, by, tw, 34, 10); c.fillStyle = "rgba(255,255,255,0.95)"; c.fill(); c.strokeStyle = e[2]; c.lineWidth = 2; c.stroke();
         txt(c, e[1], bx + tw / 2, by + 17, 24, "#1a1a1a", "center", 800);
       });
+      drawHere(c, t);
       c.restore();
       // 右の要点パネル
       var px = MX + MW + 30, pw = W - px - 30, py = MY - 10, ph = MH + 20;
@@ -223,7 +310,7 @@ function makeDrawer(spec) {
         yy += 90;
       });
       txt(c, "合計 " + fmtMin(spec.minutes) + " / " + yen(spec.yen), px + 22, py + ph - 30, 26, "#fff", "left", 900);
-      c.globalAlpha = 1; drawCaption(c, t); return;
+      c.globalAlpha = 1; drawDate(c); drawRouteCap(c, t, prog, total); return;
     }
     if (t < 17) {
       var v = ease((t - 14) / 0.6);
@@ -235,7 +322,7 @@ function makeDrawer(spec) {
       if (spec.tags && spec.tags.length) fit(c, spec.tags.join(" "), W / 2, OY + 410, 26, W - 80, "#80deea", 700);
       fit(c, "※ 時刻表・道路状況を見ていない概算です。各社の公式情報で確認してください", W / 2, OY + 470, 22, W - 60, "#b0bec5", 500);
       fit(c, "地図: 国土数値情報（行政区域）を加工　経路: 東京ステーションガイド", W / 2, OY + 520, 20, W - 60, "#90a4ae", 500);
-      c.globalAlpha = 1; drawCaption(c, t); return;
+      c.globalAlpha = 1; drawDate(c); drawCaption(c, t); return;
     }
     var w2 = ease((t - 17) / 0.6);
     c.globalAlpha = w2;
@@ -245,7 +332,7 @@ function makeDrawer(spec) {
     fit(c, "この地図を、現場の声で育て続けたいと思っています。役に立ったら応援してもらえると嬉しいです", W / 2, OY + 380, 24, W - 60, "#ffe0b2", 700);
     txt(c, SITE, W / 2, OY + 470, 28, "#80cbc4", "center", 700);
     txt(c, CREDIT, W - 30, H - 40, 26, "#fff", "right", 800);
-    c.globalAlpha = 1;
+    c.globalAlpha = 1; drawDate(c);
   };
 }
 
@@ -278,6 +365,7 @@ function makeMp4(spec, onProgress) {
       var c = cv.getContext("2d"), draw = makeDrawer(spec), N = Math.round(DUR * FPS), i = 0;
       function step() {
         if (failed) return;
+        if (spec.__cancel) { failed = true; try { enc.close(); } catch (e) {} rej(new Error("cancel")); return; }   // v166: 日付を変えて作り直すとき
         try {
           var budget = 12;                                                      // 1 回に十数コマずつ（画面を固めない・裏に回っても進む）
           while (i < N && budget-- > 0 && enc.encodeQueueSize < 8) {
@@ -309,6 +397,7 @@ function makeRec(spec, onProgress) {
     rec.onerror = function (e) { rej(e.error || new Error("record")); };
     var t0 = performance.now(); draw(c, 0); rec.start(250);
     function frame() {
+      if (spec.__cancel) { try { rec.stop(); } catch (e) {} rej(new Error("cancel")); return; }   // v166
       var t = (performance.now() - t0) / 1000;
       draw(c, Math.min(DUR, t));
       if (onProgress) onProgress(Math.min(1, t / DUR));
@@ -338,23 +427,52 @@ RG.pvIsMp4 = function (rec) { return /mp4/.test(rec && rec.mime || ""); };
 RG.pvSnsReady = function (rec) { return RG.pvIsMp4(rec) && (rec.codec === "h264" || rec.codec == null); };
 
 /* ---- 画面 ---- */
-function fname(spec, mime) { return "route-pv-" + spec.title.replace(/[\\/:*?"<>|\s]/g, "_").slice(0, 40) + "-" + (spec.date.getMonth() + 1) + (spec.date.getDate()) + (/mp4/.test(mime || "") ? ".mp4" : ".webm"); }
+function fname(spec, mime) { return "route-pv-" + spec.title.replace(/[\\/:*?"<>|\s]/g, "_").slice(0, 40) + "-" + spec.dayStr + (/mp4/.test(mime || "") ? ".mp4" : ".webm"); }
+/* v166: 作る時点の現在地。案内中の位置 → 出発地が «現在地» ならそれ → 1 回だけ取得。取れない・許可がない・http のときは null（字幕は «出発地から»） */
+function pvHere(cb) {
+  var N = RG.Nav, T = RG.Trip, done = false;
+  function fin(v) { if (done) return; done = true; cb(v); }
+  if (N && N.on && N.last) return fin({ la: N.last[0], lo: N.last[1], real: true });
+  if (T && T.isGeo && T.origin) return fin({ la: T.origin[0], lo: T.origin[1], real: true });
+  if (!navigator.geolocation || (RG.secureOK && !RG.secureOK())) return fin(null);
+  function ask() {
+    var tm = setTimeout(function () { fin(null); }, 7000);
+    try {
+      navigator.geolocation.getCurrentPosition(function (p) { clearTimeout(tm); var la = p.coords.latitude, lo = p.coords.longitude; fin(la > 20 && la < 46 && lo > 122 && lo < 154 ? { la: la, lo: lo, real: true } : null); },
+        function () { clearTimeout(tm); fin(null); }, { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 });
+    } catch (e) { clearTimeout(tm); fin(null); }
+  }
+  if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: "geolocation" }).then(function (st) { if (st.state === "denied") fin(null); else ask(); }, ask);   // 前に «許可しない» にした人には聞き直さない
+  else ask();
+}
 RG.pvFlow = function (kind, proceed, items, opts) {
+  opts = opts || {};
+  if (!RG.pvSupported() || !RG.pvSpecFromPlan(items, opts)) { proceed && proceed(null); return; }
+  if (opts.here === undefined) { pvHere(function (h) { RG.pvFlow(kind, proceed, items, Object.assign({}, opts, { here: h })); }); return; }   // 位置は作る時点で 1 回だけ決める（日付や向きを変えて作り直しても動かない）
   var spec = RG.pvSpecFromPlan(items, opts);
-  if (!spec || !RG.pvSupported()) { proceed && proceed(null); return; }
+  RG.pvLastSpec = spec;                                                  // 試験用
   var m = RG.openModal("🎬 ルート PV を作っています（20秒）", '<div class="pv"><p class="set__d">' + esc(spec.title) + " の 20 秒動画をこの端末で作っています。作り終わると " + (kind === "obsidian" ? "Obsidian に送ります" : kind === "mail" ? "メールを開きます" : "共有に進みます") + "。</p>" +
-    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + dims(spec).W + '" height="' + dims(spec).H + '" class="pv__cv' + (spec.vertical ? " pv__cv--v" : "") + '"></canvas><p class="src">' + (spec.captions ? "書いてあるメモ・感想・ひとことは字幕として動画に入ります。" : "メモ欄に書いておくと、字幕として動画に入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
+    '<label class="pv__day">📅 移動予定日 <input id="pv-day" type="date" value="' + spec.dayStr + '"></label>' +
+    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + dims(spec).W + '" height="' + dims(spec).H + '" class="pv__cv' + (spec.vertical ? " pv__cv--v" : "") + '"></canvas><p class="src">字幕は乗る線・乗り換える駅から自動で入ります（' +
+    (spec.here && spec.here.real ? "📍 いまここ の印つき" : "現在地が取れなかったので出発地から") + "）。日付を変えると作り直します。" + (spec.captions ? "メモ・感想・ひとことは «まとめ» の場面に出ます。" : "メモ欄に書いておくと «まとめ» の場面に字幕で入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
   var cv = $("#pv-cv", m), c = cv.getContext("2d"), draw = makeDrawer(spec), bar = $("#pv-bar", m);
   var t0 = performance.now(), live = true;
   (function tick() { if (!live) return; var t = (performance.now() - t0) / 1000; draw(c, Math.min(DUR, t)); if (t < DUR) requestAnimationFrame(tick); })();
+  var di = $("#pv-day", m); if (di) di.addEventListener("change", function () {
+    if (!di.value || di.value === spec.dayStr) return;
+    spec.__cancel = true; live = false;
+    RG.pvFlow(kind, proceed, items, Object.assign({}, opts, { date: di.value }));
+  });
   RG.pvMake(spec, function (p) { if (bar) bar.style.width = (p * 100).toFixed(0) + "%"; }).then(function (r) {
+    if (spec.__cancel) return;
     live = false;
     var id = "pv" + Date.now(), exp = Date.now() + KEEP_DAYS * 864e5;
     var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime), vertical: !!spec.vertical, tags: spec.tags || [],
-                again: function () { var o = Object.assign({}, opts || {}, { vertical: !spec.vertical }); RG.pvFlow(kind, proceed, items, o); } };
+                day: spec.dayStr, dayText: spec.dayText, link: spec.link, caps: spec.caps,
+                again: function () { var o = Object.assign({}, opts, { vertical: !spec.vertical, date: spec.dayStr }); RG.pvFlow(kind, proceed, items, o); } };
     put(rec).catch(function () {});
     RG.pvShow(rec, kind, proceed);
-  }).catch(function () { live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
+  }).catch(function () { if (spec.__cancel) return; live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
 };
 RG.pvShow = function (rec, kind, proceed) {
   var url = URL.createObjectURL(rec.blob), exp = new Date(rec.expires);
@@ -362,9 +480,11 @@ RG.pvShow = function (rec, kind, proceed) {
   var isMp4 = RG.pvIsMp4(rec), sns = RG.pvSnsReady(rec), file = null;
   try { file = new File([rec.blob], rec.name, { type: rec.mime }); } catch (e) { file = null; }
   var mobile = RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent);
-  var postTxt = "【東京移動メモ】" + rec.title + "\n20秒のルートPV" + (rec.tags && rec.tags.length ? "\n" + rec.tags.join(" ") : "") + "\n\n地図で確認 → " + SITE;
+  var link = rec.link || SITE;                                                 // v166: 同じ日付・字幕で相手も開ける共有リンク（?from=&to=&pv=1&d=）
+  var postTxt = "【東京移動メモ】" + rec.title + (rec.dayText ? "\n移動予定：" + rec.dayText : "") + "\n20秒のルートPV" + (rec.tags && rec.tags.length ? "\n" + rec.tags.join(" ") : "") + "\n\n地図で確認 → " + link;
   var html = '<div class="pv"><video id="pv-v" class="pv__v' + (rec.vertical ? " pv__v--v" : "") + '" src="' + url + '" controls autoplay muted playsinline></video>' +
     '<div class="pv__exp">⏳ この動画の保有期限: <b>' + expStr + '</b>（1週間）。応援の有無にかかわらず、期限を過ぎると消える可能性があります。</div>' +
+    (rec.dayText ? '<div class="pv__dayline">📅 移動予定：<b>' + esc(rec.dayText) + '</b>　<button class="pv__lnk" type="button" id="pv-link" data-link="' + esc(link) + '">🔗 このルートのリンクをコピー</button><br><small>リンクを開いた相手の端末でも、同じ日付・字幕の PV ができます（現在地はリンクに入りません）。</small></div>' : "") +
     (RG.snsPanelHTML ? RG.snsPanelHTML({ video: true, main: "youtube" }) : "") +
     '<div class="sh__btns">' +
       '<a class="sh__b" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (isMp4 ? "MP4" : "WebM") + '・' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
@@ -383,7 +503,10 @@ RG.pvShow = function (rec, kind, proceed) {
   if (v) v.addEventListener("ended", function () { if (hint && !hint.textContent) hint.innerHTML = "🎬 ここまで見てくれてありがとうございます。よければ <b>☕ 応援する</b>（1 タップで送金アプリが開きます）。"; });
   /* v84: SNS の並びは共通（assets/sns.js）。スマホは共有シートに動画と本文を載せて渡す。PC は保存＋本文コピー＋投稿画面 */
   if (RG.snsBind) RG.snsBind(m.querySelector(".snsp"), function () {
-    return { title: "ルート PV: " + rec.title, text: postTxt.replace("\n\n地図で確認 → " + SITE, ""), url: SITE, file: file, blobUrl: url, fileName: rec.name, kind: "video" };
+    return { title: "ルート PV: " + rec.title, text: postTxt.replace("\n\n地図で確認 → " + link, ""), url: link, file: file, blobUrl: url, fileName: rec.name, kind: "video" };
+  });
+  var lk = $("#pv-link", m); if (lk) lk.addEventListener("click", function () {
+    (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { lk.textContent = "コピーしました"; }).catch(function () { lk.textContent = link; });
   });
   var go = $("#pv-go", m); if (go) go.addEventListener("click", function () { proceed && proceed(rec); });
   var ag = $("#pv-again", m); if (ag) ag.addEventListener("click", function () { URL.revokeObjectURL(url); rec.again(); });
@@ -392,10 +515,28 @@ RG.pvShow = function (rec, kind, proceed) {
 RG.pvList = function () {
   all().then(function (rs) {
     rs = rs.filter(function (r) { return r.expires > Date.now(); }).sort(function (a, b) { return b.created - a.created; });
-    var html = '<div class="pv"><p class="set__d">この端末に残っている PV（期限つき）。</p>' + (rs.length ? rs.map(function (r) { var e = new Date(r.expires); return '<button class="ytl" type="button" data-pv="' + r.id + '"><span class="ytl__b"><b>🎬 ' + esc(r.title) + "</b><i>期限 " + e.getFullYear() + "/" + (e.getMonth() + 1) + "/" + e.getDate() + "・" + (r.blob.size / 1048576).toFixed(1) + " MB</i></span></button>"; }).join("") : '<p class="set__d">ありません。おでかけプランの「📤 共有」や「🎬 PV を作る」で作れます。</p>') + "</div>";
+    var html = '<div class="pv"><p class="set__d">この端末に残っている PV（期限つき）。</p>' + (rs.length ? rs.map(function (r) { var e = new Date(r.expires); return '<button class="ytl" type="button" data-pv="' + r.id + '"><span class="ytl__b"><b>🎬 ' + esc(r.title) + "</b><i>" + (r.dayText ? "移動予定 " + esc(r.dayText) + "・" : "") + "期限 " + e.getFullYear() + "/" + (e.getMonth() + 1) + "/" + e.getDate() + "・" + (r.blob.size / 1048576).toFixed(1) + " MB</i></span></button>"; }).join("") : '<p class="set__d">ありません。おでかけプランの「📤 共有」や「🎬 PV を作る」で作れます。</p>') + "</div>";
     var m = RG.openModal("🎬 ルート PV の一覧", html);
     Array.prototype.forEach.call(m.querySelectorAll("[data-pv]"), function (b) { b.addEventListener("click", function () { var r = rs.filter(function (x) { return x.id === b.dataset.pv; })[0]; if (r) RG.pvShow(r, null, null); }); });
   }).catch(function () { RG.openModal("🎬 ルート PV", '<p class="set__d">この端末では保存領域が使えません。</p>'); });
 };
+/* ---- v166: 共有リンク。?from=駅ID&to=駅ID（v91 の比較の共有）に pv=1・d=移動予定日・m=手段 を足す。現在地は載せない（SNS に貼られると位置が知られるため） */
+RG.pvShareUrl = function (spec) {
+  if (!spec || !spec.fromId || !spec.toId) return SITE;
+  return SITE + "?from=" + encodeURIComponent(spec.fromId) + "&to=" + encodeURIComponent(spec.toId) + "&pv=1&d=" + spec.dayStr + (spec.modeId ? "&m=" + encodeURIComponent(spec.modeId) : "");
+};
+/* リンクで開いた人の端末で同じ PV を作る（app.js の restoreRouteFromUrl が比較画面を開いたあとに呼ぶ）。経路は開いた端末で同じ条件で引き直す */
+RG.pvFromLink = function (pp) {
+  var f = pp && RG.byId[pp.from], t = pp && RG.byId[pp.to], T = RG.Trip || {};
+  if (!f || !t || !RG.Planner || !RG.Planner.estimate || !RG.pvSupported()) return;
+  var when = T.when || new Date(), r = null;
+  try { r = RG.Planner.estimate([f.la, f.lo], [t.la, t.lo], when, T.aggr); } catch (e) { r = null; }
+  var os = (r && r.options) || []; if (!os.length) return;
+  var o = os.filter(function (x) { return x.id === pp.m; })[0] || os.filter(function (x) { return x.id === "train"; })[0] || os[0];
+  var item = { k: "route", label: RG.stLabel(f) + " → " + RG.stLabel(t), from: RG.stLabel(f), to: RG.stLabel(t), mode: o.m.label, emoji: o.m.emoji, id: o.id, yen: o.yen, min: o.minutes,
+               detail: (o.detail || []).slice(0, 8), toId: t.id, la: t.la, lo: t.lo, fla: f.la, flo: f.lo, air: o.air ? { a: o.air.a, b: o.air.b } : null, at: +when };
+  RG.pvFlow(null, null, [item], { date: pp.d || "", memo: "" });
+};
+if (RG.pvPending) { var pp0 = RG.pvPending; RG.pvPending = null; setTimeout(function () { RG.pvFromLink(pp0); }, 300); }   // pv.js より先にリンクが読まれていたとき
 if (window.indexedDB) setTimeout(RG.pvSweep, 4000);
 })(window.RG);
