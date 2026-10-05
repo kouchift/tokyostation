@@ -336,13 +336,13 @@ function doGet(e) {
       if (!q.key || q.key !== adminKey_()) return json_({ error: "鍵が違います" });
       var n0 = Math.max(1, Math.min(1000, +q.n || 500)), xs = sheet_("ExifLog"), last = xs.getLastRow(), X = [], xc = X_COLS.indexOf("xid") + 1;
       if (last > 1) {                             // 新しい n 行だけ読む
-        var cnt = Math.min(n0, last - 1), start = last - cnt + 1, vals = xs.getRange(start, 1, cnt, X_COLS.length).getValues(), fill = false;
-        X = vals.map(function (v, i) { var o = {}; X_COLS.forEach(function (c, j) { o[c] = v[j]; }); if (!isXid_(o.xid)) { o.xid = xidFor_(o, start + i); v[xc - 1] = o.xid; fill = true; } return o; });
-        if (fill) { xs.getRange(start, xc, cnt, 1).setValues(vals.map(function (v) { return [v[xc - 1]]; })); SpreadsheetApp.flush(); }   // v166: xid の無い古い行に補って書き戻す（1 回だけ）
+        var cnt = Math.min(n0, last - 1), start = last - cnt + 1, vals = xs.getRange(start, 1, cnt, X_COLS.length).getValues(), nfill = 0;
+        X = vals.map(function (v, i) { var o = {}; X_COLS.forEach(function (c, j) { o[c] = v[j]; }); if (!isXid_(o.xid)) { o.xid = xidFor_(o, start + i); v[xc - 1] = o.xid; nfill++; } return o; });
+        if (nfill) { xs.getRange(start, xc, cnt, 1).setValues(vals.map(function (v) { return [v[xc - 1]]; })); SpreadsheetApp.flush(); }   // v166: xid の無い古い行に補って書き戻す（ExifLog のこの列だけ・1 回だけ）
       }
       X = X.reverse().map(function (r) { var o = {}; X_COLS.forEach(function (c) { o[c] = c === "ts" ? iso_(r[c]) : r[c]; }); return o; });
       var PH = rows_("Photos", P_COLS).map(function (r) { var o = photoOut_(r); o.hidden = r.hidden; o.reports = r.reports; o.visible = visible_(r); o.shared = r.shared; return o; });
-      return json_({ ok: true, v: 146, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl(), purge: purgeInfo_() });
+      return json_({ ok: true, v: 146, xfilled: nfill || 0, log: X, photos: PH, sheet: SpreadsheetApp.openById(PROP.getProperty("SS")).getUrl(), purge: purgeInfo_() });
     }
     if (a === "spot") {
       var k = clean_(q.k, 200), me = clean_(q.u, 20), lk = {}, my = [];

@@ -46,8 +46,11 @@ const st1 = await state(8766);
 const ids = st1.exif.map(r => r.xid);
 log(ids.every(x => /^x[0-9a-f]{16}$/.test(x)) && new Set(ids).size === ids.length, "読み込みで古い行に xid が補われ、書き戻された（全部ちがう id: " + new Set(ids).size + "/" + ids.length + "）");
 log(JSON.stringify(Object.assign({}, st1.exif[4], { xid: "" })) === JSON.stringify(Object.assign({}, st1.exif[5], { xid: "" })) && st1.exif[4].xid !== st1.exif[5].xid, "中身が同じ 2 行でも id は別");
-const st1b = await (async () => { await page.click("#go"); await page.waitForFunction(() => /記録 12 件/.test(document.getElementById("msg").textContent)); return state(8766); })();
-log(JSON.stringify(st1b.exif) === JSON.stringify(st1.exif), "読み込み直しても id は変わらない（安定）");
+const msg1 = await page.textContent("#msg");
+log(/古い行 12 件に id を補って/.test(msg1), "補った件数が画面に出る: " + msg1.replace(/^記録.*?順。/, "").trim());
+log(st1.photos.length === st0.photos.length && JSON.stringify(st1.photos) === JSON.stringify(st0.photos), "書き戻しは ExifLog だけ（Photos は触っていない）");
+const st1b = await (async () => { await page.click("#go"); await page.waitForFunction(() => /記録 12 件/.test(document.getElementById("msg").textContent) && !/補って/.test(document.getElementById("msg").textContent)); return state(8766); })();
+log(JSON.stringify(st1b.exif) === JSON.stringify(st1.exif), "読み込み直しても id は変わらない（安定・補う行は 0）");
 log(!(await page.locator("#selbar").isHidden()) && (await page.locator("#tb .sel:not(:disabled)").count()) === 12, "チェックボックスと «選択した n 件を削除» の帯が出る");
 await page.screenshot({ path: `${OUT}/admin_list.png` });
 
@@ -83,7 +86,7 @@ await page.check("#delph");
 const row = await page.evaluate(() => { const tr = [...document.querySelectorAll("#tb tr")].filter(tr => !tr.classList.contains("rej"))[0]; return { xid: tr.querySelector(".del1").dataset.xid, pid: tr.querySelector("img") ? "" : "" }; });
 const pidOf = st3.exif.filter(r => r.xid === row.xid)[0].pid;
 await page.click('#tb .del1[data-xid="' + row.xid + '"]');
-log(/ひもづく公開写真 1 件も完全に消します/.test(dialogs[dialogs.length - 1] || ""), "写真も消すときは確認に書いてある");
+log(/ひもづく公開写真 1 件も完全に消します。.*ドライブの写真も消えます.*元に戻せません/.test(dialogs[dialogs.length - 1] || ""), "写真も消すときは確認が強い文言: " + (dialogs[dialogs.length - 1] || "").split("\n").filter(l => /⚠/.test(l))[0]);
 await sleep(11500);
 const st4 = await state(8766);
 const ph = st4.photos.filter(p => p.pid === pidOf), fileId = st3.photos.filter(p => p.pid === pidOf)[0].file_id;
@@ -102,11 +105,12 @@ await ctx.close(); e1.kill();
 /* ---- 古い受け皿（直す前の posts_api.gs）: 消せない知らせだけ出て、チェックは効かない */
 console.log("■ 古い受け皿（直す前の .gs）");
 const oldSrc = path.join(OUT, "posts_api_old.gs");
-fs.writeFileSync(oldSrc, execSync("git show HEAD:tools/posts_api.gs", { cwd: ROOT }));
+fs.writeFileSync(oldSrc, execSync("git show origin/main:tools/posts_api.gs", { cwd: ROOT }));   // 直す前（main に入っている版）
 const e2 = await emu(8767, oldSrc);
 const o = await open(8767);
 const omsg = await o.page.textContent("#msg");
-log(/古い版/.test(omsg) && (await o.page.locator("#selbar").isHidden()) && (await o.page.locator("#tb .sel:disabled").count()) === 12, "古い受け皿: 知らせが出て、チェックと削除は無効");
+log(/受け皿（Apps Script）の公開し直しが必要です。tools\/posts_deploy\.bat を実行してください/.test(omsg) && (await o.page.locator("#selbar").isHidden()) && (await o.page.locator("#tb .sel, #tb .del1").count()) === 0 && (await o.page.locator("#all").isHidden()) && (await o.page.locator("#tb tr").count()) === 12,
+  "古い受け皿: 知らせだけ出て、チェックと削除は出ない（一覧は見える）: " + omsg.replace(/^記録.*?順。/, "").trim());
 log(!o.errors.length, "ページのエラーなし");
 await o.ctx.close(); e2.kill();
 await browser.close();
