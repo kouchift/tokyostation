@@ -390,7 +390,7 @@ var Rail = (function () {
             esc(g.id) + '"' + (g.enabled ? "" : " disabled") + ">" +
             (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +   // v122: 地図と同じ印
             '<span class="legend__t"><b>' + esc(g.label) + "</b>" +
-              "<i>" + esc(g.desc || "") + "</i>" +
+              "<i>" + esc(g.desc || "") + (g.varies ? "　※ 地図の印は種類で変わります：" + esc(g.varies) : "") + "</i>" +   // v164: 種類別の出し分けを凡例に書く
               (g.enabled ? "" : '<u>⚠ ' + esc(g.reason || "データ未取得") + "</u>") + "</span>" +
             '<span class="legend__n">' + (g.enabled ? n + "件" : "—") + "</span></button>"; }).join("") +
         "</div>" +
@@ -707,7 +707,7 @@ function openSettings() {
         var on = !ST.genres || !ST.genres.length || ST.genres.indexOf(g.id) >= 0;
         return '<label class="set__sw' + (g.enabled ? "" : " off") + '">' +
           '<input type="checkbox" data-cat="' + g.id + '"' + (on ? " checked" : "") +
-          (g.enabled ? "" : " disabled") + "> " + g.e + " " + esc(g.label) +
+          (g.enabled ? "" : " disabled") + "> " + (RG.gMark ? RG.gMark(g, "gmk--sm") : g.e) + " " + esc(g.label) +   // v164: 地図と同じ印（前は絵文字の直書きで、線画アイコンのジャンルは地図と見た目が違った）
           ' <span class="set__n">' + (g.enabled ? n + "件" : "未取得") + "</span></label>"; }).join("") + "</div>" +
       '<details class="set__list"><summary>TOP100の中身を見る</summary><ol>' +
         (RG.LANDMARKS_TOP || []).map(function (L) {

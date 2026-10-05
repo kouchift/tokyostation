@@ -34,7 +34,9 @@ RG.MAPSIZE = {
     /* 引きぐあい  駅名   丸の半径  丸   名前  区名  地名  スポット */
     { z:  1,      lbl: 5.0,  dot: 1.7,  dots: 14, names: 8, adm: 1, jpadm: 7, poi:  4 },
     { z:  4,      lbl: 9.0,  dot: 3.2,  dots: 20, names: 6, adm: 4, jpadm: 7, poi: 10 },
-    { z: 22,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 }
+    { z: 22,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 20 },
+    /* v164: 最大ズームを 2.4 倍に上げたぶんの段（駅前よりさらに寄る）。大きさは変えず、置ける印の数だけ少し増やす */
+    { z: 60,      lbl: 9.5,  dot: 4.0,  dots: 25, names: 8, adm: 4, jpadm: 7, poi: 28 }
   ],
   /* 上の «駅名» と «丸» は «大きい駅» のときの大きさです。
      ふつうの駅・選んだ駅は、それに対する «割合» で決めます。 */
@@ -59,7 +61,7 @@ RG.mapSizeAt = function (z) {
   var S = RG.MAPSIZE, st = S.steps;
   var u = Math.log(Math.max(1, z)) / Math.LN2;          // ×1→0 ×4→2 ×22→4.46
   var us = st.map(function (x) { return Math.log(Math.max(1, x.z)) / Math.LN2; });
-  var i = (u <= us[1]) ? 0 : 1;
+  var i = 0; while (i < st.length - 2 && u > us[i + 1]) i++;   // v164: 段が 4 つ以上でも使えるように
   var t = (u - us[i]) / Math.max(0.0001, us[i + 1] - us[i]);
   t = Math.max(0, Math.min(1, t));
   function mix(k) { return st[i][k] + (st[i + 1][k] - st[i][k]) * t; }
@@ -486,6 +488,7 @@ RG.lineSequence = function (fromId, line, limit) {
 var Map = (function () {
   var svg, gE, gN, selected = null, vb, wrap, lodTimer = null;
   function U(w) { return w * (RG.K || 1); }                 // 23区版の幅 → 実際の単位
+  var ZMIN = 25;   // v164: いちばん寄ったときの viewBox の幅（23区版の単位）。60 → 25 で約 2.4 倍まで寄れる。丸・文字・印は画面 px 基準なので大きくならない
   function zl() { return (RG.LEGACY_W || VB.w) / vb.w; }    // 23区版のズーム段階（1 = 23区が画面いっぱい）
   RG.zoomLevel = function () { return vb ? zl() : 1; };
 
@@ -899,7 +902,7 @@ var Map = (function () {
       e.preventDefault();
       var k = pinch.d / dist(e.touches), r = pinch.r;
       var ar = pinch.vb.h / pinch.vb.w;
-      var nw = clamp(pinch.vb.w * k, U(60), VB.w * 1.6), nh = nw * ar;
+      var nw = clamp(pinch.vb.w * k, U(ZMIN), VB.w * 1.6), nh = nw * ar;
       var fx = (pinch.c.x - r.left) / r.width, fy = (pinch.c.y - r.top) / r.height;
       vb.x = pinch.vb.x + (pinch.vb.w - nw) * fx;
       vb.y = pinch.vb.y + (pinch.vb.h - nh) * fy;
@@ -968,7 +971,7 @@ var Map = (function () {
   RG.mapCommitView = function () { if (gestT) commitView(); };
   function zoomAt(cx, cy, k, gesture) {
     var r = gesture && gestR ? gestR : wrap.getBoundingClientRect();
-    var nw = clamp(vb.w * k, U(60), VB.w * 1.6), nh = nw * (vb.h / vb.w);
+    var nw = clamp(vb.w * k, U(ZMIN), VB.w * 1.6), nh = nw * (vb.h / vb.w);
     var fx = (cx - r.left) / r.width, fy = (cy - r.top) / r.height;
     vb.x += (vb.w - nw) * fx; vb.y += (vb.h - nh) * fy; vb.w = nw; vb.h = nh; apply(gesture);
   }
@@ -1091,7 +1094,7 @@ var Map = (function () {
     var r = wrap.getBoundingClientRect(), ar = r.height / r.width, k = pad || 1.15;
     if (k > 0 && k < 1) k = 1 + k;
     var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    var w = Math.max((x1 - x0) * k, (y1 - y0) * k / ar, U(60));
+    var w = Math.max((x1 - x0) * k, (y1 - y0) * k / ar, U(ZMIN));
     vb.w = w; vb.h = w * ar; vb.x = cx - w / 2; vb.y = cy - vb.h / 2;
     apply();
   }
