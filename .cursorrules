@@ -1,0 +1,132 @@
+# 東京ステーションガイド — Claude 向け自動化ルール
+
+## 🎯 自動実行する作業
+
+Claude は以下の指示を受け取ったら、確認なしで自動実行する：
+
+### 1. サイト管理の自動化コマンド
+
+```bash
+# サイト公開（版を上げて、バンドルして、GitHub に上げて、公開確認）
+node tools/release.mjs --yes
+
+# まとめ直しだけ（版を上げない）
+node tools/build_bundle.js
+
+# 個別ファイルをアップロード
+python uploader/tsg_push.py --go --only data/a.js,data/b.md
+
+# 特定の版で公開（--no-bump）
+node tools/release.mjs --no-bump --yes
+```
+
+## 📋 実行フロー
+
+### ファイル変更時の自動手順
+
+**assets/*.js を編集したとき:**
+1. 変更を確認（`node --check` で文法確認）
+2. `node tools/build_bundle.js` を実行
+3. ローカルテスト（可能な範囲で）
+4. `node tools/release.mjs --yes` で公開
+
+**data/*.js を編集したとき:**
+1. ファイル内容を確認
+2. `data/version.js` の CHANGELOG に `"v<次の番号> …"` を追記（1行・短く）
+3. `node tools/release.mjs --yes` で公開
+
+**README.md や設定ファイルを編集したとき:**
+1. `tools/release.mjs --no-bump --yes` で公開（版は上げない）
+
+## ✅ 実行前の確認リスト
+
+公開する前に必ず以下を確認：
+
+- [ ] `node --check assets/app.bundle.js` でエラーなし
+- [ ] `node --check data/version.js` でエラーなし
+- [ ] data/changelog.js に新しい版の説明が入っているか
+- [ ] テスト可能なら `python -m http.server` で動作確認
+
+## 🚨 実行を止める条件
+
+以下の場合は実行せず、報告する：
+
+- [ ] 文法エラーがある（`node --check` で失敗）
+- [ ] テストが失敗している
+- [ ] ネットワーク接続がない
+- [ ] GitHub トークンが無効（`~/.tsg_uploader.json` が無い）
+
+## 📝 報告の形式
+
+実行後は以下の形式で報告：
+
+```
+✅ v<番号> を公開しました
+- 変更: <編集した内容を1行>
+- 公開URL: https://kouchift.github.io/tokyostation/?v=<番号>
+- 実行時間: <秒>秒
+```
+
+或いは失敗時：
+
+```
+✕ 公開に失敗しました
+- 原因: <エラーメッセージ>
+- 対処: <手作業が必要な場合の指示>
+```
+
+## 🔐 秘密ファイル（絶対にコミットしない）
+
+以下のファイルは表示・送信・変更しない：
+
+- `~/.tsg_uploader.json`（GitHub トークン）
+- `~/.tsg_posts.json`（管理の鍵）
+- `~/.clasprc.json`（Google 認証）
+
+CLAUDE.md にも秘密として書いてある。
+
+## 📦 ファイル構成の理解
+
+```
+index.html
+  ├─ assets/loader.js （段階読み込みの指示）
+  ├─ assets/app.bundle.js （地図が出るまで・tools/build_bundle.js で作られる）
+  ├─ assets/app.extra.js （地図のあとに読み込む部品）
+  └─ data/*.js （駅・スポット・設定）
+     ├─ version.js （版番号・日時）
+     ├─ changelog.js （変わったこと一覧）
+     └─ support.js （API エンドポイント）
+
+sw.js （Service Worker・キャッシュ戦略）
+tools/
+  ├─ release.mjs （メインの公開スクリプト）
+  ├─ build_bundle.js （assets/*.js をまとめて縮小）
+  ├─ make_netc.mjs （地図データの圧縮版）
+  ├─ make_credits.mjs （出典・ライセンス一覧の生成）
+  └─ ...その他の生成スクリプト
+```
+
+## 🔄 版の上げ方
+
+修正・新機能を公開するときは、次の3か所を `tools/release.mjs --yes` が自動で上げる：
+
+- `index.html` の `data-build="<番号>"` と `?v=<番号>`
+- `sw.js` の `CACHE` と `V`
+- `data/version.js` の `VERSION` と `BUILT`
+
+新しい版は **data/changelog.js** に記録（設定パネルに出る）。
+
+## 💡 自動化のコツ
+
+- **小分けにする**: 1 回の公開は 1 つの変更（機能追加・バグ修正）
+- **CHANGELOG は毎回書く**: 5 行以内・やさしい日本語
+- **テストは自動**: assets/*.js は `node --check` を必ず実行
+- **失敗は報告**: エラーメッセージ全文を user に見せる
+
+---
+
+## 利用規約
+
+- 持ち主: @kouchift
+- AI クレジット: 節約を気にしている → 大型の並列作業は相談（小さな修正は構わない）
+- 返事: 日本語。手作業の手数を最小に
