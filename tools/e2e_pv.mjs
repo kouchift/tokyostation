@@ -102,7 +102,7 @@ async function run(name, vp, mobile) {
   /* ---- 共有リンクで開き直す → 同じ日付・字幕の PV が自動で始まる */
   await page.goto(BASE + "?" + done.link.split("?")[1], { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#pv-day", { timeout: 90000 });
-  await page.waitForTimeout(1200);
+  await page.waitForFunction(() => RG.pvLastSpec && RG.pvLastSpec.hereDone, null, { timeout: 40000 });   // 位置を取ってから（出発地が駅なのでブラウザに聞く）
   const again = await page.evaluate(() => ({ day: document.querySelector("#pv-day").value, caps: RG.pvLastSpec.caps, here: RG.pvLastSpec.here, title: RG.pvLastSpec.title }));
   log(again.day === DAY, "リンクから開いた PV の日付: " + again.day);
   log(JSON.stringify(again.caps) === JSON.stringify(spec.caps), "リンクから開いた PV の字幕が同じ: " + again.caps.join(" ／ "));

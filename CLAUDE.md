@@ -9,6 +9,7 @@
 - CLAUDE.md は公開しない（uploader の SKIP に入れてある）
 - `assets/*.js` を直したら **必ず** まとめ直す。index.html が読むのは `assets/app.bundle.js` だけ
 - 版を上げないと、一度見た人のブラウザ（Service Worker のキャッシュ）に新しいファイルが届かない
+- **利用者に見える変更を含む PR は必ず版を上げる。同時進行の PR があるときは、後から合流する側が合流後に版を上げる**（v166 のまま合流した PR #5・#7 は届いていなかった。2026-10-05）
 - ふつうは **`tools/release.bat`**（= `node tools/release.mjs`）で全部やる:
   版を +1（index.html の data-build と `?v=`・sw.js の CACHE と V・data/version.js の VERSION と BUILT）→ まとめ直し → 文法確認 → 下見 → y で GitHub へ → 公開の確認
   - `--no-bump`（版はそのまま）/ `--dry`（下見だけ）/ `--yes`（確認なし）
