@@ -4882,7 +4882,7 @@ button.lchip.lchip--go,button.lchip.lchip--sk{color:var(--lfg,#fff) !important} 
 .modal--dark .mm__hl--zero{color:var(--label)}.modal--dark .mm__hl-go{color:var(--link)}
 .modal--dark .mm__cap{color:var(--label)}.modal--dark .mm__cap b{color:var(--text)}
 .modal--dark .mm__lst{background:var(--control2);color:var(--link);border-color:var(--border)}
-.modal--dark :is(.sec--tokyo,.dep,.nat,.lvc,.handy__i,.cam__k,.focus,.car,.eh__hee,.grx__sec,.grx__rp,.grv__visit,.grv__manner,.hl__sec,.wl){
+.modal--dark :is(.sec--tokyo,.dep,.nat,.lvc,.handy__i,.cam__k,.focus,.car,.eh__hee,.grx__sec,.grx__rp,.grv__visit,.grv__manner,.hl__sec,.wl,.hkz){
   --text:#181c20;--label:#404751;--muted:#707882;--gray600:#404751;--gray800:#2d3135;--grid:#e0e3e8;--border:#c0c7d3;--link:#0061a1;--highlight:#0061a1;
   color:var(--text);color-scheme:light}
 .modal--dark .tk__ride button.tk__pill--sk,.modal--dark .tk__ride button.tk__pill--sk small{color:#fff}   /* 上の :is(...) は (0,2,1) なのでそれより強く */
@@ -4898,3 +4898,7 @@ button.lchip.lchip--go,button.lchip.lchip--sk{color:var(--lfg,#fff) !important} 
 .modal--dark :is(.grx__sec,.hl__sec) ruby rt{color:#5b6470}
 .focus__cheerb{color:#1a1a1a}
 .modal--dark .grv__all summary,.modal--dark .grv__all summary *{color:#181c20}
+/* v166: 歴オタ図鑑の一覧はスポットと同じ窓（.modal--dark）に。中身の茶・クリームの配色はそのまま（白い面に載せる） */
+.modal--dark .hkz{background:#fff;border-radius:14px;padding:10px 12px;color:#181c20}
+.hkz__it .hkz__t em{color:#6B7280}                                                   /* 番号：#999 は白地で 2.85:1 だった → 4.8:1 */
+.hkc__back{display:inline-flex;align-items:center;min-height:36px;border:1px solid #D7CCC8;background:#FBF8F6;color:#3E2723;border-radius:999px;padding:0 14px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;margin:0 0 8px}

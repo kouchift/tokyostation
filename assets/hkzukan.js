@@ -110,7 +110,7 @@ function render(keep) {
     chips("cat", Object.keys(cats).sort(function (a, b) { return cats[b] - cats[a]; }).map(function (c) { return [c, c + " " + cats[c]]; }), "種類") +
     '<div class="hkz__f"><span>並び</span>' + [["rank", "重要な順"], ["year", "年代順"], ["name", "あいうえお順"]].map(function (s) {
       return '<button type="button" class="hkz__c' + (S.sort === s[0] ? " on" : "") + '" data-hksort="' + s[0] + '">' + s[1] + "</button>"; }).join("") + "</div>" +
-    '<p class="hkz__n">' + L.length + " 件" + (L.length < all.length ? "（" + all.length + " 件中）" : "") + " ― 地図の印を押してもカードが開きます</p>" +
+    '<p class="hkz__n">' + L.length + " 件" + (L.length < all.length ? "（" + all.length + " 件中）" : "") + "</p>" +
     '<ol class="hkz__list">' + L.map(function (x, i) {
       return '<li><button class="hkz__it' + (rd[x.id] ? " rd" : "") + '" type="button" data-hkc="' + esc(x.id) + '"><b class="hkz__rk hkz__rk--' + x.rank + '">' + x.rank + "</b>" +
         '<span class="hkz__t"><em>' + (i + 1) + "</em>" + esc(x.n) + (rd[x.id] ? ' <i class="hkz__ok">✔</i>' : "") + "</span>" +
@@ -118,15 +118,43 @@ function render(keep) {
         '<span class="hkz__h">' + esc(x.hook) + "</span></button></li>"; }).join("") + "</ol>" +
     '<p class="src">解説は当サイトの手書き（定説にもとづく。«〜と伝わる»«諸説» はそう書いています）。位置はおおよそ。写真は Wikipedia・ウィキメディア・コモンズの画像（ライセンスは各ファイルのページ）。' +
       "見学の時間・公開の有無は各施設でご確認ください。</p></div>";
-  RG.histCustom("🏯 " + esc(I.n) + " 歴オタ図鑑", html, L.map(function (x) { return [x.n.replace(/（.*?）/g, ""), x.la, x.lo]; }), "#6D4C41",
-    function (i) { RG.hkCard(L[i].id); }, keep);
+  /* v166: 一覧はスポットのカードと同じ窓（RG.openCard）に出す。前は れきし地図の下窓（PC では左の小さな窓）だった。
+     keep のときは見ていた位置（スクロール）をそのまま。カードから «一覧へ» で戻ったときも同じ位置 */
+  var bd0 = document.querySelector(".modal.show .modal__bd"), inList = !!document.querySelector(".modal.show .hkz__list");
+  var top = keep ? (inList && bd0 ? bd0.scrollTop : (S.top || 0)) : 0;
+  var m = (RG.openCard || RG.openModal)("🏯 " + esc(I.n) + " 歴オタ図鑑", html);
+  var bd = m.querySelector(".modal__bd"); if (bd) bd.scrollTop = top;
+  if (RG.modalMapTo && L.length) {                    // «🗺️ 地図» でこの県の場所を見て、«📖 もどる» で一覧に戻れる
+    var la = 0, lo = 0; L.forEach(function (x) { la += x.la; lo += x.lo; });
+    RG.modalMapTo({ la: la / L.length, lo: lo / L.length, z: 900, n: I.n + " 歴オタ図鑑", reopen: function () { render(true); } });
+  }
+  S.back = false;
   CUR = L;
 }
 var CUR = [];
+/* v166: カードを閉じる（×・外側・Esc）と、一覧から開いたときは一覧に戻る（スクロール位置もそのまま） */
+function cardShowing() { var M = document.querySelector(".modal.show"); return M && M.querySelector(".hkc") ? M : null; }
+document.addEventListener("click", function (e) {
+  var t = e.target; if (!t || !t.closest) return;
+  var M = document.querySelector(".modal.show"); if (!M) return;
+  var x = t === M || t.closest(".modal__x");
+  if (!x) return;
+  if (S.back && M.querySelector(".hkc")) { e.stopPropagation(); e.preventDefault(); render(true); return; }
+  if (M.querySelector(".hkz__list")) S.back = false;
+}, true);
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape" || !S.back || !cardShowing()) return;
+  e.stopPropagation(); render(true);
+}, true);
 document.addEventListener("click", function (e) {
   var t = e.target; if (!t || !t.closest) return;
   var b;
-  if ((b = t.closest("[data-hkc]"))) { e.preventDefault(); RG.hkCard(b.getAttribute("data-hkc")); return; }
+  if ((b = t.closest("[data-hkback]"))) { e.preventDefault(); render(true); return; }
+  if ((b = t.closest("[data-hkc]"))) {
+    e.preventDefault();
+    if (b.closest(".hkz__list")) { var bd1 = b.closest(".modal__bd"); S.top = bd1 ? bd1.scrollTop : 0; S.back = true; }   // 一覧から開いた → 戻れる
+    RG.hkCard(b.getAttribute("data-hkc")); return;
+  }
   if ((b = t.closest("[data-hkf]"))) { S[b.getAttribute("data-hkf")] = b.getAttribute("data-v"); render(true); return; }
   if ((b = t.closest("[data-hksort]"))) { S.sort = b.getAttribute("data-hksort"); render(true); return; }
   if ((b = t.closest("[data-hkchg]"))) { choosePref(); return; }
@@ -212,6 +240,7 @@ RG.hkCard = function (id) {
   var evs = (rel.ev || []).map(function (e) { return H.filter(function (h) { return h.id === e; })[0] || { id: e, t: e }; });
   var P = { n: "🏯" + x.n.replace(/（.*?）/g, ""), la: x.la, lo: x.lo, pt: "💬 歴オタの補足（コメント・現地の写真）", ph: "補足・異説・現地で見つけたもの・おすすめの歩き方（300字まで）" };
   var html = '<div class="hkc">' +
+    (S.back ? '<button class="hkc__back" type="button" data-hkback="1">‹ ' + esc((RG.HK_INDEX[S.pf] || {}).n || "") + " 歴オタ図鑑の一覧へ</button>" : "") +
     '<div class="hkc__gal" data-hkgal="1"></div>' +
     '<div class="hkc__hd"><span class="hkz__rk hkz__rk--' + x.rank + '">' + x.rank + "</span>" +
       '<h3 class="hkc__n">' + esc(x.n) + "<small>" + esc(x.yomi) + "</small></h3></div>" +
