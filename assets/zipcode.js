@@ -20,7 +20,12 @@
 var $ = RG.$, el = RG.el, esc = RG.esc;
 var CELL = 0.2, GRID = 0.01;
 var tiles = {}, loading = {}, grid = {};     // grid: "la,lo"(0.01度) → [pt,...]
-var chip = null, chipT = null, touchMode = false, lastKey = "";
+var chip = null, chipT = null, lastKey = "";
+/* v166: 郵便番号モードは «既定 OFF»。〒 ボタンか設定で ON にしたときだけ札を出す（PC もスマホも）。
+   ON/OFF は localStorage に覚える（次に開いたときも同じ） */
+var ZKEY = "tsg.zip.on", zipOn = false;
+try { zipOn = localStorage.getItem(ZKEY) === "1"; } catch (e) {}
+function saveOn() { try { localStorage.setItem(ZKEY, zipOn ? "1" : "0"); } catch (e) {} }
 
 function tileKey(la, lo) { return Math.floor(la * 5) + "_" + Math.floor(lo * 5); }
 function addTile(rows) {
@@ -118,37 +123,14 @@ function zoomOk() { return RG.zoomLevel && RG.zoomLevel() >= 5; }   // v72: 12km
 
 RG.initZip = function () {
   var wrap = document.querySelector(".mapwrap"); if (!wrap) return;
-  // PC：カーソルが «止まってから» 0.7秒たったら出す（追従表示は目ざわりだったので v72 で変更）
-  //     動かしたら消える。固定（クリック）したものはそのまま。
-  var dwellT = 0, lastX = 0, lastY = 0;
-  wrap.addEventListener("pointermove", function (e) {
-    if (e.pointerType !== "mouse" || touchMode) return;
-    if (RG.settings && RG.settings.zipHover === false) return;      // 設定で «カーソルで出さない» にしたとき
-    var moved = Math.abs(e.clientX - lastX) + Math.abs(e.clientY - lastY);
-    lastX = e.clientX; lastY = e.clientY;
-    clearTimeout(dwellT);
-    if (chip && chip.classList.contains("sticky")) return;
-    if (moved > 4 && chip && chip.classList.contains("on")) hide();
-    if (!zoomOk() || wrap.classList.contains("dragging")) return;
-    if (e.target.closest && e.target.closest("button,a,input,.quickbar,.zoombar,.poipop,.navbar,.heatlegend,.hint,.poicount,.node,.poi,.lm")) return;
-    var cx = e.clientX, cy = e.clientY;
-    dwellT = setTimeout(function () {
-      if (chip && chip.classList.contains("sticky")) return;
-      var q = pointToLatLng(cx, cy), hit = RG.zipAt(q.la, q.lo);
-      if (!hit) { hide(); return; }
-      show(hit, cx, cy, false);
-      lastKey = hit.zip + hit.town;
-    }, 1000);
-  });
-  wrap.addEventListener("pointerleave", function () { if (chip && !chip.classList.contains("sticky")) hide(); });
-  // クリック／タップで «固定»（コピーしやすいように）。スマホは 〒 モードのときだけ
+  // v166: カーソルを乗せただけでは出さない（〒 モード ON のとき、クリック／タップで出す）
+  // クリック／タップで札を出す（コピーしやすいように固定）。〒 モードが ON のときだけ（PC もスマホも）
   wrap.addEventListener("click", function (e) {
-    if (e.target.closest && e.target.closest(".node,.poi,.lm,button,a,input,.ln__hit,.adm,.b3n,.zipchip")) return;
-    if (!zoomOk()) return;
-    var isMouse = e.pointerType === "mouse" || !("ontouchstart" in window);
-    if (!isMouse && !touchMode) return;
+    if (!zipOn) return;
+    if (e.target.closest && e.target.closest(".node,.poi,.lm,button,a,input,.ln__hit,.b3n,.zipchip")) return;   // v166: 区の面（.adm）の上でも出す（〒 モードの目的はそれ）
+    if (!zoomOk()) { if (RG.tripStatus) RG.tripStatus("〒 郵便番号は、地図をもう少し寄せると出せます（7km幅より狭く）", "info", 2500); return; }
     var q = pointToLatLng(e.clientX, e.clientY), hit = RG.zipAt(q.la, q.lo);
-    if (!hit) { if (touchMode && RG.tripStatus) RG.tripStatus("このあたりの郵便番号データはまだ読み込み中か、近くに町丁目がありません", "info", 2500); return; }
+    if (!hit) { if (RG.tripStatus) RG.tripStatus("このあたりの郵便番号データはまだ読み込み中か、近くに町丁目がありません", "info", 2500); return; }
     show(hit, e.clientX, e.clientY, true);
   }, true);
   // 〒 ボタン（ズームボタンの列に足す）
@@ -156,20 +138,28 @@ RG.initZip = function () {
   if (zb) {
     var b = el("button", { id: "zipbtn", class: "sm", type: "button", "aria-label": "郵便番号を調べる", title: "郵便番号：地図をタップすると、その場所の郵便番号が出ます", text: "〒" });
     b.setAttribute("aria-pressed", "false");
-    b.addEventListener("click", function () {
-      touchMode = !touchMode; b.classList.toggle("on", touchMode);
-      setMode(touchMode);
-      if (touchMode) {
-        if (!zoomOk()) { RG.tripStatus && RG.tripStatus("〒 郵便番号は、地図をもう少し寄せると出せます（7km幅より狭く）", "info", 3200); }
-        else RG.tripStatus && RG.tripStatus("〒 地図をタップすると、その場所の郵便番号が出ます", "info", 2600);
-        RG.Map.lod && RG.Map.lod();
-      } else hide();
-    });
+    b.addEventListener("click", function () { RG.zipSet(!zipOn, true); });
     zb.appendChild(b);
   }
+  /* v166: ON/OFF をひとつの場所で切り替える（〒 ボタン・設定・起動時の復元が全部ここを通る） */
+  RG.zipSet = function (on, say) {
+    on = !!on;
+    var changed = on !== zipOn;
+    zipOn = on; saveOn();
+    if (b) b.classList.toggle("on", on);
+    setMode(on);
+    if (on) {
+      if (say && changed) {
+        if (!zoomOk()) { RG.tripStatus && RG.tripStatus("〒 郵便番号は、地図をもう少し寄せると出せます（7km幅より狭く）", "info", 3200); }
+        else RG.tripStatus && RG.tripStatus("〒 地図をタップすると、その場所の郵便番号が出ます", "info", 2600);
+      }
+      RG.Map.lod && RG.Map.lod();
+    } else hide();
+  };
+  if (zipOn) RG.zipSet(true, false);                                 // 前回 ON のままなら復元
   /* v118: 郵便番号モード。ON のときだけ: 地図をタップで郵便番号・検索欄で 7 桁の番号を探せる。画面の上に «〒 郵便番号モード» の帯 */
   function setMode(on) {
-    b.setAttribute("aria-pressed", on ? "true" : "false");
+    if (b) b.setAttribute("aria-pressed", on ? "true" : "false");
     document.body.classList.toggle("zipmode", on);
     Array.prototype.forEach.call(document.querySelectorAll("#hero-q, #q, .cardq__in"), function (inp) {
       if (inp.dataset.ph0 == null) inp.dataset.ph0 = inp.placeholder || "";
@@ -179,7 +169,7 @@ RG.initZip = function () {
     if (on && !bar) {
       bar = document.createElement("button"); bar.id = "zipbar"; bar.type = "button"; bar.className = "zipbar";
       bar.innerHTML = "〒 郵便番号モード <b>ON</b><span>押すと OFF</span>";
-      bar.addEventListener("click", function () { b.click(); });
+      bar.addEventListener("click", function () { RG.zipSet(false, false); });
       (document.querySelector(".mapwrap") || document.body).appendChild(bar);
     }
     if (bar) bar.hidden = !on;
@@ -191,7 +181,7 @@ RG.initZip = function () {
 /* 地図が動いたら：見えている升目を読む（lod から呼ばれる） */
 RG.zipOnMove = function (bbox) { if (zoomOk()) RG.zipLoadFor(bbox); else if (chip && !chip.classList.contains("sticky")) hide(); };
 
-RG.zipMode = function () { return touchMode; };                        // v118: 郵便番号モードが ON か（検索が使う）
+RG.zipMode = function () { return zipOn; };                            // v118: 郵便番号モードが ON か（検索・設定が使う）
 
 /* ---- 検索：郵便番号 → 場所 ---- */
 var idxCache = {};

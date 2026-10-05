@@ -86,9 +86,9 @@ RG.adultSwitchHTML = function () {
       "> 🔠 文字を大きくする（画面ぜんぶ）</label>" +
       '<p class="deep__d">小さい字が読みづらいときに。地図の文字は変わりません。</p>' +
       '<label class="set__sw"><input id="zip-sw" type="checkbox"' +
-      ((RG.settings && RG.settings.zipHover === false) ? "" : " checked") +
-      "> 〒 郵便番号をカーソルで表示する（PC・止めて1秒後）</label>" +
-      '<p class="deep__d">うるさいときは外してください。外しても 〒 ボタン→クリックでは出ます。</p>' +
+      ((RG.zipMode && RG.zipMode()) ? " checked" : "") +
+      "> 〒 郵便番号モード（地図をクリック／タップで郵便番号）</label>" +
+      '<p class="deep__d">ふだんは OFF です。ON にすると、寄せた地図を押したところの郵便番号が出ます（地図の 〒 ボタンと同じ）。</p>' +
       '<details class="deep deep--in"><summary>表示するものを増やす</summary>' +
         '<div class="deep__b">' +
           '<label class="set__sw"><input id="ad-sw" type="checkbox"' + (on() ? " checked" : "") +
@@ -133,9 +133,7 @@ RG.bindAdultSwitch = function (root) {
   });
   var zs = $("#zip-sw", root);
   if (zs) zs.addEventListener("change", function () {
-    if (RG.settings) RG.settings.zipHover = this.checked;
-    if (RG.saveSettings) RG.saveSettings();
-    if (!this.checked && RG.zipHide) RG.zipHide();
+    if (RG.zipSet) RG.zipSet(this.checked, true);                     // v166: 〒 ボタンと同じ切り替え（localStorage に覚える）
   });
   var bg = $("#big-sw", root);
   if (bg) bg.addEventListener("change", function () {
