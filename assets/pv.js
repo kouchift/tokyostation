@@ -108,17 +108,33 @@ RG.pvSpecFromPlan = function (itemsIn, opts) {
   var tags = ["東京ステーションガイド", fromN.replace(/駅$/, ""), toN.replace(/駅$/, "")].concat(spots.slice(0, 2)).map(function (t) { return "#" + String(t).replace(/[\s・\/#（）()]/g, ""); })
     .filter(function (t, i, a) { return t.length > 1 && t !== "#現在地" && a.indexOf(t) === i; });
   /* v166: 現在地は呼び出し側が作る時点で 1 回だけ決めて渡す（o.here）。移動予定日は o.date（YYYY-MM-DD）。無ければ予定の出発日（今日以降のとき）か今日 */
-  var here = o.here && o.here.la != null ? { la: +o.here.la, lo: +o.here.lo, real: !!o.here.real } : null;
+  var here = null, hereWhy = "";
+  if (o.here && o.here.la != null) {
+    here = { la: +o.here.la, lo: +o.here.lo, acc: o.here.acc != null && isFinite(+o.here.acc) ? Math.round(+o.here.acc) : null, real: !!o.here.real };
+    var pts0 = []; legs.forEach(function (l) { (l.path || []).forEach(function (q) { pts0.push(q); }); });
+    var kmMin = pts0.length && RG.hav ? Math.min.apply(null, pts0.map(function (q) { return RG.hav([here.la, here.lo], q); })) : 0;
+    here.km = Math.round(kmMin);
+    if (kmMin > 30) { here.far = true; here.dir = dir8(centerOf(pts0), [here.la, here.lo]); }   // v166: ルートから遠い（30km 超）→ 地図の範囲には入れず、端に札で出す
+  } else if (o.here && o.here.why) hereWhy = String(o.here.why);
+  else if (o.here === null) hereWhy = "現在地が取れませんでした";
+  var hereLine = here && here.real ? "📍 現在地を入れました" + (here.far ? "（ルートから " + here.km + "km " + here.dir + "）" : here.acc != null ? "（±" + here.acc + "m）" : "")
+                                   : hereWhy ? "📍 現在地は取れなかったので出発地から（" + hereWhy + "）" : "";
   var at0 = first.at ? +first.at : 0, today = parseDay(Date.now());
   var day = parseDay(o.date != null && o.date !== "" ? o.date : (at0 >= today.getTime() ? at0 : Date.now()));
   var spec = { title: fromN + " → " + toN, fromN: fromN, toN: toN, spots: spots, tags: tags, legs: legs, minutes: tmin, yen: tyen, date: new Date(first.at || Date.now()), captions: gatherCaptions(itemsAll, opts),
            vertical: opts && opts.vertical != null ? !!opts.vertical : (RG.snsIsMobile ? RG.snsIsMobile() : /Android|iPhone|iPad/i.test(navigator.userAgent)),
            here: here, day: day, dayStr: dayStr(day), dayText: fmtDay(day), caps: caps, lines: lines, routeLine: lines.join(" → "),
-           startCap: here && here.real ? "📍 いまここから出発" : "出発地から出発",
+           startCap: here && here.real ? "📍 いまここから出発" : "出発地から出発", hereWhy: hereWhy, hereLine: hereLine,
            fromId: nameId(first.from) || nearId(legs[0].from), toId: last.toId || nameId(last.to) || nearId(legs[legs.length - 1].to), modeId: items.length === 1 ? String(first.id || "") : "" };
   spec.link = RG.pvShareUrl(spec);
   return spec;
 };
+/* v166: 点の集まりの真ん中と、a から見た b の方角（8 方位） */
+function centerOf(pts) { var la = 0, lo = 0; pts.forEach(function (q) { la += q[0]; lo += q[1]; }); return pts.length ? [la / pts.length, lo / pts.length] : [35.68, 139.76]; }
+function dir8(a, b) {
+  var dy = b[0] - a[0], dx = (b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180), deg = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;   // 0 = 北・時計回り
+  return ["北", "北東", "東", "南東", "南", "南西", "西", "北西"][Math.round(deg / 45) % 8];
+}
 function arc(a, b) {
   var out = [], n = 24;
   for (var i = 1; i < n; i++) {
@@ -160,7 +176,7 @@ function makeDrawer(spec) {
   var rings = decodePref();
   // 経路全体の範囲
   var pts = []; spec.legs.forEach(function (l) { (l.path || []).forEach(function (p) { pts.push(p); }); });
-  if (spec.here) pts.push([spec.here.la, spec.here.lo]);                   // v166: «いまここ» も画面に入れる
+  if (spec.here && !spec.here.far) pts.push([spec.here.la, spec.here.lo]);   // v166: «いまここ» も画面に入れる（遠すぎるときは入れず、端に札）
   if (!pts.length) pts = [[35.68, 139.76]];
   var la0 = Math.min.apply(null, pts.map(function (p) { return p[0]; })), la1 = Math.max.apply(null, pts.map(function (p) { return p[0]; }));
   var lo0 = Math.min.apply(null, pts.map(function (p) { return p[1]; })), lo1 = Math.max.apply(null, pts.map(function (p) { return p[1]; }));
@@ -241,6 +257,16 @@ function makeDrawer(spec) {
   function drawHere(c, t) {                                                    // 地図の上に «📍 いまここ»（作る時点の位置で固定）
     if (!spec.here) return;
     var q = pj([spec.here.la, spec.here.lo]), r = 10 + 5 * (0.5 + 0.5 * Math.sin(t * 5));
+    if (spec.here.far) {                                                       // v166: 遠いときは地図の縁（内側）に、方角と距離の札
+      var cx = MX + MW / 2, cy = MY + MH / 2, dx = q[0] - cx, dy = q[1] - cy, kk = Math.max(Math.abs(dx) / (MW / 2 - 60), Math.abs(dy) / (MH / 2 - 60), 1e-6);
+      var ex = cx + dx / kk, ey = cy + dy / kk, s2 = "📍 いまここ（" + spec.here.dir + " " + spec.here.km + "km）";
+      c.beginPath(); c.arc(ex, ey, 9, 0, Math.PI * 2); c.fillStyle = "#1A73E8"; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 3; c.stroke();
+      c.font = "800 22px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
+      var tw2 = c.measureText(s2).width + 20, bx2 = Math.max(MX + 4, Math.min(MX + MW - tw2 - 4, ex - tw2 / 2)), by2 = ey < cy ? ey + 16 : ey - 52;
+      roundRect(c, bx2, by2, tw2, 34, 10); c.fillStyle = "rgba(255,255,255,0.95)"; c.fill(); c.strokeStyle = "#1A73E8"; c.lineWidth = 2; c.stroke();
+      txt(c, s2, bx2 + tw2 / 2, by2 + 17, 22, "#0d47a1", "center", 800);
+      return;
+    }
     c.beginPath(); c.arc(q[0], q[1], r + 8, 0, Math.PI * 2); c.fillStyle = "rgba(26,115,232,0.22)"; c.fill();
     c.beginPath(); c.arc(q[0], q[1], 9, 0, Math.PI * 2); c.fillStyle = "#1A73E8"; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 3; c.stroke();
     var s = "📍 いまここ"; c.font = "800 22px 'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif";
@@ -262,8 +288,9 @@ function makeDrawer(spec) {
       fit(c, "移動予定：" + spec.dayText, W / 2, OY + 345, 40, W - 80, "#ffe082", 900);                       // v166
       fit(c, "ルート：" + (spec.routeLine || spec.legs.map(function (l) { return l.mode || ""; }).join(" → ")), W / 2, OY + 410, 30, W - 100, "#e0f2f1", 700);
       txt(c, "所要 およそ " + fmtMin(spec.minutes) + "・" + yen(spec.yen), W / 2, OY + 465, 26, "#b2dfdb", "center", 600);
-      if (spec.spots && spec.spots.length) fit(c, "立ち寄り: " + spec.spots.join("・"), W / 2, OY + 515, 26, W - 100, "#ffe0b2", 700);
-      txt(c, "東京ステーションガイド", W / 2, OY + 580, 26, "#80cbc4", "center", 700); c.globalAlpha = 1; return;
+      if (spec.spots && spec.spots.length) fit(c, "立ち寄り: " + spec.spots.join("・"), W / 2, OY + 512, 26, W - 100, "#ffe0b2", 700);
+      if (spec.hereLine) fit(c, spec.hereLine, W / 2, OY + 552, 22, W - 80, spec.here && spec.here.real ? "#b2dfdb" : "#ffcdd2", 600);   // v166: 現在地が入ったか・入らなかった理由
+      txt(c, "東京ステーションガイド", W / 2, OY + 592, 24, "#80cbc4", "center", 700); c.globalAlpha = 1; return;
     }
     if (t < 14) {
       var u = ease((t - 3) / 0.6);
@@ -435,51 +462,78 @@ RG.pvSnsReady = function (rec) { return RG.pvIsMp4(rec) && (rec.codec === "h264"
 
 /* ---- 画面 ---- */
 function fname(spec, mime) { return "route-pv-" + spec.title.replace(/[\\/:*?"<>|\s]/g, "_").slice(0, 40) + "-" + spec.dayStr + (/mp4/.test(mime || "") ? ".mp4" : ".webm"); }
-/* v166: 作る時点の現在地。案内中の位置 → 出発地が «現在地» ならそれ → 1 回だけ取得。取れない・許可がない・http のときは null（字幕は «出発地から»） */
+/* v166: 作る時点の現在地。案内中の位置 → 出発地が «現在地» ならそれ → ブラウザに 1 回だけ聞く（低精度 8 秒 → だめなら高精度 8 秒）。
+   取れないときは { real:false, why } で理由を返す（許可なし・時間切れ・測れない・http）。許可のダイアログは PV のボタンを押した直後（この中）で出る */
 function pvHere(cb) {
   var N = RG.Nav, T = RG.Trip, done = false;
   function fin(v) { if (done) return; done = true; cb(v); }
-  if (N && N.on && N.last) return fin({ la: N.last[0], lo: N.last[1], real: true });
-  if (T && T.isGeo && T.origin) return fin({ la: T.origin[0], lo: T.origin[1], real: true });
-  if (!navigator.geolocation || (RG.secureOK && !RG.secureOK())) return fin(null);
-  function ask() {
-    var tm = setTimeout(function () { fin(null); }, 7000);
+  function no(why) { fin({ real: false, why: why }); }
+  if (N && N.on && N.last) return fin({ la: N.last[0], lo: N.last[1], acc: N.lastAcc, real: true });
+  if (T && T.isGeo && T.origin) return fin({ la: T.origin[0], lo: T.origin[1], acc: T.acc != null ? T.acc : null, real: true });
+  if (!navigator.geolocation) return no("この端末では位置情報が使えません");
+  if (RG.secureOK && !RG.secureOK()) return no("https でないと位置情報が使えません");
+  function ask(hi) {
     try {
-      navigator.geolocation.getCurrentPosition(function (p) { clearTimeout(tm); var la = p.coords.latitude, lo = p.coords.longitude; fin(la > 20 && la < 46 && lo > 122 && lo < 154 ? { la: la, lo: lo, real: true } : null); },
-        function () { clearTimeout(tm); fin(null); }, { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 });
-    } catch (e) { clearTimeout(tm); fin(null); }
+      navigator.geolocation.getCurrentPosition(function (p) {
+        var la = p.coords.latitude, lo = p.coords.longitude;
+        if (la > 20 && la < 46 && lo > 122 && lo < 154) fin({ la: la, lo: lo, acc: p.coords.accuracy, real: true }); else no("日本の外の位置が返りました");
+      }, function (e) {
+        if (e && e.code === 1) return no("位置情報の許可がありません。アドレス欄の鍵や設定から許可できます");
+        if (!hi) return ask(true);                                          // 低精度でだめなら高精度でもう一度
+        no(e && e.code === 3 ? "時間切れ。この端末では位置を測れないようです" : "この端末では位置を測れませんでした");
+      }, { enableHighAccuracy: hi, timeout: 8000, maximumAge: hi ? 0 : 300000 });
+    } catch (e) { no("位置情報を使えませんでした"); }
   }
-  if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: "geolocation" }).then(function (st) { if (st.state === "denied") fin(null); else ask(); }, ask);   // 前に «許可しない» にした人には聞き直さない
-  else ask();
+  ask(false);
+}
+function hereText(spec) {                       // 生成画面の 1 行
+  var h = spec.here;
+  if (h && h.real) return "📍 現在地を入れる: 取れました" + (h.acc != null ? "（±" + h.acc + "m）" : "") + (h.far ? "。ルートから " + h.km + "km（" + h.dir + "）離れているので、地図の端に札で出します" : "");
+  return "📍 現在地を入れる: 取れませんでした（" + (spec.hereWhy || "理由がわかりません") + "）→ 出発地から出発にします";
 }
 RG.pvFlow = function (kind, proceed, items, opts) {
-  opts = opts || {};
+  opts = Object.assign({}, opts || {});
   if (!RG.pvSupported() || !RG.pvSpecFromPlan(items, opts)) { proceed && proceed(null); return; }
-  if (opts.here === undefined) { pvHere(function (h) { RG.pvFlow(kind, proceed, items, Object.assign({}, opts, { here: h })); }); return; }   // 位置は作る時点で 1 回だけ決める（日付や向きを変えて作り直しても動かない）
-  var spec = RG.pvSpecFromPlan(items, opts);
+  var spec = RG.pvSpecFromPlan(items, opts), live = true, draw = null;
   RG.pvLastSpec = spec;                                                  // 試験用
   var m = RG.openModal("🎬 ルート PV を作っています（20秒）", '<div class="pv"><p class="set__d">' + esc(spec.title) + " の 20 秒動画をこの端末で作っています。作り終わると " + (kind === "obsidian" ? "Obsidian に送ります" : kind === "mail" ? "メールを開きます" : "共有に進みます") + "。</p>" +
+    '<div class="pv__here" id="pv-here"></div>' +
     '<label class="pv__day">📅 移動予定日 <input id="pv-day" type="date" value="' + spec.dayStr + '"></label>' +
-    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + dims(spec).W + '" height="' + dims(spec).H + '" class="pv__cv' + (spec.vertical ? " pv__cv--v" : "") + '"></canvas><p class="src">字幕は乗る線・乗り換える駅から自動で入ります（' +
-    (spec.here && spec.here.real ? "📍 いまここ の印つき" : "現在地が取れなかったので出発地から") + "）。日付を変えると作り直します。" + (spec.captions ? "メモ・感想・ひとことは «まとめ» の場面に出ます。" : "メモ欄に書いておくと «まとめ» の場面に字幕で入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
-  var cv = $("#pv-cv", m), c = cv.getContext("2d"), draw = makeDrawer(spec), bar = $("#pv-bar", m);
-  var t0 = performance.now(), live = true;
+    '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + dims(spec).W + '" height="' + dims(spec).H + '" class="pv__cv' + (spec.vertical ? " pv__cv--v" : "") + '"></canvas><p class="src">字幕は乗る線・乗り換える駅から自動で入ります。日付を変えると作り直します。' +
+    (spec.captions ? "メモ・感想・ひとことは «まとめ» の場面に出ます。" : "メモ欄に書いておくと «まとめ» の場面に字幕で入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
+  var cv = $("#pv-cv", m), c = cv.getContext("2d"), bar = $("#pv-bar", m), hereEl = $("#pv-here", m);
+  draw = makeDrawer(spec);
+  function hereLine() {
+    if (!hereEl) return;
+    if (opts.here === undefined) { hereEl.innerHTML = "📍 現在地を入れる: <b>取得中…</b>（ブラウザが位置情報の許可を聞いたら「許可」を押してください）"; hereEl.className = "pv__here"; return; }
+    hereEl.textContent = hereText(spec); hereEl.className = "pv__here" + (spec.here && spec.here.real ? "" : " pv__here--no");
+  }
+  hereLine();
+  var t0 = performance.now();
   (function tick() { if (!live) return; var t = (performance.now() - t0) / 1000; draw(c, Math.min(DUR, t)); if (t < DUR) requestAnimationFrame(tick); })();
   var di = $("#pv-day", m); if (di) di.addEventListener("change", function () {
     if (!di.value || di.value === spec.dayStr) return;
     spec.__cancel = true; live = false;
-    RG.pvFlow(kind, proceed, items, Object.assign({}, opts, { date: di.value }));
+    RG.pvFlow(kind, proceed, items, Object.assign({}, opts, { date: di.value }));   // 位置が決まっていれば opts.here のまま（作り直しても動かない）
   });
-  RG.pvMake(spec, function (p) { if (bar) bar.style.width = (p * 100).toFixed(0) + "%"; }).then(function (r) {
+  function start() {
+    spec.hereDone = true; RG.pvLastSpec = spec;
+    RG.pvMake(spec, function (p) { if (bar) bar.style.width = (p * 100).toFixed(0) + "%"; }).then(function (r) {
+      if (spec.__cancel) return;
+      live = false;
+      var id = "pv" + Date.now(), exp = Date.now() + KEEP_DAYS * 864e5;
+      var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime), vertical: !!spec.vertical, tags: spec.tags || [],
+                  day: spec.dayStr, dayText: spec.dayText, link: spec.link, caps: spec.caps,
+                  again: function () { var o = Object.assign({}, opts, { vertical: !spec.vertical, date: spec.dayStr }); RG.pvFlow(kind, proceed, items, o); } };
+      var sv = storable(rec); if (sv) put(sv).catch(function (e) { if (window.console) console.warn("PV: 端末への保存に失敗（動画はこのまま使えます）", e && e.message); });
+      RG.pvShow(rec, kind, proceed);
+    }).catch(function () { if (spec.__cancel) return; live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
+  }
+  if (opts.here !== undefined) start();
+  else pvHere(function (h) {                                             // 位置は作る時点で 1 回だけ決める（日付や向きを変えて作り直しても動かない）
     if (spec.__cancel) return;
-    live = false;
-    var id = "pv" + Date.now(), exp = Date.now() + KEEP_DAYS * 864e5;
-    var rec = { id: id, blob: r.blob, mime: r.mime, codec: r.codec || "", title: spec.title, created: Date.now(), expires: exp, name: fname(spec, r.mime), vertical: !!spec.vertical, tags: spec.tags || [],
-                day: spec.dayStr, dayText: spec.dayText, link: spec.link, caps: spec.caps,
-                again: function () { var o = Object.assign({}, opts, { vertical: !spec.vertical, date: spec.dayStr }); RG.pvFlow(kind, proceed, items, o); } };
-    var sv = storable(rec); if (sv) put(sv).catch(function (e) { if (window.console) console.warn("PV: 端末への保存に失敗（動画はこのまま使えます）", e && e.message); });
-    RG.pvShow(rec, kind, proceed);
-  }).catch(function () { if (spec.__cancel) return; live = false; RG.closeModal(); RG.tripStatus && RG.tripStatus("この端末では動画を作れませんでした。そのまま送ります。", "warn", 3500); proceed && proceed(null); });
+    opts.here = h; spec = RG.pvSpecFromPlan(items, opts); draw = makeDrawer(spec); hereLine(); start();
+  });
 };
 RG.pvShow = function (rec, kind, proceed) {
   var url = URL.createObjectURL(rec.blob), exp = new Date(rec.expires);

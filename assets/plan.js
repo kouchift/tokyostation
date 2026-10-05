@@ -575,6 +575,7 @@ RG.openPlan = function () {
 /* 起動時に、前回の予定が残っていたらどうするか聞く */
 RG.planHousekeeping = function () {
   if (!P.items.length) return;
+  if (document.querySelector(".modal.show")) return;   // v167: もう別の画面（共有リンクから始まったルート PV など）が開いていたら、上に重ねて消さない
   var t = totals();
   var oldest = P.items.reduce(function (a, x) { return Math.min(a, x.at || Date.now()); }, Date.now());
   var days = Math.floor((Date.now() - oldest) / 86400000);
