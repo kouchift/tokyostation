@@ -917,7 +917,7 @@ function showRoutes(destId) {
     b.addEventListener("click", function () {
       RG.Nav.destId = s.id;
       RG.closeModal();
-      RG.startNav([s.la, s.lo], RG.stLabel(s), r.options[+b.dataset.nav]);
+      RG.startNav([s.la, s.lo], RG.stLabel(s), r.options[+b.dataset.nav], { result: r, destId: s.id, destName: RG.stLabel(s) });   // v164: 候補の切替・やり直し用に比較結果も渡す
     });
   });
   $$("[data-sort]", m).forEach(function (b) {

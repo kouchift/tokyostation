@@ -8,7 +8,7 @@ const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..');
 const ORDER = ['app', 'qos', 'cvunder', 'maplbl', 'attrib', 'icons', 'score', 'planner', 'plannerui', 'lines_ui', 'basemap', 'three', 'wikicard',
   'corp', 'smoking', 'adult', 'edu', 'hensachi', 'pins', 'groups', 'koyomi2', 'koyomi', 'search',
-  'nav', 'traininfo', 'plan', 'logbook', 'geohelp', 'tiles', 'geo', 'zipcode', 'enrich', 'focus', 'buzz', 'eduhist', 'whs', 'wimg', 'graves', 'hkzukan', 'hklong', 'histlong', 'histmap', 'arguide', 'indoor_areas', 'indoor', 'qr', 'inro', 'tip', 'shinkansen', 'share', 'nature', 'history', 'places', 'yt', 'air', 'pv', 'card', 'roads', 'quake', 'memo', 'comments_legacy', 'posts', 'obnote', 'sticker', 'alerts', 'weather', 'sns', 'levechi', 'poifilter', 'cvsfilter', 'tokyo', 'favs', 'onsite', 'flow', 'mapfocus', 'stats', 'loader'];
+  'nav', 'navui', 'traininfo', 'plan', 'logbook', 'geohelp', 'tiles', 'geo', 'zipcode', 'enrich', 'focus', 'buzz', 'eduhist', 'whs', 'wimg', 'graves', 'hkzukan', 'hklong', 'histlong', 'histmap', 'arguide', 'indoor_areas', 'indoor', 'qr', 'inro', 'tip', 'shinkansen', 'share', 'nature', 'history', 'places', 'yt', 'air', 'pv', 'card', 'roads', 'quake', 'memo', 'comments_legacy', 'posts', 'obnote', 'sticker', 'alerts', 'weather', 'sns', 'levechi', 'poifilter', 'cvsfilter', 'tokyo', 'favs', 'onsite', 'flow', 'mapfocus', 'stats', 'loader'];
 /* v139: 2 本に分ける。«地図が出るまで» に要る部品だけ（CORE）を先に読み、残り（EXTRA）は地図が出てから読む。
    速度制限中でも、最初に待つ量を 1/3 ほどにするため。CORE に入れる部品を変えるときは、起動の順（app.js の RG.boot）も確かめる */
 const CORE = ['app', 'qos', 'cvunder', 'maplbl', 'attrib', 'icons', 'score', 'planner', 'plannerui', 'geohelp', 'loader'];

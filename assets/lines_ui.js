@@ -737,6 +737,7 @@ function openSettings() {
     (RG.statsSwitchHTML ? RG.statsSwitchHTML() : "") +
     (RG.geoSwitchHTML ? RG.geoSwitchHTML() : "") +
     (RG.weatherSwitchHTML ? RG.weatherSwitchHTML() : "") +
+    (RG.alertSwitchHTML ? RG.alertSwitchHTML() : "") +   // v164: 警報の帯のレベル・確認ずみ
     (RG.voiceSwitchHTML ? RG.voiceSwitchHTML() : "") +
     (RG.adultSwitchHTML ? RG.adultSwitchHTML() : "") +
     '<div class="set__sec set__ver"><h4>ℹ️ この版について</h4>' +
@@ -761,6 +762,7 @@ function openSettings() {
   if (RG.mapFocusSwitchBind) RG.mapFocusSwitchBind(m);   // v102
   if (RG.geoSwitchBind) RG.geoSwitchBind(m);
   if (RG.weatherSwitchBind) RG.weatherSwitchBind(m);
+  if (RG.alertSwitchBind) RG.alertSwitchBind(m);
   if (RG.voiceSwitchBind) RG.voiceSwitchBind(m);
   if (RG.tipBind) RG.tipBind(m);
   if (RG.favs) RG.favs.settingsBind(m);

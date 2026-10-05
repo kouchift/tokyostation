@@ -102,6 +102,8 @@ RG.navFit = function () { drawRoute(true); };
 /* v125: 案内の帯に出す «次にすること»（乗る駅・路線・降りる駅を 1 行で） */
 function stepHtml() {
   var segs = N.lines || [];
+  if (RG.NavUI && RG.NavUI.nextStepText)         // v164: «いま何をするか»（乗る前・乗車中・降りた後で変わる）
+    return '<button class="nav__step" id="nv-fit" type="button" title="経路の全体を地図に出す">' + esc(RG.NavUI.nextStepText()) + "</button>";
   if (!segs.length) return "";
   var o = N.opt && N.opt.rail, s0 = RG.byId[segs[0].ids[0]], out = [];
   if (s0 && !(o && o.accessMin != null && o.accessMin < 1)) out.push("🚶 <b>" + esc(RG.stLabel(s0)) + "</b>まで" + (o && o.accessMin != null ? "徒歩" + Math.round(o.accessMin) + "分" : "歩く"));
@@ -113,7 +115,8 @@ function stepHtml() {
   if (segs.length > 3) out.push("ほか");
   return '<button class="nav__step" id="nv-fit" type="button" title="経路の全体を地図に出す">' + out.join(" ／ ") + "</button>";
 }
-RG.startNav = function (destCoord, destName, opt) {
+/* v164: ctx = {result, destId, destName}（比較結果。候補の切替・やり直しに使う。navui.js） */
+RG.startNav = function (destCoord, destName, opt, ctx) {
   if (!navigator.geolocation) { RG.tripStatus("この端末では位置情報が使えないため、案内モードは始められません。", "warn"); return; }
   if (RG.secureOK && !RG.secureOK()) { if (RG.showGeoHelp) RG.showGeoHelp({ code: 0 }); return; }
   if (!RG.Trip.origin) { RG.tripStatus("先に出発地を決めてください。", "warn"); return; }
@@ -124,6 +127,8 @@ RG.startNav = function (destCoord, destName, opt) {
   N.startedAt = Date.now(); N.muted = false; N.offCount = 0; N.lastPrompt = 0;
   N.startKm = RG.hav(RG.Trip.origin, destCoord);
   N.opt = opt || null;
+  N.ctx = ctx || null; N.last = null; N.lastOff = null; N.lastRest = null; N.lastAcc = null;
+  if (ctx && ctx.destId) N.destId = ctx.destId;
   N.lines = railLines(RG.Trip.origin, destCoord);   // v123: 使う路線（運行情報で知らせるため）
   N.path = buildPath(RG.Trip.origin, destCoord, opt);
   N.from = RG.Trip.origin;
@@ -131,13 +136,18 @@ RG.startNav = function (destCoord, destName, opt) {
   if (RG.heroFold) RG.heroFold("route");
   drawRoute(true);                                    // v125: 経路を地図に描いて全体を見せる（前は描かれず、地図も動かなかった）
   bar();
+  if (RG.NavUI && RG.NavUI.onStart) RG.NavUI.onStart();
   RG.tripStatus("🧭 案内をはじめました。道をそれたら教えます。", "ok", 3200);
   N.watchId = navigator.geolocation.watchPosition(onPos, onErr,
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 8000 });
 };
+/* v164: 位置が一時的に取れない（トンネル・屋内・時間切れ）だけでは案内を止めない。許可が無いときだけ止める */
 function onErr(e) {
-  RG.tripStatus("現在地を追えなくなりました（" + esc(e.message || "") + "）。案内を止めます。", "warn", 6000);
-  stop();
+  if (e && e.code === 1) {                      // PERMISSION_DENIED
+    RG.tripStatus("位置情報の許可がないため、案内を止めます。", "warn", 6000);
+    stop(); return;
+  }
+  RG.tripStatus("現在地を取得できていません（" + esc((e && e.message) || "") + "）。取れしだい続けます。", "warn", 5000);
 }
 function onPos(p) {
   if (!N.on) return;
@@ -146,7 +156,9 @@ function onPos(p) {
   if (RG.Map.paintMe) RG.Map.paintMe(c, p.coords.accuracy);
   var off = distToPath(c, N.path);
   var rest = RG.hav(c, N.dest);
+  N.lastOff = off; N.lastRest = rest; N.lastAcc = p.coords.accuracy;
   bar(off, rest, p.coords.accuracy);
+  if (RG.NavUI && RG.NavUI.update) RG.NavUI.update(c, off, rest, p.coords.accuracy);
   // GPS の誤差より十分に大きいときだけ「外れた」とみなす
   var tol = Math.max(tolOf(N.mode), (p.coords.accuracy || 0) * 1.6);
   if (off > tol) N.offCount++; else N.offCount = 0;
@@ -191,22 +203,29 @@ function bar(off, rest, acc) {
   if (!N.on) { b.hidden = true; b.innerHTML = ""; return; }
   b.hidden = false;
   var pct = N.startKm ? Math.max(0, Math.min(100, (1 - (rest == null ? N.startKm : rest) / N.startKm) * 100)) : 0;
+  var U = RG.NavUI;                                   // v164: 帯を押すと «移動の詳細»。📷 AR・候補の切替・やり直し（navui.js）
+  if (rest == null && N.lastRest != null) { rest = N.lastRest; off = N.lastOff; acc = N.lastAcc; }   // 描き直しでも最後の位置の数字を残す
   b.innerHTML =
     '<div class="nav__bar">' +
+      (U ? '<button class="nav__main" id="nv-detail" type="button" aria-label="移動の詳細を開く" title="移動の詳細（乗り場・号車・出口）">' : '<span class="nav__main">') +
       '<span class="nav__i">🧭</span>' +
-      '<span class="nav__t"><b>' + esc(N.destName) + "</b> へ案内中" +
+      '<span class="nav__t"><b>' + esc(N.destName) + "</b> へ案内中" + (U ? ' <u class="nav__more">詳細 ▸</u>' : "") +
         '<i>' + esc(N.modeLabel) +
         (rest != null ? " ・ のこり約 " + rest.toFixed(1) + "km" : "") +
         (off != null ? " ・ ルートから " + Math.round(off) + "m" : "") +
         (acc ? " ・ 精度±" + Math.round(acc) + "m" : "") + "</i></span>" +
+      (U ? "</button>" : "</span>") +
+      (U && RG.arOpen ? '<button class="nav__x nav__x--ar" id="nv-ar" type="button" title="カメラで方角を見る（AR）">📷 AR</button>' : "") +
       (N.muted ? '<button class="nav__x" id="nv-unmute" type="button" title="お知らせを再開">🔕</button>' : "") +
-      '<button class="nav__x" id="nv-stop" type="button">案内をやめる</button>' +
+      '<button class="nav__x" id="nv-stop" type="button">' + (U ? "やめる" : "案内をやめる") + "</button>" +
     "</div>" +
     stepHtml() +
+    (U && U.candsHtml ? U.candsHtml() : "") +
     '<div class="nav__prog"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
     disStrip();
   var fb = $("#nv-fit", b); if (fb) fb.addEventListener("click", function () { drawRoute(true); });
   var st = $("#nv-stop", b); if (st) st.addEventListener("click", function () { stop(); });
+  if (U && U.bind) U.bind(b);
   var ds = $("#nv-dis", b); if (ds) ds.addEventListener("click", function () { RG.navReroute("運行情報"); });
   var um = $("#nv-unmute", b);
   if (um) um.addEventListener("click", function () {
@@ -226,6 +245,7 @@ function stop(quiet) {
   document.body.classList.remove("navon");
   drawRoute(false);
   bar();
+  if (RG.NavUI && RG.NavUI.onStop) RG.NavUI.onStop();
   if (!quiet) RG.tripStatus("案内を終わりました。おつかれさまでした。", "ok", 2800);
 }
 RG.stopNav = stop;

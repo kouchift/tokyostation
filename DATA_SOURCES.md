@@ -134,3 +134,8 @@ tools/build_standalone.py  単一ファイル版の生成
 - `data/indoor/<地区>.js`・`assets/indoor_areas.js` — 国土交通省「歩行空間ネットワークデータ（池袋駅周辺 ほか各地区）」「構内地図データ（都営地下鉄大江戸線 各駅）」（歩行空間ナビ・データプラットフォーム https://www.hokonavi.go.jp/opendata/ ・公共データ利用規約 第1.0版）、国土交通省「新宿駅周辺屋内地図オープンデータ（令和2年度更新版）」（G空間情報センター・政府標準利用規約）を加工して作成（`tools/build_indoor.py`）。大江戸線の出口番号の一部は © OpenStreetMap contributors（ODbL）
 - `data/indoor/ikebukuro-station*.js`（v154）— 池袋駅の地下通路・出口: © OpenStreetMap contributors（ODbL 1.0）。Overpass API から取得（highway=footway/steps/corridor の level・indoor・tunnel、railway=subway_entrance など）。有志の登録によるため、すべての通路があるとは限らない
 - `data/indoor/<地区>__out.js`（v154）— 構内図の地区のまわり 700 m の歩道: 上の «歩行空間ネットワークデータ» の各地区を切り出して構内図の座標に写したもの
+
+## v164
+- 案内中の «移動の詳細»（`assets/navui.js`）の号車・乗り場・出口 — `data/details/<駅名>.js` の現地調査データ（`boarding` / `tracks` / `exits`。運営者・協力者が現地で確かめて書く）だけを使う。無い駅は «未調査» と出し、推測や外部データで埋めない。乗り場・出口のひな形は `data/details/TEMPLATE-記入例.js.txt`
+- 案内中の AR（`assets/arguide.js` を案内用に流用）— 端末の GPS・コンパス・カメラだけ（外部データなし・映像や位置はどこにも送らない）
+- 警報の帯の «レベル設定» と «確認ずみ»（`assets/alerts.js`）— 出どころは従来どおり気象庁（防災気象情報・津波）。表示レベルと確認ずみの ID は端末の localStorage にだけ保存（どこにも送らない）。注意報の名前はコード表（10〜26）を自前で持つ

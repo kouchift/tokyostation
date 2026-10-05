@@ -119,5 +119,11 @@ code{font-size:12px;background:#EEF2F7;padding:0 3px;border-radius:3px}.box{back
 <li><code>data/indoor/ikebukuro-station*.js</code>（v154）— 池袋駅の地下通路・出口: © OpenStreetMap contributors（ODbL 1.0）。Overpass API から取得（highway=footway/steps/corridor の level・indoor・tunnel、railway=subway_entrance など）。有志の登録によるため、すべての通路があるとは限らない</li>
 <li><code>data/indoor/&lt;地区&gt;__out.js</code>（v154）— 構内図の地区のまわり 700 m の歩道: 上の «歩行空間ネットワークデータ» の各地区を切り出して構内図の座標に写したもの</li>
 </ul>
+<h3>v164</h3>
+<ul>
+<li>案内中の «移動の詳細»（<code>assets/navui.js</code>）の号車・乗り場・出口 — <code>data/details/&lt;駅名&gt;.js</code> の現地調査データ（<code>boarding</code> / <code>tracks</code> / <code>exits</code>。運営者・協力者が現地で確かめて書く）だけを使う。無い駅は «未調査» と出し、推測や外部データで埋めない。乗り場・出口のひな形は <code>data/details/TEMPLATE-記入例.js.txt</code></li>
+<li>案内中の AR（<code>assets/arguide.js</code> を案内用に流用）— 端末の GPS・コンパス・カメラだけ（外部データなし・映像や位置はどこにも送らない）</li>
+<li>警報の帯の «レベル設定» と «確認ずみ»（<code>assets/alerts.js</code>）— 出どころは従来どおり気象庁（防災気象情報・津波）。表示レベルと確認ずみの ID は端末の localStorage にだけ保存（どこにも送らない）。注意報の名前はコード表（10〜26）を自前で持つ</li>
+</ul>
 
 </main></body></html>
