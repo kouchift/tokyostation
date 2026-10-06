@@ -76,7 +76,9 @@ if(!window.__pvP){go();return;}
 /* v140: crit.css が届くまでは、下書きの地図と «用意しています» だけ（ほかは隠す） */
 html:not(.crit-ok) body{margin:0;background:#F5F6F8;font-family:system-ui,sans-serif}
 html:not(.crit-ok) .app{visibility:hidden}
-html:not(.crit-ok) .mapwrap{visibility:visible;position:fixed;inset:0;min-height:0;overflow:hidden}
+/* v171: crit.css が届く前の地図の枠は、最終の位置（ヘッダー＋出発バーの下・下のタブの上）に置く。全画面にすると CSS が届いた瞬間に下書きの地図ごと動いて «画面のずれ»（PC で 0.76）になる */
+html:not(.crit-ok) .mapwrap{visibility:visible;position:fixed;left:0;right:0;top:114px;bottom:48px;min-height:0;overflow:hidden}
+html:not(.crit-ok) body.slim .mapwrap{top:44px;bottom:48px}
 html:not(.crit-ok) .mapwrap>*{visibility:hidden}
 html:not(.crit-ok) .mapwrap>.mappv,html:not(.crit-ok) .mapwrap>#skel{visibility:visible}
 /* v142: app.min.css が届くまでは、crit に無い «あとから出る部品»（.app の外に足される窓など）は隠す（崩れた形を見せない） */
