@@ -2723,7 +2723,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 .bzr__h{font-size:12.5px;margin:2px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .bzr__l{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px;max-height:180px;overflow:auto}
 .bzr__i{display:grid;grid-template-columns:44px 64px 1fr 18px;gap:6px;align-items:center;text-align:left;border:1px solid #eee;background:#fff;border-radius:8px;padding:5px 8px;font-size:12px;cursor:pointer}
-.bzr__i.far{opacity:.7}
+.bzr__i.far{opacity:.92}   /* v170: 薄くしすぎると日付の文字が 3:1 になる */
 .bzr__d{color:var(--muted,#5F6772);font-size:11px}.bzr__a{color:#444;font-size:11px;background:#f2f2f2;border-radius:4px;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bzr__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bzr__none{font-size:12px;color:#666;margin:4px 0}
@@ -3137,7 +3137,7 @@ body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
 .sns--x{background:#000;color:#fff;border-color:#000}
 .sns--ig{background:#C4255E;color:#fff;border-color:#C4255E}
 .sns--tt{background:#111;color:#fff;border-color:#111;box-shadow:inset 0 0 0 2px #69C9D0, inset 0 0 0 4px #111}
-.sns--line{background:#06C755;color:#fff;border-color:#06C755}
+.sns--line{background:#06C755;color:#0B2E1A;border-color:#06C755}   /* v170: LINE の緑に白では 2.3:1。濃い緑の字に */
 .sns--fb{background:#1877F2;color:#fff;border-color:#1877F2}
 .sns--wa{background:#25D366;color:#fff;border-color:#25D366}
 .sns--tg{background:#229ED9;color:#fff;border-color:#229ED9}
@@ -3225,7 +3225,7 @@ html:not(.fonts-ok) .ms{visibility:hidden}
 .hdr__ic{width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--label);display:inline-flex;align-items:center;justify-content:center;padding:0;position:relative;flex:0 0 auto}
 .hdr__ic .ms{font-size:23px}
 .hdr__ic:hover{background:var(--control2);color:var(--text)}
-.hdr__ic--avatar{width:36px;height:36px;background:var(--text);color:#fff;box-shadow:var(--sh-xs);margin-left:2px}
+.hdr__ic--avatar{width:44px;height:44px;background:var(--text);color:#fff;box-shadow:var(--sh-xs);margin-left:2px}
 .hdr__ic--avatar .ms{font-size:20px}
 .hdr__ic--avatar:hover{background:#2d3135;color:#fff}
 .hdr__btn--plan.has{color:var(--lb900)}
@@ -3243,7 +3243,7 @@ html:not(.fonts-ok) .ms{visibility:hidden}
 .topbar{background:rgba(247,249,255,.92);border-bottom:1px solid rgba(224,227,232,.7)}
 .tripbar{background:transparent;border:0;gap:6px;padding:0 12px}
 .app>.topbar{height:var(--tripbar-h,50px)}
-.tb__btn{height:34px;padding:0 13px;border:0;border-radius:999px;background:var(--control2);color:var(--text);font-weight:700;font-size:12px;box-shadow:none}
+.tb__btn{height:40px;padding:0 13px;border:0;border-radius:999px;background:var(--control2);color:var(--text);font-weight:700;font-size:12px;box-shadow:none}
 .tb__btn:hover{background:var(--grid);border:0}
 .tb__btn--go{background:var(--lb900);color:#fff}
 .tb__btn--go:hover{background:var(--lb600)}
@@ -3251,9 +3251,9 @@ html:not(.fonts-ok) .ms{visibility:hidden}
 .tb__btn--warn{background:var(--amberbg);color:var(--amber)}
 .tb__from{font-size:11.5px;color:var(--muted);font-weight:500}
 .tb__from.on{color:var(--lb900);font-weight:700}
-.tb__dt{height:34px;border:0;border-radius:999px;background:var(--control2);padding:0 12px;font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)}
+.tb__dt{height:40px;border:0;border-radius:999px;background:var(--control2);padding:0 12px;font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)}
 .aggr{display:inline-flex;gap:0;background:var(--control2);border-radius:999px;padding:3px}
-.aggr__b{height:28px;border:0;border-radius:999px;background:transparent;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--label)}
+.aggr__b{height:36px;border:0;border-radius:999px;background:transparent;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--label)}
 .aggr__b[aria-pressed=true]{background:#fff;color:var(--lb900);box-shadow:var(--sh-xs)}
 body.night .topbar{background:#181c20}
 body.night .tripbar{background:transparent}
@@ -3691,7 +3691,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* 出発バーは初回は二次 UI。ルート検索を始めたら通常表示 */
 .topbar{background:#fff;border-bottom:1px solid var(--grid)}
 .tripbar{max-height:var(--tripbar-h)}   /* overflow は既存のまま（横スクロールを壊さない） */
-body:not(.route-active) .tripbar{opacity:.72}
+body:not(.route-active) .tripbar{opacity:.9}   /* v170: .72 では文字のコントラストが 3:1 を切っていた */
 body.route-active .tripbar{max-height:none;opacity:1}
 body.route-active .heroSearch{opacity:.92}
 body.route-active .heroSearch:hover,body.route-active .heroSearch:focus-within{opacity:1}
@@ -4522,7 +4522,7 @@ html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}
    文字は小さく・薄く。ただし «読める» の最低ライン（背景とのコントラスト約 3.5:1）は守る。地形を出している間は «地理院» を残す */
 .attrib{pointer-events:auto;font-size:8.5px;line-height:1.35;color:#858585;background:rgba(255,255,255,.72);padding:0 4px;border-radius:4px;max-width:min(78vw,520px);white-space:normal;overflow:visible;text-overflow:clip;display:flex;align-items:center;gap:2px}
 .attrib a{color:inherit;text-decoration:underline;text-decoration-thickness:.5px}
-.attrib__i{border:0;background:none;color:inherit;font:inherit;font-size:13px;line-height:1;padding:0;margin:0 -4px 0 0;cursor:pointer;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center}
+.attrib__i{border:0;background:none;color:inherit;font:inherit;font-size:13px;line-height:1;padding:0;margin:0 -2px 0 0;cursor:pointer;min-width:30px;min-height:30px;display:inline-flex;align-items:center;justify-content:center}
 .attrib:not(.open) .attrib__t,.attrib__g,.attrib:not(.rl) .attrib__rl{display:none}
 .attrib.rl:not(.open) .attrib__g{display:inline}
 .attrib:not(.open){background:rgba(255,255,255,.35)}
