@@ -39,7 +39,7 @@ function mapShadow(v) {
 }
 /* 動き: .08〜.13s → fast / .14〜.22s → base / .23〜.32s → slow。長いもの（0.5s〜）は演出なので触らない。イージングは linear / ease / ease-in-out → var(--ease) */
 function mapTransition(v) {
-  if (/none|var\(--t-/.test(v)) return v;
+  if (/none|var\(--t-|var\(--ease/.test(v)) return v;   // 2 回目に var(--ease) の中の ease を写さない
   let changed = false;
   let out = v.replace(/(\d*\.?\d+)(m?s)\b/g, (s, n, u) => { let ms = u === "ms" ? +n : +n * 1000; if (ms < 60 || ms > 330) return s; changed = true; return ms <= 130 ? "var(--t-fast)" : ms <= 220 ? "var(--t-base)" : "var(--t-slow)"; });
   out = out.replace(/\b(ease-in-out|ease-out|ease-in|linear|ease)\b/g, m => { changed = true; return "var(--ease)"; });
