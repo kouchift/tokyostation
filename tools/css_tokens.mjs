@@ -32,7 +32,7 @@ function mapShadow(v) {
   if (/var\(|inset|none|currentColor|--lc/.test(v)) return v;
   const parts = v.split(/,(?![^(]*\))/).map(s => s.trim());
   if (parts.length > 1) return v;
-  const m = /^(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px(?:\s+(-?\d+(?:\.\d+)?)px)?\s+rgba?\(0,\s*0,\s*0,\s*(\.\d+|0\.\d+|\d)\)$/.exec(parts[0]);
+  const m = /^(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px(?:\s+(-?\d+(?:\.\d+)?)px)?\s+rgba?\((?:0|24|16|0),\s*(?:0|28|24|34),\s*(?:0|32|40|74),\s*(\.\d+|0\.\d+|\d)\)$/.exec(parts[0]);   // 黒・紺（24,28,32 / 0,34,74 / 16,24,40）の影だけ（色のついた影は演出）
   if (!m) return v;
   const blur = +m[3]; const tok = blur <= 6 ? "1" : blur <= 16 ? "2" : "3";
   tick("shadow " + tok); return "var(--sh-" + tok + ")";
@@ -47,8 +47,13 @@ function mapTransition(v) {
 }
 /* 灰色: 文字色は読める濃さに、線・背景は段階に。色みのある色は触らない */
 function grey(hex) { let h = hex.replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); if (h.length !== 6) return null; const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); if (Math.max(r, g, b) - Math.min(r, g, b) > 8) return null; return (r + g + b) / 3; }
+function hsl(hex) { let h = hex.replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); if (h.length !== 6) return null; const r = parseInt(h.slice(0, 2), 16) / 255, g = parseInt(h.slice(2, 4), 16) / 255, b = parseInt(h.slice(4, 6), 16) / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; if (mx === mn) return { h: 0, s: 0, l }; const d = mx - mn, s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); let hh = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return { h: hh * 60, s, l }; }
+/* 青の仲間（色相 200〜225°・彩度 .5 以上）は brand の 3 段に寄せる（ロゴの紺・リンク・主ボタンがばらばらだった） */
+function mapBlue(hex) { const c = hsl(hex); if (!c || c.s < 0.5 || c.h < 200 || c.h > 226) return null; if (c.l < 0.2) return "--brand-ink"; if (c.l <= 0.42) return "--brand"; if (c.l <= 0.6) return "--brand-2"; return null; }
 function mapGreyColor(v, prop) {
   return v.replace(/#[0-9a-fA-F]{3}\b|#[0-9a-fA-F]{6}\b/g, hex => {
+    let bl = mapBlue(hex); if (bl === "--brand-2" && prop === "color") bl = "--brand";   // 空色は白地の文字には薄すぎる（3.5:1）
+    if (bl && /^(color|background|background-color|border|border-color|border-top|border-bottom|border-left|border-right|fill|stroke)$/.test(prop)) { tick("blue " + hex.toLowerCase() + "→" + bl); return "var(" + bl + ")"; }
     const l = grey(hex); if (l === null) return hex;
     let tok;
     if (prop === "color" || prop === "fill" || prop === "stroke") {
@@ -63,7 +68,7 @@ function mapGreyColor(v, prop) {
   });
 }
 /* 暗い面（濃いカード・案内バー・夜）の決まりでは、灰色の文字を濃くしない（暗い背景で読めなくなる） */
-const DARK = /modal--dark|card--dark|\.night|\.navbar|\.nav__|glass|--dark|\.dark\b|loadbar|\.hint\b|lb__|bootwarn|\.sheet--d/;
+const DARK = /modal--dark|card--dark|\.night|\.navbar|\.nav__|glass|--dark|\.dark\b|loadbar|\.hint\b|lb__|bootwarn|\.sheet--d|sns--|sh__b--|\.fb\b|\.x--|lbadge|plate__|\.lchip/;   // 暗い面と、各社の色（SNS）・路線色の札は触らない
 function rewrite(css) {
   // 決まり（selector{…}）ごとに処理。:root の定義（--xxx:）は触らない
   return css.replace(/([^{}]+)\{([^{}]*)\}/g, (block, sel, body) => {
