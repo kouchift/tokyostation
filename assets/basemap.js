@@ -351,7 +351,7 @@ function quickBar() {
   if (B.qbMini) {
     q.className = "quickbar mini";
     q.innerHTML = (RG.slimSpotHtml ? RG.slimSpotHtml() : "") +   // v103: スマホでは «📍 スポット» をここに（帯はやめた）
-      '<button class="qb__open" type="button" id="qb-open">🗺️ 地図の設定</button>' +
+      '<button class="qb__open" type="button" id="qb-open"><span class="ms" aria-hidden="true">layers</span> 地図の設定</button>' +
       '<button class="qb__open qb__open--hist" type="button" id="qb-hist">📜 れきし地図</button>' +   // v128
       (cur ? '<button class="qb__open qb__open--h" type="button" id="qb-open2">' +
         cur.e + " " + esc(cur.label) + "</button>" : "");

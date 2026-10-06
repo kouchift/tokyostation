@@ -69,6 +69,7 @@ function span(t) {
   var s = t.__mls;
   if (!s) {
     s = t.__mls = document.createElement("span"); s.className = "ml"; s.__t = t;
+    s.dataset.k = t.classList.contains("st-lbl") ? "st" : "x";   // v173: 駅名かそれ以外か（案内中は駅名以外を薄くする）
     /* v171: ここでは足さない。位置（transform）を決めてから足す（(0,0) に一度描かれてから動くと «画面のずれ»（CLS 0.76）に数えられる） */
   }
   return s;
