@@ -365,7 +365,7 @@ O.close = function () { if (O.guide) O.stopGuide(); O.on = false; if (O.el) O.el
 O.toggle = function () { if (O.on) O.close(); else O.open(); };
 O.init = function () {
   var zb = $(".zoombar"); if (zb && !$("#zonsite")) {
-    var b = document.createElement("button"); b.id = "zonsite"; b.className = "sm zb--onsite"; b.type = "button"; b.setAttribute("aria-label", "現地モード（近くの出口・コンビニ・食事・目的地）"); b.title = "現地モード"; b.setAttribute("aria-pressed", "false");
+    var b = document.createElement("button"); b.id = "zonsite"; b.className = "sm zb--onsite zb--x"; b.type = "button"; b.setAttribute("aria-label", "現地モード（近くの出口・コンビニ・食事・目的地）"); b.title = "現地モード"; b.setAttribute("aria-pressed", "false");
     b.innerHTML = '<span class="ms">explore</span>';
     var rail = $("#zrail"); zb.insertBefore(b, rail || null);
     b.addEventListener("click", function () { O.toggle(); });

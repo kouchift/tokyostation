@@ -2306,7 +2306,7 @@ RG.paintPick = function (a) { Map.paintPick(a); };
 
 /* ==================================================== 検索とフィルタ chip */
 function initSearch() {
-  var input = $("#q"), sug = $("#sug");
+  var input = $("#q"), sug = $("#sug"); if (!input || !sug) return;   // v172: ヘッダーの隠し検索は撤去（入口カードの検索に 1 本化）
   function clear() { sug.innerHTML = ""; }
   input.addEventListener("input", function () {
     var v = input.value.trim(); clear(); if (!v) return;
@@ -2765,6 +2765,16 @@ RG.boot = function () {
     $("#zout").addEventListener("click", function () { Map.zoom(1.45); });
     $("#zfit").addEventListener("click", Map.fitAll);
     $("#zhub").addEventListener("click", function () { RG.goHere(); });   // v113: ◎ は «現在地へ»（取れないときは東京駅へ。v89 までは東京駅へ）
+    /* v172: スマホのズームバーは ＋ − 現在地 えらぶ だけ。全体・広く・現地・〒 は «⋯ その他» の中（1 タップで開く） */
+    var zm = $("#zmore"), zbar = document.querySelector(".zoombar");
+    if (zm && zbar) {
+      zm.addEventListener("click", function () {
+        var on = !zbar.classList.contains("open"); zbar.classList.toggle("open", on); zm.setAttribute("aria-expanded", String(on));
+        var seen = false; try { seen = !!localStorage.getItem("tsg.zmore.seen"); } catch (e) {}
+        if (on && !seen && RG.tripStatus) { RG.tripStatus("⋯ の中: 全体表示・地図を広く・現地モード・〒。ピンチアウトでも全体に戻れます", "info", 4500); try { localStorage.setItem("tsg.zmore.seen", "1"); } catch (e) {} }
+      });
+      document.addEventListener("pointerdown", function (e) { if (zbar.classList.contains("open") && !e.target.closest(".zoombar")) { zbar.classList.remove("open"); zm.setAttribute("aria-expanded", "false"); } }, true);
+    }
     $("#zhub").setAttribute("aria-label", "現在地へ（取れないときは東京駅）"); $("#zhub").title = "現在地へ";
     var bh = $("#btn-hub");
     if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });

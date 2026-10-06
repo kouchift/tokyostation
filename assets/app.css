@@ -5016,3 +5016,28 @@ body.slim.mapfocus .tb__status{bottom:72px}
 .pl__sum>span{flex:0 0 auto;white-space:nowrap}
 .pl__sum b{min-width:0;white-space:nowrap}
 .pl__sum>small,.pl__sum>i{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* =========================================================================
+   v172: 第一印象と導線（R3）
+   A. PC の出発バーはふだん畳み、入口カードの 1 行（.tripFold）から開く。ルート比較を始めたら／設定 «いつも出す» なら常設
+   B. スマホのズームバーは ＋ − 現在地 えらぶ ＋ «⋯»。全体・広く・現地・〒 は ⋯ の中
+   ========================================================================= */
+.tripFold{display:none;align-items:center;gap:8px;width:100%;margin:8px 0 2px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper-2);color:var(--ink);font:inherit;font-size:var(--fs-13);text-align:left;cursor:pointer}
+.tripFold:hover{background:var(--paper-3)}
+.tripFold .ms{font-size:18px;color:var(--ink-3)}
+.tripFold__t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tripFold__t b{font-weight:700;color:var(--brand)}
+.tripFold__x{transition:transform var(--t-base) var(--ease)}
+body.trip-open .tripFold__x{transform:rotate(180deg)}
+@media (min-width:721px){
+  .tripFold{display:flex}
+  body.route-active .tripFold,body.trip-always .tripFold{display:none}
+  body:not(.route-active):not(.trip-always):not(.trip-open){--tripbar-h:0px}
+  body:not(.route-active):not(.trip-always):not(.trip-open) .topbar{display:none}
+  #zmore{display:none}
+}
+@media (max-width:720px){
+  .zoombar:not(.open) .zb--x{display:none}
+  .zoombar.open{background:rgba(255,255,255,.98)}
+  #zmore[aria-expanded=true]{background:var(--brand-50);color:var(--brand)}
+}

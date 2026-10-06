@@ -106,7 +106,7 @@ RG.searchRemote = function (q, cb) {
 
 /* ------------------------------------------------------------ 検索UI */
 RG.initSearchUI = function () {
-  var input = $("#q"), sug = $("#sug");
+  var input = $("#q"), sug = $("#sug"); if (!input || !sug) return;   // v172: ヘッダーの隠し検索は撤去
   var last = "", remoteRows = [];
   function clear() { sug.innerHTML = ""; }
 

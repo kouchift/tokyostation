@@ -136,7 +136,7 @@ RG.initZip = function () {
   // 〒 ボタン（ズームボタンの列に足す）
   var zb = document.querySelector(".zoombar");
   if (zb) {
-    var b = el("button", { id: "zipbtn", class: "sm", type: "button", "aria-label": "郵便番号を調べる", title: "郵便番号：地図をタップすると、その場所の郵便番号が出ます", text: "〒" });
+    var b = el("button", { id: "zipbtn", class: "sm zb--x", type: "button", "aria-label": "郵便番号を調べる", title: "郵便番号：地図をタップすると、その場所の郵便番号が出ます", text: "〒" });
     b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () { RG.zipSet(!zipOn, true); });
     zb.appendChild(b);
