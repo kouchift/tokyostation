@@ -207,7 +207,7 @@ function bar(off, rest, acc) {
   if (rest == null && N.lastRest != null) { rest = N.lastRest; off = N.lastOff; acc = N.lastAcc; }   // 描き直しでも最後の位置の数字を残す
   b.innerHTML =
     '<div class="nav__bar">' +
-      (U ? '<button class="nav__main" id="nv-detail" type="button" aria-label="移動の詳細を開く" title="移動の詳細（乗り場・号車・出口）">' : '<span class="nav__main">') +
+      (U ? '<button class="nav__main" id="nv-detail" type="button" aria-label="詳細（乗り場・号車・出口）を開く" title="移動の詳細（乗り場・号車・出口）">' : '<span class="nav__main">') +
       '<span class="nav__i">🧭</span>' +
       '<span class="nav__t"><b>' + esc(N.destName) + "</b> へ案内中" + (U ? ' <u class="nav__more">詳細 ▸</u>' : "") +
         '<i>' + esc(N.modeLabel) +

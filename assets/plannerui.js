@@ -754,7 +754,7 @@ function pareto(r) {
       '<text x="' + X(o.minutes) + '" y="' + (Y(o.yen) - 3.3) + '" font-size="2.9" text-anchor="middle">' +
       o.m.emoji + "</text></g>";
   }).join("");
-  return '<div class="chartwrap"><svg viewBox="0 0 ' + W + " " + H + '" class="pareto" role="img" ' +
+  return '<div class="chartwrap"><svg viewBox="0 0 ' + W + " " + H + '" class="pareto" role="group" ' +
     'aria-label="所要時間と費用の比較"><text x="' + ml + '" y="' + (mt + 2.4) + '" font-size="2.6" fill="#626264">円</text>' +
     g + (path ? '<path d="' + path + '" fill="none" stroke="#0055AD" stroke-width=".6" stroke-dasharray="1.6 1.2" opacity=".75"/>' : "") +
     dots + '</svg><p class="chartnote">青い破線＝<b>パレート最適</b>。それより速くて安い手段が無い選択肢です。' +
@@ -848,7 +848,7 @@ function axesHtml(ax) {
     return '<button class="ax" type="button" data-jump="' + o.__i + '"><span class="ax__l">' + icon + " " + label + "</span><b>" + o.m.emoji + " " + esc(o.m.label) + "</b><small>" + o.minutes + "分 ・ " + yen(o.yen) +
       (key === "few" && x != null ? " ・ 乗換" + x + "回" : key === "less" && w != null ? " ・ 徒歩" + w + "分" : "") + "</small></button>";
   }
-  return '<div class="axes"><span class="axes__l">比較軸</span>' + chip("fast", "⚡", "速さ重視", ax.fast) + chip("few", "🔁", "乗換少なめ", ax.few) + chip("less", "🚶", "徒歩少なめ", ax.less) + chip("cheap", "💴", "安さ重視", ax.cheap) + "</div>";
+  return '<div class="axes" tabindex="0" aria-label="比較軸"><span class="axes__l">比較軸</span>' + chip("fast", "⚡", "速さ重視", ax.fast) + chip("few", "🔁", "乗換少なめ", ax.few) + chip("less", "🚶", "徒歩少なめ", ax.less) + chip("cheap", "💴", "安さ重視", ax.cheap) + "</div>";
 }
 /* 検索条件を復元できる URL（?from=駅ID&to=駅ID。現在地からのときは from を省き、開いた人が出発地を決める） */
 RG.routeShareUrl = function (destId) {

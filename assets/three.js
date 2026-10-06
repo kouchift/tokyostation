@@ -230,6 +230,8 @@ function draw() {
   if (!B.mode3d) { g3.style.display = "none"; svg.classList.remove("d3on"); return; }
   g3.style.display = "";
   svg.classList.add("d3on");
+  /* v170: 建物の形（data/bldg3d.js・約 1 秒の読み込み）は 3D を点けたときだけ取りに行く */
+  if (!RG.BLDG3D && RG.ensureData && !draw.__asked) { draw.__asked = 1; RG.ensureData("bldg", function () { draw.__asked = 0; draw(); }); }
 
   var P = params();
   var out = [];
