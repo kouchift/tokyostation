@@ -132,7 +132,7 @@ var Rail = (function () {
           var m = meta(n), hasBadge = !!(m.k) || meta(n).e >= 2;
           var col = (m.conf !== "なし" ? m.c : (lineColor[n] || m.c));
           return '<button class="lr__i' + (hasBadge ? "" : " lr__i--txt") + '" type="button" data-line="' + esc(n) + '" ' +
-            'style="--lc:' + col + '" aria-pressed="false" aria-label="' + esc(n) + '" title="' + esc(n + (m.o ? "（" + m.o + "）" : "")) + '">' +
+            'style="--lc:' + col + '" aria-pressed="false" aria-label="' + esc((hasBadge && m.k ? m.k + " " : "") + n) + '" title="' + esc(n + (m.o ? "（" + m.o + "）" : "")) + '">' +
             (hasBadge ? badge(m, false, n) : '<span class="lbadge lbadge--t" style="--lc:' + col + '">' + esc(shortLine(n).slice(0, 5)) + "</span>") + "</button>"; }).join("") + "</div>";
     }).join("");
     if (!rows) rows = '<div class="lr__row"><span class="lr__g">' + esc(pref) + '</span><span class="lr__empty">' + (LP ? "この都道府県を通る路線が見つかりません" : "都道府県の境界を読み込み中です。少し待ってからもう一度えらんでください") + "</span></div>";
@@ -159,7 +159,7 @@ var Rail = (function () {
         return '<button class="lr__i lr__i--g lr__i--v2' + (g.enabled ? "" : " off") + '" type="button" ' +
           'data-genre="' + esc(g.id) + '" style="--lc:' + g.c + '" aria-pressed="false" ' +
           'data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '" ' +
-          (g.enabled ? "" : "disabled ") + 'aria-label="' + esc(g.label) + '">' +
+          (g.enabled ? "" : "disabled ") + ">" +   // v170: 名前は見える文字（短い名前＋件数）から。aria-label で別の名前にしない
           (RG.gMark ? RG.gMark(g) : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +
           '<span class="lr__lbl">' + esc(g.short || g.label) + "</span>" +
           '<span class="lr__num">' + (!g.enabled ? "データなし" : n ? n.toLocaleString() : g.optIn ? "押すと出る" : "&nbsp;") + "</span>" +
@@ -650,7 +650,7 @@ var Rail = (function () {
   }
   RG.lineBadgeText = function (n) { var m = meta(n); return m.k ? "[" + m.k + "] " : ""; };
 
-  return { build: build, meta: meta };
+  return { build: build, meta: meta, isBuilt: function () { return !!box; } };
 })();
 RG.Rail = Rail;
 
@@ -744,7 +744,7 @@ function openSettings() {
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
     (RG.QOS ? '<div class="set__sec"><h4>📶 表示の軽さ</h4><p class="set__d">通信がゆっくりなとき（月末の速度制限など）や、力の弱いスマホでは、地図と駅を最優先にして、写真は押したときだけ読みます。</p>' +
-      '<select data-qos class="set__sel"><option value="auto"' + (RG.QOS.mode === "auto" ? " selected" : "") + '>自動（おすすめ）</option><option value="full"' + (RG.QOS.mode === "full" ? " selected" : "") + '>しっかり表示（通信が速いとき）</option><option value="lite"' + (RG.QOS.mode === "lite" ? " selected" : "") + '>軽く（通信を節約）</option></select>' +
+      '<select data-qos class="set__sel" aria-label="表示の軽さ"><option value="auto"' + (RG.QOS.mode === "auto" ? " selected" : "") + '>自動（おすすめ）</option><option value="full"' + (RG.QOS.mode === "full" ? " selected" : "") + '>しっかり表示（通信が速いとき）</option><option value="lite"' + (RG.QOS.mode === "lite" ? " selected" : "") + '>軽く（通信を節約）</option></select>' +
       '<p class="set__d" data-qos-now>' + esc(RG.QOS.label()) + "</p>" +
       (RG.idleLeft && RG.idleLeft() ? '<button type="button" class="set__b" data-rest>📥 まだ読んでいない地図のデータ（' + RG.idleLeft() + ' 件）も読み込む</button>' : "") + "</div>" : "") +   // v139
     (RG.mapFocusSwitchHTML ? RG.mapFocusSwitchHTML() : "") +   // v102
@@ -905,7 +905,11 @@ RG.delegateClick = delegate;
 
 RG.initLinesUI = function () {
   if (window.matchMedia && matchMedia("(max-width:720px)").matches) ST.railOpen = false;   // v88: スマホは «えらぶ» シートを閉じた状態で始める（地図の上に重なるため）
-  Rail.build();
+  /* v170: スマホは «えらぶ» を押すまで一覧（路線・90 ジャンル）を作らない（起動の長いタスクを 100ms ほど減らす）。
+     データが届いたとき（RG.rebuildRail）や設定からも作れる */
+  var slim = window.matchMedia && matchMedia("(max-width:720px)").matches, zr = document.getElementById("zrail");
+  if (slim && zr) zr.addEventListener("click", function () { if (!Rail.isBuilt()) { Rail.build(); if (RG.railToggle) RG.railToggle(true); } }, true);
+  else Rail.build();
   if (ST.secret) document.body.classList.add("secret");
   RG.Map.paintWatch(ST.watch);
   RG.Map.setPoiScale(ST.poiScale || 1);

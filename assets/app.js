@@ -190,7 +190,8 @@ RG.$ = $; RG.el = el; RG.esc = esc; RG.num = num; RG.isTouch = isTouch;
 RG.lineFg = function (hex) {
   var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim()); if (!m) return "#fff";
   var n = parseInt(m[1], 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
-  return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) > 0.18 ? "#111" : "#fff";
+  var L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  return (L + 0.05) / 0.0556 >= 1.05 / (L + 0.05) ? "#111" : "#fff";   // v170: 黒と白のうち、コントラスト比が高いほう（4.5:1 に近づける）
 };
 
 /* ================================================================ 索引構築 */
@@ -566,17 +567,23 @@ var Map = (function () {
       var p = el("path", { class: "ln" + (shin ? " ln--shin" : "") + (fav ? " ln--fav" : "") + (xm ? " ln--ext ln--" + xm : ""), d: byLine[k].join(""),
                            stroke: RG.lineColor[k] || "#9AA0A6", "stroke-width": 3.4,
                            fill: "none", "stroke-linecap": "round" });
-      // 押すための «太い透明な線»（細い線は指では狙えないため）
-      var hit = el("path", { class: "ln__hit", d: byLine[k].join(""),
-                             stroke: "transparent", "stroke-width": 13,
-                             fill: "none", "stroke-linecap": "round" });
-      hit.dataset.line = k;
-      hit.setAttribute("tabindex", "0");
-      hit.setAttribute("role", "button");
-      hit.setAttribute("aria-label", k + " をひらく");
-      gE.appendChild(hit); gE.appendChild(p); map[k] = [p, hit];
+      p.dataset.line = k;
+      gE.appendChild(p); map[k] = [p];
     });
     edgeByLine = map;
+    /* v170: 押すための «太い透明な線»（細い線は指では狙えないため）は、起動の長いタスクを短くするため «あとで» 作る
+       （最初に触ったとき、または 2 秒後）。それまでは細い線そのものが押せる */
+    var hitsDone = false;
+    function ensureHits() {
+      if (hitsDone) return; hitsDone = true;
+      Object.keys(byLine).forEach(function (k) {
+        var hit = el("path", { class: "ln__hit", d: byLine[k].join(""), stroke: "transparent", "stroke-width": 13, fill: "none", "stroke-linecap": "round" });
+        hit.dataset.line = k; hit.setAttribute("tabindex", "-1"); hit.setAttribute("role", "button"); hit.setAttribute("aria-label", k + " をひらく");   // 路線は数百本あるので Tab の止まり先にしない（キーボードは右下の «えらぶ» の路線一覧から）
+        gE.insertBefore(hit, map[k][0]); map[k].push(hit);
+      });
+    }
+    if (RG.whenSettled) RG.whenSettled(2000, ensureHits); else setTimeout(ensureHits, 2000);
+    RG.ensureLineHits = ensureHits;
     /* 路線の線を押すと、その路線のカードが開く（駅の一覧も入っています）。
        マウスを乗せると、路線名がふきだしで出ます。 */
     gE.addEventListener("click", function (ev) {
@@ -828,7 +835,7 @@ var Map = (function () {
     RG.__lblInfo = { z: +z.toFixed(2), dots: nDot, names: nName, cap: maxDot };
 
     svg.style.setProperty("--hitr", (12 * upx).toFixed(2));
-    svg.style.setProperty("--sthitr", (15 * upx).toFixed(2));
+    svg.style.setProperty("--sthitr", ((isTouch() ? 22 : 15) * upx).toFixed(2));   // v170: 指では 44px 相当の当たり判定
     var lv = $("#zlevel");
     if (lv) lv.textContent = z < 1.6 ? "全体" : z < 5 ? "広域" : z < 14 ? "地区" : "詳細";
     poiLOD();
@@ -1910,7 +1917,7 @@ var Card = (function () {
     return '<div class="sec sec--score"><div class="sec__h"><b>この駅の戦闘力</b>' +
       '<em><button class="rankbtn" type="button" data-rank="' + esc(st.id) + '">全国 ' + d.n +
       "駅中 <b>" + d.rank + "</b> 位 ▸ ランキング（全国・都道府県・路線）</button></em></div>" +
-      '<div class="scorewrap">' + RG.Score.radar(st.id) + '<div class="axes">' + bars + "</div></div>" +
+      '<div class="scorewrap">' + RG.Score.radar(st.id) + '<div class="axes" tabindex="0">' + bars + "</div></div>" +
       '<p class="mini">各軸は' + esc(RG.SCORE.radiusLabel) + "の実データを、23区全駅の中でのパーセンタイル順位（0〜100）に直したものです。" +
       "絶対値ではなく<b>相対評価</b>なので「東京の中でどのくらいか」を表します。</p>" + offHtml + "</div>";
   }
@@ -2659,7 +2666,7 @@ RG.initHeroSearch = function () {
     (RG.EXT && Object.keys(RG.EXT.lines).length ? "＋船・ヘリなど " + Object.keys(RG.EXT.lines).length : "");   // v124: 港・ヘリポートは «駅» に数えない   // v101: 「全国 8,381 駅・60 路線の路線図から…」
   // 高さを CSS 変数に（スマホでは «地図の設定»・ヒント・天気チップを hero の下に置くため）
   function measure() { if (hero) document.documentElement.style.setProperty("--hero-h", hero.offsetHeight + "px"); }
-  measure();
+  if (window.requestAnimationFrame) requestAnimationFrame(measure); else measure();   // v170: 描いた直後に高さを測ると画面の計算をやり直させる（起動の長いタスク）ので、次の描画のときに
   if (window.ResizeObserver && hero) new ResizeObserver(measure).observe(hero);
   window.addEventListener("resize", measure);
 };
@@ -2749,14 +2756,9 @@ RG.boot = function () {
   if (!RG.MAPPOI) RG.MAPPOI = [];
 
   // ---- ここから下は «地図が出るまで» に必要なもの ----
-  step("ジャンルアイコン", function () {   // v101: スプライトを取りに行く（届いたら印を描き直す。届かなければ絵文字のまま）
-    if (!RG.iconsInit) return;
-    document.addEventListener("rg:icons", function (e) { if (e.detail && e.detail.n && RG.Map && RG.Map.poiLOD) RG.Map.poiLOD(); if (RG.buildGroupBar) try { RG.buildGroupBar(); } catch (err) {} });
-    RG.iconsInit();
-  });
-  step("スポットの取り込み", function () { mergeExtraPois(); });
-  step("検索の索引", function () { buildIndex(); });
-  step("駅カード", function () { Card.init(); });
+  /* v170: 下ごしらえ（索引・駅カード）は RG.bootPrepare で先に済ませておける（loader.js が描画との間に息つぎを入れる。長いタスクを 2 つに割る） */
+  if (prepared) { failed = prepared.failed; timing = prepared.timing; RG.bootTiming = timing; }
+  else prepareSteps(step);
   step("路線図の描画", function () { Map.draw(); Map.initViewport(); if (RG.mlInit) RG.mlInit(); }, true);   // v144: 文字は重ね層（maplbl.js）
   step("地図のボタン", function () {
     $("#zin").addEventListener("click", function () { Map.zoom(1 / 1.45); });
@@ -2768,6 +2770,32 @@ RG.boot = function () {
     if (bh) bh.addEventListener("click", function () { Card.open(RG.HUB); });
   });
   later = [];                                                     // ここから下は «あとで»（最初の表示位置と文字の大きさだけは今）
+  bootRest(step);
+  var Q = later; later = null;
+  return bootFinish(Q, failed);
+};
+var prepared = null;
+function prepareSteps(step) {
+  step("ジャンルアイコン", function () {   // v101: スプライトを取りに行く（届いたら印を描き直す。届かなければ絵文字のまま）
+    if (!RG.iconsInit) return;
+    document.addEventListener("rg:icons", function (e) { if (e.detail && e.detail.n && RG.Map && RG.Map.poiLOD) RG.Map.poiLOD(); if (RG.buildGroupBar) try { RG.buildGroupBar(); } catch (err) {} });
+    RG.iconsInit();
+  });
+  step("スポットの取り込み", function () { mergeExtraPois(); });
+  step("検索の索引", function () { buildIndex(); });
+  step("駅カード", function () { Card.init(); });
+}
+RG.bootPrepare = function () {
+  if (prepared) return;
+  var P = { failed: [], timing: [] }; prepared = P;
+  if (!RG.MAPPOI) RG.MAPPOI = [];
+  prepareSteps(function (name, fn, vital) {
+    var t0 = performance.now();
+    try { fn(); } catch (err) { P.failed.push({ n: name, e: (err && err.message) || String(err), vital: !!vital }); if (window.console) console.error("[起動] " + name + " でつまずきました:", err); }
+    P.timing.push([name, Math.round(performance.now() - t0)]);
+  });
+};
+function bootRest(step) {
 
   // ---- ここから下は «無くても地図は見られる» もの ----
   step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
@@ -2848,12 +2876,19 @@ RG.boot = function () {
       }, function () {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
     }
     // 前に «許可しない» にした人には聞き直さない
-    if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: "geolocation" }).then(function (s) { if (s.state !== "denied") ask(); }, ask);
-    else ask();
+    // v170: 起動時に «許可しますか» のダイアログを出さない。前に許可した人だけ、黙って現在地のあたりを出す（はじめての人は «現在地から» を押したときに聞く）
+    if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name: "geolocation" }).then(function (s) { if (s.state === "granted") ask(); }, function () {});
   }
 
-  /* «あとで» の列を、息つぎしながら順に。終わったら rg:booted（loader.js はこれを待ってから追加データを読み始める） */
-  var Q = later; later = null;
+}
+/* «あとで» の列を、息つぎしながら順に。終わったら rg:booted（loader.js はこれを待ってから追加データを読み始める） */
+function bootFinish(Q, failed) {
+  function runStep(name, fn, vital) {
+    var t0 = performance.now();
+    try { fn(); }
+    catch (err) { failed.push({ n: name, e: (err && err.message) || String(err), vital: !!vital }); if (window.console) console.error("[起動] " + name + " でつまずきました:", err); }
+    RG.bootTiming.push([name, Math.round(performance.now() - t0)]);
+  }
   RG.bootFailed = failed;
   RG.booted = false;
   /* 本体の残り（app.extra.js）が要らない手順は先に。要る手順は、届くのを待ってから */
@@ -2879,7 +2914,7 @@ RG.boot = function () {
   }
   drain();
   return failed;
-};
+}
 
 /* つまずいた部品を、画面の下に静かに知らせる（地図は使えるまま） */
 RG.showBootTrouble = function (failed) {

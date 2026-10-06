@@ -26,7 +26,7 @@ function pillText() {
   var h1 = hero && hero.querySelector("h1");
   return h1 ? h1.textContent.replace(/\s+/g, "") : "東京駅から、どこへ行く？";
 }
-function paintPill() { if (!pill) return; var b = pill.querySelector("b"); if (b) b.textContent = pillText(); }
+function paintPill() { if (!pill) return; var b = pill.querySelector("b"); if (b) b.textContent = pillText(); pill.setAttribute("aria-label", pillText() + "（行き先の検索を開く）"); }   // v170: 名前は見える文字から始める
 function apply(m, why) {
   if (!hero) return;
   mode = m;
@@ -128,7 +128,6 @@ RG.mapFocusInit = function () {
   // 1 行のピル（mini のときだけ見える）
   pill = document.createElement("button");
   pill.type = "button"; pill.className = "heroSearch__pill"; pill.id = "hero-pill"; pill.hidden = true;
-  pill.setAttribute("aria-label", "行き先の検索を開く");
   pill.innerHTML = '<span class="ms" aria-hidden="true">search</span><b></b><i class="ms" aria-hidden="true">expand_more</i>';
   pill.addEventListener("click", function () { RG.heroExpand(true);   /* v125: スマホでも 1 タップで入力へ（前は «開く→欄を押す» の 2 タップ） */ if (RG.settings && RG.settings.heroFold === "mini") { /* «いつも小さく» は開いても設定は変えない */ } });
   hero.insertBefore(pill, hero.firstChild);

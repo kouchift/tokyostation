@@ -616,7 +616,8 @@ body.secret .lbadge{min-width:25px;height:25px;font-size:11.5px;background:var(-
 .set__b{height:33px;padding:0 14px;border-radius:8px;border:1px solid var(--lb900);background:var(--lb900);
   color:#fff;font-size:12.5px;font-weight:600}
 .sug--set{top:36px}
-.set__sw{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.set__sw{display:flex;align-items:center;gap:8px;font-size:12.5px;min-height:32px}
+.set__sw input[type=checkbox],.set__sw input[type=radio],.set__row input[type=checkbox]{width:24px;height:24px;margin:0;flex:0 0 auto;accent-color:var(--lb900,#0055AD)}   /* v170: 24px 以上（WCAG 2.5.8） */
 .set__ok{font-size:12.5px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .set__note{margin-top:10px;background:#FFF6D9;border:1px dashed var(--ye600);border-radius:9px;
   padding:10px 12px;font-size:11px;line-height:1.75;color:#5c4a00}
@@ -2509,7 +2510,9 @@ html,body{max-width:100vw;overflow-x:hidden}
 }
 /* SVG の中の outline は地図の単位で描かれ、寄ると数km の黄色い輪になる（タップ後に出ていた巨大な丸の正体）。
    地図の中ではフォーカスを丸の色で示す */
-#map *:focus,#map *:focus-visible{outline:none !important}
+#map *:focus:not(:focus-visible){outline:none}
+/* v170: キーボードで駅・スポット・ランドマークに来たとき、どこにいるか見える */
+#map .node:focus-visible,#map .poi:focus-visible,#map .lm:focus-visible{outline:3px solid var(--lb600,#0055AD);outline-offset:3px;border-radius:50%}
 #map .node:focus-visible .st-dot,#map .poi:focus-visible .poi__c,#map .lm:focus-visible .lm__c{stroke:#FFB300 !important}
 
 /* =========================================================================
@@ -2587,7 +2590,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 .enr__lbx{position:fixed;top:10px;right:12px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer}
 .enr__lbn{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:30px;cursor:pointer}
 .enr__lbn--p{left:8px}.enr__lbn--n{right:8px}
-.attrib{position:absolute;right:6px;bottom:4px;font-size:9px;color:#6E7A88;background:rgba(255,255,255,.72);padding:1px 6px;border-radius:6px;pointer-events:none;z-index:5;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attrib{position:absolute;right:6px;bottom:6px;font-size:9px;color:#6E7A88;background:rgba(255,255,255,.72);padding:1px 6px;border-radius:6px;pointer-events:none;z-index:5;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:560px){.attrib{font-size:8px;right:4px;bottom:2px;max-width:50vw}}
 /* v68: 西武池袋線・山手線は引いていても見失わない */
 .ln--fav{opacity:min(1,calc(var(--lnop,1) * 1.6)) !important;stroke-width:calc(var(--lnw,3.4) * 1.45px) !important}
@@ -2720,8 +2723,8 @@ html,body{max-width:100vw;overflow-x:hidden}
 .bzr__h{font-size:12.5px;margin:2px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .bzr__l{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px;max-height:180px;overflow:auto}
 .bzr__i{display:grid;grid-template-columns:44px 64px 1fr 18px;gap:6px;align-items:center;text-align:left;border:1px solid #eee;background:#fff;border-radius:8px;padding:5px 8px;font-size:12px;cursor:pointer}
-.bzr__i.far{opacity:.7}
-.bzr__d{color:#888;font-size:11px}.bzr__a{color:#444;font-size:11px;background:#f2f2f2;border-radius:4px;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bzr__i.far{opacity:.92}   /* v170: 薄くしすぎると日付の文字が 3:1 になる */
+.bzr__d{color:var(--muted,#5F6772);font-size:11px}.bzr__a{color:#444;font-size:11px;background:#f2f2f2;border-radius:4px;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bzr__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bzr__none{font-size:12px;color:#666;margin:4px 0}
 .set__ver{border-top:1px dashed #ddd;margin-top:10px}
@@ -3076,7 +3079,7 @@ html.kuni-on .geo__pn{display:none!important}
 .app>.linerail{height:var(--chips-h);box-sizing:border-box;overflow:visible}   /* v88: overflow-y:hidden だと «えらぶ» で開く中身（バーの真上に出る）が切れて見えなかった（v82〜v87 の不具合） */
 .app>.mapwrap{flex:1 1 0;min-height:160px}
 /* v83: 文章欄の残り文字数 */
-.lg__l{display:block;font-size:12px;color:#555;margin:6px 0 2px}.lg__cnt{float:right;font-size:11.5px;color:#777;font-variant-numeric:tabular-nums}.lg__cnt.is-near{color:#C45E1A}.lg__cnt.is-full{color:#C62828;font-weight:700}
+.lg__l{display:block;font-size:12px;color:#555;margin:6px 0 2px}.lg__cnt{float:right;font-size:11.5px;color:var(--muted,#5F6772);font-variant-numeric:tabular-nums}.lg__cnt.is-near{color:#C45E1A}.lg__cnt.is-full{color:#C62828;font-weight:700}
 .lg__l .lg__rev,.lg__l .pl__memo{margin-top:4px}
 
 /* =========================================================================
@@ -3132,9 +3135,9 @@ body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
 .sns:hover{filter:brightness(.96)}
 .sns--big{padding:9px 18px;font-size:14px}
 .sns--x{background:#000;color:#fff;border-color:#000}
-.sns--ig{background:#E1306C;color:#fff;border-color:#E1306C}
+.sns--ig{background:#C4255E;color:#fff;border-color:#C4255E}
 .sns--tt{background:#111;color:#fff;border-color:#111;box-shadow:inset 0 0 0 2px #69C9D0, inset 0 0 0 4px #111}
-.sns--line{background:#06C755;color:#fff;border-color:#06C755}
+.sns--line{background:#06C755;color:#0B2E1A;border-color:#06C755}   /* v170: LINE の緑に白では 2.3:1。濃い緑の字に */
 .sns--fb{background:#1877F2;color:#fff;border-color:#1877F2}
 .sns--wa{background:#25D366;color:#fff;border-color:#25D366}
 .sns--tg{background:#229ED9;color:#fff;border-color:#229ED9}
@@ -3180,7 +3183,7 @@ body.wx-night .hint,body.wx-night .poicount{background:rgba(255,255,255,.96)}
    ========================================================================= */
 :root{
   --bg:#f7f9ff; --surface:#ffffff; --control:#f1f4f9; --control2:#ebeef4; --control3:#e5e8ee;
-  --text:#181c20; --label:#404751; --muted:#707882; --link:#0061a1; --highlight:#0061a1;
+  --text:#181c20; --label:#404751; --muted:#5F6772; --link:#0061a1; --highlight:#0061a1;
   --grid:#e0e3e8; --border:#c0c7d3; --gray600:#404751; --gray800:#2d3135;
   --lb50:#f1f4f9; --lb200:#d1e4ff; --lb400:#9dcaff; --lb600:#007ac9; --lb900:#0061a1;
   --ok:#006c4b; --okbg:#6bfcc0; --amber:#8f4c00; --amberbg:#ffdcc3; --err:#ba1a1a;
@@ -3219,10 +3222,10 @@ html:not(.fonts-ok) .ms{visibility:hidden}
 .hdr__btn{height:38px;border:1px solid var(--grid);border-radius:999px;background:#fff;font-weight:700;font-size:12.5px;padding:0 12px 0 8px;display:inline-flex;align-items:center;gap:4px;box-shadow:var(--sh-xs)}
 .hdr__btn .ms{font-size:17px;color:var(--lb900)}
 .hdr__btn:hover{background:var(--control);border-color:var(--grid)}
-.hdr__ic{width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--label);display:inline-flex;align-items:center;justify-content:center;padding:0;position:relative;flex:0 0 auto}
+.hdr__ic{width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--label);display:inline-flex;align-items:center;justify-content:center;padding:0;position:relative;flex:0 0 auto}
 .hdr__ic .ms{font-size:23px}
 .hdr__ic:hover{background:var(--control2);color:var(--text)}
-.hdr__ic--avatar{width:36px;height:36px;background:var(--text);color:#fff;box-shadow:var(--sh-xs);margin-left:2px}
+.hdr__ic--avatar{width:44px;height:44px;background:var(--text);color:#fff;box-shadow:var(--sh-xs);margin-left:2px}
 .hdr__ic--avatar .ms{font-size:20px}
 .hdr__ic--avatar:hover{background:#2d3135;color:#fff}
 .hdr__btn--plan.has{color:var(--lb900)}
@@ -3233,14 +3236,14 @@ html:not(.fonts-ok) .ms{visibility:hidden}
   .hdr__btn--hub{display:none}
   .hdr__search{max-width:none}
   .hdr__search input{height:40px;font-size:16px !important;padding-left:38px}
-  .hdr__ic{width:38px;height:38px}
+  .hdr__ic{width:44px;height:44px}
 }
 
 /* ---------- 上の操作列（出発地・日時・条件）：白いガラスの帯に pill を並べる ---------- */
 .topbar{background:rgba(247,249,255,.92);border-bottom:1px solid rgba(224,227,232,.7)}
 .tripbar{background:transparent;border:0;gap:6px;padding:0 12px}
 .app>.topbar{height:var(--tripbar-h,50px)}
-.tb__btn{height:34px;padding:0 13px;border:0;border-radius:999px;background:var(--control2);color:var(--text);font-weight:700;font-size:12px;box-shadow:none}
+.tb__btn{height:40px;padding:0 13px;border:0;border-radius:999px;background:var(--control2);color:var(--text);font-weight:700;font-size:12px;box-shadow:none}
 .tb__btn:hover{background:var(--grid);border:0}
 .tb__btn--go{background:var(--lb900);color:#fff}
 .tb__btn--go:hover{background:var(--lb600)}
@@ -3248,9 +3251,9 @@ html:not(.fonts-ok) .ms{visibility:hidden}
 .tb__btn--warn{background:var(--amberbg);color:var(--amber)}
 .tb__from{font-size:11.5px;color:var(--muted);font-weight:500}
 .tb__from.on{color:var(--lb900);font-weight:700}
-.tb__dt{height:34px;border:0;border-radius:999px;background:var(--control2);padding:0 12px;font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)}
+.tb__dt{height:40px;border:0;border-radius:999px;background:var(--control2);padding:0 12px;font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)}
 .aggr{display:inline-flex;gap:0;background:var(--control2);border-radius:999px;padding:3px}
-.aggr__b{height:28px;border:0;border-radius:999px;background:transparent;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--label)}
+.aggr__b{height:36px;border:0;border-radius:999px;background:transparent;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--label)}
 .aggr__b[aria-pressed=true]{background:#fff;color:var(--lb900);box-shadow:var(--sh-xs)}
 body.night .topbar{background:#181c20}
 body.night .tripbar{background:transparent}
@@ -3286,7 +3289,7 @@ body.night .tb__dt{background:#2d3135;color:#f7f9ff}
 .qb__c{border:0;border-radius:999px;background:var(--control2);font-weight:700;font-size:12px;color:var(--text);height:32px;padding:0 12px}
 .qb__c[aria-pressed=true]{background:var(--text);color:#fff}
 .qb__c--x{background:transparent}
-.zoombar{right:12px;bottom:14px;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.95);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:var(--sh-md);border:1px solid rgba(224,227,232,.8);z-index:14}
+.zoombar{right:12px;bottom:40px;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.95);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:var(--sh-md);border:1px solid rgba(224,227,232,.8);z-index:14}
 .zoombar button{width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--text);font-family:var(--mono);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:none;padding:0}
 .zoombar button:hover{background:var(--control2)}
 .zoombar button .ms{font-size:21px}
@@ -3308,7 +3311,7 @@ body.night .tb__dt{background:#2d3135;color:#f7f9ff}
 .mutip{border-radius:999px;font-weight:700}
 .linepop{border-radius:12px;box-shadow:var(--sh-md)}
 .poipop{border-radius:16px;box-shadow:var(--sh-md);border:1px solid var(--grid)}
-@media (max-width:720px){ .zoombar{bottom:16px} .hint{max-width:calc(100% - 150px)} }
+@media (max-width:720px){ .zoombar{bottom:40px} .hint{max-width:calc(100% - 150px)} }
 
 /* ---------- 下の帯：シート風の «路線／スポット／話題» と絞り込み pill ---------- */
 .linerail{background:rgba(247,249,255,.94);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid rgba(224,227,232,.6);box-shadow:0 -2px 12px rgba(0,0,0,.05);z-index:22}
@@ -3688,7 +3691,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* 出発バーは初回は二次 UI。ルート検索を始めたら通常表示 */
 .topbar{background:#fff;border-bottom:1px solid var(--grid)}
 .tripbar{max-height:var(--tripbar-h)}   /* overflow は既存のまま（横スクロールを壊さない） */
-body:not(.route-active) .tripbar{opacity:.72}
+body:not(.route-active) .tripbar{opacity:1}   /* v170: .72 では文字のコントラストが 3:1 を切っていた */
 body.route-active .tripbar{max-height:none;opacity:1}
 body.route-active .heroSearch{opacity:.92}
 body.route-active .heroSearch:hover,body.route-active .heroSearch:focus-within{opacity:1}
@@ -4051,7 +4054,7 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   body.slim .hdr__brandIcon{width:30px;height:30px;font-size:17px}
   body.slim .hdr__mark{font-size:14.5px;gap:6px}
   body.slim .hdr__mark small{display:none}
-  body.slim .hdr__ic{width:40px;height:40px}
+  body.slim .hdr__ic{width:44px;height:44px}
   /* 出発バーはルート比較を始めるまで出さない（設定 «いつも出す» なら出す） */
   body.slim:not(.route-active):not(.trip-always){--tripbar-h:0px}
   body.slim:not(.route-active):not(.trip-always) .topbar{display:none}
@@ -4066,7 +4069,7 @@ body.mapfocus .zoombar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   .qb__n{margin-left:5px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--tsg-accent);color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
   /* ズームボタンを小さく（8 個で 310px） */
   body.slim .zoombar{padding:3px;gap:0;right:8px}
-  body.slim .zoombar button{width:38px;height:38px}
+  body.slim .zoombar button{width:44px;height:44px}
   body.slim .zoombar button .ms{font-size:20px}
   /* 件数・レベチ札・出典は小さく */
   body.slim .poicount{font-size:10.5px;padding:2px 8px}
@@ -4519,7 +4522,7 @@ html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}
    文字は小さく・薄く。ただし «読める» の最低ライン（背景とのコントラスト約 3.5:1）は守る。地形を出している間は «地理院» を残す */
 .attrib{pointer-events:auto;font-size:8.5px;line-height:1.35;color:#858585;background:rgba(255,255,255,.72);padding:0 4px;border-radius:4px;max-width:min(78vw,520px);white-space:normal;overflow:visible;text-overflow:clip;display:flex;align-items:center;gap:2px}
 .attrib a{color:inherit;text-decoration:underline;text-decoration-thickness:.5px}
-.attrib__i{border:0;background:none;color:inherit;font:inherit;font-size:11px;line-height:1;padding:2px;margin:0;cursor:pointer;min-width:0;min-height:0}
+.attrib__i{border:0;background:none;color:inherit;font:inherit;font-size:13px;line-height:1;padding:0;margin:0 -2px 0 0;cursor:pointer;min-width:30px;min-height:30px;display:inline-flex;align-items:center;justify-content:center}
 .attrib:not(.open) .attrib__t,.attrib__g,.attrib:not(.rl) .attrib__rl{display:none}
 .attrib.rl:not(.open) .attrib__g{display:inline}
 .attrib:not(.open){background:rgba(255,255,255,.35)}
@@ -4790,7 +4793,7 @@ body.gesturing .poipop{visibility:hidden}
 .modal--dark .cact,.card--dark .cact{background:var(--control);color:var(--text);border-color:var(--border)}
 .modal--dark .cact--p,.card--dark .cact--p{background:var(--lb900);color:#fff;border-color:var(--lb900)}
 .modal--dark .cact small,.card--dark .cact small{color:var(--label)}
-.modal--dark .cact--p small,.card--dark .cact--p small{color:rgba(255,255,255,.8)}
+.modal--dark .cact--p small,.card--dark .cact--p small{color:rgba(255,255,255,.92)}
 .modal--dark .lnk,.card--dark .lnk{background:var(--control3);color:var(--text);border-color:var(--border)}
 .modal--dark .lnk:hover,.card--dark .lnk:hover{background:rgba(255,255,255,.22)}
 .modal--dark .ex,.card--dark .ex{background:var(--control)}
@@ -4831,7 +4834,7 @@ body.gesturing .poipop{visibility:hidden}
    面の色はそのままにして文字だけ暗く戻す（読みやすさ優先。面ごとの色は意味を持つので、ぜんぶ暗くはしない） */
 .modal--dark :is(.pins,.pst,.req__b,.tk__pill,.tk__side,.tk__q,.tk__note,.mm__local,.mm__cheer,.term,.nsp,.trn,.skf,.sk__more,.ax,.todo,.sp,.risk,.spot,.bzp__i,.bzp__w,.eh,.whs__why,.sec--sk,.sec--score,.mapb,.lbadge,.gbadge,.spotcard__phl,.hp__x,.mini code),
 .card--dark :is(.pins,.pst,.req__b,.tk__pill,.tk__side,.tk__q,.tk__note,.mm__local,.mm__cheer,.term,.nsp,.trn,.skf,.sk__more,.ax,.todo,.sp,.risk,.spot,.bzp__i,.bzp__w,.eh,.whs__why,.sec--sk,.sec--score,.mapb,.lbadge,.gbadge,.spotcard__phl,.hp__x,.mini code){
-  --text:#181c20;--label:#404751;--muted:#707882;--gray600:#404751;--gray800:#2d3135;--grid:#e0e3e8;--border:#c0c7d3;--link:#0061a1;--highlight:#0061a1;
+  --text:#181c20;--label:#404751;--muted:#5F6772;--gray600:#404751;--gray800:#2d3135;--grid:#e0e3e8;--border:#c0c7d3;--link:#0061a1;--highlight:#0061a1;
   --lb50:#f1f4f9;--lb200:#d1e4ff;--lb400:#9dcaff;--ok:#006c4b;--amber:#8f4c00;--amberbg:#ffdcc3;--control:#f1f4f9;--control2:#ebeef4;--control3:#e5e8ee;--surface:#fff;
   color:var(--text);color-scheme:light
 }
@@ -4903,3 +4906,10 @@ button.lchip.lchip--go,button.lchip.lchip--sk{color:var(--lfg,#fff) !important} 
 .modal--dark .hkz{background:#fff;border-radius:14px;padding:10px 12px;color:#181c20}
 .hkz__it .hkz__t em{color:#6B7280}                                                   /* 番号：#999 は白地で 2.85:1 だった → 4.8:1 */
 .hkc__back{display:inline-flex;align-items:center;min-height:36px;border:1px solid #D7CCC8;background:#FBF8F6;color:#3E2723;border-radius:999px;padding:0 14px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;margin:0 0 8px}
+
+/* v170: 入口カードをたたんでも、見出し（h1）は読み上げには残す（画面には出さない）。ページに h1 が無い状態を作らない */
+body.hero-mini .heroSearch.heroSearch--mini>h1{display:block !important;position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* v170: 出典 ⓘ はズームバーの下に収める（重なると押せない）。スポットの帯（PC）は最初から高さを確保して、出たときに地図がずれないように */
+.attrib{bottom:4px}
+@media (min-width:721px){ #groupbar:empty{min-height:47px} }

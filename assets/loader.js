@@ -40,7 +40,7 @@ var IDLE = [
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）
   { f: "data/tokyo_station.js", key: "tokyost", label: "東京駅の出入口" },      // v90: 東京駅モード（小さい）
-  { f: "data/auto/station_exits.js", key: "stexits", label: "主要駅の出入口" },   // v114: GitHub Actions が毎月更新    // v112: 現地モードの «出口»（主要駅）
+  { f: "data/auto/station_exits.js", key: "stexits", label: "主要駅の出入口", opt: true },   // v170: Actions が作るファイル（無い環境もある）。無くても数えない   // v114: GitHub Actions が毎月更新    // v112: 現地モードの «出口»（主要駅）
   { f: "data/shinkansen.js", key: "shinkansen", label: "新幹線の駅" },
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
   { f: "data/analytics.js", key: "analytics", label: "利用状況の設定" },        // v98: endpoint が空なら送らない
@@ -64,8 +64,7 @@ var IDLE = [
   { f: "data/flood.js",     key: "flood",     label: "浸水想定" },
   { f: "data/events.js",    key: "events",    label: "イベント" },
   { f: "data/relief.js",    key: "relief",    label: "地形" },
-  { f: "data/jp_admin.js",  key: "jpadm",     label: "全国の市区町村" },
-  { f: "data/bldg3d.js",    key: "bldg",      label: "3Dの建物" }
+  { f: "data/jp_admin.js",  key: "jpadm",     label: "全国の市区町村" }
 ];
 
 /* 第3段：使うときだけ（合計 約6MB）。group: どの操作で要るか */
@@ -95,7 +94,8 @@ var ONDEMAND = [
   { f: "data/river_geo.js", key: "rivergeo", label: "川の線形",           group: "spots" },
   { f: "data/roads.js",     key: "roads",    label: "高速道路・国道",     group: "spots" },
   { f: "data/tokaido.js",   key: "kaido",    label: "五街道と宿場",       group: "spots" },
-  { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots", opt: true }   // 未作成のファイル（無くても数えない）
+  { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots", opt: true },   // 未作成のファイル（無くても数えない）
+  { f: "data/bldg3d.js",    key: "bldg",     label: "3Dの建物",           group: "bldg" }    // v170: 3D を点けたときだけ（起動直後に 1 秒以上の実行時間を使っていた）
 ];
 
 var loaded = {}, inflight = {};
@@ -204,6 +204,16 @@ function flush(urgent, done) {
   T.push(function () { document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } })); });
   runTasks(T, done);
 }
+
+/* v170: «利用者が触った» か «ms たった» かの早い方で 1 回だけ呼ぶ（裏のタブでは触るまで待つ） */
+function whenSettled(ms, cb) {
+  var done = false, t;
+  function go() { if (done) return; done = true; clearTimeout(t); ["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (e) { document.removeEventListener(e, go, true); }); setTimeout(cb, 0); }
+  ["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (e) { document.addEventListener(e, go, { once: true, capture: true, passive: true }); });
+  function tick() { if (document.hidden) { t = setTimeout(tick, 1000); return; } go(); }
+  t = setTimeout(tick, ms);
+}
+RG.whenSettled = whenSettled;
 
 /* 順番に、端末が暇なときに読む */
 function runQueue(items, onEach, done, urgent) {
@@ -357,7 +367,6 @@ function loadExtras() {
 RG.extrasReady = function () { return loadExtras(); };
 RG.startApp = function (netPromise) {
   setProgress("路線図をよみこんでいます", 10);
-  if (!(RG.QOS && RG.QOS.lite())) loadExtras();
   var bad = [];
   var coreP = Promise.all(CORE.map(function (f) { return load(f).catch(function () { bad.push(f); }); }));
   Promise.all([coreP, netPromise]).then(function (r) {
@@ -369,6 +378,9 @@ RG.startApp = function (netPromise) {
     // （requestAnimationFrame は裏のタブでは止まるので使わない）
     return new Promise(function (res) { setTimeout(res, 0); });
   }).then(function () {
+    if (RG.bootPrepare) RG.bootPrepare();                        // v170: 下ごしらえ（索引・駅カード）→ 息つぎ → 描画（長いタスクを 2 つに割る）
+    return new Promise(function (res) { setTimeout(res, 0); });
+  }).then(function () {
     RG.boot();
     setProgress("", 100);
     loadExtras();                                                   // ゆっくりのときは、ここで（地図が出てから）
@@ -377,13 +389,15 @@ RG.startApp = function (netPromise) {
   }).then(function () {
     armOnDemandTriggers();
     if (RG.QOS) RG.QOS.update();                                    // v139: 実際に届いた速さで «表示の軽さ» を決め直す
-    setTimeout(function () {
+    /* v170: 第 2 段（約 1.2MB）は、利用者が触ったとき、または地図が出て 5 秒たってから。
+       最初の数秒は本体の残り・検索・カードの準備に回線と CPU を使う（Core Web Vitals の LCP/TBT のため） */
+    whenSettled(5000, function () {
       runIdle(function () {
         // 保存された設定に «おとな向け» や «喫煙» があるときは、そのデータも
         if ((RG.adultOn && RG.adultOn()) || (RG.hasSmokeTicket && RG.hasSmokeTicket()) ||
             (RG.settings && RG.settings.camspot)) RG.ensureSpots();
       });
-    }, 900);
+    });
   }).catch(function (e) {
     setProgress("よみこみに失敗しました", 100);
     if (window.console) console.error(e);

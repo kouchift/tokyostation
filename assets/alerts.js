@@ -232,7 +232,7 @@ RG.alertSwitchHTML = function () {
   return '<div class="set__sec"><h4>⚠️ 警報の帯</h4>' +
     '<p class="set__d">地図の上に出る «警報» の帯を、どのレベルから出すか決めます（気象庁の 3 区分）。帯の × か一覧の «確認した» で消した警報は、同じものが再び出ません。' +
     '同じ地域に新しい種類の警報が出たときだけ戻ります。大津波警報・津波警報は «特別警報»、津波注意報は «警報» としてあつかいます。地図の ⚠️ の印は設定にかかわらず警報以上を置きます。</p>' +
-    '<div class="set__row"><span>帯に出す警報</span><select id="set-al-min" class="set__sel">' + RG.ALERT_LEVELS.map(function (L) {
+    '<div class="set__row"><span>帯に出す警報</span><select id="set-al-min" class="set__sel" aria-label="帯に出す警報">' + RG.ALERT_LEVELS.map(function (L) {
       return '<option value="' + L.id + '"' + (L.id === min ? " selected" : "") + ">" + esc(L.label) + "</option>"; }).join("") + "</select></div>" +
     '<div class="set__btns"><button id="set-al-reset" class="set__b2" type="button">確認ずみを消す（' + RG.alertSeenCount() + " 件）</button>" +
     '<button id="set-al-list" class="set__b2" type="button">いま出ている警報を見る</button></div></div>';
