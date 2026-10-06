@@ -210,6 +210,7 @@ RG.heroSyncOrigin = function () {
   var h = document.querySelector(".heroSearch h1"); if (!h) return;
   var lb = RG.Trip && RG.Trip.origin ? (RG.Trip.isGeo ? "現在地" : (RG.Trip.label || "").replace(/^出発：/, "")) : "東京駅";
   if (lb.length > 12) lb = lb.slice(0, 11) + "…";
-  h.innerHTML = esc(lb) + "から、<br class=\"mobileOnly\">どこへ行く？";
+  var html = esc(lb) + "から、<br class=\"mobileOnly\">どこへ行く？";
+  if (h.innerHTML !== html) h.innerHTML = html;   // v170: 同じ文なら触らない（起動直後に描き直すと LCP が遅れる）
 };
 })(window.RG);
