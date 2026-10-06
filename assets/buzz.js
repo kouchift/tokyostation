@@ -85,8 +85,8 @@ function row(b, showArea) {
     '<div class="bz__n">' + esc(b.n) + "</div>" +
     (b.by ? '<div class="bz__by">' + (b.pl === "news" ? "記事: " : "投稿: ") + esc(b.by) + "</div>" : "") +
     (b.ev ? '<div class="bz__ev">話題の根拠: ' + esc(b.ev) + (b.src ? ' <a href="' + esc(b.src) + '" target="_blank" rel="noopener">出典</a>' : "") + "</div>" : "") +
-    '<div class="bz__act"><button class="bz__b" type="button" data-go="' + esc(b.id) + '">📍 地図で見る</button>' +
-    (b.pl === "news" ? "" : '<button class="bz__b" type="button" data-emb="' + esc(b.id) + '">👀 投稿を見る</button>') +
+    '<div class="bz__act"><button class="bz__b" type="button" data-go="' + esc(b.id) + '"><span class="ms" aria-hidden="true">place</span> 地図で見る</button>' +
+    (b.pl === "news" ? "" : '<button class="bz__b" type="button" data-emb="' + esc(b.id) + '"><span class="ms" aria-hidden="true">open_in_new</span> 投稿を見る</button>') +
     '<a class="bz__b bz__b--l" href="' + esc(b.url) + '" target="_blank" rel="noopener">↗ ' + p.n + ' で開く</a></div>' +
     '<div class="bz__emb" hidden></div></div></li>';
 }
@@ -225,7 +225,7 @@ RG.buzzRailRefresh = function (force) {
         '<span class="bzr__p">' + p.e + "</span></button>";
     }
     box.innerHTML = '<div class="bzr__h">いま見ている範囲の話題 <b>' + inv.length + "</b>件" + (near.length ? "（近くにさらに " + near.length + "件）" : "") +
-      ' <button class="lr__c" type="button" id="bzr-all">📚 一覧をひらく</button> <button class="lr__c" type="button" id="bzr-voice">🗣️ みんなの声</button></div>' +
+      ' <button class="lr__c" type="button" id="bzr-all"><span class="ms" aria-hidden="true">list</span> 一覧をひらく</button> <button class="lr__c" type="button" id="bzr-voice"><span class="ms" aria-hidden="true">forum</span> みんなの声</button></div>' +
       (shown.length ? '<div class="bzr__l">' + shown.map(function (b) { return rowMini(b, inv.indexOf(b) < 0); }).join("") + "</div>"
                     : '<p class="bzr__none">この範囲にはまだ話題がありません。地図を引くと近くの話題が出ます。</p>');
     var all = document.getElementById("bzr-all"); if (all) all.addEventListener("click", function () { RG.showBuzz(null, "fresh"); });

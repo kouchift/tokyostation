@@ -1013,6 +1013,16 @@ var Map = (function () {
     vb.w = U(w || 260); vb.h = vb.w * (r.height / r.width);
     vb.x = s.x - vb.w / 2; vb.y = s.y - vb.h / 2 - (isTouch() ? vb.h * 0.16 : 0);
     apply();
+    ping(s.x, s.y);
+  }
+  /* v173: 寄せた先に 1 回だけ輪を広げて «ここ» を示す（検索やカードから地図へ飛んだとき。起動時は出さない） */
+  var pingT = null;
+  function ping(x, y) {
+    if (!svg || !RG.booted) return;
+    var old = svg.querySelector(".fping"); if (old) old.parentNode.removeChild(old);
+    var c = el("circle", { class: "fping", cx: x, cy: y, "aria-hidden": "true" });
+    svg.appendChild(c);
+    clearTimeout(pingT); pingT = setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 1000);
   }
   /* 緯度経度を指定して、そこへ地図を寄せる */
   function flyTo(la, lo, w) {
@@ -1660,8 +1670,8 @@ var Card = (function () {
         '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '"><span class="ms" aria-hidden="true">link</span> 共有</button>' +
         '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）"><span class="ms" aria-hidden="true">badge</span> カード</button>' +
         (RG.favs ? '<button class="cmini" type="button" data-fav-open="1"><span class="ms" aria-hidden="true">star</span> お気に入り一覧</button>' : "") +
-        (RG.stickerStation ? '<button class="cmini" type="button" data-stk-st="' + esc(s.id) + '" title="SNS に貼る駅名標のステッカー（透明な PNG）">🏷️ ステッカー</button>' : "") +
-        (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る">📝 Obsidian</button>' : "") +
+        (RG.stickerStation ? '<button class="cmini" type="button" data-stk-st="' + esc(s.id) + '" title="SNS に貼る駅名標のステッカー（透明な PNG）"><span class="ms" aria-hidden="true">sell</span> ステッカー</button>' : "") +
+        (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る"><span class="ms" aria-hidden="true">edit_note</span> Obsidian</button>' : "") +
       "</div>" +
       '<div class="cardq"><label class="cardq__l"><span class="ms">search</span><input class="cardq__in" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(RG.stLabel(s)) + 'から、どこへ？（駅名・地名）" aria-label="' + esc(RG.stLabel(s)) + 'からの行き先"></label><div class="cardq__sug" role="listbox" hidden></div></div>' +
       "</div>";

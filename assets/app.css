@@ -5047,3 +5047,20 @@ body.trip-open .tripFold__x{transform:rotate(180deg)}
 
 /* v172: スマホの出典は 1 行に省略（長い 2 行だと入口の見出しより大きく、CSS の差し替えで描き直されて LCP が 6 秒になる。全文は ⓘ で） */
 body.slim .attrib{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
+
+/* =========================================================================
+   v173: 動きと細部（R4）
+   案内中（body.navon）は経路と駅名だけを濃く。スポット・道路・区界・ランドマーク・道路名は薄く（経路が見つけやすい）
+   ========================================================================= */
+body.navon .poihost,body.navon .roads,body.navon .adm,body.navon .lms,body.navon .three{opacity:.22;transition:opacity var(--t-slow) var(--ease)}
+body.navon .maplbl .ml[data-k=x]{opacity:.3}
+body.navon .edges .ln:not(.hi):not(.on){opacity:.3}
+/* 駅へ寄せた先の 1 回だけの輪（RG.Map.focus。0.9 秒で消える。reduced-motion では出さない） */
+.fping{fill:none;stroke:var(--brand);stroke-width:calc(var(--sthitr,11) * .2px);pointer-events:none;animation:fping .9s ease-out forwards}
+@keyframes fping{0%{r:calc(var(--sthitr,11) * .6px);stroke-opacity:.9}100%{r:calc(var(--sthitr,11) * 3.2px);stroke-opacity:0}}
+@media (prefers-reduced-motion:reduce){ .fping{display:none} }
+/* チップ・小さなボタンの手ざわり: 色は 120ms でなめらかに、押したときは 1px 沈む（ホバーで何かが開くことはしない） */
+.bz__b,.bz__ar,.bz__tab,.qb__c,.qb__open,.pltab,.gb__g,.hs__s,.rt__card,.lr__tab,.lr__all,.lr__t,.zoombar button,.tripFold,.heroAction{
+  transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.bz__b:active,.bz__ar:active,.bz__tab:active,.qb__c:active,.qb__open:active,.pltab:active,.gb__g:active,.hs__s:active,.rt__card:active,.zoombar button:active,.tripFold:active{transform:translateY(1px)}
+@media (prefers-reduced-motion:reduce){ .bz__b,.bz__ar,.bz__tab,.qb__c,.qb__open,.pltab,.gb__g,.hs__s,.rt__card,.lr__tab,.lr__all,.lr__t,.zoombar button,.tripFold,.heroAction{transition:none} }
