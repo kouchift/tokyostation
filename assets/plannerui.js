@@ -42,12 +42,26 @@ function initBar() {
     if (f) f.value = s + "T10:00";
   };
   $("#t-now").addEventListener("click", function () { setWhen(new Date()); afterWhen(); });
+  /* v172: PC では出発バーをふだん畳み、入口カードの 1 行「出発: 〇〇・いま・標準 ▾」から開く（設定 «いつも出す» で常設に戻せる。ルート比較を始めたら自動で出る） */
+  var hero = document.getElementById("hero"), pop = hero && hero.querySelector(".heroSearch__popular");
+  if (hero && !document.getElementById("tripfold")) {
+    var tf = document.createElement("button"); tf.id = "tripfold"; tf.className = "tripFold"; tf.type = "button"; tf.setAttribute("aria-expanded", "false"); tf.setAttribute("aria-controls", "tripbar");
+    tf.innerHTML = '<span class="ms" aria-hidden="true">schedule</span><span class="tripFold__t">出発: <b id="tf-from">東京駅</b>・<b id="tf-when">いま</b>・<b id="tf-aggr">標準</b><i id="tf-night" hidden>・🌙 終電後</i></span><span class="ms tripFold__x" aria-hidden="true">expand_more</span>';
+    tf.addEventListener("click", function () { RG.tripOpen(!document.body.classList.contains("trip-open")); });
+    if (pop && pop.parentNode) pop.parentNode.insertBefore(tf, pop); else hero.appendChild(tf);
+  }
+  RG.tripOpen = function (on) {
+    document.body.classList.toggle("trip-open", !!on);
+    var b = document.getElementById("tripfold"); if (b) b.setAttribute("aria-expanded", String(!!on));
+    if (on) { var dt = $("#t-dt"); if (dt && RG.syncAspect) setTimeout(RG.syncAspect, 60); }
+  };
+  RG.paintTripFold = paintFold; paintFold();
   $("#t-geo").addEventListener("click", useGeo);
-  $("#t-find").addEventListener("click", openDiscover);
+  $("#t-find").addEventListener("click", function () { if (RG.heroExpand && document.getElementById("hero-q")) RG.heroExpand(true); else openDiscover(); });   // v172: 検索の入口は入口カードに 1 本化（カードが無いときだけ以前の一覧）
   $("#t-rescue").addEventListener("click", openRescue);
   $$("[data-aggr]").forEach(function (b) {
     b.addEventListener("click", function () {
-      Trip.aggr = +b.dataset.aggr;
+      Trip.aggr = +b.dataset.aggr; if (RG.tripOpen) RG.tripOpen(true); paintFold();   // v172: 変えた直後は開いたまま
       $$("[data-aggr]").forEach(function (x) { x.setAttribute("aria-pressed", String(+x.dataset.aggr === Trip.aggr)); });
       status(RG.CONFIG.aggr[Trip.aggr].emoji + " 「" + RG.CONFIG.aggr[Trip.aggr].label +
              "」に切り替えました（" + RG.CONFIG.aggr[Trip.aggr].tone + "提案します）", "info", 2600);
@@ -61,11 +75,22 @@ function setWhen(d) {
                      "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
 var whenShown = false;   // v170: 起動の 1 回目は «終電後» の知らせを出さない（出発バーの 🌙 と深夜レスキューで分かる。起動直後の吹き出しは LCP を遅らせ、うるさい）
+/* v172: 畳んだ 1 行に、いまの出発地・時刻・攻めかたを書く */
+function paintFold() {
+  var f = $("#tf-from"), w = $("#tf-when"), a = $("#tf-aggr"), n = $("#tf-night"); if (!f) return;
+  f.textContent = Trip.origin ? (Trip.isGeo ? "現在地" + (Trip.label && /（/.test(Trip.label) ? Trip.label.slice(Trip.label.indexOf("（")) : "") : (Trip.label || "").replace(/^出発：/, "")) : "東京駅";
+  var d = Trip.when || new Date(), near = Math.abs(d - new Date()) < 3 * 60000;
+  w.textContent = near ? "いま" : (d.getMonth() + 1) + "/" + d.getDate() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  var ag = (RG.CONFIG && RG.CONFIG.aggr || [])[Trip.aggr]; a.textContent = ag ? ag.label : "標準";
+  if (n) n.hidden = !document.body.classList.contains("night");
+}
 function afterWhen() {
   var night = RG.Planner.isAfterLastTrain(Trip.when);
   $("#t-rescue").hidden = !night;
   document.body.classList.toggle("night", night);
   var first = !whenShown; whenShown = true;
+  if (!first && RG.tripOpen) RG.tripOpen(true);   // v172: 時刻を変えた直後は出発バーを開いたままに
+  paintFold();
   if (night && !first) {
     var m = RG.Planner.minutesToFirstTrain(Trip.when);
     status("🌙 いまは終電後の時間帯です（始発まであと " + m + " 分）。電車以外の手段を優先して提案します。",
@@ -79,6 +104,7 @@ function setOrigin(coord, label, id, accuracy) {
   Trip.isGeo = !id;                       // 駅ではなく実際の現在地かどうか
   if (RG.Map.paintMe) RG.Map.paintMe(coord, Trip.isGeo ? accuracy : 0);
   var f = $("#t-from"); if (f) { f.textContent = "出発：" + label; f.classList.add("on"); }   // v171: 出発バーができる前に現在地が届くことがある
+  paintFold();
   status(label + " を出発地にしました。行き先の駅をタップするか「🧭 行き先をさがす」へ。", "ok", 3500);
   refreshIso();
   try { document.dispatchEvent(new CustomEvent("rg:origin", { detail: { label: label, id: Trip.id, isGeo: Trip.isGeo } })); } catch (e) {}   // v96: 内側からの呼び出し（現在地など）でも入口が追従する

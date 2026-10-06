@@ -169,7 +169,7 @@ function carsFor(d, purpose) {
 function na(what, hint) { return '<div class="nd__na">' + what + "：<b>未調査</b>" + (hint ? '<span class="lvt">' + hint + "</span>" : "") + "</div>"; }
 function carsHtml(name, d, purpose) {
   var rows = carsFor(d, purpose);
-  if (!rows) return na("号車", "この駅の現地調査データ（data/details/" + esc(name) + ".js）がまだありません");
+  if (!rows) return na("号車", esc(name) + "駅の乗り場と号車は、まだ現地で調べていません");   // v172: 内部のファイル名を出さない
   var main = rows[0];
   return '<div class="nd__cars"><span class="nd__car">' + esc(String(main.car)) + "号車</span> " + (ICON[main.type] || "") + " " + esc(main.label || "") +
     (main.pos ? '<span class="lvt">（' + esc(main.pos) + "寄り）</span>" : "") +
@@ -233,7 +233,7 @@ function renderDetail(D) {
     steps.push('<div class="nd__step"><div class="nd__t">' + (o.m ? o.m.emoji : "▶") + " " + esc(n.destName) + " へ <span>約" + (km || 0).toFixed(1) + "km</span></div>" +
       ((o.detail || []).length ? '<ul class="opt__d">' + o.detail.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul>" : "") + "</div>");
   }
-  var src = '<p class="src">号車・乗り場・出口は <code>data/details/&lt;駅名&gt;.js</code> の現地調査データだけを使っています。無い駅は «未調査» と出し、推測で埋めません。' +
+  var src = '<p class="src">号車・乗り場・出口は、現地で調べた駅のデータだけを使っています。無い駅は «未調査» と出し、推測で埋めません。' +
     "所要時間はモデルによる概算です。移動前に各事業者の公式情報で確かめてください。</p>";
   return '<div class="nd">' + head + candHtml + '<div class="nd__now">' + esc(nextStepText()) + "</div>" + steps.join("") + src + "</div>";
 }

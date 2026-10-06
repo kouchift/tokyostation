@@ -139,7 +139,7 @@ var Rail = (function () {
     var prefSel = '<div class="lr__row lr__row--pref"><span class="lr__g">地域</span>' +
       '<select id="lr-pref" class="lr__sel" aria-label="都道府県をえらぶ">' +
         PREF_NAMES.map(function (p) { return '<option value="' + p + '"' + (p === pref ? " selected" : "") + ">" + p + (p === "東京都" ? "（主要路線）" : "") + "</option>"; }).join("") +
-      '</select><span class="lr__hint">都道府県をえらぶと、その県の路線に切り替わり、地図もそこへ寄ります。アイコンにカーソルを当てると路線名が出ます。</span></div>';
+      '</select><span class="lr__hint">都道府県をえらぶと、その県の路線に切り替わり、地図もそこへ寄ります。</span></div>';
     rows = prefSel + rows;
     var genres = (RG.GENRES || []);
     var grow =
@@ -908,12 +908,17 @@ RG.initLinesUI = function () {
   /* v170: スマホは «えらぶ» を押すまで一覧（路線・90 ジャンル）を作らない（起動の長いタスクを 100ms ほど減らす）。
      データが届いたとき（RG.rebuildRail）や設定からも作れる */
   var slim = window.matchMedia && matchMedia("(max-width:720px)").matches, zr = document.getElementById("zrail");
-  if (slim && zr) zr.addEventListener("click", function () { if (!Rail.isBuilt()) { Rail.build(); if (RG.railToggle) RG.railToggle(true); } }, true);
+  if (slim && zr) zr.addEventListener("click", function (e) {
+    if (Rail.isBuilt()) return;
+    e.stopImmediatePropagation();   // v172: 作った直後に同じ click が «とじる» まで届いて、初回だけ開かなかった（作る → 開く で止める）
+    Rail.build(); if (RG.railToggle) RG.railToggle(true);
+  }, true);
   else Rail.build();
   if (ST.secret) document.body.classList.add("secret");
   RG.Map.paintWatch(ST.watch);
   RG.Map.setPoiScale(ST.poiScale || 1);
-  applyLandmarks();
+  /* v172: 自分のランドマーク（絵文字の画像）は起動直後に描かない。Lighthouse が画面外のその画像を LCP 要素に選び、本体の読み込みまで LCP が 6 秒に延びていた */
+  if (RG.whenSettled) RG.whenSettled(4000, applyLandmarks); else applyLandmarks();
   $("#btn-set").addEventListener("click", openSettings);
 };
 

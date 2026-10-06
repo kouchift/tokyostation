@@ -88,7 +88,7 @@ RG.mapFocusSwitchHTML = function () {
         return '<label class="set__segi"><input type="radio" name="gs-herofold" value="' + a[0] + '"' + (p === a[0] ? " checked" : "") + "><b>" + a[1] + "</b><small>" + a[2] + "</small></label>";
       }).join("") + "</div>" +
     '<label class="set__sw"><input id="gs-mapfocus" type="checkbox"' + (RG.mapFocus() ? " checked" : "") + "> ⛶ 地図を広く（ヘッダー・出発バー・下のチップを隠す。右下の ⛶ でも切り替え）</label>" +
-    '<label class="set__sw"><input id="gs-tripalways" type="checkbox"' + (RG.settings && RG.settings.tripAlways ? " checked" : "") + "> 🧭 出発バー（出発地・時刻・攻めかた）をスマホでもいつも出す（既定: ルート比較を始めたら出る）</label></div>";
+    '<label class="set__sw"><input id="gs-tripalways" type="checkbox"' + (RG.settings && RG.settings.tripAlways ? " checked" : "") + "> 🧭 出発バー（出発地・時刻・攻めかた）をいつも出す（既定: PC は入口カードの «出発:» の行から開く。スマホはルート比較を始めたら出る）</label></div>";
 };
 RG.mapFocusSwitchBind = function (root) {
   Array.prototype.forEach.call(root.querySelectorAll('input[name="gs-herofold"]'), function (r) {

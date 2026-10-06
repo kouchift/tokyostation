@@ -3597,7 +3597,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=171) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=172) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -4995,3 +4995,55 @@ body.slim .hdr__mark{font-size:var(--fs-14);letter-spacing:0;gap:5px}
 body.slim .hdr__mark{font-size:13px;letter-spacing:-.01em;gap:4px}
 body.slim .hdr__brandIcon{width:26px;height:26px;font-size:15px}
 .hdr__mark>span>strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* =========================================================================
+   v172: 第一印象と導線の細部（R3）
+   ========================================================================= */
+/* 窓の題字は切らない: 題字が伸び、右の «ノート» «シール» は詰める。スマホでは文字を隠してアイコンだけ */
+.modal__hd b,#modal-title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modal__ob{flex:0 0 auto;margin-left:6px}
+@media (max-width:720px){ .modal__ob{min-width:40px;padding:0 10px} .modal__ob .ms+*{display:none} }
+/* お知らせ（トースト）はスマホでは下から（入口カードの題字に重ならない。親指の近く） */
+body.slim .tb__status{top:auto;bottom:calc(var(--chips-h,48px) + 64px);max-width:calc(100% - 24px)}
+body.slim.mapfocus .tb__status{bottom:72px}
+/* 読み込みの帯は細い 1 本の線だけ（文字はスクリーンリーダー向けに残す）。ヘッダーを隠さない */
+.loadbar{padding:0;height:4px;background:transparent;gap:0;display:block}
+.loadbar .lb__t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.loadbar .lb__p{max-width:none;height:4px;border-radius:0;background:rgba(0,34,74,.08)}
+.loadbar .lb__p i{background:var(--brand-2)}
+/* おでかけプランの合計欄: «合計» が縦に折れない */
+.pl__sum{align-items:center;flex-wrap:nowrap}
+.pl__sum>span{flex:0 0 auto;white-space:nowrap}
+.pl__sum b{min-width:0;white-space:nowrap}
+.pl__sum>small,.pl__sum>i{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* =========================================================================
+   v172: 第一印象と導線（R3）
+   A. PC の出発バーはふだん畳み、入口カードの 1 行（.tripFold）から開く。ルート比較を始めたら／設定 «いつも出す» なら常設
+   B. スマホのズームバーは ＋ − 現在地 えらぶ ＋ «⋯»。全体・広く・現地・〒 は ⋯ の中
+   ========================================================================= */
+.tripFold{display:none;align-items:center;gap:8px;width:100%;margin:8px 0 2px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper-2);color:var(--ink);font:inherit;font-size:var(--fs-13);text-align:left;cursor:pointer}
+.tripFold:hover{background:var(--paper-3)}
+.tripFold .ms{font-size:18px;color:var(--ink-3)}
+.tripFold__t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tripFold__t b{font-weight:700;color:var(--brand)}
+.tripFold__x{transition:transform var(--t-base) var(--ease)}
+body.trip-open .tripFold__x{transform:rotate(180deg)}
+@media (min-width:721px){
+  .tripFold{display:flex}
+  body.route-active .tripFold,body.trip-always .tripFold{display:none}
+  body:not(.route-active):not(.trip-always):not(.trip-open){--tripbar-h:0px}
+  body:not(.route-active):not(.trip-always):not(.trip-open) .topbar{display:none}
+  #zmore{display:none}
+}
+@media (max-width:720px){
+  .zoombar:not(.open) .zb--x{display:none}
+  .zoombar.open{background:rgba(255,255,255,.98)}
+  #zmore[aria-expanded=true]{background:var(--brand-50);color:var(--brand)}
+}
+
+/* v172: PC のお知らせは «スポットをさがす» の帯の下に（出発バーを畳んだとき帯と重なっていた） */
+@media (min-width:721px){ .tb__status{top:calc(var(--header-h) + var(--tripbar-h) + 62px)} }
+
+/* v172: スマホの出典は 1 行に省略（長い 2 行だと入口の見出しより大きく、CSS の差し替えで描き直されて LCP が 6 秒になる。全文は ⓘ で） */
+body.slim .attrib{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}

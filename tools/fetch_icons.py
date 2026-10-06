@@ -18,7 +18,7 @@ ICONS = ("ac_unit,add,arrow_back,bookmark,calendar_month,chat_bubble,check_circl
          "local_fire_department,luggage,map,markunread_mailbox,mic,my_location,navigation,near_me,nightlight,"
          "partly_cloudy_day,person,place,rainy,remove,route,schedule,search,settings,share,star,storefront,thunderstorm,"
          "timer,tips_and_updates,train,tune,warning,wb_sunny,zoom_out_map,"
-         "link,badge,sell,edit_note,photo_camera,balance,replay,door_front,playlist_add,open_in_new,content_copy,delete,bolt,expand_circle_down")   # v171: 操作ボタンの絵文字を線のアイコンに寄せるぶん
+         "link,badge,sell,edit_note,photo_camera,balance,replay,door_front,playlist_add,open_in_new,content_copy,delete,bolt,expand_circle_down,more_horiz,schedule,explore_nearby")   # v171: 操作ボタンの絵文字を線のアイコンに寄せるぶん
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"
 
 def used_icons():
