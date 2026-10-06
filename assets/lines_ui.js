@@ -908,7 +908,11 @@ RG.initLinesUI = function () {
   /* v170: スマホは «えらぶ» を押すまで一覧（路線・90 ジャンル）を作らない（起動の長いタスクを 100ms ほど減らす）。
      データが届いたとき（RG.rebuildRail）や設定からも作れる */
   var slim = window.matchMedia && matchMedia("(max-width:720px)").matches, zr = document.getElementById("zrail");
-  if (slim && zr) zr.addEventListener("click", function () { if (!Rail.isBuilt()) { Rail.build(); if (RG.railToggle) RG.railToggle(true); } }, true);
+  if (slim && zr) zr.addEventListener("click", function (e) {
+    if (Rail.isBuilt()) return;
+    e.stopImmediatePropagation();   // v172: 作った直後に同じ click が «とじる» まで届いて、初回だけ開かなかった（作る → 開く で止める）
+    Rail.build(); if (RG.railToggle) RG.railToggle(true);
+  }, true);
   else Rail.build();
   if (ST.secret) document.body.classList.add("secret");
   RG.Map.paintWatch(ST.watch);
