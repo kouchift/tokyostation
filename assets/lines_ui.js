@@ -139,7 +139,7 @@ var Rail = (function () {
     var prefSel = '<div class="lr__row lr__row--pref"><span class="lr__g">地域</span>' +
       '<select id="lr-pref" class="lr__sel" aria-label="都道府県をえらぶ">' +
         PREF_NAMES.map(function (p) { return '<option value="' + p + '"' + (p === pref ? " selected" : "") + ">" + p + (p === "東京都" ? "（主要路線）" : "") + "</option>"; }).join("") +
-      '</select><span class="lr__hint">都道府県をえらぶと、その県の路線に切り替わり、地図もそこへ寄ります。アイコンにカーソルを当てると路線名が出ます。</span></div>';
+      '</select><span class="lr__hint">都道府県をえらぶと、その県の路線に切り替わり、地図もそこへ寄ります。</span></div>';
     rows = prefSel + rows;
     var genres = (RG.GENRES || []);
     var grow =

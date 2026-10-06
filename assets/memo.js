@@ -190,7 +190,7 @@ RG.memoPeople = function (name) { var ms = retained(name), seen = {}, n = 0; ms.
 RG.memoHeadline = function (name) {
   var n = RG.memoCount(name), ppl = RG.memoPeople(name);
   if (n > 0) return '<div class="mm__hl"><span class="mm__hl-b">みんなで更新中</span>　・　<b>' + ppl + "</b>人が実際に通って情報を追加しています" + (n !== ppl ? "（声 " + n + " 件）" : "") + "</div>";
-  return '<div class="mm__hl mm__hl--zero">まだ情報が少ない駅です。<button type="button" class="mm__hl-go" data-memo-go="1">最初のメモを残しませんか？</button></div>';
+  return '<div class="mm__hl mm__hl--zero">この駅のメモは、まだありません。<button type="button" class="mm__hl-go" data-memo-go="1">最初のメモを書く</button></div>';
 };
 RG.memoAvg = function (name) {
   var ms = retained(name), out = {};

@@ -4995,3 +4995,24 @@ body.slim .hdr__mark{font-size:var(--fs-14);letter-spacing:0;gap:5px}
 body.slim .hdr__mark{font-size:13px;letter-spacing:-.01em;gap:4px}
 body.slim .hdr__brandIcon{width:26px;height:26px;font-size:15px}
 .hdr__mark>span>strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* =========================================================================
+   v172: 第一印象と導線の細部（R3）
+   ========================================================================= */
+/* 窓の題字は切らない: 題字が伸び、右の «ノート» «シール» は詰める。スマホでは文字を隠してアイコンだけ */
+.modal__hd b,#modal-title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modal__ob{flex:0 0 auto;margin-left:6px}
+@media (max-width:720px){ .modal__ob{min-width:40px;padding:0 10px} .modal__ob .ms+*{display:none} }
+/* お知らせ（トースト）はスマホでは下から（入口カードの題字に重ならない。親指の近く） */
+body.slim .tb__status{top:auto;bottom:calc(var(--chips-h,48px) + 64px);max-width:calc(100% - 24px)}
+body.slim.mapfocus .tb__status{bottom:72px}
+/* 読み込みの帯は細い 1 本の線だけ（文字はスクリーンリーダー向けに残す）。ヘッダーを隠さない */
+.loadbar{padding:0;height:4px;background:transparent;gap:0;display:block}
+.loadbar .lb__t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.loadbar .lb__p{max-width:none;height:4px;border-radius:0;background:rgba(0,34,74,.08)}
+.loadbar .lb__p i{background:var(--brand-2)}
+/* おでかけプランの合計欄: «合計» が縦に折れない */
+.pl__sum{align-items:center;flex-wrap:nowrap}
+.pl__sum>span{flex:0 0 auto;white-space:nowrap}
+.pl__sum b{min-width:0;white-space:nowrap}
+.pl__sum>small,.pl__sum>i{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

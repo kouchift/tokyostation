@@ -218,7 +218,7 @@ RG.buzzRailRefresh = function (force) {
     function rowMini(b, far) {
       var p = PL[b.pl] || PL.x, hot = live.indexOf(b) >= 0;
       return '<button class="bzr__i' + (far ? " far" : "") + (b.img ? " bzr__i--img" : "") + '" type="button" data-bzid="' + esc(b.id) + '" title="' + esc(b.n) + '">' +
-        (b.img ? '<img class="bzr__im" src="' + esc(b.img) + '" alt="" loading="lazy">' : '<span class="bzr__im bzr__im--ph">' + p.e + "</span>") +
+        (b.img ? '<img class="bzr__im" src="' + esc(b.img) + '" alt="" loading="lazy" onerror="this.outerHTML=\'<span class=\\'bzr__im bzr__im--ph\\'>' + p.e + '</span>\'">' : '<span class="bzr__im bzr__im--ph">' + p.e + "</span>") +
         '<span class="bzr__d">' + esc(b.d.slice(5).replace("-", "/")) + "</span>" +
         '<span class="bzr__a">' + esc(areaOf(b)) + "</span>" +
         '<span class="bzr__n">' + (hot ? "🔥" : "🕰️") + " " + esc(b.n) + "</span>" +
