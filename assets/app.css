@@ -3282,7 +3282,7 @@ body.night .tb__btn{background:#2d3135;color:#f7f9ff}
 body.night .tb__from{color:#c7d0e6}
 body.night .aggr{background:#2d3135}
 body.night .aggr__b{color:#c7d0e6}
-body.night .aggr__b[aria-pressed=true]{background:var(--paper-2);color:var(--ink)}
+body.night .aggr__b[aria-pressed=true]{background:#f7f9ff;color:#181c20}
 body.night .tb__dt{background:#2d3135;color:#f7f9ff}
 .weekbar{background:transparent}
 .tb__status{border-radius:var(--r-pill);font-weight:600;box-shadow:var(--sh-sm);border:1px solid var(--grid);background:#fff}
@@ -3597,7 +3597,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=139) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=171) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -4791,7 +4791,6 @@ body.gesturing .poipop{visibility:hidden}
    ・部品は CSS 変数の差し替えで暗色に。ベタ塗りの #fff を持つ部品だけ下で個別に直す
    ========================================================================= */
 .modal--dark .modal__box,.card--dark{
-  --ink:#F3F6FA;--ink-2:rgba(243,246,250,.80);--ink-3:rgba(243,246,250,.68);--line:rgba(255,255,255,.16);--line-2:rgba(255,255,255,.26);--paper:#141C2B;--paper-2:rgba(255,255,255,.06);--paper-3:rgba(255,255,255,.10);
   --surface:#141C2B;--bg:rgba(16,24,40,.94);--control:rgba(255,255,255,.08);--control2:rgba(255,255,255,.12);--control3:rgba(255,255,255,.15);
   --text:#F3F6FA;--label:rgba(243,246,250,.72);--muted:rgba(243,246,250,.62);--gray600:rgba(243,246,250,.72);--gray800:#F3F6FA;
   --grid:rgba(255,255,255,.12);--border:rgba(255,255,255,.22);--link:#9CC9FF;--highlight:#9CC9FF;
@@ -4858,7 +4857,7 @@ body.gesturing .poipop{visibility:hidden}
   color:var(--text);color-scheme:light
 }
 .modal--dark :is(.pins,.pst,.req__b,.eh,.whs__why,.sec--sk,.sec--score,.bzp__i) a,.card--dark :is(.pins,.pst,.req__b,.eh,.whs__why,.sec--sk,.sec--score,.bzp__i) a{color:#0061a1}
-.modal--dark .pin,.card--dark .pin{background:#fff;color:var(--ink)}
+.modal--dark .pin,.card--dark .pin{background:#fff;color:#181c20}
 .modal--dark .pin.on,.card--dark .pin.on{background:#C8880F;color:#fff}
 .modal--dark .mapb,.card--dark .mapb{color:#0061a1}
 .modal--dark .cmini,.card--dark .cmini{background:var(--control2);border-color:var(--border)}
@@ -4920,9 +4919,9 @@ button.lchip.lchip--go,button.lchip.lchip--sk{color:var(--lfg,#fff) !important} 
 .modal--dark .grx__sec p,.modal--dark .grx__sec h5,.modal--dark .grx__rp span,.modal--dark .grv__visit p{color:var(--text)}
 .modal--dark :is(.grx__sec,.hl__sec) ruby rt{color:#5b6470}
 .focus__cheerb{color:var(--ink)}
-.modal--dark .grv__all summary,.modal--dark .grv__all summary *{color:var(--ink)}
+.modal--dark .grv__all summary,.modal--dark .grv__all summary *{color:#181c20}
 /* v166: 歴オタ図鑑の一覧はスポットと同じ窓（.modal--dark）に。中身の茶・クリームの配色はそのまま（白い面に載せる） */
-.modal--dark .hkz{background:#fff;border-radius:var(--r-lg);padding:10px 12px;color:var(--ink)}
+.modal--dark .hkz{background:#fff;border-radius:var(--r-lg);padding:10px 12px;color:#181c20}
 .hkz__it .hkz__t em{color:#6B7280}                                                   /* 番号：#999 は白地で 2.85:1 だった → 4.8:1 */
 .hkc__back{display:inline-flex;align-items:center;min-height:36px;border:1px solid #D7CCC8;background:var(--paper-2);color:#3E2723;border-radius:var(--r-pill);padding:0 14px;font:inherit;font-size:var(--fs-13);font-weight:800;cursor:pointer;margin:0 0 8px}
 
@@ -4932,3 +4931,52 @@ body.hero-mini .heroSearch.heroSearch--mini>h1{display:block !important;position
 /* v170: 出典 ⓘ はズームバーの下に収める（重なると押せない）。スポットの帯（PC）は最初から高さを確保して、出たときに地図がずれないように */
 .attrib{bottom:4px}
 @media (min-width:721px){ #groupbar:empty{min-height:47px} }
+
+/* =========================================================================
+   v171: 部品の層（ボタン・チップ・窓・トーストの «共通の形»）。
+   目的: 1 画面に 4〜5 種あったボタンの様式を 4 種（主 / 副 / 枠 / 危険）に寄せる。
+   既存の class はそのまま、ここで同じ形に揃える（後ろにあるので勝つ）。新しいボタンは .btn .btn--p / --s / --o / --d を使う
+   ========================================================================= */
+/* 主ボタン（1 画面に 1〜2 個。青の面・白い字） */
+.btn--p,.opt__b--nav,.rc__a--main,.cact--p,.heroAction--primary,.tb__btn--go,.set__b,.pl__share,.readback__go,.rc__make,
+.modal--dark .cact--p{
+  background:var(--brand);color:#fff;border:1px solid var(--brand);border-radius:var(--r-pill);font-weight:700;box-shadow:var(--sh-1)}
+.btn--p:hover,.opt__b--nav:hover,.rc__a--main:hover,.cact--p:hover,.heroAction--primary:hover,.tb__btn--go:hover,.set__b:hover{background:#004A96;border-color:#004A96;filter:none}
+/* 副ボタン（薄い面・濃い字。いちばん多い） */
+.btn--s,.opt__b,.lr__c,.cmini,.set__b2,.sortbar__b,.pltab--b,.stp__b,.lvb,.rc__c,.pp__c{
+  background:var(--paper-3);color:var(--ink);border:1px solid transparent;border-radius:var(--r-pill);font-weight:700;box-shadow:none}
+.btn--s:hover,.opt__b:hover,.lr__c:hover,.cmini:hover,.set__b2:hover,.sortbar__b:hover{background:var(--line);filter:none}
+.lr__c[aria-pressed=true],.sortbar__b[aria-pressed=true],.opt__b[aria-pressed=true]{background:var(--brand);color:#fff;border-color:var(--brand)}
+/* 枠ボタン（白い面・線。並べても主張しない） */
+.btn--o,.rc__a,.heroAction,.pp__b,.lnk,.rt__card,.rt__share,.rt__fav{
+  background:var(--paper);color:var(--ink);border:1px solid var(--line-2);border-radius:var(--r-pill);font-weight:700;box-shadow:none}
+.btn--o:hover,.rc__a:hover,.heroAction:hover,.pp__b:hover,.lnk:hover{background:var(--brand-50);border-color:var(--brand);color:var(--brand);filter:none}
+/* 危険（やめる・消す） */
+.btn--d,.nav__stop,.bootwarn__x,.set__danger{background:var(--paper);color:var(--bad);border:1px solid var(--bad);border-radius:var(--r-pill);font-weight:700}
+.btn--d:hover,.nav__stop:hover{background:#FFF5F5}
+/* 大きさ: ふつう 40px / 小 32px。文字 14 / 13。押したときは少し沈む */
+.btn,.opt__b,.rc__a,.heroAction,.set__b,.set__b2,.pp__b,.tb__btn--go{min-height:40px;padding:0 16px;font-size:var(--fs-14);line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.lr__c,.cmini,.sortbar__b,.lvb,.rc__c,.pp__c,.nav__cand{min-height:32px;padding:0 12px;font-size:var(--fs-13)}
+.btn:active,.opt__b:active,.rc__a:active,.heroAction:active,.set__b:active,.set__b2:active,.lr__c:active,.cmini:active,.cact:active{transform:translateY(1px)}
+.btn[disabled],.opt__b[disabled],.rc__a[disabled],.set__b[disabled],.lr__c[disabled]{opacity:.45;pointer-events:none}
+/* 駅カードの大きな 2 つ（現在地からここへ／ここから出発）は角丸の板のまま（主・枠） */
+.cact{border-radius:var(--r-md)}
+.cact:not(.cact--p){background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
+.modal--dark .cact:not(.cact--p),.card--dark .cact:not(.cact--p){background:var(--paper-2);color:var(--ink);border-color:var(--line-2)}
+
+/* 窓とトーストの出入り（180〜240ms・ease-out。reduced-motion では 0） */
+@keyframes tsg-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes tsg-fade{from{opacity:0}to{opacity:1}}
+.modal.show{animation:tsg-fade var(--t-base) var(--ease)}
+.modal.show .modal__box{animation:tsg-up var(--t-slow) var(--ease)}
+.tb__status{animation:tsg-up var(--t-base) var(--ease)}
+.poipop{animation:tsg-up var(--t-base) var(--ease)}
+.linerail.open{animation:tsg-up var(--t-slow) var(--ease)}
+
+/* 文字組: 読み物（カードの本文）は 15〜16px・行間 1.7、行長が長すぎないように */
+.modal__bd p,.card--dark p,.wc__body,.nd__txt{font-size:var(--fs-16);line-height:1.7}
+.modal__bd{font-size:var(--fs-14);line-height:1.6}
+.modal__hd b,#modal-title{font-size:var(--fs-18);line-height:1.3;letter-spacing:-.01em}
+/* ボタンの中の線のアイコン（絵文字の代わり）: 18px・文字と中央そろえ */
+.opt__b .ms,.cmini .ms,.rt__card .ms,.heroAction .ms,.lvb .ms,.modal__ob .ms,.tb__btn .ms,.btn .ms,.set__b .ms,.set__b2 .ms,.rc__a .ms{font-size:18px;line-height:1;vertical-align:-4px;margin-right:2px}
+.heroAction .ms{margin-right:4px}

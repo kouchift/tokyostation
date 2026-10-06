@@ -62,10 +62,15 @@ function mapGreyColor(v, prop) {
     tick("grey " + prop + " " + hex.toLowerCase() + "→" + tok); return "var(" + tok + ")";
   });
 }
+/* 暗い面（濃いカード・案内バー・夜）の決まりでは、灰色の文字を濃くしない（暗い背景で読めなくなる） */
+const DARK = /modal--dark|card--dark|\.night|\.navbar|\.nav__|glass|--dark|\.dark\b|loadbar|\.hint\b|lb__|bootwarn|\.sheet--d/;
 function rewrite(css) {
-  // 宣言ごと（{ } の中の «prop:value»）に処理。:root の定義（--xxx:）は触らない
-  return css.replace(/([a-zA-Z-]+)\s*:\s*([^;{}]+)(?=;|})/g, (all, prop, value) => {
+  // 決まり（selector{…}）ごとに処理。:root の定義（--xxx:）は触らない
+  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (block, sel, body) => {
+    const dark = DARK.test(sel);
+    return sel + "{" + body.replace(/([a-zA-Z-]+)\s*:\s*([^;{}]+)(?=;|$)/g, (all, prop, value) => {
     if (prop.startsWith("--")) return all;
+    if (dark && /^(color|fill|stroke|background|background-color|border|border-color|border-top|border-bottom|border-left|border-right|outline)$/.test(prop)) return all;
     if (/calc\(|var\(--u|--lblscale|--poiscale|--lmscale|--sthitr/.test(value)) return all;
     let v = value;
     if (prop === "border-radius") v = mapRadius(v);
@@ -74,6 +79,7 @@ function rewrite(css) {
     else if (prop === "transition") v = mapTransition(v);
     else if (/^(color|fill|stroke|background|background-color|border|border-color|border-top|border-bottom|border-left|border-right|outline)$/.test(prop)) v = mapGreyColor(v, prop);
     return v === value ? all : prop + ":" + v;
+    }) + "}";
   });
 }
 for (const f of FILES) {
