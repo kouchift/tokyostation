@@ -2912,7 +2912,7 @@ function bootFinish(Q, failed) {
     if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);
     document.dispatchEvent(new CustomEvent("rg:booted"));
   }
-  drain();
+  setTimeout(drain, 0);   // v171: 描画のタスクと «あとで» の列を分ける（長いタスクを短く）
   return failed;
 }
 
