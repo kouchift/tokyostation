@@ -60,11 +60,13 @@ function setWhen(d) {
   $("#t-dt").value = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
                      "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
+var whenShown = false;   // v170: 起動の 1 回目は «終電後» の知らせを出さない（出発バーの 🌙 と深夜レスキューで分かる。起動直後の吹き出しは LCP を遅らせ、うるさい）
 function afterWhen() {
   var night = RG.Planner.isAfterLastTrain(Trip.when);
   $("#t-rescue").hidden = !night;
   document.body.classList.toggle("night", night);
-  if (night) {
+  var first = !whenShown; whenShown = true;
+  if (night && !first) {
     var m = RG.Planner.minutesToFirstTrain(Trip.when);
     status("🌙 いまは終電後の時間帯です（始発まであと " + m + " 分）。電車以外の手段を優先して提案します。",
            "night", 6000);
