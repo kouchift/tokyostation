@@ -3597,7 +3597,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 /* ---------- v87 アイコン字体を同梱（Google Fonts 非依存） ----------
    Material Symbols Outlined（Apache License 2.0 / Google）。index.html の icon_names に並ぶ約 50 個だけのサブセット（65KB）。
    アイコンを増やすときは tools/fetch_icons.py で作り直す。 */
-@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=171) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
+@font-face{font-family:'Material Symbols Outlined';font-style:normal;font-weight:400 500;font-display:block;src:url(fonts/msymbols.woff2?v=172) format('woff2')}   /* v139: 太さ 400〜500・大きさ 24 に固定して 65KB → 21KB */
 
 #zrail{display:none}
 /* ---------- v88 スマホ: 下の 2 本の帯（駅の絞り込みチップ・路線／スポット／話題のバー）を常時表示しない ----------
@@ -5041,3 +5041,6 @@ body.trip-open .tripFold__x{transform:rotate(180deg)}
   .zoombar.open{background:rgba(255,255,255,.98)}
   #zmore[aria-expanded=true]{background:var(--brand-50);color:var(--brand)}
 }
+
+/* v172: PC のお知らせは «スポットをさがす» の帯の下に（出発バーを畳んだとき帯と重なっていた） */
+@media (min-width:721px){ .tb__status{top:calc(var(--header-h) + var(--tripbar-h) + 62px)} }
