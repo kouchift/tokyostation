@@ -1657,9 +1657,9 @@ var Card = (function () {
     return '<div class="cardActs">' + primary +
       '<button class="cact" type="button" data-from="' + esc(s.id) + '"' + (isOrigin ? ' disabled aria-disabled="true"' : "") + '><span class="ms">near_me</span><b>' + (isOrigin ? "出発地です" : "ここから出発") + '</b><small>' + (isOrigin ? "いまの出発地" : "出発地にする") + "</small></button>" +
       '<div class="cardActs__mini">' +
-        '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '">🔗 共有</button>' +
-        '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
-        (RG.favs ? '<button class="cmini" type="button" data-fav-open="1">⭐ お気に入り一覧</button>' : "") +
+        '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '"><span class="ms" aria-hidden="true">link</span> 共有</button>' +
+        '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）"><span class="ms" aria-hidden="true">badge</span> カード</button>' +
+        (RG.favs ? '<button class="cmini" type="button" data-fav-open="1"><span class="ms" aria-hidden="true">star</span> お気に入り一覧</button>' : "") +
         (RG.stickerStation ? '<button class="cmini" type="button" data-stk-st="' + esc(s.id) + '" title="SNS に貼る駅名標のステッカー（透明な PNG）">🏷️ ステッカー</button>' : "") +
         (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る">📝 Obsidian</button>' : "") +
       "</div>" +

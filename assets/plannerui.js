@@ -26,7 +26,7 @@ function initBar() {
         return '<button class="aggr__b" type="button" data-aggr="' + a.id + '" aria-pressed="' +
           (a.id === 1) + '" title="' + esc(a.tone) + '">' + a.emoji + " " + esc(a.label) + "</button>";
       }).join("") + "</span>" +
-    '<button id="t-find" class="tb__btn tb__btn--go" type="button">🧭 行き先をさがす</button>' +
+    '<button id="t-find" class="tb__btn tb__btn--go" type="button"><span class="ms" aria-hidden="true">navigation</span> 行き先をさがす</button>' +
     '<button id="t-rescue" class="tb__btn tb__btn--night" type="button" hidden>🌙 終電を逃した</button>';
 
   if (RG.secureOK && !RG.secureOK()) {
@@ -788,8 +788,8 @@ function optCard(o, i, ctx) {
     (o.links && o.links.length ? '<div class="opt__lnks">' + o.links.map(function (l) { return l.u ? '<a class="lnk lnk--s" href="' + esc(l.u) + '" target="_blank" rel="noopener">' + esc(l.t) + " ↗</a>" : '<button class="lnk lnk--s" type="button" data-act="' + esc(l.act) + '">' + esc(l.t) + "</button>"; }).join("") + "</div>" : "") +
     (o.stopped ? "" :
       '<div class="opt__acts">' +
-        '<button class="opt__b" type="button" data-add="' + i + '">🧳 リストに追加</button>' +
-        '<button class="opt__b opt__b--nav" type="button" data-nav="' + i + '">🧭 この道で案内</button>' +
+        '<button class="opt__b" type="button" data-add="' + i + '"><span class="ms" aria-hidden="true">playlist_add</span> リストに追加</button>' +
+        '<button class="opt__b opt__b--nav" type="button" data-nav="' + i + '"><span class="ms" aria-hidden="true">navigation</span> この道で案内</button>' +
         (ctx && ctx.to ? RG.mapButtons(ctx.from, ctx.to, o.id, "") : "") +
       "</div>") +
     "</div>";
@@ -836,9 +836,9 @@ function summaryHtml(r, s, rec) {
       '<div class="rs__c"><small>費用</small><b>' + yen(rec.yen) + (rec.yenPlus ? '<i class="opt__plus">' + esc(rec.yenPlus) + "</i>" : "") + "</b></div>" +
     "</div>" +
     (f.length ? '<div class="rs__feat">' + f.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("") + "</div>" : "") +
-    '<div class="rs__acts"><button class="opt__b opt__b--nav" type="button" data-nav="' + rec.__i + '">🗺️ 地図で経路を見る</button>' +
-    '<button class="opt__b" type="button" data-add="' + rec.__i + '">🧳 リストに追加</button>' +
-    '<button class="opt__b" type="button" data-jump="' + rec.__i + '">▾ 詳細へ</button>' +
+    '<div class="rs__acts"><button class="opt__b opt__b--nav" type="button" data-nav="' + rec.__i + '"><span class="ms" aria-hidden="true">map</span> 地図で経路を見る</button>' +
+    '<button class="opt__b" type="button" data-add="' + rec.__i + '"><span class="ms" aria-hidden="true">playlist_add</span> リストに追加</button>' +
+    '<button class="opt__b" type="button" data-jump="' + rec.__i + '"><span class="ms" aria-hidden="true">expand_circle_down</span> 詳細へ</button>' +
     (RG.onsite && (Trip.id === "東京" || s.id === "東京" || (rec.rail && (rec.rail.board === "東京" || rec.rail.alight === "東京"))) ? '<button class="opt__b" type="button" data-onsite="exit">🚪 東京駅の出口を見る</button>' : "") +   // v96: 現地モードへ
     "</div></div>";
 }
@@ -870,8 +870,8 @@ function showRoutes(destId) {
   var r = RG.Planner.estimate(Trip.origin, [s.la, s.lo], Trip.when, Trip.aggr);
   var kl = { day: "日中", peak: "ラッシュ", night: "深夜・早朝" }[r.hourKind];
   var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(RG.stLabel(s)) + "</b>" +
-    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '" title="ルートカードを作る">🪪 カード</button>' +
-    ' <button class="rt__card rt__share" type="button" data-rshare="' + esc(s.id) + '" title="この検索を共有">🔗 共有</button>' +
+    ' <button class="rt__card" type="button" data-card="' + esc(s.id) + '" title="ルートカードを作る"><span class="ms" aria-hidden="true">badge</span> カード</button>' +
+    ' <button class="rt__card rt__share" type="button" data-rshare="' + esc(s.id) + '" title="この検索を共有"><span class="ms" aria-hidden="true">link</span> 共有</button>' +
     (RG.favs ? ' <button class="rt__card rt__fav' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? " on" : "") + '" type="button" data-rfav="' + esc(s.id) + '" aria-pressed="' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "true" : "false") + '">' + (RG.favs.isFavRoute(Trip.id || null, s.id) ? "★ お気に入り" : "☆ お気に入り") + "</button>" : "") + "</div>" +
     '<div class="rt__meta">' + (r.at.getMonth() + 1) + "/" + r.at.getDate() + " " + hhmm(r.at) +
     " 発（" + kl + "）／直線 " + r.straightKm.toFixed(1) + "km／" +
