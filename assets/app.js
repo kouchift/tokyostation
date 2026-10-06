@@ -2662,8 +2662,8 @@ RG.initHeroSearch = function () {
   if (RG.tokyoHeroInit) RG.tokyoHeroInit();
   if (RG.setOrigin && !RG.setOrigin.__hero) { var so = RG.setOrigin; RG.setOrigin = function () { var r = so.apply(this, arguments); if (RG.heroSyncOrigin) RG.heroSyncOrigin(); return r; }; RG.setOrigin.__hero = 1; }
   // 駅数を小さく（«全国の路線図の上に東京駅の入口» という構造が分かるように）
-  var hs = $("#hero-stat"); if (hs && RG.NET) hs.textContent = RG.NET.stations.filter(function (s) { return !s.ext; }).length.toLocaleString("ja-JP") + " 駅・" + RG.NET.lines.filter(function (l) { return !l.ext; }).length + " 路線" +
-    (RG.EXT && Object.keys(RG.EXT.lines).length ? "＋船・ヘリなど " + Object.keys(RG.EXT.lines).length : "");   // v124: 港・ヘリポートは «駅» に数えない   // v101: 「全国 8,381 駅・60 路線の路線図から…」
+  var hs = $("#hero-stat"); if (hs && RG.NET) { var hsT = RG.NET.stations.filter(function (s) { return !s.ext; }).length.toLocaleString("ja-JP") + " 駅・" + RG.NET.lines.filter(function (l) { return !l.ext; }).length + " 路線" +
+    (RG.EXT && Object.keys(RG.EXT.lines).length ? "＋船・ヘリなど " + Object.keys(RG.EXT.lines).length : ""); if (hs.textContent !== hsT) hs.textContent = hsT; }   // v171: 同じ文なら触らない（描き直すと LCP の候補になる）   // v124: 港・ヘリポートは «駅» に数えない   // v101: 「全国 8,381 駅・60 路線の路線図から…」
   // 高さを CSS 変数に（スマホでは «地図の設定»・ヒント・天気チップを hero の下に置くため）
   function measure() { if (hero) document.documentElement.style.setProperty("--hero-h", hero.offsetHeight + "px"); }
   if (window.requestAnimationFrame) requestAnimationFrame(measure); else measure();   // v170: 描いた直後に高さを測ると画面の計算をやり直させる（起動の長いタスク）ので、次の描画のときに

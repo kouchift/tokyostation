@@ -4990,3 +4990,8 @@ body.slim .hdr__mark{font-size:var(--fs-14);letter-spacing:0;gap:5px}
 
 /* v171: 入口カードの 1 行目（名前と «行き方ガイド»）は、あとから «たたむ» ボタンが入っても高さが変わらないように */
 .heroSearch__eyebrow{min-height:28px}
+
+/* v171: スマホのヘッダー: 名前 13px・印 26px で、ボタン 4 つ（44px）と同居しても名前が切れない */
+body.slim .hdr__mark{font-size:13px;letter-spacing:-.01em;gap:4px}
+body.slim .hdr__brandIcon{width:26px;height:26px;font-size:15px}
+.hdr__mark>span>strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
