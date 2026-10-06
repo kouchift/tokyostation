@@ -69,7 +69,7 @@ function span(t) {
   var s = t.__mls;
   if (!s) {
     s = t.__mls = document.createElement("span"); s.className = "ml"; s.__t = t;
-    layer.appendChild(s);
+    /* v171: ここでは足さない。位置（transform）を決めてから足す（(0,0) に一度描かれてから動くと «画面のずれ»（CLS 0.76）に数えられる） */
   }
   return s;
 }
@@ -104,11 +104,15 @@ function apply(t, d, F) {
   s.__x = d.x; s.__y = d.y; s.__r = d.r; s.__a = d.a; s.__dy = d.dy;
   if (!s.__on) { s.__on = true; s.style.display = ""; act.push(t); }
   place(s, F);
+  if (!s.parentNode) layer.appendChild(s);   // v171: 位置が決まってから足す
 }
 function place(s, F) {
   if (!F) return;
   var x = (s.__x - F.x) * F.k + F.ox, y = (s.__y - F.y) * F.k + F.oy;
-  var tr = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)" + (s.__r ? " rotate(" + s.__r.toFixed(1) + "deg)" : "") + " translate(" + s.__a + "," + (-0.82 + s.__dy).toFixed(2) + "em)";
+  /* v171: 位置は left/top で（transform だけだと、Chrome が «(0,0) から動いた» と数えて «画面のずれ»（CLS 0.76）になる）。回転と字の寄せは transform */
+  var lt = x.toFixed(1) + "px," + y.toFixed(1) + "px";
+  if (s.__lt !== lt) { s.__lt = lt; s.style.left = x.toFixed(1) + "px"; s.style.top = y.toFixed(1) + "px"; }
+  var tr = (s.__r ? "rotate(" + s.__r.toFixed(1) + "deg) " : "") + "translate(" + s.__a + "," + (-0.82 + s.__dy).toFixed(2) + "em)";
   if (s.__tr !== tr) { s.__tr = tr; s.style.transform = tr; }
 }
 function flush() {

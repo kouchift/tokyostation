@@ -1657,9 +1657,9 @@ var Card = (function () {
     return '<div class="cardActs">' + primary +
       '<button class="cact" type="button" data-from="' + esc(s.id) + '"' + (isOrigin ? ' disabled aria-disabled="true"' : "") + '><span class="ms">near_me</span><b>' + (isOrigin ? "出発地です" : "ここから出発") + '</b><small>' + (isOrigin ? "いまの出発地" : "出発地にする") + "</small></button>" +
       '<div class="cardActs__mini">' +
-        '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '">🔗 共有</button>' +
-        '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）">🪪 カード</button>' +
-        (RG.favs ? '<button class="cmini" type="button" data-fav-open="1">⭐ お気に入り一覧</button>' : "") +
+        '<button class="cmini" type="button" data-share-st="' + esc(s.id) + '"><span class="ms" aria-hidden="true">link</span> 共有</button>' +
+        '<button class="cmini" type="button" data-card="' + esc(s.id) + '" title="起点→この駅のルートカード（1080×1080）"><span class="ms" aria-hidden="true">badge</span> カード</button>' +
+        (RG.favs ? '<button class="cmini" type="button" data-fav-open="1"><span class="ms" aria-hidden="true">star</span> お気に入り一覧</button>' : "") +
         (RG.stickerStation ? '<button class="cmini" type="button" data-stk-st="' + esc(s.id) + '" title="SNS に貼る駅名標のステッカー（透明な PNG）">🏷️ ステッカー</button>' : "") +
         (RG.sendStationNote ? '<button class="cmini" type="button" data-ob-st="' + esc(s.id) + '" title="Obsidian にこの駅のノートを送る">📝 Obsidian</button>' : "") +
       "</div>" +
@@ -2662,8 +2662,8 @@ RG.initHeroSearch = function () {
   if (RG.tokyoHeroInit) RG.tokyoHeroInit();
   if (RG.setOrigin && !RG.setOrigin.__hero) { var so = RG.setOrigin; RG.setOrigin = function () { var r = so.apply(this, arguments); if (RG.heroSyncOrigin) RG.heroSyncOrigin(); return r; }; RG.setOrigin.__hero = 1; }
   // 駅数を小さく（«全国の路線図の上に東京駅の入口» という構造が分かるように）
-  var hs = $("#hero-stat"); if (hs && RG.NET) hs.textContent = RG.NET.stations.filter(function (s) { return !s.ext; }).length.toLocaleString("ja-JP") + " 駅・" + RG.NET.lines.filter(function (l) { return !l.ext; }).length + " 路線" +
-    (RG.EXT && Object.keys(RG.EXT.lines).length ? "＋船・ヘリなど " + Object.keys(RG.EXT.lines).length : "");   // v124: 港・ヘリポートは «駅» に数えない   // v101: 「全国 8,381 駅・60 路線の路線図から…」
+  var hs = $("#hero-stat"); if (hs && RG.NET) { var hsT = RG.NET.stations.filter(function (s) { return !s.ext; }).length.toLocaleString("ja-JP") + " 駅・" + RG.NET.lines.filter(function (l) { return !l.ext; }).length + " 路線" +
+    (RG.EXT && Object.keys(RG.EXT.lines).length ? "＋船・ヘリなど " + Object.keys(RG.EXT.lines).length : ""); if (hs.textContent !== hsT) hs.textContent = hsT; }   // v171: 同じ文なら触らない（描き直すと LCP の候補になる）   // v124: 港・ヘリポートは «駅» に数えない   // v101: 「全国 8,381 駅・60 路線の路線図から…」
   // 高さを CSS 変数に（スマホでは «地図の設定»・ヒント・天気チップを hero の下に置くため）
   function measure() { if (hero) document.documentElement.style.setProperty("--hero-h", hero.offsetHeight + "px"); }
   if (window.requestAnimationFrame) requestAnimationFrame(measure); else measure();   // v170: 描いた直後に高さを測ると画面の計算をやり直させる（起動の長いタスク）ので、次の描画のときに
@@ -2912,7 +2912,7 @@ function bootFinish(Q, failed) {
     if (failed.length && RG.showBootTrouble) RG.showBootTrouble(failed);
     document.dispatchEvent(new CustomEvent("rg:booted"));
   }
-  drain();
+  setTimeout(drain, 0);   // v171: 描画のタスクと «あとで» の列を分ける（長いタスクを短く）
   return failed;
 }
 

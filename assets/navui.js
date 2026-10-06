@@ -199,7 +199,7 @@ function renderDetail(D) {
     '<div class="nd__sum">' + (o.m ? o.m.emoji + " " + esc(o.m.label) : esc(n.modeLabel)) + "　所要 <b>" + (o.minutes || "—") + "分</b>　" + yen(o.yen) +
     (rr ? "　乗換 " + rr.transfers + " 回" : "") + "</div>" +
     '<div class="nd__tools">' +
-      '<button class="lvb" type="button" id="nd-map">🗺️ 地図を見る</button>' +
+      '<button class="lvb" type="button" id="nd-map"><span class="ms" aria-hidden="true">map</span> 地図を見る</button>' +
       (RG.arOpen ? '<button class="lvb" type="button" id="nd-ar">📷 AR で方角を見る</button>' : "") +
       (n.destId ? '<button class="lvb" type="button" id="nd-cmp">⚖️ 候補をくらべる</button>' : "") +
       '<button class="lvb" type="button" id="nd-redo">🔁 現在地からやり直す</button>' +

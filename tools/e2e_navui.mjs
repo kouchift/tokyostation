@@ -13,6 +13,8 @@ const browser = await chromium.launch({ args: ["--use-fake-ui-for-media-stream"]
 const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2,
   geolocation: HERE, permissions: ["geolocation"], serviceWorkers: "block", locale: "ja-JP" });
 const page = await ctx.newPage();
+/* v171: «いま» を昼（11:00 ローカル）に固定する。終電後の時間帯に回すと候補の順が変わり（電車が 11 番目）、同じ試験が落ちていた */
+await page.clock.setFixedTime(new Date("2026-10-06T11:00:00"));
 const errors = []; page.on("pageerror", e => errors.push(String(e))); 
 await page.route(/jma\.go\.jp\/bosai\/warning\/data\/r8\/.*\.json/, r => r.fulfill({ json: !/130000\.json/.test(r.request().url()) ? [] : [{ reportDatetime: "2026-10-05T10:00:00+09:00", headlineText: "テスト", warning: { class10Items: [{ areaCode: "130010", kinds }] } }] }));
 await page.route(/jma\.go\.jp\/bosai\/tsunami\/data\/list\.json/, r => r.fulfill({ json: [] }));

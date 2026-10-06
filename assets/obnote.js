@@ -96,13 +96,13 @@ function hook() {
       var r = ss.apply(this, arguments);
       var m = document.querySelector(".modal.show"), hd = m && m.querySelector(".modal__hd");
       if (hd && p && p.n && p.la != null && !hd.querySelector(".modal__ob")) {
-        var b = document.createElement("button"); b.type = "button"; b.className = "modal__ob"; b.textContent = "📝 ノート";
-        b.setAttribute("aria-label", "📝 ノート（Obsidian に送る）");
+        var b = document.createElement("button"); b.type = "button"; b.className = "modal__ob"; b.innerHTML = "<span class=\"ms\" aria-hidden=\"true\">edit_note</span> ノート";
+        b.setAttribute("aria-label", "ノート（Obsidian に送る）");
         b.addEventListener("click", function (e) { e.stopPropagation(); RG.sendSpotNote(p); });
         hd.insertBefore(b, hd.querySelector(".modal__x"));
         if (RG.stickerSpot) {                                          // v116: SNS に貼るステッカー
-          var b2 = document.createElement("button"); b2.type = "button"; b2.className = "modal__ob modal__ob--2"; b2.textContent = "🏷️ シール";
-          b2.setAttribute("aria-label", "🏷️ シール（SNS に貼るステッカーを作る）");
+          var b2 = document.createElement("button"); b2.type = "button"; b2.className = "modal__ob modal__ob--2"; b2.innerHTML = "<span class=\"ms\" aria-hidden=\"true\">sell</span> シール";
+          b2.setAttribute("aria-label", "シール（SNS に貼るステッカーを作る）");
           b2.addEventListener("click", function (e) { e.stopPropagation(); RG.stickerSpot(p); });
           hd.insertBefore(b2, hd.querySelector(".modal__x"));
         }
