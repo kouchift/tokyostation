@@ -78,7 +78,7 @@ function setOrigin(coord, label, id, accuracy) {
   Trip.acc = accuracy || null;
   Trip.isGeo = !id;                       // 駅ではなく実際の現在地かどうか
   if (RG.Map.paintMe) RG.Map.paintMe(coord, Trip.isGeo ? accuracy : 0);
-  var f = $("#t-from"); f.textContent = "出発：" + label; f.classList.add("on");
+  var f = $("#t-from"); if (f) { f.textContent = "出発：" + label; f.classList.add("on"); }   // v171: 出発バーができる前に現在地が届くことがある
   status(label + " を出発地にしました。行き先の駅をタップするか「🧭 行き先をさがす」へ。", "ok", 3500);
   refreshIso();
   try { document.dispatchEvent(new CustomEvent("rg:origin", { detail: { label: label, id: Trip.id, isGeo: Trip.isGeo } })); } catch (e) {}   // v96: 内側からの呼び出し（現在地など）でも入口が追従する
