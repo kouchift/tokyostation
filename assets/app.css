@@ -5044,3 +5044,6 @@ body.trip-open .tripFold__x{transform:rotate(180deg)}
 
 /* v172: PC のお知らせは «スポットをさがす» の帯の下に（出発バーを畳んだとき帯と重なっていた） */
 @media (min-width:721px){ .tb__status{top:calc(var(--header-h) + var(--tripbar-h) + 62px)} }
+
+/* v172: スマホの出典は 1 行に省略（長い 2 行だと入口の見出しより大きく、CSS の差し替えで描き直されて LCP が 6 秒になる。全文は ⓘ で） */
+body.slim .attrib{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}

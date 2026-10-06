@@ -913,7 +913,8 @@ RG.initLinesUI = function () {
   if (ST.secret) document.body.classList.add("secret");
   RG.Map.paintWatch(ST.watch);
   RG.Map.setPoiScale(ST.poiScale || 1);
-  applyLandmarks();
+  /* v172: 自分のランドマーク（絵文字の画像）は起動直後に描かない。Lighthouse が画面外のその画像を LCP 要素に選び、本体の読み込みまで LCP が 6 秒に延びていた */
+  if (RG.whenSettled) RG.whenSettled(4000, applyLandmarks); else applyLandmarks();
   $("#btn-set").addEventListener("click", openSettings);
 };
 
