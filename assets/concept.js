@@ -408,6 +408,18 @@
       if (!reduced) requestAnimationFrame(drawFrame);
     }
     requestAnimationFrame(drawFrame);
+    /* drawElementImage が «ある» だけの環境では、カードに大きさが付かず何も描けない。
+       少し待っても大きさが付かないときは、通常カード表示に倒す（正直なフォールバック） */
+    setTimeout(function () {
+      if (!failed && (card.offsetWidth < 4 || card.offsetHeight < 4)) {
+        failed = true;
+        try { canvas.remove(); } catch (e) {}
+        var fb3 = document.getElementById('cx-lens-fallback');
+        if (fb3) fb3.hidden = false;
+        hint.innerHTML = 'HTML-IN-CANVAS <b class="off">FALLBACK</b> — このブラウザでは通常カード表示';
+        tech('cx-tech-hic', '未対応のため通常の DOM カード表示にフォールバック');
+      }
+    }, 900);
     if (reduced) {
       window.addEventListener('resize', function () { drawFrame(0); });
       stage.addEventListener('pointermove', function () { drawFrame(0); });

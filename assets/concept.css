@@ -14,7 +14,10 @@
 
 /* ---------- ヘッダー: 夜の駅の紺 ---------- */
 .hdr{background:linear-gradient(180deg,#0d1830,#0a1120);border-bottom:1px solid rgba(255,255,255,.13);color:#eef2f8}
+.hdr__mark{color:#eef2f8}
 .hdr__mark small{color:#9fb0c9}
+.hdr__brand strong{color:#eef2f8}
+.hdr__brand small{color:#9fb0c9}
 .hdr__ic{color:#c7d0e6}
 .hdr__ic:hover{background:rgba(255,255,255,.12);color:#fff}
 .hdr__ic--avatar{background:#14335f;color:#fff}
