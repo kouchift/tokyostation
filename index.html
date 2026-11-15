@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="駅ガイド">
-<title>東京ステーションガイド｜路線図から、いちばん良い移動手段へ</title>
+<title>東京ステーションガイド｜東京駅の行き方・出口・乗り換えを手段別に比較</title>
 <meta name="description" content="東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーなどで比較。全国8,000駅以上の路線図から、目的地までの移動方法を探せます。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="東京ステーションガイド">
@@ -273,5 +273,58 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   });
 }
 </script>
+<!-- ▼ 静的コンテンツ（2026-11-15 追加）: トップは路線図アプリ（.app）が本体で、本文の静的テキストがほぼ無かった。
+     検索エンジンと JavaScript が使えない環境にも «サイトの内容» が伝わるよう、要約と主要ページへのリンクを静的 HTML で置く。
+     アプリのレイアウト（.app は 100dvh・body は overflow:hidden）には触れていないので、アプリの動作は従来どおり -->
+<style>
+.tsg-static{max-width:880px;margin:0 auto;padding:28px 18px 40px;color:#1d2733;font-size:15px;line-height:1.8}
+.tsg-static h2{font-size:21px;margin:0 0 10px}
+.tsg-static h3{font-size:16px;margin:24px 0 6px}
+.tsg-static p{margin:0 0 10px}
+.tsg-static ul{margin:0 0 6px;padding-left:1.2em}
+.tsg-static li{margin:2px 0}
+.tsg-static a{color:#0055AD}
+.tsg-static small{color:#5A6472}
+</style>
+<footer class="tsg-static">
+  <h2>東京駅の行き方・出口・乗り換えガイド</h2>
+  <p>東京ステーションガイドは、東京駅から主要な駅・空港への行き方を、電車・徒歩・自転車・バス・タクシーなどの手段別に、所要時間・料金・乗り換え回数で比較できるガイドです。上の路線図アプリでは、全国8,000駅以上の路線図から目的地までの移動方法を検索できます。JavaScript が使えない環境では、このページ下部の静的ガイドをご利用ください。</p>
+
+  <h3>東京駅の基本情報 ― 丸の内側と八重洲側</h3>
+  <p>東京駅は大きく「丸の内側（西）」と「八重洲側（東）」に分かれています。丸の内側には赤レンガの丸の内駅舎があり、皇居・大手町・丸の内のオフィス街方面の出口です。八重洲側には高速バスのバスターミナル東京八重洲、大丸などの商業施設があります。両側は改札の内外の自由通路で行き来できますが、端から端までは距離があるため、目的に合った側の出口を使うのが近道です。</p>
+  <p>注意したいのは京葉線（舞浜・千葉方面）のホームで、ほかの JR 線の改札から地下を10分ほど歩く位置にあります。乗り換えの時間には余裕を見てください。東京メトロ丸ノ内線の東京駅は JR の改札外にあり、大手町駅（千代田線・東西線・半蔵門線・三田線）へも地下通路でつながっています。</p>
+  <p>→ <a href="guide/tokyo-station-exits.html">東京駅の出口ガイド｜丸の内・八重洲・地下の使い分け</a> ／ <a href="station/tokyo/">東京駅の案内｜乗り入れ路線・徒歩圏の見どころ</a></p>
+
+  <h3>東京駅からの行き方ガイド</h3>
+  <ul>
+    <li><a href="guide/tokyo-to-shinjuku.html">東京駅 → 新宿駅への行き方</a></li>
+    <li><a href="guide/tokyo-to-shibuya.html">東京駅 → 渋谷駅への行き方</a></li>
+    <li><a href="guide/tokyo-to-ikebukuro.html">東京駅 → 池袋駅への行き方</a></li>
+    <li><a href="guide/tokyo-to-shinagawa.html">東京駅 → 品川駅への行き方</a></li>
+    <li><a href="guide/tokyo-to-ueno.html">東京駅 → 上野駅への行き方</a></li>
+    <li><a href="guide/tokyo-to-asakusa.html">東京駅 → 浅草への行き方</a></li>
+    <li><a href="guide/tokyo-to-ginza.html">東京駅 → 銀座への行き方</a></li>
+    <li><a href="guide/tokyo-to-yokohama.html">東京駅 → 横浜駅への行き方</a></li>
+    <li><a href="guide/tokyo-to-haneda.html">東京駅 → 羽田空港への行き方</a></li>
+    <li><a href="guide/tokyo-to-narita.html">東京駅 → 成田空港への行き方</a></li>
+  </ul>
+  <p>すべての行き先: <a href="guide/index.html">東京駅からの行き方ガイド一覧</a></p>
+
+  <h3>東京駅への行き方（空港・主要駅から）</h3>
+  <ul>
+    <li><a href="guide/haneda-to-tokyo.html">羽田空港 → 東京駅への行き方</a></li>
+    <li><a href="guide/narita-to-tokyo.html">成田空港 → 東京駅への行き方</a></li>
+    <li><a href="guide/shinjuku-to-tokyo.html">新宿駅 → 東京駅への行き方</a></li>
+    <li><a href="guide/shibuya-to-tokyo.html">渋谷駅 → 東京駅への行き方</a></li>
+    <li><a href="guide/yokohama-to-tokyo.html">横浜駅 → 東京駅への行き方</a></li>
+  </ul>
+
+  <h3>駅の案内・空き時間プラン</h3>
+  <ul>
+    <li>駅の案内: <a href="station/tokyo/">東京駅</a>・<a href="station/shinjuku/">新宿駅</a>・<a href="station/shibuya/">渋谷駅</a>・<a href="station/shinagawa/">品川駅</a>・<a href="station/ikebukuro/">池袋駅</a>・<a href="station/ueno/">上野駅</a></li>
+    <li>東京駅での空き時間プラン: <a href="plan/tokyo/30min/">30分</a>・<a href="plan/tokyo/1hour/">1時間</a>・<a href="plan/tokyo/2hours/">2時間</a></li>
+  </ul>
+  <p><small>所要時間・料金は当サイトの推定による概算です。運賃は距離から計算した目安で、実際の運賃・時刻表・出口の工事状況は各交通事業者・施設の公式情報でご確認ください。</small></p>
+</footer>
 </body>
 </html>
