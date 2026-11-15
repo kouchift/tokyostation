@@ -327,6 +327,10 @@
       tech('cx-tech-hic', '未対応のため通常の DOM カード表示にフォールバック');
       return;
     }
+    /* 既定ではフォールバックのカードが見えている（JS が無い・クローラ向け）。
+       レンズが使えるときだけ、ここで隠してキャンバスに任せる */
+    var fb0 = document.getElementById('cx-lens-fallback');
+    if (fb0) fb0.hidden = true;
     hint.innerHTML = 'HTML-IN-CANVAS <b>ACTIVE</b> — DOM カードをキャンバス内でレンズ変形中';
     tech('cx-tech-hic', '有効 — 案内カードを drawElementImage で描画しレンズ変形');
 
