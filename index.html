@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-build="173">
+<html lang="ja" data-build="174">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
@@ -18,20 +18,22 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <link rel="canonical" href="https://kouchift.github.io/tokyostation/">
 <meta property="og:locale" content="ja_JP">
+<meta property="og:site_name" content="東京ステーションガイド">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://kouchift.github.io/tokyostation/assets/og.jpg">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://kouchift.github.io/tokyostation/","url":"https://kouchift.github.io/tokyostation/","name":"東京ステーションガイド","description":"東京駅から新宿・渋谷・羽田空港などへの行き方を、電車・徒歩・バス・タクシーで比較。全国8,000駅以上の路線図。","inLanguage":"ja"},{"@type":"WebApplication","name":"東京ステーションガイド","url":"https://kouchift.github.io/tokyostation/","applicationCategory":"TravelApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}]}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300224A'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle'%3E%F0%9F%9A%89%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="assets/favicon-48.png">
 <!-- ▼ 起動に要るものは、HTML と同時に並列で取りに行く（待ち行列を作らない） -->
 <script>
 /* v140: 下書きの地図のデータを «いちばん最初に» 取りに行く（CSS より前に置くので待たされない）。
    2 回目以降（端末に保存済み）や、回線が速いと分かっているときは取らない */
 (function(){try{var c=navigator.connection||{},sw=navigator.serviceWorker&&navigator.serviceWorker.controller;
-function net(){return fetch("data/net.c.json?v=173",{credentials:"same-origin"}).then(function(r){if(!r.ok)throw new Error("net.c.json "+r.status);return r.json();});}
-function pre(){["assets/app.bundle.js","data/config.js","data/lines_meta.js","data/genres.js","data/score.js","data/areas.js","data/focus.js"].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.as="script";l.href=f+"?v=173";document.head.appendChild(l);});}
+function net(){return fetch("data/net.c.json?v=174",{credentials:"same-origin"}).then(function(r){if(!r.ok)throw new Error("net.c.json "+r.status);return r.json();});}
+function pre(){["assets/app.bundle.js","data/config.js","data/lines_meta.js","data/genres.js","data/score.js","data/areas.js","data/focus.js"].forEach(function(f){var l=document.createElement("link");l.rel="preload";l.as="script";l.href=f+"?v=174";document.head.appendChild(l);});}
 if(sw||(c.effectiveType==="4g"&&!c.saveData&&c.downlink>=5)){window.__netP=net();window.__netP.catch(function(){});pre();window.__gate=Promise.resolve();return;}
 /* 下書きを先に（小さいので数秒）。本物の駅データと本体は下書きが届いてから取りに行く（細い回線を取り合わない） */
-window.__pvP=fetch("data/net_lite.json?v=173").then(function(r){return r.json();});
+window.__pvP=fetch("data/net_lite.json?v=174").then(function(r){return r.json();});
 window.__gate=window.__pvP.then(pre,pre);
 window.__netP=window.__pvP.then(net,net);window.__pvP.catch(function(){});window.__netP.catch(function(){});}catch(e){}})();
 </script>
@@ -51,19 +53,22 @@ document.head.appendChild(l);};}catch(e){}})();   /* v142: 読み始めは下の
 <!-- v142: 最初の画面に要る決まりだけを assets/crit.css（約 15KB・tools/make_critical.mjs が作る）で先に読み、app.min.css は «後回し»（下の script が、駅データが届いてから足す）。
      細い回線では、本体と駅データが先に届く（地図が早く出る）。app.min.css が届いたら crit は外す（二重にならないように）。
      crit.css が届くまでは «下書きの地図» と骨組みだけ（下の style の html:not(.crit-ok)） -->
-<link id="crit" rel="preload" href="assets/crit.css?v=173" as="style" onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.add('crit-ok')" onerror="document.documentElement.classList.add('crit-ok')">
+<link id="crit" rel="preload" href="assets/crit.css?v=174" as="style" onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.add('crit-ok')" onerror="document.documentElement.classList.add('crit-ok')">
 <script>
 /* v142: «後回しの読み方»。app.min.css（と欧文の書体）は、細い回線では駅データ（net.c.json）が届いてから読む（地図を先に）。
    ただし指で触ったら、すぐ読む（ボタンや窓の見た目が要る）。2 回目以降（端末に保存済み）・速い回線は、すぐ読む */
 (function(){var done=0;function go(){if(done)return;done=1;
-var l=document.createElement("link");l.rel="stylesheet";l.href="assets/app.min.css?v=173";   /* script で足した stylesheet は描画を止めない（media=print の切り替えは、読み直しになることがあるので使わない） */
+var l=document.createElement("link");l.rel="stylesheet";l.href="assets/app.min.css?v=174";   /* script で足した stylesheet は描画を止めない（media=print の切り替えは、読み直しになることがあるので使わない） */
 l.onload=function(){var c=document.getElementById("crit");if(c)c.remove();document.documentElement.classList.add("css-ok","crit-ok");};
 l.onerror=function(){document.documentElement.classList.add("css-ok","crit-ok");};
-document.head.appendChild(l);if(window.__fonts)window.__fonts();}
+document.head.appendChild(l);
+/* v174: コンセプト反映の上書き（assets/concept.css）は本体の «あと» に読む（同格の決まりは後勝ち） */
+var cl=document.createElement("link");cl.rel="stylesheet";cl.href="assets/concept.css?v=174";document.head.appendChild(cl);
+if(window.__fonts)window.__fonts();}
 if(!window.__pvP){go();return;}
 (window.__netP||window.__pvP).then(go,go);addEventListener("pointerdown",go,{once:true,capture:true});setTimeout(go,20000);})();
 </script>
-<noscript><link rel="stylesheet" href="assets/app.min.css?v=173"><style>.app{visibility:visible!important}</style></noscript>
+<noscript><link rel="stylesheet" href="assets/app.min.css?v=174"><style>.app{visibility:visible!important}</style></noscript>
 <!-- v140: design_v2.css（v117 のデザインの上書き）は app.min.css の後ろに入れた（1 回の通信で済むように） -->
 <style>
 /* 最初の1枚：CSS が届く前でも «真っ白» にしない骨組み */
@@ -122,6 +127,7 @@ html:not(.css-ok) body>:not(.app):not(#sheet):not(#scrim):not(script):not(noscri
   <div id="navbar" class="navbar" role="region" aria-label="案内中" hidden></div>
   <div class="mapwrap" role="main">
     <svg id="map" role="group" aria-label="日本の鉄道路線図"></svg>
+    <canvas id="tsg-gl" aria-hidden="true"></canvas>
     <div id="skel" class="skel" aria-hidden="true"><i></i><span>路線図を用意しています…</span></div>
     <!-- v89: 最初の 3 秒で «東京駅から、どこへ行く？» が分かる入口。既存の検索索引・ルート比較にそのままつなぐ -->
     <section id="hero" class="heroSearch" aria-label="目的地を検索">
@@ -217,7 +223,8 @@ setTimeout(ok,4000);})();
 })();
 </script>
 <!-- v140: 本体（assets/app.bundle.js）は下の script が入れる（細い回線では下書きの地図のあとで） -->
-<script src="assets/comments-v109.js?v=173" defer></script>
+<script src="assets/comments-v109.js?v=174" defer></script>
+<script src="assets/concept.js?v=174" defer></script>
 <script>
 /* v106: コメント機能の設定を RG.COMMENTS に入れる。endpoint が空なら表示しない */
 (function() {
@@ -231,7 +238,7 @@ setTimeout(ok,4000);})();
    ・bundle が届いたら RG.startApp に渡す。両方そろった瞬間に地図を描く
    ・部品が読めていなければ、必ず気づけるようにする */
 (function () {
-  var netP = (window.__netP || fetch("data/net.c.json?v=173", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("net.c.json " + r.status); return r.json(); }))
+  var netP = (window.__netP || fetch("data/net.c.json?v=174", { credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("net.c.json " + r.status); return r.json(); }))
     .catch(function (e) { console.error(e); return null; });
   function panic(msg) {
     if (document.querySelectorAll("#map .node").length) return;
@@ -253,7 +260,7 @@ setTimeout(ok,4000);})();
   /* v140: 本体を入れる（回線が速い・2 回目以降はすぐ。ゆっくりなときは下書きの地図が届いてから） */
   function inject() {
     if (window.RG && window.RG.startApp) { go(); return; }
-    var sc = document.createElement("script"); sc.src = "assets/app.bundle.js?v=173";
+    var sc = document.createElement("script"); sc.src = "assets/app.bundle.js?v=174";
     sc.addEventListener("load", go); sc.addEventListener("error", function () { panic("プログラムの部品（assets/app.bundle.js）を読み込めませんでした。"); });
     document.body.appendChild(sc);
   }
@@ -273,6 +280,289 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   });
 }
 </script>
+<!-- ▼ エリアガイド区画（v174 追加）: UI 刷新コンセプト «tokyostation-uikonseputo» のデザインを、
+     静的区画として実サイトへ移したもの。見た目は assets/concept.css、しかけは assets/concept.js。
+     アプリ（.app）の DOM・レイアウトには触れていない。写真の出典は写真ごとに «PHOTO:» で明記 -->
+<section class="tsg-show" id="cx-showcase" aria-label="東京駅エリアガイド">
+  <div class="cx-hero cx-wrap">
+    <p class="cx-hero-en" aria-hidden="true">TOKYO STATION</p>
+    <h2>東京<span class="cx-accent">駅</span>、<br>歩く理由が増えた。</h2>
+    <p class="cx-lead">1914年開業、日本の玄関口。<span>赤レンガの駅舎を中心に、丸の内・八重洲・日本橋・大手町——徒歩圏に4つの顔を持つ「駅が街になる」エリアの案内です。行き方を探すときは、上の路線図で駅や地名を検索してください。</span></p>
+    <div class="cx-stats" role="list" aria-label="東京駅の基本データ">
+      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="1914">1,914</span><em>年</em></div><div class="cx-lbl">開業</div></div>
+      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="335">335</span><em>m</em></div><div class="cx-lbl">丸の内駅舎の全長</div></div>
+      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="2012">2,012</span><em>年</em></div><div class="cx-lbl">駅舎の保存・復原が完成</div></div>
+      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="4">4</span><em>エリア</em></div><div class="cx-lbl">徒歩圏の街</div></div>
+    </div>
+    <div class="cx-chips" aria-label="エリアへ移動">
+      <button class="cx-chip" type="button" data-goto-area="marunouchi"><small>01</small>丸の内</button>
+      <button class="cx-chip" type="button" data-goto-area="yaesu"><small>02</small>八重洲</button>
+      <button class="cx-chip" type="button" data-goto-area="nihonbashi"><small>03</small>日本橋</button>
+      <button class="cx-chip" type="button" data-goto-area="otemachi"><small>04</small>大手町</button>
+    </div>
+  </div>
+
+  <div class="cx-marquee" aria-hidden="true">
+    <div class="cx-marquee-track" id="cx-marquee-track">
+      <span>MARUNOUCHI <b>●</b> YAESU <b>●</b> NIHONBASHI <b>●</b> OTEMACHI <b>●</b> GINZA <b>●</b> IMPERIAL PALACE <b>●</b> SINCE 1914 <b>●</b>&nbsp;</span>
+    </div>
+  </div>
+
+  <section class="cx-wrap cx-sec" aria-labelledby="cx-h-station">
+    <div class="cx-sec-head">
+      <span class="cx-idx">01 — THE STATION</span>
+      <h2 id="cx-h-station">駅舎そのものが、目的地。</h2>
+      <p>辰野金吾の設計による丸の内駅舎は、2003年に国の重要文化財に指定され、2012年に創建時の姿へ復原されました。下の写真では、案内カードがキャンバスの中をレンズのように動きます（対応ブラウザのみ）。</p>
+    </div>
+
+    <div class="cx-stage" id="cx-stage">
+      <img class="cx-stage-photo" src="assets/concept/hero.jpg" alt="ライトアップされた東京駅丸の内駅舎の南ドームと、背後にそびえる丸の内の高層ビル群（夜景）" loading="lazy" decoding="async">
+      <div class="cx-stage-shade" aria-hidden="true"></div>
+      <canvas id="cx-lens" layoutsubtree aria-label="丸の内駅舎の案内カード（レンズ表示）">
+        <article class="cx-lens-card">
+          <div class="cx-lc-en">MARUNOUCHI STATION BUILDING</div>
+          <h3>丸の内駅舎</h3>
+          <p>赤レンガと白い花崗岩の帯が走る、辰野金吾の代表作。南北のドームを戴く姿は、東京の原風景です。</p>
+          <dl>
+            <dt>開業</dt><dd>1914年（大正3年）</dd>
+            <dt>設計</dt><dd>辰野金吾</dd>
+            <dt>全長</dt><dd>約335m</dd>
+            <dt>指定</dt><dd>国の重要文化財（2003年）</dd>
+            <dt>復原</dt><dd>2012年 完成</dd>
+          </dl>
+        </article>
+      </canvas>
+      <div class="cx-stage-fallback" id="cx-lens-fallback">
+        <article class="cx-lens-card">
+          <div class="cx-lc-en">MARUNOUCHI STATION BUILDING</div>
+          <h3>丸の内駅舎</h3>
+          <p>赤レンガと白い花崗岩の帯が走る、辰野金吾の代表作。南北のドームを戴く姿は、東京の原風景です。</p>
+          <dl>
+            <dt>開業</dt><dd>1914年（大正3年）</dd>
+            <dt>設計</dt><dd>辰野金吾</dd>
+            <dt>全長</dt><dd>約335m</dd>
+            <dt>指定</dt><dd>国の重要文化財（2003年）</dd>
+            <dt>復原</dt><dd>2012年 完成</dd>
+          </dl>
+        </article>
+      </div>
+      <p class="cx-stage-hint" id="cx-lens-hint">HTML-IN-CANVAS <b class="off">FALLBACK</b> — このブラウザでは通常カード表示</p>
+    </div>
+    <p class="cx-credit">PHOTO: 東京駅丸の内駅舎（夜景）— 撮影 <a href="https://commons.wikimedia.org/wiki/File:2024_Tokyo_Station_Marunouchi_Building_at_night_().jpg" target="_blank" rel="noopener">Kakidai</a>（Wikimedia Commons、<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja" target="_blank" rel="noopener">CC BY-SA 4.0</a>）</p>
+
+    <div class="cx-station-grid">
+      <figure>
+        <img src="assets/concept/dome.jpg" alt="復原された東京駅丸の内駅舎のドーム内部。八角形の天井と回廊を見上げる" loading="lazy" decoding="async">
+      </figure>
+      <div class="cx-station-text">
+        <h3>見上げる、南北ドーム</h3>
+        <p>丸の内北口・南口の改札を抜けると、頭上には復原された<b>八角形のドーム</b>。黄土色の天井には干支のレリーフが配され、戦前の意匠が現代に蘇りました。</p>
+        <p>駅舎内には美術館<b>東京ステーションギャラリー</b>と、駅舎そのものがホテルになった<b>東京ステーションホテル</b>も。「乗るためだけの駅」から「過ごすための駅」へ——この変化こそ、東京駅が街になった理由です。</p>
+        <p><a class="cx-more" href="station/tokyo/">東京駅の案内を見る</a></p>
+        <p class="cx-credit">PHOTO: 丸の内駅舎ドーム（復原後）— 撮影 <a href="https://commons.wikimedia.org/wiki/File:Tokyo_sta_DOME.jpg" target="_blank" rel="noopener">Kei365</a>（Wikimedia Commons、<a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank" rel="noopener">CC BY-SA 3.0</a>）</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cx-wrap cx-sec" id="cx-areas" aria-labelledby="cx-h-areas">
+    <div class="cx-sec-head">
+      <span class="cx-idx">02 — AREAS</span>
+      <h2 id="cx-h-areas">徒歩圏に、4つの顔。</h2>
+      <p>改札を出る方角で、街の性格はまったく変わります。目的に合わせて出口を選ぶのが、東京駅を楽しむ第一歩です。</p>
+    </div>
+
+    <div class="cx-tabs" role="tablist" aria-label="エリア選択">
+      <button class="cx-tab" type="button" role="tab" id="cx-tab-marunouchi" aria-controls="cx-panel-marunouchi" aria-selected="true" data-area="marunouchi">丸の内<small>MARUNOUCHI</small></button>
+      <button class="cx-tab" type="button" role="tab" id="cx-tab-yaesu" aria-controls="cx-panel-yaesu" aria-selected="false" data-area="yaesu" tabindex="-1">八重洲<small>YAESU</small></button>
+      <button class="cx-tab" type="button" role="tab" id="cx-tab-nihonbashi" aria-controls="cx-panel-nihonbashi" aria-selected="false" data-area="nihonbashi" tabindex="-1">日本橋<small>NIHONBASHI</small></button>
+      <button class="cx-tab" type="button" role="tab" id="cx-tab-otemachi" aria-controls="cx-panel-otemachi" aria-selected="false" data-area="otemachi" tabindex="-1">大手町<small>OTEMACHI</small></button>
+    </div>
+
+    <article class="cx-panel" role="tabpanel" id="cx-panel-marunouchi" aria-labelledby="cx-tab-marunouchi">
+      <p class="cx-p-lead">駅舎と皇居に挟まれた、東京の「顔」。</p>
+      <p class="cx-p-sub">赤レンガの駅前広場から行幸通り、丸の内仲通りへ。美術館、カフェ、ブランド店が整然と並ぶ、東京で最も端正な街並みです。</p>
+      <ul class="cx-spot-list">
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">丸の内駅前広場・行幸通り</span><span class="cx-s-walk">駅前すぐ</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">KITTE丸の内（屋上庭園 KITTEガーデン）</span><span class="cx-s-walk">駅直結</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">丸の内仲通り</span><span class="cx-s-walk">徒歩 約3分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">三菱一号館美術館・ブリックスクエア</span><span class="cx-s-walk">徒歩 約5分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">皇居東御苑（大手門）</span><span class="cx-s-walk">徒歩 約10分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">東京ステーションギャラリー</span><span class="cx-s-walk">駅舎内</span></li>
+      </ul>
+      <p><a class="cx-more" href="station/tokyo/">東京駅の案内を見る</a></p>
+    </article>
+
+    <article class="cx-panel" role="tabpanel" id="cx-panel-yaesu" aria-labelledby="cx-tab-yaesu" hidden>
+      <p class="cx-p-lead">新幹線の玄関口は、旅の前後がいちばん充実する場所。</p>
+      <p class="cx-p-sub">巨大な地下街と再開発ビルが広がる実用派エリア。駅弁、ラーメン、お土産——「あと15分」がいちばん楽しいのはこの出口です。</p>
+      <ul class="cx-spot-list">
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">東京ラーメンストリート（東京駅一番街）</span><span class="cx-s-walk">八重洲地下</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">東京キャラクターストリート</span><span class="cx-s-walk">八重洲地下</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">八重洲地下街（ヤエチカ）</span><span class="cx-s-walk">駅直結</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">大丸東京店</span><span class="cx-s-walk">駅直結</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">東京ミッドタウン八重洲</span><span class="cx-s-walk">徒歩 約2分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">グランスタ八重北・八重洲</span><span class="cx-s-walk">改札外</span></li>
+      </ul>
+      <p><a class="cx-more" href="guide/tokyo-station-exits.html">東京駅の出口ガイドを見る</a></p>
+    </article>
+
+    <article class="cx-panel" role="tabpanel" id="cx-panel-nihonbashi" aria-labelledby="cx-tab-nihonbashi" hidden>
+      <p class="cx-p-lead">五街道の起点、日本の道路の原点がある街。</p>
+      <p class="cx-p-sub">江戸の商業の中心地は、いまも老舗が息づく街。再開発で生まれた新しい複合施設と、創業百年超の暖簾が同居します。駅からは北へ徒歩圏。</p>
+      <ul class="cx-spot-list">
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">日本橋・道路元標</span><span class="cx-s-walk">徒歩 約10分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">日本橋三越本店</span><span class="cx-s-walk">徒歩 約12分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">コレド室町テラス</span><span class="cx-s-walk">徒歩 約12分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">日本橋高島屋 S.C.</span><span class="cx-s-walk">徒歩 約8分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">福徳神社・福徳の森</span><span class="cx-s-walk">徒歩 約12分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">小津和紙・はいばら等の老舗めぐり</span><span class="cx-s-walk">徒歩 約10分</span></li>
+      </ul>
+      <p><a class="cx-more" href="guide/tokyo-station-exits.html">東京駅の出口ガイドを見る</a></p>
+    </article>
+
+    <article class="cx-panel" role="tabpanel" id="cx-panel-otemachi" aria-labelledby="cx-tab-otemachi" hidden>
+      <p class="cx-p-lead">日本経済の中枢は、静かに使える穴場でもある。</p>
+      <p class="cx-p-sub">東京駅とは地下通路で直結。皇居ランの拠点、温泉施設、緑の森まで揃う、知る人ぞ知る使い勝手のいいエリアです。</p>
+      <ul class="cx-spot-list">
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">大手町駅（地下通路で直結）</span><span class="cx-s-walk">徒歩 約5分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">皇居東御苑・大手門</span><span class="cx-s-walk">徒歩 約7分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">将門塚</span><span class="cx-s-walk">徒歩 約7分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">大手町の森（大手町タワー）</span><span class="cx-s-walk">徒歩 約6分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">星のや東京・SPA大手町</span><span class="cx-s-walk">徒歩 約7分</span></li>
+        <li><span class="cx-s-dot"></span><span class="cx-s-name">読売新聞社・日経ビル周辺の食街</span><span class="cx-s-walk">徒歩 約6分</span></li>
+      </ul>
+      <p><a class="cx-more" href="station/tokyo/">東京駅の案内を見る</a></p>
+    </article>
+  </section>
+
+  <section class="cx-wrap cx-sec" aria-labelledby="cx-h-spots">
+    <div class="cx-sec-head">
+      <span class="cx-idx">03 — SPOTS</span>
+      <h2 id="cx-h-spots">まず押さえる、4つの景色。</h2>
+      <p>時間がない日でも、この4か所を回れば東京駅の「いま」が分かります。すべて駅から徒歩5分圏内です。</p>
+    </div>
+    <div class="cx-cards">
+      <article class="cx-card">
+        <div class="cx-ph"><img src="assets/concept/dome.jpg" alt="東京駅丸の内駅舎の復原ドーム内部" loading="lazy" decoding="async"></div>
+        <div class="cx-bd">
+          <span class="cx-tag">INSIDE THE STATION</span>
+          <h3><a href="station/tokyo/">丸の内南北ドーム</a></h3>
+          <p>復原で蘇った八角形ドーム。干支のレリーフと回廊を見上げる、駅舎内いちばんの見どころ。</p>
+          <div class="cx-meta">丸の内北口・南口 改札前</div>
+          <p class="cx-credit">PHOTO: 撮影 <a href="https://commons.wikimedia.org/wiki/File:Tokyo_sta_DOME.jpg" target="_blank" rel="noopener">Kei365</a>（Wikimedia Commons、<a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank" rel="noopener">CC BY-SA 3.0</a>）</p>
+        </div>
+      </article>
+      <article class="cx-card">
+        <div class="cx-ph"><img src="assets/concept/kitte.jpg" alt="KITTE丸の内の屋上庭園から望む東京駅丸の内駅前広場と駅舎" loading="lazy" decoding="async"></div>
+        <div class="cx-bd">
+          <span class="cx-tag">VIEW POINT</span>
+          <h3><a href="station/tokyo/">KITTEガーデン</a></h3>
+          <p>旧東京中央郵便局の屋上庭園。駅舎と駅前広場を真正面に望める、無料の展望スポット。</p>
+          <div class="cx-meta">KITTE丸の内 6F ／ 丸の内南口すぐ</div>
+          <p class="cx-credit">PHOTO: 撮影 <a href="https://commons.wikimedia.org/wiki/File:KITTE_Garden,_Tokyo;_September_2022_(16).jpg" target="_blank" rel="noopener">Dick Thomas Johnson</a>（Wikimedia Commons、<a href="https://creativecommons.org/licenses/by/2.0/deed.ja" target="_blank" rel="noopener">CC BY 2.0</a>）</p>
+        </div>
+      </article>
+      <article class="cx-card">
+        <div class="cx-ph"><img src="assets/concept/nakadori.jpg" alt="イルミネーションに彩られた丸の内仲通りの並木道（夜）" loading="lazy" decoding="async"></div>
+        <div class="cx-bd">
+          <span class="cx-tag">STREET</span>
+          <h3><a href="station/tokyo/">丸の内仲通り</a></h3>
+          <p>ブランド店とカフェが並ぶ石畳の並木道。冬はシャンパンゴールドのイルミネーションで一変します。</p>
+          <div class="cx-meta">丸の内南口から 徒歩 約3分</div>
+          <p class="cx-credit">PHOTO: 撮影 <a href="https://commons.wikimedia.org/wiki/File:Marunouchi_Nakadori_Street_at_night_201912.jpg" target="_blank" rel="noopener">Wpcpey</a>（Wikimedia Commons、<a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank" rel="noopener">CC BY 4.0</a>）</p>
+        </div>
+      </article>
+      <article class="cx-card">
+        <div class="cx-ph"><img src="assets/concept/gyoko.jpg" alt="行幸通り越しに見る東京駅丸の内駅舎（昼景）" loading="lazy" decoding="async"></div>
+        <div class="cx-bd">
+          <span class="cx-tag">APPROACH</span>
+          <h3><a href="station/tokyo/">行幸通り</a></h3>
+          <p>駅前広場から皇居へまっすぐ伸びる、東京の象徴的なアプローチ。駅舎の正面写真はここから。</p>
+          <div class="cx-meta">丸の内中央口 目の前</div>
+          <p class="cx-credit">PHOTO: 撮影 <a href="https://commons.wikimedia.org/wiki/File:View_of_the_Tokyo_Station_from_Gyoko_Street,_21_July_2013.jpg" target="_blank" rel="noopener">掬茶</a>（Wikimedia Commons、<a href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank" rel="noopener">CC BY-SA 3.0</a>）</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="cx-wrap cx-sec" aria-labelledby="cx-h-gourmet">
+    <div class="cx-sec-head">
+      <span class="cx-idx">04 — GOURMET &amp; SHOPPING</span>
+      <h2 id="cx-h-gourmet">乗り換え時間を、ごちそうに変える。</h2>
+      <p>駅ナカ・駅チカの食と買い物は、東京駅のもうひとつの主役。待ち時間が短いほど、選ぶ楽しさが増えます。</p>
+    </div>
+    <div class="cx-rows">
+      <div class="cx-row"><span class="cx-no">G-01</span><div><h3>東京ラーメンストリート</h3><p>全国の人気店が集まるラーメンの殿堂。行列の絶えない名店が徒歩ゼロ分でハシゴできます。</p></div><span class="cx-where">東京駅一番街 B1<br>八重洲地下</span></div>
+      <div class="cx-row"><span class="cx-no">G-02</span><div><h3>駅弁屋 祭</h3><p>全国各地の駅弁が集結する駅弁専門店。旅の始まりは、ここで弁当を選ぶところから。</p></div><span class="cx-where">グランスタ東京 1F<br>改札内</span></div>
+      <div class="cx-row"><span class="cx-no">G-03</span><div><h3>グランスタ東京</h3><p>限定スイーツと「新・東京土産」の宝庫。エキナカ初登場の店が並ぶ、東京駅最大級の商業空間。</p></div><span class="cx-where">改札内 1F・B1</span></div>
+      <div class="cx-row"><span class="cx-no">G-04</span><div><h3>東京キャラクターストリート</h3><p>人気キャラクターの公式ショップがずらり。子どもも大人も足が止まる、八重洲地下の名物通り。</p></div><span class="cx-where">東京駅一番街 B1<br>八重洲地下</span></div>
+      <div class="cx-row"><span class="cx-no">G-05</span><div><h3>ほっぺタウン（大丸東京店）</h3><p>弁当・惣菜・スイーツが集まるデパ地下。出張帰りの手土産選びなら、まずここへ。</p></div><span class="cx-where">大丸東京店 B1・1F<br>八重洲北口直結</span></div>
+      <div class="cx-row"><span class="cx-no">G-06</span><div><h3>KITTE丸の内 レストラン＆カフェ</h3><p>屋上庭園とセットで楽しめる食のフロア。駅舎を眺めながらの食事は丸の内ならでは。</p></div><span class="cx-where">KITTE丸の内 5F・6F</span></div>
+    </div>
+    <p style="margin-top:18px"><a class="cx-more" href="station/tokyo/">東京駅の案内を見る</a></p>
+  </section>
+
+  <section class="cx-wrap cx-sec" aria-labelledby="cx-h-access">
+    <div class="cx-sec-head">
+      <span class="cx-idx">05 — ACCESS</span>
+      <h2 id="cx-h-access">ここから、日本中へ。</h2>
+      <p>新幹線6方面と在来線、地下鉄が集まる日本最大級のターミナル。主要目的地への所要時間の目安です（乗車時間ベース）。詳しい行き方は各ガイドへ。</p>
+    </div>
+    <div class="cx-lines" aria-label="乗り入れ路線">
+      <span class="cx-line-chip"><i style="background:#009ad6"></i>東海道新幹線</span>
+      <span class="cx-line-chip"><i style="background:#009ad6"></i>東北新幹線</span>
+      <span class="cx-line-chip"><i style="background:#36b558"></i>上越・北陸新幹線</span>
+      <span class="cx-line-chip"><i style="background:#80c241"></i>山手線</span>
+      <span class="cx-line-chip"><i style="background:#00b2e5"></i>京浜東北線</span>
+      <span class="cx-line-chip"><i style="background:#f15a22"></i>中央線</span>
+      <span class="cx-line-chip"><i style="background:#ff9500"></i>東海道線</span>
+      <span class="cx-line-chip"><i style="background:#00418e"></i>横須賀・総武快速線</span>
+      <span class="cx-line-chip"><i style="background:#c8006b"></i>京葉線</span>
+      <span class="cx-line-chip"><i style="background:#e60012"></i>丸ノ内線（東京メトロ）</span>
+    </div>
+    <div class="cx-dest-grid">
+      <a class="cx-dest" href="guide/tokyo-to-shinagawa.html"><div class="cx-d-name">品川</div><div class="cx-d-time">約7分</div><div class="cx-d-via">山手線・京浜東北線</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/tokyo-to-ueno.html"><div class="cx-d-name">上野</div><div class="cx-d-time">約8分</div><div class="cx-d-via">山手線・京浜東北線</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/tokyo-to-maihama.html"><div class="cx-d-name">舞浜</div><div class="cx-d-time">約15分</div><div class="cx-d-via">京葉線（東京ディズニーリゾート最寄り）</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/index.html"><div class="cx-d-name">新横浜</div><div class="cx-d-time">約18分</div><div class="cx-d-via">東海道新幹線</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/tokyo-to-haneda.html"><div class="cx-d-name">羽田空港</div><div class="cx-d-time">約35分</div><div class="cx-d-via">浜松町で東京モノレールに乗換え</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/tokyo-to-narita.html"><div class="cx-d-name">成田空港</div><div class="cx-d-time">約55分</div><div class="cx-d-via">成田エクスプレス</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/index.html"><div class="cx-d-name">仙台</div><div class="cx-d-time">約1時間30分</div><div class="cx-d-via">東北新幹線「はやぶさ」</div><span class="cx-d-go">行き方ガイド →</span></a>
+      <a class="cx-dest" href="guide/index.html"><div class="cx-d-name">名古屋</div><div class="cx-d-time">約1時間40分</div><div class="cx-d-via">東海道新幹線「のぞみ」</div><span class="cx-d-go">行き方ガイド →</span></a>
+    </div>
+  </section>
+
+  <section class="cx-wrap cx-sec" aria-labelledby="cx-h-course">
+    <div class="cx-sec-head">
+      <span class="cx-idx">06 — MODEL COURSE</span>
+      <h2 id="cx-h-course">半日モデルコース</h2>
+      <p>初めての東京駅散策に。駅舎の眺めから始めて、夕方のライトアップで締める王道ルートです。</p>
+    </div>
+    <ol class="cx-course">
+      <li><time>10:00</time><div class="cx-c-body"><h3>KITTEガーデン</h3><p>屋上庭園から駅舎と駅前広場を一望。まず「全体像」をつかんでから歩き始めます。</p></div></li>
+      <li><time>11:00</time><div class="cx-c-body"><h3>駅舎ドーム＆東京ステーションギャラリー</h3><p>丸の内南口ドームを見上げ、駅舎内の美術館へ。レンガ壁の展示室はここだけの体験。</p></div></li>
+      <li><time>13:00</time><div class="cx-c-body"><h3>東京ラーメンストリート</h3><p>八重洲地下へ移動して名店ラーメンのランチ。食後はキャラクターストリートを冷やかしに。</p></div></li>
+      <li><time>15:00</time><div class="cx-c-body"><h3>丸の内仲通り</h3><p>石畳の並木道でカフェとショッピング。三菱一号館美術館の庭園もすぐそばです。</p></div></li>
+      <li><time>17:30</time><div class="cx-c-body"><h3>行幸通り〜丸の内駅前広場</h3><p>ライトアップが始まる駅舎で締めくくり。昼とは違う、黄金色の東京駅に出会えます。</p></div></li>
+    </ol>
+    <p style="margin-top:20px">駅での空き時間の使い方は、<a class="cx-more" href="plan/tokyo/2hours/">東京駅での空き時間プラン（2時間）</a>や<a class="cx-more" href="plan/tokyo/1hour/">1時間プラン</a>もどうぞ。</p>
+  </section>
+
+  <div class="cx-show-foot">
+    <div class="cx-wrap">
+      <p>この区画は、東京駅エリアガイドのデザイン刷新コンセプトを実サイトへ移したものです。背景の粒子の流れは WebGPU（未対応環境では Canvas 2D）で描画し、駅舎セクションの案内カードは HTML-in-Canvas 対応ブラウザでは DOM のままキャンバスへ取り込んでレンズ状に歪ませています。どちらの技術も、非対応環境では通常の表示に自動でフォールバックします。</p>
+      <p>掲載情報はエリア紹介のための概要です。営業時間・イベント等の最新情報は各公式サイトでご確認ください。</p>
+      <p class="cx-credit">PHOTOS: 丸の内駅舎 夜景（Kakidai、CC BY-SA 4.0）／ ドーム（Kei365、CC BY-SA 3.0）／ KITTEガーデン眺望（Dick Thomas Johnson、CC BY 2.0）／ 丸の内仲通り（Wpcpey、CC BY 4.0）／ 行幸通り（掬茶、CC BY-SA 3.0）— いずれも Wikimedia Commons のファイルで、撮影者・ライセンスは写真ごとの «PHOTO:» 表記と<a href="credits.html" target="_blank" rel="noopener">出典一覧</a>に記載</p>
+      <p class="cx-tech">
+        <b>RENDERING</b> — <span id="cx-tech-engine">（読み込み中）</span><br>
+        <b>HTML-IN-CANVAS</b> — <span id="cx-tech-hic">未対応のため通常の DOM カード表示にフォールバック</span><br>
+        <b>MOTION</b> — <span id="cx-tech-motion">（JavaScript で判定）</span>
+      </p>
+    </div>
+  </div>
+</section>
+<!-- ▲ エリアガイド区画ここまで -->
+
 <!-- ▼ 静的コンテンツ（2026-11-15 追加）: トップは路線図アプリ（.app）が本体で、本文の静的テキストがほぼ無かった。
      検索エンジンと JavaScript が使えない環境にも «サイトの内容» が伝わるよう、要約と主要ページへのリンクを静的 HTML で置く。
      アプリのレイアウト（.app は 100dvh・body は overflow:hidden）には触れていないので、アプリの動作は従来どおり -->
