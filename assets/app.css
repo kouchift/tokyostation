@@ -3852,6 +3852,7 @@ body.route-active .heroSearch:hover,body.route-active .heroSearch:focus-within{o
 .os__d{display:flex;flex-direction:column;align-items:flex-end}.os__d b{font-size:var(--fs-14);font-family:var(--mono)}.os__d small{font-size:var(--fs-11);color:var(--label);white-space:nowrap}
 .os__br{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:var(--r-xs);color:#fff;font-size:var(--fs-11);font-weight:900;font-style:normal;margin-right:5px;vertical-align:-3px}
 .os__e{font-size:var(--fs-13);color:var(--label);padding:8px 6px;margin:0}
+.os__src{font-size:var(--fs-12,12px);color:var(--label);padding:8px 6px;margin:0;line-height:1.5}
 body.onsite-on .zoombar{bottom:calc(min(46vh,420px) + 16px)}
 body.onsite-on .lvbtn,body.onsite-on .poicount,body.onsite-on .attrib{display:none}
 @media (min-width:721px){ .onsite{left:auto;right:76px;width:380px} body.onsite-on .zoombar{bottom:14px} body.onsite-on .lvbtn,body.onsite-on .poicount,body.onsite-on .attrib{display:inline-flex} }

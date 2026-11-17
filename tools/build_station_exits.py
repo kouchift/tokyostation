@@ -100,7 +100,7 @@ def main():
                 continue
             seen.add(key)
             kind = "m" if t.get("railway") == "subway_entrance" else "j"   # m: 地下鉄の出入口 ／ j: 駅の出入口（JR・私鉄）
-            ex.append([nm, sub, round(e["lat"], 6), round(e["lon"], 6), kind, 1 if t.get("wheelchair") == "yes" else 0])
+            ex.append([nm, sub, round(e["lat"], 6), round(e["lon"], 6), kind, 1 if t.get("wheelchair") == "yes" else 0, 0, "u" if t.get("location") == "underground" else ""])
         ex.sort(key=lambda x: (x[4], x[0]))
         out.append({"n": n, "la": la, "lo": lo, "pax": s[8] if len(s) > 8 else 0, "x": ex})
         cache[n] = out[-1]; json.dump(cache, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
