@@ -6,11 +6,16 @@
   railway=subway_entrance ／ railway=train_station_entrance ／ entrance=* かつ名前が «〜口» «出口» のもの
 ・東京駅は data/tokyo_station.js（手で整えた出入口・駅ビル）があるので入れない
 ・出典: © OpenStreetMap contributors（ODbL 1.0）
+・«公式照合済み» は tools/station_exits_verified.json が正本。再生成のたびに
+  定義と一致する出入口へ付け直すので、作り直しても照合済みは落ちない
+  （付け方は tools/exits_verified.py。生成ファイルを直接直しても消える）
 
   python tools/build_station_exits.py            … 下の MAJOR の駅（足すときは MAJOR に名前を足す）
 """
 import json, os, re, sys, time, subprocess, urllib.parse, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # 同じフォルダの exits_verified を読むため
+from exits_verified import load_defs, apply_verified, header_note
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EPS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
 UA = "tokyostation-guide/1.0 (https://kouchift.github.io/tokyostation/)"
@@ -62,6 +67,7 @@ def label(t, stn):
 
 
 def main():
+    defs = load_defs()                                    # «公式照合済み» の定義（tools/station_exits_verified.json）
     net = json.load(open(os.path.join(ROOT, "data", "net.json"), encoding="utf-8"))
     best = {}
     for s in net["stations"]:                             # [?, 名前, 緯度, 経度, 路線, かな, …, 利用者数(8), …]
@@ -103,16 +109,20 @@ def main():
             ex.append([nm, sub, round(e["lat"], 6), round(e["lon"], 6), kind, 1 if t.get("wheelchair") == "yes" else 0, 0, "u" if t.get("location") == "underground" else ""])
         ex.sort(key=lambda x: (x[4], x[0]))
         out.append({"n": n, "la": la, "lo": lo, "pax": s[8] if len(s) > 8 else 0, "x": ex})
+        apply_verified(defs, out[-1:])                    # 照合フラグを定義から付け直す（キャッシュにも正しい値を残す）
         cache[n] = out[-1]; json.dump(cache, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
         print("%2d %-8s 出入口 %3d" % (i + 1, n, len(ex)), flush=True)
         time.sleep(4)
+    nver = apply_verified(defs, out)                      # キャッシュから読んだ駅（古い 6 要素の項目を含む）にも付け直す
+    note = header_note(defs)
     js = ("/* 主要駅の出入口（tools/build_station_exits.py で作成・%s）\n"
-          "   出典: © OpenStreetMap contributors（ODbL 1.0）。位置は目安。現地の案内表示を優先してください\n"
-          "   駅ごと: { n: 駅名, la, lo, pax: 1 日の利用者数, x: [[表示名, 補足, 緯度, 経度, 種類 m=地下鉄/j=駅, 車いす可 1/0], …] } */\n"
-          "RG.STATION_EXITS = %s;\n") % (time.strftime("%Y-%m-%d"), json.dumps(out, ensure_ascii=False, separators=(",", ":")))
+          "   出典: © OpenStreetMap contributors（ODbL 1.0）。位置は目安。現地の案内表示と事業者の公式案内を優先してください\n"
+          "%s\n"
+          "   駅ごと: { n: 駅名, la, lo, pax: 1 日の利用者数, x: [[表示名, 補足, 緯度, 経度, 種類 m=地下鉄/j=駅, 車いす可 1/0, 公式照合 1/0, 場所 g=地上/u=地下], …] } */\n"
+          "RG.STATION_EXITS = %s;\n") % (time.strftime("%Y-%m-%d"), ("   " + note.replace("\n", "\n   ")) if note else "   公式照合: 済んだ範囲はまだありません", json.dumps(out, ensure_ascii=False, separators=(",", ":")))
     os.makedirs(os.path.join(ROOT, "data", "auto"), exist_ok=True)
     open(os.path.join(ROOT, "data", "auto", "station_exits.js"), "w", encoding="utf-8").write(js)
-    print("→ data/auto/station_exits.js  %d 駅 / 出入口 %d" % (len(out), sum(len(o["x"]) for o in out)))
+    print("→ data/auto/station_exits.js  %d 駅 / 出入口 %d（公式照合 %d）" % (len(out), sum(len(o["x"]) for o in out), nver))
 
 
 if __name__ == "__main__":
