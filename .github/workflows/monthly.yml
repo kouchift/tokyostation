@@ -1,5 +1,6 @@
 # 毎月 1 日に «主要駅の出入口» と «はじめての土地の 6 ジャンル» を OpenStreetMap から作り直す（v114）
 #   → data/auto/station_exits.js ・ data/auto/travel.js
+#   ※ 出入口の «公式照合済み» は tools/station_exits_verified.json が正本で、生成時に付け直される（作り直しても落ちない）
 # 手で動かす: GitHub の Actions タブ → monthly-osm → Run workflow
 name: monthly-osm
 on:

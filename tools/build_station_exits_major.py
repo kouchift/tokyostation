@@ -8,12 +8,15 @@
   map?bbox= で駅周辺だけを取る（この道具の範囲は 5 駅のみ）。
 ・出典: © OpenStreetMap contributors（ODbL 1.0）
 
-公式照合（2026-11-18）:
-・渋谷駅の地下鉄出入口番号は、東急電鉄の公式駅構内図（東横線・田園都市線
-  渋谷駅 立体図・平面図、2026-08-21 現在）にある A0〜A12／B1〜B7／C1〜C3 と
-  照合できたものだけ「公式照合 1」にする。
-・それ以外は公式照合が済んでいないので「公式照合 0（未確認）」。
+公式照合:
+・«公式照合済み» の定義は tools/station_exits_verified.json が正本（共通部品
+  tools/exits_verified.py）。2026-11-18 の照合では、渋谷駅の地下鉄出入口番号が
+  東急電鉄の公式駅構内図（東横線・田園都市線 渋谷駅 立体図・平面図、
+  2026-08-21 現在）にある A0〜A12／B1〜B7／C1〜C3 と照合できた。
+・定義に一致したものだけ「公式照合 1」。それ以外は「公式照合 0（未確認）」で、
   画面側は未確認を明示する（勝手に断定しない）。
+・月次ワークフローの build_station_exits.py も同じ定義で付け直すので、
+  そちらが作り直しても照合済みは落ちない。
 
 駅ごと: { n, la, lo, pax, x: [[表示名, 補足, 緯度, 経度, 種類 m=地下鉄/j=駅,
         車いす可 1/0, 公式照合 1/0, 場所 g=地上/u=地下], …] }
@@ -24,9 +27,13 @@ import json, os, re, sys, time, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
 
 sys.stdout = __import__("io").TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # 同じフォルダの exits_verified を読むため
+from exits_verified import load_defs, is_verified
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UA = "tokyostation-guide/1.0 (https://kouchift.github.io/tokyostation/)"
-CHECKED = "2026-11-18"
+DEFS = load_defs()                                        # «公式照合済み» の定義（tools/station_exits_verified.json）
+CHECKED = max(d.get("checked", "") for d in DEFS)         # 照合日（出力ヘッダー用）
 # 駅名 → 隣の駅（出入口の名前に混ざっていたら除く）
 TARGETS = {
     "新宿": ["新宿三丁目", "都庁前", "東新宿", "代々木", "南新宿", "西武新宿", "初台", "新宿御苑前", "曙橋", "若松河田", "新大久保", "大久保", "落合", "西新宿"],
@@ -35,9 +42,6 @@ TARGETS = {
     "品川": ["泉岳寺", "高輪ゲートウェイ", "北品川", "新馬場", "大井町", "天王洲アイル"],
     "上野": ["湯島", "上野御徒町", "上野広小路", "仲御徒町", "京成上野", "入谷", "稲荷町", "御徒町", "新御徒町", "浅草", "田原町", "根津", "鶯谷", "日暮里", "三ノ輪"],
 }
-# 渋谷: 東急の公式駅構内図で確認できる地下鉄出入口番号
-SHIBUYA_OK = re.compile(r"^(A(0|1|2|3|4|5|6|7|8|9|10|11|12)[ab]?|B[1-7][ab]?|C[1-3])$")
-
 
 def fetch_osm(la, lo, cache_path):
     if cache_path and os.path.exists(cache_path):
@@ -111,7 +115,7 @@ def main():
             seen.add(key)
             kind = "m" if rw == "subway_entrance" else "j"
             wc = 1 if t.get("wheelchair") == "yes" else 0
-            ver = 1 if (n == "渋谷" and kind == "m" and SHIBUYA_OK.match(nm)) else 0
+            ver = 1 if is_verified(DEFS, n, kind, nm) else 0
             lvl = "u" if (t.get("location") == "underground" or "地下" in nm0) else "g"
             ex.append([nm, sub, round(float(node.get("lat")), 6), round(float(node.get("lon")), 6), kind, wc, ver, lvl])
         ex.sort(key=lambda x: (x[4], x[0]))
