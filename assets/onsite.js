@@ -67,7 +67,7 @@ function items(cat) {
   if (cat.kind === "exit" && !nearTokyo()) {
     var ES = exitStation(); if (!ES) return out;
     ES.x.forEach(function (x) {
-      out.push({ n: x[0], sub: (x[1] ? x[1] + " ・ " : "") + (x[4] === "m" ? "地下鉄の出入口" : "駅の出入口") + (x[5] ? " ・ ♿ 車いす可" : "") + (x[7] === "u" ? " ・ 地下" : "") + (x[6] === 1 ? " ・ 公式照合済み" : " ・ ⚠未確認"),
+      out.push({ n: x[0], sub: (x[1] ? x[1] + " ・ " : "") + (x[4] === "m" ? "地下鉄の出入口" : "駅の出入口") + (x[5] ? " ・ ♿ 車いす可の記録あり（要確認）" : "") + (x[7] === "u" ? " ・ 地下" : "") + (x[6] === 1 ? " ・ 公式照合済み" : " ・ ⚠未確認"),
                  e: x[4] === "m" ? "🚇" : "🚪", la: x[2], lo: x[3], km: RG.hav(a, [x[2], x[3]]), exit: { n: x[0] } });
     });
     return out.sort(function (p, q) { return p.km - q.km; }).slice(0, 40);
