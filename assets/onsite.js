@@ -67,7 +67,7 @@ function items(cat) {
   if (cat.kind === "exit" && !nearTokyo()) {
     var ES = exitStation(); if (!ES) return out;
     ES.x.forEach(function (x) {
-      out.push({ n: x[0], sub: (x[1] ? x[1] + " ・ " : "") + (x[4] === "m" ? "地下鉄の出入口" : "駅の出入口") + (x[5] ? " ・ ♿ 車いす可" : ""),
+      out.push({ n: x[0], sub: (x[1] ? x[1] + " ・ " : "") + (x[4] === "m" ? "地下鉄の出入口" : "駅の出入口") + (x[5] ? " ・ ♿ 車いす可" : "") + (x[7] === "u" ? " ・ 地下" : "") + (x[6] === 1 ? " ・ 公式照合済み" : " ・ ⚠未確認"),
                  e: x[4] === "m" ? "🚇" : "🚪", la: x[2], lo: x[3], km: RG.hav(a, [x[2], x[3]]), exit: { n: x[0] } });
     });
     return out.sort(function (p, q) { return p.km - q.km; }).slice(0, 40);
@@ -125,12 +125,13 @@ function listHtml(cat) {
   }
   var cvsQ = cat.id === "cvs" && RG.cvsFilterHtml ? RG.cvsFilterHtml("cvsf--os") : "";   // v99: 7／F／L（地図と同じ状態）
   var exQ = cat.kind === "exit" ? guideHtml() + carHtml() : "";
+  var exSrc = cat.kind === "exit" && !nearTokyo() ? '<p class="os__src">出入口データ: © OpenStreetMap contributors（ODbL 1.0）。「⚠未確認」は事業者の公式案内と照合できていない出入口です。位置は目安なので、現地の案内表示を優先してください。</p>' : "";
   return destQ + cvsQ + exQ + L.map(function (x, i) {
     return '<button class="os__row" type="button" data-os-i="' + i + '">' +
       (RG.gIconHtml && x.poi && !x.poi.e && RG.hasIcon(x.poi.g) ? RG.gIconHtml(x.poi.g, x.e, "os__e2") : '<span class="os__e2">' + esc(x.e) + "</span>") +   // v101
       '<span class="os__nm"><b>' + (x.brand ? brandMark(x.brand) : "") + esc(x.n) + "</b><small>" + esc(x.sub || "") + "</small></span>" +
       '<span class="os__d"><b>' + esc(dir(O.anchor, [x.la, x.lo])) + "</b><small>" + m(x.km) + "・徒歩" + walkMin(x.km) + "分</small></span></button>";
-  }).join("");
+  }).join("") + exSrc;
 }
 
 /* ---- v112: 降りてからの案内（選んだ出口へ、現在地から方角と距離。位置が変わるたびに更新） ---- */
