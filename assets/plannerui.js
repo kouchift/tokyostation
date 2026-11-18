@@ -201,6 +201,15 @@ RG.closeModal = function () {
   if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
 };
 RG.openModal = modal;
+/* D-01 第3周回: 開いている窓の見出しを後から差し替えるときの受け口。
+   見出し要素へ textContent で直書きすると M.__title とずれて、rg:icons の
+   再描画で古い見出しに戻ってしまう。差し替えはここを通すこと */
+RG.setModalTitle = function (title) {
+  if (!M) return;
+  M.__title = title;
+  var hd = $(".modal__hd b", M); if (!hd) return;
+  if (RG.iconifyText) RG.iconifyText(hd, title); else hd.textContent = title;
+};
 /* D-01: アイコンが後から届いたら、開いている窓の見出しをアイコンで出し直す */
 document.addEventListener("rg:icons", function () { if (M && M.__title && RG.iconifyText) RG.iconifyText($(".modal__hd b", M), M.__title); });
 /* v166: スポット・駅・案内の «カード» は濃いめの半透明（.modal--dark）。設定など入力の多い画面は openModal（白）のまま */
