@@ -29,14 +29,12 @@ var CORE = ["data/version.js", "data/config.js", "data/lines_meta.js",
             "data/genres.js", "data/score.js", "data/areas.js", "data/focus.js",
             "data/transit_tokyo.js"];   // v124: 島への船・ヘリ・島の飛行機・水上バス・渡し（路線網に足す）
 
-/* 第2段：地図が出たあと、端末が暇なときに順に足す（合計 約2MB・gzip後 約600KB） */
+/* 第2段：地図が出たあと、端末が暇なときに順に足す（29件・合計 約1.7MB・gzip後 約464KB。第2周回E で重い5点 約511KB を第3段へ移した） */
 var IDLE = [
   { f: "data/geo/pref.json", key: "geopref", label: "都道府県の境界", json: "GEO_PREF" },
   { f: "data/landmarks.js", key: "landmarks", label: "ランドマーク" },
-  { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮" },
   { f: "data/shrines_jp.js", key: "shrines_jp", label: "主な神社・寺院" },
   { f: "data/jma_areas.js", key: "jmaareas", label: "気象庁の予報区" },          // v115: 防災情報（警報を置く場所）
-  { f: "data/auto/buzz_auto.js", key: "buzzauto", label: "話題の場所（自動更新）" },   // v114: GitHub Actions が毎朝更新
   { f: "data/buzz.js",      key: "buzz",      label: "SNSで話題の場所" },
   { f: "data/levechi.js",   key: "levechi",   label: "レベチなレストラン" },   // v87: 小さいので早めに（左下のボタンを最初から出す）
   { f: "data/tokyo_station.js", key: "tokyost", label: "東京駅の出入口" },      // v90: 東京駅モード（小さい）
@@ -45,11 +43,9 @@ var IDLE = [
   { f: "data/support.js",   key: "support",   label: "制作者への窓口" },
   { f: "data/analytics.js", key: "analytics", label: "利用状況の設定" },        // v98: endpoint が空なら送らない
   { f: "data/paymethods.js", key: "paymethods", label: "寄付の手段" },
-  { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ" },
   { f: "data/wikiinfo.js",  key: "wiki",      label: "区と路線の説明" },
   { f: "data/heat.js",      key: "heat",      label: "区の統計" },
   { f: "data/admin.js",     key: "admin",     label: "行政区の地図" },
-  { f: "data/geo/muni.json", key: "geomuni",  label: "市区町村の境界", json: "GEO_MUNI" },
   { f: "data/depth.js",     key: "depth",     label: "地下の深さ" },
   { f: "data/crime.js",     key: "crime",     label: "安全のデータ" },
   { f: "data/bigevents.js", key: "bigev",     label: "大きな行事" },
@@ -57,7 +53,6 @@ var IDLE = [
   { f: "data/edu_history.js", key: "eduhist", label: "歴史の場所のやさしい解説" },   // v126
   { f: "data/whs_jp.js",    key: "whs",       label: "日本の世界遺産" },          // v127
   { f: "data/graves.js",    key: "grave",     label: "偉人の墓 100" },            // v133
-  { f: "data/poi.js",       key: "poi",       label: "駅のまわりの情報" },
   { f: "data/mappois.js",   key: "pois",      label: "スポット" },
   { f: "data/user_pois.js", key: "user",      label: "自分のスポット" },
   { f: "data/user_hensachi.js", key: "hensachi", label: "偏差値" },
@@ -95,7 +90,13 @@ var ONDEMAND = [
   { f: "data/roads.js",     key: "roads",    label: "高速道路・国道",     group: "spots" },
   { f: "data/tokaido.js",   key: "kaido",    label: "五街道と宿場",       group: "spots" },
   { f: "data/ytspots.js",   key: "yt",       label: "YouTubeで見る場所",  group: "spots", opt: true },   // 未作成のファイル（無くても数えない）
-  { f: "data/bldg3d.js",    key: "bldg",     label: "3Dの建物",           group: "bldg" }    // v170: 3D を点けたときだけ（起動直後に 1 秒以上の実行時間を使っていた）
+  { f: "data/bldg3d.js",    key: "bldg",     label: "3Dの建物",           group: "bldg" },   // v170: 3D を点けたときだけ（起動直後に 1 秒以上の実行時間を使っていた）
+  /* 第2周回E: 第2段（IDLE）から移した5点。それぞれ «使う瞬間» にだけ読む（合計 gzip 約511KB を初回セッションから外す） */
+  { f: "data/geo/muni.json", key: "geomuni", label: "市区町村の境界", json: "GEO_MUNI", group: "geomuni" },   // 地図に寄ったとき（geo.js の geoLOD・z>=4）
+  { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ",             group: "koyomi" },                  // 週カレンダーに触れた／月・日のカードを開いたとき
+  { f: "data/auto/buzz_auto.js", key: "buzzauto", label: "話題の場所（自動更新）", group: "buzz" },           // 話題の一覧・マージのとき（buzz.js）
+  { f: "data/poi.js",       key: "poi",       label: "駅のまわりの情報",   group: "poi" },                     // 駅カードを開いたとき（app.js の Card.open）
+  { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮",           group: "ichinomiya" }               // 一之宮ジャンルを選んだとき／スポット一式と一緒
 ];
 
 var loaded = {}, inflight = {};
@@ -144,7 +145,7 @@ function setProgress(txt, pct) {
 var pendingKeys = {}, flushT = null;
 var BASE_KEYS = { admin: 1, relief: 1, heat: 1, bldg: 1, crime: 1, depth: 1, jpadm: 1 };
 var POI_KEYS = { pois: 1, od: 1, od2: 1, chain2: 1, user: 1, landmarks: 1, events: 1, corp: 1,
-                 smoke: 1, travel: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, whs: 1, grave: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, sentojp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
+                 smoke: 1, travel: 1, camadult: 1, osm10: 1, edu: 1, klm: 1, hensachi: 1, ichinomiya: 1, whs: 1, grave: 1, shrines_jp: 1, cams_jp: 1, buzz: 1, buzzauto: 1, corpgone: 1, views_jp: 1, onsen_jp: 1, sentojp: 1, nearsp: 1, levechi: 1, mountains: 1, water: 1, castles: 1, osmx: 1, air: 1, yt: 1, kaido: 1, roads: 1, rivergeo: 1 };
 function refresh(key) {
   loaded[key] = true;
   pendingKeys[key] = 1;
@@ -199,7 +200,7 @@ function flush(urgent, done) {
   if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) T.push(function () { RG.buildWeekBar(); });
   if (keys.indexOf("kuni") >= 0) T.push(function () { if (RG.kuniOn && RG.kuniOn()) RG.kuniSet(true); });
   if (keys.indexOf("support") >= 0 && RG.tipInit) T.push(function () { RG.tipInit(); });
-  if (card) T.push(function () { if (RG.Card && RG.Card.refresh) RG.Card.refresh(); });
+  if (card) T.push(function () { if (keys.indexOf("poi") >= 0 && RG.Score && RG.Score.reset) RG.Score.reset(); if (RG.Card && RG.Card.refresh) RG.Card.refresh(); });   // 第2周回E: poi が後から届いたら、POIなしで計算済みのスコアを捨てる
   if (keys.indexOf("landmarks") >= 0) T.push(function () { if (RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks(); });
   T.push(function () { document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } })); });
   runTasks(T, done);
@@ -272,7 +273,7 @@ RG.ensureData = function (group, cb) {
     });
   }, true);
 };
-RG.ensureSpots = function (cb) { RG.ensureData("spots", cb); };
+RG.ensureSpots = function (cb) { RG.ensureData("ichinomiya"); RG.ensureData("spots", cb); };   // 第2周回E: 一之宮はスポット索引の一部なので、スポット一式と一緒に読む
 RG.spotsReady = function () { return groupState.spots === "done"; };
 RG.spotsFailed = function () { return groupState.spots === "failed"; };
 RG.dataGroupState = function (g) { return groupState[g] || null; };
@@ -290,6 +291,7 @@ function armOnDemandTriggers() {
       var real = list && list.length && list.indexOf("__none__") < 0;
       var heavy = real && list.some(function (g) { return !LIGHT[g]; });
       if (heavy) RG.ensureSpots(function () { orig(list); });
+      if (real && list.indexOf("ichinomiya") >= 0) RG.ensureData("ichinomiya", function () { orig(list); });   // 第2周回E: 一之宮は軽いジャンル扱いだが、データ本体は専用グループから
       orig(list);
     };
   }
@@ -304,6 +306,9 @@ function armOnDemandTriggers() {
   // 設定パネル（喫煙・おとな向け・業種など）
   var st = document.getElementById("btn-set");
   if (st) st.addEventListener("click", go, { once: true });
+  // 第2周回E: 週カレンダーに触れたら «こよみ»（六曜・祝日・今日は何の日）を読む。届いたら flush が buildWeekBar をやり直す
+  var wb = document.getElementById("weekbar");
+  if (wb) wb.addEventListener("pointerdown", function () { RG.ensureData("koyomi"); }, { passive: true, once: true });
 }
 
 /* v139: 第2段の読み方を «通信の速さ» で変える
@@ -311,8 +316,8 @@ function armOnDemandTriggers() {
    ・ゆっくり（速度制限中など）: 小さくて地図にすぐ効くもの（1）→ 地図の印・区の形（2）→ カードの中身（3）の順に «じわじわ»。
      2・3 は 1 件ごとに 1.5 秒あけ、ほかの通信（写真など）の邪魔をしない
    ・データセーバー: 1 だけ。残りは設定の «残りのデータも読み込む» か、使うときに */
-var PRI2 = { pois: 1, admin: 1, levechi: 1, grave: 1, whs: 1, ichinomiya: 1, shrines_jp: 1, buzz: 1, buzzauto: 1, geomuni: 1, jpadm: 1 };
-var PRI3 = { koyomi: 1, descs: 1, poi: 1, eduhist: 1, relief: 1, bldg: 1 };
+var PRI2 = { pois: 1, admin: 1, levechi: 1, grave: 1, whs: 1, shrines_jp: 1, buzz: 1, jpadm: 1 };
+var PRI3 = { descs: 1, eduhist: 1, relief: 1, bldg: 1 };
 function pri(it) { return PRI3[it.key] ? 3 : PRI2[it.key] ? 2 : 1; }
 var idleLeft = null, idleDone = null, idleRunning = false;
 function runIdle(done, all) {
@@ -389,7 +394,7 @@ RG.startApp = function (netPromise) {
   }).then(function () {
     armOnDemandTriggers();
     if (RG.QOS) RG.QOS.update();                                    // v139: 実際に届いた速さで «表示の軽さ» を決め直す
-    /* v170: 第 2 段（約 1.2MB）は、利用者が触ったとき、または地図が出て 5 秒たってから。
+    /* v170: 第 2 段は、利用者が触ったとき、または地図が出て 5 秒たってから。
        最初の数秒は本体の残り・検索・カードの準備に回線と CPU を使う（Core Web Vitals の LCP/TBT のため） */
     whenSettled(5000, function () {
       runIdle(function () {

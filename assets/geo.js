@@ -23,6 +23,7 @@ var $ = RG.$, el = RG.el, esc = RG.esc;
 var gGeo = null, gPref = null, gMuni = null, gLbl = null, gFrame = null;
 var PREF = null, MUNI = null, detail = {}, detailLoading = {};
 var prefInfo = [];          // { c, n, bbox:[x0,y0,x1,y1], cx, cy, path }
+var muniAsked = 0;          // 第2周回E: 市区町村の粗い境界（ONDEMAND "geomuni"）を取りに行ったか
 
 /* ---- TopoJSON を解く（この用途に必要な分だけ） ---- */
 function decodeArcs(topo) {
@@ -293,6 +294,11 @@ RG.geoLOD = function () {
       }
     }
   });
+  // 第2周回E: 粗い市区町村境界は «寄ったときだけ» 読む（ONDEMAND "geomuni"・gzip 約132KB を初回から外した）
+  if (z >= 4 && !MUNI && !muniAsked && RG.ensureData) {
+    muniAsked = 1;
+    RG.ensureData("geomuni", function () { muniAsked = 0; RG.geoLOD(); });
+  }
   // 寄っていたら、見えている県の詳しい境界を取りに行く
   if (z >= 4 && MUNI) {
     prefInfo.forEach(function (p) {

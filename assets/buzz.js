@@ -59,7 +59,17 @@ RG.buzzLists = function () {
 
 /* 地図に «話題の山» を置く（土地ごとに1つ） */
 RG.mergeBuzz = function () {
-  if (!RG.BUZZ || RG.__buzzMerged) return; RG.__buzzMerged = 1;
+  if (!RG.BUZZ) return;
+  /* 第2周回E: 自動更新ぶん（data/auto/buzz_auto.js）は ONDEMAND "buzz"（showBuzz・話題ボタンで読む）。
+     ここでは «届いている分だけ» で山を作る。自動ぶんが後から届いたら（flush が buzzauto を POI 扱いで
+     mergeExtraPois に流す）、山だけを作り直す。一覧（buzzLists）は開くたびに withAuto で足すので常に最新 */
+  if (RG.__buzzMerged) {
+    if (!(RG.BUZZ_AUTO && !RG.__buzzAutoIn)) return;
+    RG.MAPPOI = (RG.MAPPOI || []).filter(function (p) { return p.g !== "buzz"; });
+    RG.__buzzMerged = 0;
+  }
+  RG.__buzzMerged = 1;
+  if (RG.BUZZ_AUTO) RG.__buzzAutoIn = 1;
   RG.MAPPOI = RG.MAPPOI || [];
   var L = RG.buzzLists(), live = L.fresh.concat(L.borrow, L.ever), byArea = {};
   live.forEach(function (b) { var a = areaOf(b); (byArea[a] = byArea[a] || []).push(b); });
@@ -108,6 +118,8 @@ function stkArea(a, cb) {
   });
 }
 RG.showBuzz = function (area, tab) {
+  /* 第2周回E: 自動更新ぶんがまだなら読んでから開き直す（失敗時は手集めぶんだけで開く） */
+  if (!RG.BUZZ_AUTO && RG.ensureData && RG.dataGroupState && RG.dataGroupState("buzz") !== "failed" && RG.dataGroupState("buzz") !== "done") { RG.ensureData("buzz", function () { RG.showBuzz(area, tab); }); return; }
   if (area && !tab) tab = "stock";
   if (tab === "stock" && !area) tab = "fresh";
   if (tab === "stock" && !(RG.BUZZ_STOCK && RG.BUZZ_STOCK[area]) && !STK["tried" + area]) { STK["tried" + area] = 1; stkArea(area, function () { RG.showBuzz(area, tab); }); return; }
@@ -241,7 +253,7 @@ RG.buzzRailRefresh = function (force) {
 /* ヘッダーのボタン */
 RG.buzzBind = function () {
   var b = document.getElementById("btn-buzz");
-  if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData(["buzz"]); RG.showBuzz(null, "fresh"); }); }
+  if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("buzz"); RG.showBuzz(null, "fresh"); }); }
 };
 /* =========================================================================
    v126: 場所を追う «この場所の話題»

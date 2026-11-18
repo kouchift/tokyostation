@@ -56,6 +56,9 @@ S.build = function () {
   return computed;
 };
 
+/* 第2周回E: RG.POI が後から届いたときに、POIなしで計算した結果を捨てる（loader の flush から呼ぶ） */
+S.reset = function () { computed = null; };
+
 S.of = function (id) {
   var c = S.build(), out = { total: c.total[id].total, rank: c.total[id].rank, n: c.count, axes: [] };
   c.axes.forEach(function (a) {
