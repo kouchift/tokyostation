@@ -9,12 +9,12 @@
 <link rel="icon" href="/tokyostation/favicon.ico" sizes="48x48">
 <link rel="icon" href="/tokyostation/assets/favicon-96.png" type="image/png" sizes="96x96">
 <style>
-:root{--ink:#1a2733;--sub:#5b6773;--line:#e1e6ec;--blue:#0B5394;--bg:#f7f9fc}
+:root{--ink:#1a2733;--sub:#5b6773;--line:#e1e6ec;--blue:#0B5394;--blue2:#e8f1fb;--bg:#f7f9fc}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;color:var(--ink);background:var(--bg);line-height:1.7}
+body{margin:0;font-size:16px;font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;color:var(--ink);background:var(--bg);line-height:1.7}
 header{background:#00224A}header a{display:block;max-width:720px;margin:0 auto;padding:10px 16px;color:#fff;font-weight:800;text-decoration:none}
 main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
-h1{font-size:22px;margin:0 0 8px}h2{font-size:16px;margin:28px 0 8px}
+h1{font-size:28px;margin:0 0 8px}h2{font-size:20px;font-weight:800;margin:34px 0 10px}
 p{margin:0 0 12px}
 form{display:flex;gap:8px;margin:8px 0 4px}
 input{flex:1;min-width:0;font-size:16px;padding:10px 12px;border:2px solid var(--blue);border-radius:10px}
@@ -22,6 +22,17 @@ button,.btn{font:inherit;font-weight:800;background:var(--blue);color:#fff;borde
 ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 li a{display:block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);text-decoration:none;font-weight:700}
 small{color:var(--sub)}
+a{text-underline-offset:3px}
+.btn{transition:background-color .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1)}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+li a{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s cubic-bezier(.2,.8,.2,1)}
+li a:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,34,74,.12)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+::selection{background:var(--blue2)}
+.skip{position:absolute;left:-9999px;top:0;background:#00224A;color:#fff;padding:10px 16px;z-index:10}
+.skip:focus{left:8px;top:8px}
+@media (prefers-reduced-motion:reduce){.btn,li a{transition:none}}
 </style>
 </head>
 <body>
