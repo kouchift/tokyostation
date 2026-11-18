@@ -14,6 +14,10 @@
   版を +1（index.html の data-build と `?v=`・sw.js の CACHE と V・data/version.js の VERSION と BUILT）→ まとめ直し → 文法確認 → 下見 → y で GitHub へ → 公開の確認
   - `--no-bump`（版はそのまま）/ `--dry`（下見だけ）/ `--yes`（確認なし）
   - 縮小の terser は `%USERPROFILE%\.tsg_node` に自動で入る
+- **PR 方式で版を上げるとき（`tools/release.mjs` を通さない経路）** — 第2周回で filehash が古いまま公開され、変更が再訪者に届かなかった事故（PR #29 で是正）の再発防止:
+  1. 版上げ（index.html の data-build と `?v=`・sw.js の CACHE と V・data/version.js の VERSION と BUILT）と、**`node tools/make_filehash.mjs` による `data/filehash.json` の再生成を必ず同じ PR に入れる**。どちらか片方だけの PR はマージしない
+  2. 公開（マージ）前に **`node tools/seo_check.js` を実行し、FAIL 0 を確認する**。filehash グループが PASS であること（印が古い・未収載・余分があると FAIL になる）。filehash だけを単独で確かめるなら `node tools/make_filehash.mjs --check`（生成と同じ規則で再計算して比べ、差分があればファイル名つきで出し終了コード 1）
+  3. `tools/release.mjs`（release.bat）を使う経路では、filehash の再生成は**自動**で行われる（release.mjs が make_filehash.mjs を呼ぶ）ので手作業は要らない。上の 1・2 が要るのは、PR 方式など release.mjs を通らない経路だけ
 - まとめるだけ: `NODE_PATH=%USERPROFILE%\.tsg_node\node_modules node tools/build_bundle.js`（まとめる順は build_bundle.js の ORDER。新しい部品はここに足す）
 - 一部のファイルだけ上げる: `python uploader/tsg_push.py --go --only data/a.js,data/b.md`（`--go` なしは下見）
 - 変わったことは `data/version.js` の CHANGELOG の先頭に `"v<番号> …"` で 1 行（設定パネルに出る。短く・平易に）
