@@ -39,8 +39,8 @@ RG.showHensachiEdit = function (preset) {
     '<div id="hs-sug" class="hs__sug"></div>' +
     '<div class="hs__list" id="hs-list"></div>' +
     '<div class="legend__foot">' +
-      '<button id="hs-imp" class="set__b2" type="button">📋 まとめて貼りつけ</button>' +
-      '<button id="hs-exp" class="set__b2" type="button">💾 書き出す</button>' +
+      '<button id="hs-imp" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> まとめて貼りつけ</button>' +
+      '<button id="hs-exp" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> 書き出す</button>' +
       '<button id="hs-clr" class="set__b2" type="button">ぜんぶ消す</button>' +
     "</div>" +
     '<div class="hs__note">' +
@@ -51,7 +51,7 @@ RG.showHensachiEdit = function (preset) {
       "上の «まとめて貼りつけ» を使えば、表計算ソフトからコピーした数百行を一度に取り込めます。" +
       "つまり実質、困ることはありません。</p>" +
       '<button id="hs-vendor" class="hs__vb" type="button">' +
-      "🏫 塾・予備校の方はこちら（データ提供のご相談）</button>" +
+      "<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-school'></use></svg> 塾・予備校の方はこちら（データ提供のご相談）</button>" +
     "</div>" +
     '<p class="src">偏差値は予備校各社が独自に調べたもので、複製・転載が禁じられています。' +
     "このアプリは数字を持っていません。<b>ご自分で調べた値を、ご自分のために使ってください。</b></p></div>";
@@ -235,7 +235,7 @@ RG.showVendorForm = function () {
             (form.y ? "¥" + Number(form.y).toLocaleString("ja-JP") : "—") + "</b></div>" +
           "<div><span>規約の確認</span><b>" + TERMS.length + " / " + TERMS.length + " 項目</b></div>" +
         "</div>" +
-        '<button class="vf__send" id="vf-send" type="button">📮 この内容で申請する</button>';
+        '<button class="vf__send" id="vf-send" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-postbox"></use></svg> この内容で申請する</button>';
     }
     html += '<div class="vf__nav">' +
       (step > 0 ? '<button class="set__b2" id="vf-prev" type="button">← 戻る</button>' : "") +
@@ -277,7 +277,7 @@ RG.showVendorForm = function () {
     var sd = $("#vf-send", m);
     if (sd) sd.addEventListener("click", function () {
       RG.openModal("🚧 送信先が工事中です", '<div class="gate">' +
-        '<div class="gate__e">🚧📮</div>' +
+        '<div class="gate__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-barrier"></use></svg><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-postbox"></use></svg></div>' +
         '<p class="gate__t">ここまでお進みいただき、ありがとうございました。</p>' +
         '<p class="gate__b">申し訳ありません。<b>申請の送信先が絶賛工事中</b>です。' +
         "このフォームはどこにも送られません。<br>" +

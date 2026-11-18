@@ -66,7 +66,7 @@ RG.buildWeekBar = function () {
       '<span class="wb__r">' + esc((roku(d) || "").slice(0, 2)) + "</span></button>");
   }
   host.innerHTML =
-    '<button class="wb__m" type="button" id="wb-month">📅 ' +
+    '<button class="wb__m" type="button" id="wb-month"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> ' +
       (sun.getMonth() + 1) + "月</button>" +
     '<div class="wb__row">' + cells.join("") + "</div>";
   $("#wb-month", host).addEventListener("click", function () { RG.showMonth(); });
@@ -198,14 +198,14 @@ RG.showMonth = function (ym) {
 /* ------------------------------------------------- 有償プランのご案内（工事中） */
 RG.showPlanWall = function () {
   RG.openModal("🚧 ただいま工事中です", '<div class="wall">' +
-    '<div class="wall__e">🚧</div>' +
+    '<div class="wall__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-barrier"></use></svg></div>' +
     "<p class=\"wall__t\">1か月より前のこよみを見る機能は、<b>有償プラン</b>で用意する予定です。</p>" +
     '<p class="wall__b">…と言いたいところですが、<b>その有償プランは絶賛工事中</b>で、' +
     "いつできるかは決まっていません。<br>作るかどうかは、みなさんの声（VOC）だけで決めます。</p>" +
     '<p class="wall__b">つまり今のところ、<b>無料のままで十分に使えます</b>。' +
     "1か月ぶんさかのぼれれば、たいていの «行った・行かなかった» は思い出せるはずです。</p>" +
     '<p class="wall__b wall__b--s">どうしても古い日を残したい方は、その日のうちに' +
-    "「📝 訪問メモに残す」を押しておいてください。メモは期限なく残ります。</p>" +
+    "「<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-memo'></use></svg> 訪問メモに残す」を押しておいてください。メモは期限なく残ります。</p>" +
     '<div class="wall__f"><button class="set__b2" type="button" onclick="RG.closeModal()">' +
     "わかりました</button></div></div>");
 };
@@ -279,16 +279,16 @@ RG.showDay = function (s) {
     (him.a ? '<div class="sec"><div class="sec__h"><b>🎉 きょうは何の日</b></div>' +
       '<ul class="day__l">' + him.a.map(function (x) {
         return "<li>" + linkPlaces(x) + "</li>"; }).join("") + "</ul></div>" : "") +
-    (him.e ? '<div class="sec"><div class="sec__h"><b>📜 この日のできごと</b>' +
+    (him.e ? '<div class="sec"><div class="sec__h"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> この日のできごと</b>' +
       "<em>青い字を押すと地図が動きます</em></div>" +
       '<ul class="day__l">' + him.e.map(function (x) {
         return "<li>" + linkPlaces(x) + "</li>"; }).join("") + "</ul></div>" : "") +
     '<div class="lnks">' +
-      '<button class="lnk" type="button" id="dy-set"><span>🧳</span>この日で予定を立てる</button>' +
-      '<button class="lnk" type="button" id="dy-memo"><span>📝</span>訪問メモに残す</button>' +
+      '<button class="lnk" type="button" id="dy-set"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-luggage"></use></svg></span>この日で予定を立てる</button>' +
+      '<button class="lnk" type="button" id="dy-memo"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-memo"></use></svg></span>訪問メモに残す</button>' +
       '<a class="lnk" href="https://ja.wikipedia.org/wiki/' +
         encodeURIComponent((d.getMonth() + 1) + "月" + d.getDate() + "日") +
-        '" target="_blank" rel="noopener"><span>📖</span>Wikipediaで見る</a>' +
+        '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipediaで見る</a>' +
     "</div>" +
     '<p class="src">できごと・記念日: Wikipedia「' + (d.getMonth() + 1) + "月" +
     d.getDate() + "日」（CC BY-SA 4.0・要約）。六曜は旧暦から計算しています。</p></div>";
@@ -310,7 +310,7 @@ RG.showDay = function (s) {
         '<span class="ti__k">日の出・入り</span><span class="ti__v">' + esc(wx.rise) + "</span>" +
         '<span class="ti__s">' + esc(wx.set) + " に沈む</span></div>");
     } else {
-      t.push('<div class="ti ti--none"><span class="ti__e">🌡️</span>' +
+      t.push('<div class="ti ti--none"><span class="ti__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-thermo"></use></svg></span>' +
         '<span class="ti__k">天気</span><span class="ti__v">—</span>' +
         '<span class="ti__s">16日先まで出せます</span></div>');
     }
@@ -367,17 +367,17 @@ function showBig(name, d) {
       '<span class="be__g be__g--l">' + (ev.sc >= 90 ? "特大" : ev.sc >= 75 ? "大" : "中") + "</span></div>" +
     (ev.d ? '<p class="bigcard__d">' + esc(ev.d) + "</p>" : "") +
     (on ? '<div class="exgrid">' +
-      '<div class="ex"><span class="ex__k">📅 会期</span><span class="ex__v">' +
+      '<div class="ex"><span class="ex__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> 会期</span><span class="ex__v">' +
         (on.s.getMonth() + 1) + "/" + on.s.getDate() +
         (on.one ? "" : " 〜 " + (on.e.getMonth() + 1) + "/" + on.e.getDate()) + "</span>" +
       '<span class="ex__s">' + (on.one ? "この日だけの行事です" :
         "全" + on.days + "日間。えらんだ日は " + on.nth + "日目です") + "</span></div>" +
       "</div>" : "") +
-    (ev.note ? '<p class="bigcard__w">⚠ ' + esc(ev.note) + "</p>" : "") +
+    (ev.note ? '<p class="bigcard__w"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> ' + esc(ev.note) + "</p>" : "") +
     RG.outLinks({ site: ev.u, yt: ev.n, news: ev.n,
                   map: ev.la ? ev.la + "," + ev.lo : ev.n + " 東京" }) +
     (ev.la ? '<div class="lnks"><button class="lnk" type="button" id="bg-map">' +
-      "<span>📍</span>地図でこの場所を見る</button></div>" : "") +
+      "<span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-pin'></use></svg></span>地図でこの場所を見る</button></div>" : "") +
     '<p class="src">日付は <b>おおよその目安</b> です。主催者の都合で動きますし、' +
     "隔年・3年に一度のものもあります。<b>行く前に必ず主催者の公式情報をご確認ください。</b><br>" +
     "来場者数は主催者や報道で一般に知られている概数です。</p></div>";

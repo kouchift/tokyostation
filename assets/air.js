@@ -71,11 +71,11 @@ RG.airportBlock = function (p) {
       '<div class="airb__m">' + esc(a.kind) + (a.pax ? "・年間 " + (a.pax / 1e4).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " 万人（" + a.paxy + "）" : "") + (a.rw ? "・滑走路 " + a.rw.toLocaleString("ja-JP") + "m" : "") + "</div></div></div>" +
     (alList.length ? '<div class="airb__als"><span class="airb__l">就航</span>' + alList.map(function (c) { return alChip(c); }).join("") + "</div>" : '<p class="nat__d nat__d--dim">定期便の記載がありません。</p>') +
     (rts.length ? '<div class="airb__dest"><span class="airb__l">国内 ' + rts.length + " 路線</span>" + rts.slice(0, 14).map(function (x) { var b = BY[x.to]; return '<button class="chip" type="button" data-airto="' + esc(x.to) + '">' + esc(b ? (b.nick || b.n) : x.to) + " <i>" + Math.round(x.r.km) + "km</i></button>"; }).join("") + (rts.length > 14 ? '<span class="airb__more">ほか ' + (rts.length - 14) + " 空港</span>" : "") + "</div>" : "") +
-    (a.intl ? '<p class="nat__d">🌏 国際線 ' + a.intl + " 都市（" + ((RG.AIR_INTL || []).filter(function (x) { return x.a === a.code; }).slice(0, 8).map(function (x) { return esc(x.to); }).join("・")) + (a.intl > 8 ? " …" : "") + "）</p>" : "") +
+    (a.intl ? '<p class="nat__d"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 国際線 ' + a.intl + " 都市（" + ((RG.AIR_INTL || []).filter(function (x) { return x.a === a.code; }).slice(0, 8).map(function (x) { return esc(x.to); }).join("・")) + (a.intl > 8 ? " …" : "") + "）</p>" : "") +
     (a.d ? '<p class="nat__d">' + esc(a.d) + "</p>" : "") +
     '<div class="nat__lnks"><button class="lnk lnk--k" type="button" data-airmap="' + esc(a.code) + '"><span>🛫</span>飛べる空港を地図に描く</button>' +
-    (a.web ? '<a class="lnk" href="' + esc(a.web) + '" target="_blank" rel="noopener"><span>🔗</span>空港の公式サイト</a>' : "") +
-    '<button class="lnk" type="button" data-airshops="' + esc(a.code) + '"><span>🛍️</span>ターミナル・周辺のお店</button></div>' +
+    (a.web ? '<a class="lnk" href="' + esc(a.web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg></span>空港の公式サイト</a>' : "") +
+    '<button class="lnk" type="button" data-airshops="' + esc(a.code) + '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-bags"></use></svg></span>ターミナル・周辺のお店</button></div>' +
     '<div class="airb__shops" data-airshopbox="' + esc(a.code) + '"></div>' +
     '<p class="src">就航路線は Wikipedia の記載時点（季節運航・運休は反映しきれません）。運賃・時刻は各社の公式サイトでご確認ください。</p></div>';
 };
@@ -241,8 +241,8 @@ RG.airRouteModal = function (fromCode, toCode) {
     '<div class="airrt__m">直線 ' + Math.round(km) + " km・飛行時間の目安 " + fmtMin(fm - 15) + "（搭乗〜降機 " + fmtMin(fm) + "）" + (r.sea ? "・季節運航あり" : "") + (r.pl ? "・就航予定を含む" : "") + "</div>" +
     (rows ? '<table class="airrt__t"><thead><tr><th>航空会社</th><th>運賃の目安</th><th>便数</th><th></th></tr></thead><tbody>' + rows + "</tbody></table>" : '<p class="set__d">就航会社の記載がありません。</p>') +
     (cs.length ? '<p class="nat__d nat__d--dim">共同運航（コードシェア）: ' + cs.map(function (c) { return alChip(c, true); }).join(" ") + "</p>" : "") +
-    '<div class="airrt__sh"><b>🕒 ' + (when.getMonth() + 1) + "/" + when.getDate() + " " + hm(when.getHours() * 60 + when.getMinutes()) + " 以降の便" + (sch.real ? "" : "（<u>目安</u>：便数から均等に並べた推定で、実際の時刻表ではありません）") + "</b>" + schHtml + "</div>" +
-    '<div class="lnks"><button class="lnk" type="button" data-airfit="1"><span>🗺️</span>地図で見る</button><button class="lnk" type="button" data-airrev="1"><span>🔁</span>逆方向</button></div>' +
+    '<div class="airrt__sh"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> ' + (when.getMonth() + 1) + "/" + when.getDate() + " " + hm(when.getHours() * 60 + when.getMinutes()) + " 以降の便" + (sch.real ? "" : "（<u>目安</u>：便数から均等に並べた推定で、実際の時刻表ではありません）") + "</b>" + schHtml + "</div>" +
+    '<div class="lnks"><button class="lnk" type="button" data-airfit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>地図で見る</button><button class="lnk" type="button" data-airrev="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-repeat"></use></svg></span>逆方向</button></div>' +
     '<p class="src">運賃は距離からの概算（' + esc((RG.AIR_FARE || {}).note || "") + "）。便数・時刻は" + (sch.real ? "登録された時刻表" : "推定") + "。必ず各社の公式サイトでご確認ください。</p></div>";
   var m = RG.openCard("✈️ " + (a.nick || a.n) + " → " + (b.nick || b.n), html);
   m.querySelector("[data-airfit]").addEventListener("click", function () { RG.closeModal(); RG.airShowRoutes(a.code); });

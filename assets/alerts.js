@@ -184,10 +184,10 @@ function officeUrl(k) { return B + "warning/#lang=ja&area_type=offices&area_code
 RG.showAlert = function (p) {
   var a = p.alert, html;
   if (a.kind === "volcano") {
-    html = '<div class="alcw"><p class="alc__lv">🌋 噴火警報 レベル ' + a.v.lv + "（" + esc(a.v.name) + "）</p>" +
+    html = '<div class="alcw"><p class="alc__lv"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-volcano"></use></svg> 噴火警報 レベル ' + a.v.lv + "（" + esc(a.v.name) + "）</p>" +
       '<p class="alc__t">' + esc(a.v.n) + " ・ 発表 " + esc(fmt(a.v.at)) + "</p>" +
       '<p class="alc__d">火口のまわりや登山道が規制されていることがあります。必ず気象庁と地元自治体の情報を確かめてください。</p>' +
-      '<div class="lnks"><a class="lnk" href="' + B + 'volcano/" target="_blank" rel="noopener"><span>🏛️</span>気象庁の火山の情報</a></div>' +
+      '<div class="lnks"><a class="lnk" href="' + B + 'volcano/" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg></span>気象庁の火山の情報</a></div>' +
       '<p class="src">出典: 気象庁（噴火警報・予報）。地図の位置は火山の代表地点です。</p></div>';
   } else {
     html = '<div class="alcw"><ul class="alc__l">' + a.kinds.map(function (x) {
@@ -195,8 +195,8 @@ RG.showAlert = function (p) {
       '<p class="alc__t">' + esc(a.area) + " ・ 発表 " + esc(fmt(a.at)) + "</p>" +
       (a.head ? '<p class="alc__d">' + esc(a.head) + "</p>" : "") +
       '<p class="alc__d">避難の判断は、市区町村の «避難情報» と «警戒レベル» に従ってください。地図の «避難場所» のジャンルで近くの避難場所を出せます。</p>' +
-      '<div class="lnks"><a class="lnk" href="' + officeUrl(a.office) + '" target="_blank" rel="noopener"><span>🏛️</span>気象庁の警報・注意報</a>' +
-      '<a class="lnk" href="' + B + 'risk/" target="_blank" rel="noopener"><span>🗺️</span>キキクル（危険度分布）</a></div>' +
+      '<div class="lnks"><a class="lnk" href="' + officeUrl(a.office) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg></span>気象庁の警報・注意報</a>' +
+      '<a class="lnk" href="' + B + 'risk/" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>キキクル（危険度分布）</a></div>' +
       '<p class="src">出典: 気象庁（防災気象情報）。注意報は数が多いので地図には出していません。地図の位置は地域のだいたいの中心です。</p></div>';
   }
   RG.openCard(p.be + " " + p.n.replace(/^\S+\s/, ""), html);
@@ -218,7 +218,7 @@ RG.showAlerts = function () {
     '<div class="alc__ctl"><label>帯に出す警報 <select id="al-min" class="set__sel">' + RG.ALERT_LEVELS.map(function (L) {
       return '<option value="' + L.id + '"' + (L.id === min ? " selected" : "") + ">" + esc(L.label) + "</option>"; }).join("") + "</select></label>" +
       '<button class="set__b" type="button" id="al-ok">✓ 確認した（閉じる）</button></div>' +
-    '<div class="lnks"><a class="lnk" href="' + B + 'warning/" target="_blank" rel="noopener"><span>🏛️</span>気象庁 警報・注意報（全国）</a><a class="lnk" href="' + B + 'map.html#contents=earthquake_map" target="_blank" rel="noopener"><span>📈</span>地震情報</a></div>' +
+    '<div class="lnks"><a class="lnk" href="' + B + 'warning/" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg></span>気象庁 警報・注意報（全国）</a><a class="lnk" href="' + B + 'map.html#contents=earthquake_map" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg></span>地震情報</a></div>' +
     '<p class="src">出典: 気象庁。この画面は速報の目安です。命を守る行動は、自治体の避難情報と気象庁の発表に従ってください。確認した警報は同じものが再び帯に出ません（新しい種類の警報が出たときだけ戻ります）。設定はこの端末に保存されます。</p></div>');
   Array.prototype.forEach.call(m.querySelectorAll("[data-al]"), function (b) {
     b.addEventListener("click", function () { var p = RG.MAPPOI.filter(function (x) { return x.i === b.dataset.al; })[0]; if (!p) return; RG.closeModal(); RG.Map.gotoLatLng(p.la, p.lo, 900); RG.showAlert(p); });
@@ -229,9 +229,9 @@ RG.showAlerts = function () {
 /* 設定パネルの一片（lines_ui.js の openSettings から） */
 RG.alertSwitchHTML = function () {
   var min = RG.alertMinLevel();
-  return '<div class="set__sec"><h4>⚠️ 警報の帯</h4>' +
+  return '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> 警報の帯</h4>' +
     '<p class="set__d">地図の上に出る «警報» の帯を、どのレベルから出すか決めます（気象庁の 3 区分）。帯の × か一覧の «確認した» で消した警報は、同じものが再び出ません。' +
-    '同じ地域に新しい種類の警報が出たときだけ戻ります。大津波警報・津波警報は «特別警報»、津波注意報は «警報» としてあつかいます。地図の ⚠️ の印は設定にかかわらず警報以上を置きます。</p>' +
+    '同じ地域に新しい種類の警報が出たときだけ戻ります。大津波警報・津波警報は «特別警報»、津波注意報は «警報» としてあつかいます。地図の <svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> の印は設定にかかわらず警報以上を置きます。</p>' +
     '<div class="set__row"><span>帯に出す警報</span><select id="set-al-min" class="set__sel" aria-label="帯に出す警報">' + RG.ALERT_LEVELS.map(function (L) {
       return '<option value="' + L.id + '"' + (L.id === min ? " selected" : "") + ">" + esc(L.label) + "</option>"; }).join("") + "</select></div>" +
     '<div class="set__btns"><button id="set-al-reset" class="set__b2" type="button">確認ずみを消す（' + RG.alertSeenCount() + " 件）</button>" +

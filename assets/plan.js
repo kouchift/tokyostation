@@ -77,7 +77,7 @@ RG.mapLinks = function (from, to, mode) {
 RG.mapButtons = function (from, to, mode, label) {
   var L = RG.mapLinks(from, to, mode);
   var g = '<a class="mapb mapb--g" href="' + L.google + '" target="_blank" rel="noopener">' +
-          '<span>🗺️</span>Google マップで開く</a>';
+          '<span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>Google マップで開く</a>';
   var a = '<a class="mapb mapb--a" href="' + L.apple + '" target="_blank" rel="noopener">' +
           '<span>🍎</span>Apple マップで開く</a>';
   return '<div class="mapbs">' + (L.apple_first ? a + g : g + a) + (RG.arBtn && to ? RG.arBtn("", to[0], to[1]) : "") +   // v150: AR で方角
@@ -391,9 +391,9 @@ function stockShare(id) {
   RG.snsOpen("📤 「" + c.name + "」を送る", { title: planTitle(Q), text: planText(Q), url: gr || "", md: md.md, mdName: md.name }, { main: "line", primary: ["line", "x", "obsidian", "discord", "instagram", "tiktok"] });
 }
 function renderStock() {
-  if (!P.stock.length) return '<div class="pl"><p class="set__d">まだ案がありません。「📋 予定」で行程を組んで <b>💾 この案をストック</b> を押すと、ここに並びます。' +
+  if (!P.stock.length) return '<div class="pl"><p class="set__d">まだ案がありません。「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> 予定」で行程を組んで <b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> この案をストック</b> を押すと、ここに並びます。' +
     "案はいくつでもためられ（50 まで）、それぞれ開いて手直し・複製・共有（LINE／X／Obsidian／Discord…）ができます。</p></div>";
-  return '<div class="pl"><p class="set__d">案を押すと開きます。開いた案を手直しして「💾 上書き保存」。比較したい案は「複製」して枝分かれさせてください。</p>' +
+  return '<div class="pl"><p class="set__d">案を押すと開きます。開いた案を手直しして「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> 上書き保存」。比較したい案は「複製」して枝分かれさせてください。</p>' +
     '<div class="stk">' + P.stock.map(function (c) {
       var t = totals(c), d = new Date(c.upd || c.at), isCur = c.id === P.cur;
       return '<div class="stk__r' + (isCur ? " on" : "") + '" data-sid="' + esc(c.id) + '">' +
@@ -403,13 +403,13 @@ function renderStock() {
           (c.items.length ? '<span class="stk__items">' + c.items.slice(0, 5).map(function (it) { return (it.emoji || "・") + " " + esc(it.label); }).join(" → ") + (c.items.length > 5 ? " …" : "") + "</span>" : "") +
         "</button>" +
         '<div class="stk__acts">' +
-          '<button class="tj__cp" type="button" data-sshare="' + esc(c.id) + '">📤 共有</button>' +
-          '<button class="tj__cp" type="button" data-sdup="' + esc(c.id) + '">📑 複製</button>' +
-          '<button class="tj__cp" type="button" data-sren="' + esc(c.id) + '">✏️ 名前</button>' +
-          '<button class="tj__cp" type="button" data-sdel="' + esc(c.id) + '">🗑️</button>' +
+          '<button class="tj__cp" type="button" data-sshare="' + esc(c.id) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-share"></use></svg> 共有</button>' +
+          '<button class="tj__cp" type="button" data-sdup="' + esc(c.id) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 複製</button>' +
+          '<button class="tj__cp" type="button" data-sren="' + esc(c.id) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pencil"></use></svg> 名前</button>' +
+          '<button class="tj__cp" type="button" data-sdel="' + esc(c.id) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-trash"></use></svg></button>' +
         "</div></div>";
     }).join("") + "</div>" +
-    '<p class="src">案はこの端末のブラウザにだけ保存されます。ほかの端末と共有するときは「📤 共有」から LINE・Obsidian などへ。</p></div>';
+    '<p class="src">案はこの端末のブラウザにだけ保存されます。ほかの端末と共有するときは「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-share"></use></svg> 共有」から LINE・Obsidian などへ。</p></div>';
 }
 function bindStock(m) {
   $$("[data-sopen]", m).forEach(function (b) { b.addEventListener("click", function () { if (stockOpen(b.dataset.sopen)) RG.openPlan(); }); });
@@ -424,7 +424,7 @@ RG.planStock = { save: stockSave, open: stockOpen, list: function () { return P.
 RG.openPlan = function () {
   function tabs() {
     return '<div class="pltabs">' +
-      '<button class="pltab" type="button" data-ptab="plan" aria-pressed="' + (P.tab !== "log" && P.tab !== "stock") + '">📋 予定</button>' +
+      '<button class="pltab" type="button" data-ptab="plan" aria-pressed="' + (P.tab !== "log" && P.tab !== "stock") + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> 予定</button>' +
       '<button class="pltab" type="button" data-ptab="stock" aria-pressed="' + (P.tab === "stock") + '">📚 案のストック' + (P.stock.length ? " (" + P.stock.length + ")" : "") + "</button>" +
       '<button class="pltab" type="button" data-ptab="log" aria-pressed="' + (P.tab === "log") + '">📝 訪問メモ' +
         (P.logs.length ? " (" + P.logs.length + ")" : "") + "</button></div>";
@@ -435,8 +435,8 @@ RG.openPlan = function () {
     return '<div class="plcur">' +
       '<span class="plcur__n">' + (c ? "📚 " + esc(c.name) + (dirty ? ' <i class="plcur__d">変更あり</i>' : ' <i class="plcur__d plcur__d--ok">保存ずみ</i>') : "📝 まだストックしていない案" + (dirty ? "" : "（空）")) + "</span>" +
       '<span class="plcur__b">' +
-        '<button id="pl-stock" class="set__b2" type="button">💾 ' + (c ? "この案を上書き保存" : "この案をストック") + "</button>" +
-        (c ? '<button id="pl-stock-as" class="set__b2" type="button">📑 別の案として保存</button>' : "") +
+        '<button id="pl-stock" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> ' + (c ? "この案を上書き保存" : "この案をストック") + "</button>" +
+        (c ? '<button id="pl-stock-as" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 別の案として保存</button>' : "") +
         '<button id="pl-new" class="set__b2" type="button">➕ 新しい案（白紙）</button>' +
       "</span></div>";
   }
@@ -455,7 +455,7 @@ RG.openPlan = function () {
             '" data-fee="' + r.i + '" aria-label="1人あたりの料金">' : "") +
         '<span class="pl__v">' + yen(r.v) + "</span>" +
         '<button class="pl__x" type="button" data-del="' + r.i + '" aria-label="消す">×</button></div>';
-    }).join("") : '<p class="set__d">まだ空です。比較ビューの「🧳 リストに追加」や、スポットの「🧳 立ち寄る」から入れてください。</p>';
+    }).join("") : '<p class="set__d">まだ空です。比較ビューの「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-luggage"></use></svg> リストに追加」や、スポットの「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-luggage"></use></svg> 立ち寄る」から入れてください。</p>';
 
     return tabs() + '<div class="pl">' + curBar() +
       '<div class="pl__head">' +
@@ -469,22 +469,22 @@ RG.openPlan = function () {
       '<textarea id="pl-memo" class="pl__memo" maxlength="' + ((RG.LOG_LIMITS || {}).memo || 1000) + '" placeholder="メモ（集合時間、持ちもの、雨のときの代案…）。ルート PV の字幕にも入ります">' +
         esc(P.memo) + "</textarea></label>" +
       '<div class="pl__share">' +
-        '<button id="pl-share" class="pl__b1" type="button">📤 このプランを共有する</button>' +
-        '<button id="pl-pv" class="set__b2" type="button">🎬 ルートPVを作る（20〜40秒）</button>' +
+        '<button id="pl-share" class="pl__b1" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-share"></use></svg> このプランを共有する</button>' +
+        '<button id="pl-pv" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-video"></use></svg> ルートPVを作る（20〜40秒）</button>' +
         '<button id="pl-pvl" class="set__b2" type="button">🎞️ 作ったPV</button>' +
-        '<button id="pl-copy" class="set__b2" type="button">📋 テキストをコピー</button>' +
-        '<button id="pl-prev" class="set__b2" type="button">👀 送る内容を見る</button>' +
-        '<button id="pl-done" class="set__b2 pl__done" type="button">✅ 行ってきた（訪問メモにする）</button>' +
-        '<button id="pl-clear" class="set__b2" type="button">🗑️ 全部消す</button>' +
+        '<button id="pl-copy" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> テキストをコピー</button>' +
+        '<button id="pl-prev" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-eye"></use></svg> 送る内容を見る</button>' +
+        '<button id="pl-done" class="set__b2 pl__done" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> 行ってきた（訪問メモにする）</button>' +
+        '<button id="pl-clear" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-trash"></use></svg> 全部消す</button>' +
       "</div>" +
       '<div id="pl-preview" class="pl__prev" hidden></div>' +
       (gmapRoute() ? '<a class="mapb mapb--g pl__gm" href="' + gmapRoute() + '" target="_blank" rel="noopener">' +
-        "<span>🗺️</span>Google マップで全行程を開く（いちばん正確）</a>" : "") +
+        "<span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-map'></use></svg></span>Google マップで全行程を開く（いちばん正確）</a>" : "") +
       (function () {
         var r1 = P.items.filter(function (x) { return x.k === "route"; })[0];
         if (!r1) return "";
         var f = String(r1.from || "").replace(/駅$/, ""), t2 = String(r1.to || "").replace(/駅$/, "");
-        return '<div class="pl__tr"><span class="pl__trh">🚃 電車の乗り換え・発車時刻</span>' +
+        return '<div class="pl__tr"><span class="pl__trh"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-train"></use></svg> 電車の乗り換え・発車時刻</span>' +
           RG.transitLinks(f, t2).map(function (x) {
             return '<a class="pl__trl" href="' + x.u + '" target="_blank" rel="noopener">' + esc(x.n) + " ↗</a>";
           }).join("") + "</div>";
@@ -587,9 +587,9 @@ RG.planHousekeeping = function () {
       (P.items.length > 6 ? "<li>…ほか " + (P.items.length - 6) + " 件</li>" : "") + "</ul>" +
     '<div class="hk__sum">合計 ' + yen(t.sum) + "</div>" +
     '<div class="hk__acts">' +
-      '<button id="hk-keep" class="hk__b hk__b--main" type="button">📋 このまま使う</button>' +
-      '<button id="hk-log" class="hk__b" type="button">📝 訪問メモにして残す<br><small>行ってきたぶんの記録にします</small></button>' +
-      '<button id="hk-clear" class="hk__b hk__b--del" type="button">🗑️ 一括で消す</button>' +
+      '<button id="hk-keep" class="hk__b hk__b--main" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> このまま使う</button>' +
+      '<button id="hk-log" class="hk__b" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-memo"></use></svg> 訪問メモにして残す<br><small>行ってきたぶんの記録にします</small></button>' +
+      '<button id="hk-clear" class="hk__b hk__b--del" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-trash"></use></svg> 一括で消す</button>' +
     "</div>" +
     '<label class="hk__ask"><input id="hk-never" type="checkbox"> 次からは聞かない</label></div>';
   var m = RG.openModal("🧳 のこっている予定の整理", html);

@@ -202,9 +202,9 @@ function linksHtml(res) {
   var site = res.facts.filter(function (f) { return f.pid === "P856"; })[0];
   var tel = res.facts.filter(function (f) { return f.pid === "P1329"; })[0];
   var out = [];
-  if (site) out.push('<a class="enr__lnk" href="' + esc(site.v) + '" target="_blank" rel="noopener">🌐 公式サイト</a>');
+  if (site) out.push('<a class="enr__lnk" href="' + esc(site.v) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 公式サイト</a>');
   if (tel) out.push('<a class="enr__lnk" href="tel:' + esc(tel.v.replace(/[^\d+]/g, "")) + '">📞 ' + esc(tel.v) + "</a>");
-  if (res.url) out.push('<a class="enr__lnk" href="' + esc(res.url) + '" target="_blank" rel="noopener">📖 Wikipedia で読む</a>');
+  if (res.url) out.push('<a class="enr__lnk" href="' + esc(res.url) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> Wikipedia で読む</a>');
   return out.length ? '<div class="enr__lnks">' + out.join("") + "</div>" : "";
 }
 /* v139: 写真の大きさ。一覧の小さな四角（72〜100px）に 640px の写真を読んでいたのをやめ、枠に合う標準の幅に */
@@ -218,7 +218,7 @@ function galleryHtml(res, o) {
   var h = "";
   if (showHero) {
     h += '<figure class="enr__hero" data-i="0"><div class="enr__heroBox"><img src="' + esc(sz(hero.u, lite() ? 330 : 500)) + '" alt="' + esc(hero.t) + '" loading="lazy" decoding="async"></div>' +
-         '<figcaption>📷 ' + esc([hero.lic, hero.by].filter(Boolean).join(" / ") || "Wikimedia Commons") + "</figcaption></figure>";
+         '<figcaption><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> ' + esc([hero.lic, hero.by].filter(Boolean).join(" / ") || "Wikimedia Commons") + "</figcaption></figure>";
   }
   if (rest.length) {
     h += '<div class="enr__gal">' + rest.map(function (p, i) {
@@ -269,9 +269,9 @@ RG.enrich = function (host, o) {
   collect(o).then(function (res) {
     if (host.__enr !== my || !document.body.contains(host)) return;
     if (!res || (!res.photos.length && !res.facts.length && !res.extract)) { host.innerHTML = ""; return; }
-    var head = '<div class="enr__h"><span>📸 ひと目でわかる</span>' + (res.desc ? '<em>' + esc(res.desc) + "</em>" : "") + "</div>";
+    var head = '<div class="enr__h"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> ひと目でわかる</span>' + (res.desc ? '<em>' + esc(res.desc) + "</em>" : "") + "</div>";
     var gal = galleryHtml(res, o), gate = gal && lite();             // v139: 通信を節約しているときは «押したら写真»
-    host.innerHTML = '<div class="enr">' + head + (gate ? '<button type="button" class="imgtap" data-enrgal>📷 写真を表示（' + res.photos.length + ' 枚・通信を節約中のため押したときだけ）</button>' : gal) + factsHtml(res, o) + extractHtml(res, o) + linksHtml(res) +
+    host.innerHTML = '<div class="enr">' + head + (gate ? '<button type="button" class="imgtap" data-enrgal><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> 写真を表示（' + res.photos.length + ' 枚・通信を節約中のため押したときだけ）</button>' : gal) + factsHtml(res, o) + extractHtml(res, o) + linksHtml(res) +
       '<p class="enr__credit">' +
       "数値は編集された時点のもので、最新とは限りません。</p></div>";
     function bindPh() { host.querySelectorAll("[data-i]").forEach(function (b) { if (b.__lb) return; b.__lb = 1; b.addEventListener("click", function () { lightbox(res.photos, +b.dataset.i); }); }); }

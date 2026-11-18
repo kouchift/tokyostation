@@ -148,7 +148,7 @@ var Rail = (function () {
         '<button class="lr__c" type="button" data-gnone="1">選択をぜんぶ解除</button>' +
         '<button class="lr__c" type="button" data-gonly="1">えらんだものだけ</button>' +
         '<button class="lr__c lr__c--v" type="button" data-hv="1" aria-pressed="' +
-          (!!ST.hideVisited) + '">✅ 訪問済みを隠す</button>' +
+          (!!ST.hideVisited) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> 訪問済みを隠す</button>' +
         '<span class="lr__cnt" id="lr-gcnt"></span>' +
       "</div>" +
       '<div class="lr__selrow" id="lr-sel"></div>' +
@@ -166,17 +166,17 @@ var Rail = (function () {
           (g.optIn ? '<span class="lr__dot">▶</span>' : "") + "</button>"; }).join("") +
       "</div>" +
       '<div class="lr__note"><button class="lr__c" type="button" id="lr-legend">' +
-      "❓ アイコンの意味を見る</button> " +
-      '<button class="lr__c" type="button" id="lr-chain">🏪 お店をえらぶ</button> ' +
-      '<button class="lr__c" type="button" id="lr-corp">🏢 業種でえらぶ</button> ' +
-      '<button class="lr__c" type="button" id="lr-onsen">♨️ 温泉のこだわり</button> ' +
-      '<button class="lr__c" type="button" id="lr-mtrank">🗻 山の標高TOP100</button> ' +
-      '<button class="lr__c" type="button" id="lr-hanrank">🏯 藩の石高</button> ' +
+      "<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-help'></use></svg> アイコンの意味を見る</button> " +
+      '<button class="lr__c" type="button" id="lr-chain"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-store"></use></svg> お店をえらぶ</button> ' +
+      '<button class="lr__c" type="button" id="lr-corp"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg> 業種でえらぶ</button> ' +
+      '<button class="lr__c" type="button" id="lr-onsen"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-onsen"></use></svg> 温泉のこだわり</button> ' +
+      '<button class="lr__c" type="button" id="lr-mtrank"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg> 山の標高TOP100</button> ' +
+      '<button class="lr__c" type="button" id="lr-hanrank"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-castle"></use></svg> 藩の石高</button> ' +
       '<button class="lr__c" type="button" id="lr-yt">▶️ 動画で見る</button> ' +
-      '<button class="lr__c lr__c--y" type="button" id="lr-smoke">🚬 吸える場所</button> ' +
-      '<button class="lr__c" type="button" id="lr-hs">📊 偏差値を入れる</button> ' +
-      '<button class="lr__c lr__c--p" type="button" id="lr-pins">📌 自分のピン</button> ' +
-      '<button class="lr__c lr__c--p" type="button" id="lr-pin">📌 自分のピン</button> ' +
+      '<button class="lr__c lr__c--y" type="button" id="lr-smoke"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg> 吸える場所</button> ' +
+      '<button class="lr__c" type="button" id="lr-hs"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg> 偏差値を入れる</button> ' +
+      '<button class="lr__c lr__c--p" type="button" id="lr-pins"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 自分のピン</button> ' +
+      '<button class="lr__c lr__c--p" type="button" id="lr-pin"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 自分のピン</button> ' +
       "アイコンを押すと、そのジャンルだけを地図に残します（<b>いくつでも選べます</b>）。" +
       "地図の印と同じ絵です。うすいアイコンはデータが取れていないもの、名前の下の数字はいま読み込んである件数です。</div>";
     box.innerHTML =
@@ -411,13 +411,13 @@ var Rail = (function () {
             (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +   // v122: 地図と同じ印
             '<span class="legend__t"><b>' + esc(g.label) + "</b>" +
               "<i>" + esc(g.desc || "") + (g.varies ? "　※ 地図の印は種類で変わります：" + esc(g.varies) : "") + "</i>" +   // v164: 種類別の出し分けを凡例に書く
-              (g.enabled ? "" : '<u>⚠ ' + esc(g.reason || "データ未取得") + "</u>") + "</span>" +
+              (g.enabled ? "" : '<u><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> ' + esc(g.reason || "データ未取得") + "</u>") + "</span>" +
             '<span class="legend__n">' + (g.enabled ? n + "件" : "—") + "</span></button>"; }).join("") +
         "</div>" +
         '<div class="legend__foot">' +
           '<button id="lg-all" class="set__b2" type="button">すべて表示</button>' +
           '<button id="lg-none" class="set__b2" type="button">選択をぜんぶ解除</button></div>' +
-        '<p class="src">📍 現在地／🚉 駅／⭐ 注視駅／🏫 自分で追加した場所 は、この一覧とは別に地図に出ます。</p>';
+        '<p class="src"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 駅／⭐ 注視駅／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-school"></use></svg> 自分で追加した場所 は、この一覧とは別に地図に出ます。</p>';
       var mm = RG.openModal("❓ アイコンの意味", html);
       $$("[data-lg]", mm).forEach(function (b2) {
         b2.addEventListener("click", function () {
@@ -584,7 +584,7 @@ var Rail = (function () {
                      ? "クリックで一覧を開きます"
                      : g.optIn ? "▶ 数が多いので、ふだんは地図に出しません。このアイコンを押すと出ます。"
                      : "クリックでこのジャンルだけ表示（複数可）") + "</div>"
-                 : '<div class="lp__b" style="color:#A58000">⚠ データ未取得<br>' + esc(g.reason || "") + "</div>");
+                 : '<div class="lp__b" style="color:#A58000"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> データ未取得<br>' + esc(g.reason || "") + "</div>");
     pop.style.display = "block";
     var w = pop.offsetWidth, x = Math.min(innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
     if (RG.placePop) RG.placePop(pop, { x: r.left + r.width / 2, y: r.top, h: r.height });
@@ -683,8 +683,8 @@ function openSettings() {
       '<div class="set__add"><input id="set-q" type="search" placeholder="駅名で検索して追加" aria-label="注視駅にする駅名を検索" ' +
       'autocomplete="off"><div id="set-sug" class="sug sug--set"></div></div></div>' +
 
-    '<div class="set__sec"><h4>📍 現在地のマーク</h4>' +
-      '<p class="set__d">「📍現在地」ボタンで取得したときに、地図のどこにいるかを示すマークです。</p>' +
+    '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地のマーク</h4>' +
+      '<p class="set__d">「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg>現在地」ボタンで取得したときに、地図のどこにいるかを示すマークです。</p>' +
       '<div class="mestyles">' + Object.keys(RG.ME_STYLES || {}).map(function (k) {
         var st = RG.ME_STYLES[k];
         return '<label class="mest' + (ST.meStyle === k ? " on" : "") + '">' +
@@ -700,7 +700,7 @@ function openSettings() {
       '<label class="set__sw"><input id="set-mel" type="checkbox"' + (ST.meLabel !== false ? " checked" : "") +
       "> 「現在地」の文字を出す</label></div>" +
     (RG.basemapPanel ? RG.basemapPanel() : "") +
-    '<div class="set__sec"><h4>📍 ランドマーク</h4>' +
+    '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> ランドマーク</h4>' +
       '<p class="set__d">駅以外の目印を地図に出します。TOP100は' +
       "「Wikipediaの言語版数（世界で何か国語の記事があるか）」の多い順です。</p>" +
       '<label class="set__sw"><input id="set-lm" type="checkbox"' + (ST.lmOn ? " checked" : "") +
@@ -730,11 +730,11 @@ function openSettings() {
           return "<li>" + L.e + " " + esc(L.n) + ' <span class="set__n">' + L.sl + "言語版</span></li>"; }).join("") +
       "</ol></details></div>" +
 
-    '<div class="set__sec"><h4>🔒 シークレットモード</h4>' +
+    '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-lock"></use></svg> シークレットモード</h4>' +
       '<p class="set__d">合言葉を入れると、路線記号バッジの拡大表示と' +
       '<b>持ち込みアイコン</b>（自分で用意した画像を路線アイコンに使う機能）が有効になります。</p>' +
       (ST.secret
-        ? '<p class="set__ok">🔓 解除済みです。<button id="set-lock" class="set__b" type="button">ロックする</button></p>'
+        ? '<p class="set__ok"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-lock"></use></svg> 解除済みです。<button id="set-lock" class="set__b" type="button">ロックする</button></p>'
         : '<div class="set__add"><input id="set-pw" type="password" placeholder="合言葉" aria-label="合言葉" autocomplete="off">' +
           '<button id="set-unlock" class="set__b" type="button">解除</button></div>') +
       '<div class="set__note"><b>できること／できないこと</b><br>' +
@@ -743,7 +743,7 @@ function openSettings() {
       "× 鉄道会社のロゴ・シンボルマーク・キャラクター画像は<b>同梱していません</b>。" +
       "ダウンロードして配布する機能も付けていません<br>" +
       "詳しい理由は README の「11.1」を読んでください</div></div>" +
-    (RG.QOS ? '<div class="set__sec"><h4>📶 表示の軽さ</h4><p class="set__d">通信がゆっくりなとき（月末の速度制限など）や、力の弱いスマホでは、地図と駅を最優先にして、写真は押したときだけ読みます。</p>' +
+    (RG.QOS ? '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-signal"></use></svg> 表示の軽さ</h4><p class="set__d">通信がゆっくりなとき（月末の速度制限など）や、力の弱いスマホでは、地図と駅を最優先にして、写真は押したときだけ読みます。</p>' +
       '<select data-qos class="set__sel" aria-label="表示の軽さ"><option value="auto"' + (RG.QOS.mode === "auto" ? " selected" : "") + '>自動（おすすめ）</option><option value="full"' + (RG.QOS.mode === "full" ? " selected" : "") + '>しっかり表示（通信が速いとき）</option><option value="lite"' + (RG.QOS.mode === "lite" ? " selected" : "") + '>軽く（通信を節約）</option></select>' +
       '<p class="set__d" data-qos-now>' + esc(RG.QOS.label()) + "</p>" +
       (RG.idleLeft && RG.idleLeft() ? '<button type="button" class="set__b" data-rest>📥 まだ読んでいない地図のデータ（' + RG.idleLeft() + ' 件）も読み込む</button>' : "") + "</div>" : "") +   // v139

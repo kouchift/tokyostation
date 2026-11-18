@@ -185,7 +185,7 @@ function optHtml(sel) {
   var groups = {}; I.pl.forEach(function (p, i) { (groups[p[2]] = groups[p[2]] || []).push(i); });
   var h = '<option value="">— えらぶ（図を押しても選べます） —</option>';
   var fk = {}; I.fc.forEach(function (f) { fk[f[0]] = 1; });
-  if (sel === "to" && (fk.t || fk.tm || fk.ev)) h += '<optgroup label="いちばん近い…">' + (fk.t ? '<option value="n:t">🚻 いちばん近いトイレ</option>' : "") + (fk.tm ? '<option value="n:tm">♿ いちばん近い多機能トイレ</option>' : "") + (fk.ev ? '<option value="n:ev">🛗 いちばん近いエレベーター</option>' : "") + "</optgroup>";
+  if (sel === "to" && (fk.t || fk.tm || fk.ev)) h += '<optgroup label="いちばん近い…">' + (fk.t ? '<option value="n:t">🚻 いちばん近いトイレ</option>' : "") + (fk.tm ? '<option value="n:tm"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wheelchair"></use></svg> いちばん近い多機能トイレ</option>' : "") + (fk.ev ? '<option value="n:ev"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-elevator"></use></svg> いちばん近いエレベーター</option>' : "") + "</optgroup>";
   ["gate", "exit", "plat", "st", "link", "mall", "bldg", "door"].forEach(function (k) {
     if (!groups[k]) return;
     h += '<optgroup label="' + KN[k] + '">' + groups[k].map(function (i) { var p = I.pl[i]; return '<option value="' + i + '">' + esc(p[0]) + "（" + esc(p[1]) + (I.fl.length > 1 ? "・" + flName(p[3] * 2) : "") + "）</option>"; }).join("") + "</optgroup>";
@@ -211,9 +211,9 @@ function build() {
       '<div class="ind__tip" hidden><button type="button" data-set="from">🟢 ここから</button><button type="button" data-set="to">🔴 ここまで</button></div>' +
       '<div class="ind__leg"></div></div>' +
     '<div class="ind__sh">' +
-      '<div class="ind__row"><label>🟢 出発</label><select data-sel="from"></select><button type="button" class="ind__gps" data-gps="1" title="地上で、近くの行き先をさがす">📍</button></div>' +
+      '<div class="ind__row"><label>🟢 出発</label><select data-sel="from"></select><button type="button" class="ind__gps" data-gps="1" title="地上で、近くの行き先をさがす"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg></button></div>' +
       '<div class="ind__row"><label>🔴 目的地</label><select data-sel="to"></select></div>' +
-      '<div class="ind__row ind__row--o"><label class="ind__bf"><input type="checkbox" data-bf="1"> ♿ 段差なし（エレベーター・スロープで）</label><button type="button" class="ind__go" data-go="1">道順を出す</button></div>' +
+      '<div class="ind__row ind__row--o"><label class="ind__bf"><input type="checkbox" data-bf="1"> <svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wheelchair"></use></svg> 段差なし（エレベーター・スロープで）</label><button type="button" class="ind__go" data-go="1">道順を出す</button></div>' +
       '<div class="ind__row ind__row--x" hidden><button type="button" class="ind__ext" data-ext="1"></button></div>' +
       '<div class="ind__res" data-res></div><p class="ind__note"></p></div>';
   document.body.appendChild(ov); S.ov = ov;
@@ -334,7 +334,7 @@ function go() {
     '<ol class="ind__steps">' + st.map(function (s, i) {
       return '<li><button type="button" data-st="' + i + '">' + (s.k === "up"
         ? "<b>" + (s.to > s.from ? "⬆️" : "⬇️") + " " + esc(s.t) + " で " + esc(fn(s.to)) + " へ" + (s.to > s.from ? "上がる" : "下りる") + "</b>"
-        : "<b>🚶 " + (I.fl.length > 1 ? esc(flRow(s.fl)[1]) + " を" : "") + "約 " + Math.max(10, Math.round(s.m / 10) * 10) + " m</b>" + (s.near ? "<small>" + esc(s.near) + " のあたりまで</small>" : "")) + "</button></li>";
+        : "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-walk'></use></svg> " + (I.fl.length > 1 ? esc(flRow(s.fl)[1]) + " を" : "") + "約 " + Math.max(10, Math.round(s.m / 10) * 10) + " m</b>" + (s.near ? "<small>" + esc(s.near) + " のあたりまで</small>" : "")) + "</button></li>";
     }).join("") + '<li class="ind__end"><b>🔴 ' + esc(S.to.near ? S.to.n.replace(/^\S+\s/, "") : S.to.n) + "</b>" + (I.fl.length > 1 ? "（" + esc(flName(g.o(end))) + "）" : "") + "</li></ol>" +
     '<p class="ind__hint">段を押すと、その所を図で見られます。' + (I.k === "nw" ? "信号・工事・混雑は考えていません。" : "") + "案内板・駅員さんの案内も合わせて見てください（計算 " + Math.round(performance.now() - t0) + " ms）。</p>";
   S.steps = st; var f0 = flOf(g.o(r.path[0])); if (f0 !== S.fl) showFloor(f0); else { drawRoute(); } focusStep(0);
@@ -373,13 +373,13 @@ function gps() {
       if (n < 0) { res.innerHTML = '<p class="ind__err">近く（80 m 以内）にデータの歩道がありません。</p>'; return; }
       var g = graph(); S.from = { n: "現在地（±" + acc + " m）", x: g.x(n), y: g.y(n), o2: g.o(n) }; S.ov.querySelector('[data-sel="from"]').value = "";
       if (flOf(g.o(n)) !== S.fl) showFloor(flOf(g.o(n))); fitTo(g.x(n), g.y(n), 150); marks();
-      res.innerHTML = '<p class="ind__hint">📍 現在地（精度 ±' + acc + " m）のいちばん近い歩道を出発にしました。</p>"; return;
+      res.innerHTML = '<p class="ind__hint"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地（精度 ±' + acc + " m）のいちばん近い歩道を出発にしました。</p>"; return;
     }
     var best = null, bd = Infinity;
     I.pl.forEach(function (q, i) { if (q[3] < 0) return; var d = Math.hypot(q[4] - x, q[5] - y) / I.q; if (d < bd) { bd = d; best = i; } });
     if (best == null || bd > 150) { res.innerHTML = '<p class="ind__err">近く（150 m 以内）にデータの出入口がありません。</p>'; return; }
     var s = S.ov.querySelector('[data-sel="from"]'); s.value = String(best); s.dispatchEvent(new Event("change"));
-    res.innerHTML = '<p class="ind__hint">📍 いちばん近い出入口 «' + esc(I.pl[best][0]) + "»（約 " + Math.round(bd) + " m・精度 ±" + acc + " m）を出発にしました。違っていたら選び直してください。</p>";
+    res.innerHTML = '<p class="ind__hint"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> いちばん近い出入口 «' + esc(I.pl[best][0]) + "»（約 " + Math.round(bd) + " m・精度 ±" + acc + " m）を出発にしました。違っていたら選び直してください。</p>";
   }, function () { res.innerHTML = '<p class="ind__err">現在地が取れませんでした（許可されていないか、屋内です）。</p>'; }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 });
 }
 document.addEventListener("click", function (e) {

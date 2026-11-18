@@ -22,14 +22,14 @@ RG.showTicket = function () {
   var have = hasTicket();
   var html = '<div class="tkt">' +
     '<div class="tkt__card' + (have ? " on" : "") + '">' +
-      '<div class="tkt__e">🚬</div>' +
+      '<div class="tkt__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg></div>' +
       '<div class="tkt__t">ヤニカスチケット</div>' +
       '<div class="tkt__s">' + (have ? "発券ずみ" : "未発券") + "</div>" +
       '<div class="tkt__p">' + (have ? "ご利用中" : "¥0") + "</div>" +
     "</div>" +
     (have
       ? '<p class="tkt__b">地図に喫煙できる場所が出ています。' +
-        "レールの 🚬 を押すと、種類ごとにしぼりこめます。</p>"
+        "レールの <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-smoke'></use></svg> を押すと、種類ごとにしぼりこめます。</p>"
       : '<p class="tkt__b">このチケットを持っていると、地図に<b>喫煙できる場所</b>が出ます。' +
         "屋外の喫煙所だけでなく、<b>席で吸える店</b>・<b>喫煙室のある店</b>・" +
         "<b>加熱式のみの店</b>まで分けて表示します。</p>") +
@@ -40,7 +40,7 @@ RG.showTicket = function () {
         '<span class="tkt__n">' + (cnt[k] || 0) + "</span></div>";
     }).join("") + "</div>" +
     '<div class="tkt__note">' +
-      "<b>💰 お代について</b>" +
+      "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-yen'></use></svg> お代について</b>" +
       "<p>本来は有償プランですが、<b>決済のしくみが絶賛工事中</b>のため、" +
       "いまは <b>0円</b> で発券しています。工事が終わる予定は決まっていません。" +
       "終わらせるかどうかは、みなさんの声（VOC）だけで決めます。</p>" +
@@ -48,7 +48,7 @@ RG.showTicket = function () {
     '<div class="tkt__f">' +
       (have
         ? '<button class="set__b2" type="button" id="tk-off">チケットを返す</button>'
-        : '<button class="tkt__go" type="button" id="tk-on">🚬 0円で発券する</button>') +
+        : '<button class="tkt__go" type="button" id="tk-on"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg> 0円で発券する</button>') +
     "</div>" +
     '<p class="src">' +
     "<b>受動喫煙防止条例と改正健康増進法により、店ごとの扱いは変わりやすいものです。" +
@@ -60,7 +60,7 @@ RG.showTicket = function () {
   if (on) on.addEventListener("click", function () {
     // 発券の前に、確認を1枚はさむ
     RG.openModal("🚬 発券のまえに", '<div class="pw">' +
-      '<div class="pw__e">🔞🚬</div>' +
+      '<div class="pw__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-prohibit"></use></svg><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg></div>' +
       '<p class="pw__t">つぎの3つをお確かめください。</p>' +
       '<label class="vf__t"><input type="checkbox" data-sk1><span>' +
         "<b>20歳以上</b>です（20歳未満の喫煙は法律で禁じられています）</span></label>" +
@@ -151,17 +151,17 @@ RG.showSmoke = function (s) {
       '<p class="smk__k">' + esc(K.label || "") + "</p></div></div>" +
     (K.d ? '<p class="smk__d">' + esc(K.d) + "</p>" : "") +
     '<div class="smkg">' +
-      '<div class="smkr"><span>🚬 紙巻きたばこ</span><b class="' +
+      '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg> 紙巻きたばこ</span><b class="' +
         (paper.charAt(0) === "◯" ? "ok" : "ng") + '">' + esc(paper) + "</b></div>" +
       '<div class="smkr"><span>💨 加熱式たばこ</span><b class="' +
         (heat.charAt(0) === "◯" ? "ok" : "na") + '">' + esc(heat) + "</b></div>" +
       (s.cov ? '<div class="smkr"><span>☂️ 屋根</span><b>' +
         (s.cov === "yes" ? "あります" : "ありません") + "</b></div>" : "") +
-      (s.fee ? '<div class="smkr"><span>💰 料金</span><b>' +
+      (s.fee ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg> 料金</span><b>' +
         (s.fee === "yes" ? "かかります" : "かかりません") + "</b></div>" : "") +
-      (s.op ? '<div class="smkr"><span>🕐 時間</span><b>' + esc(s.op) + "</b></div>" : "") +
-      (s.by ? '<div class="smkr"><span>🏢 運営</span><b>' + esc(s.by) + "</b></div>" : "") +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (s.op ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> 時間</span><b>' + esc(s.op) + "</b></div>" : "") +
+      (s.by ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg> 運営</span><b>' + esc(s.by) + "</b></div>" : "") +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
     "</div>" +
     RG.outLinks({ site: s.web, map: s.la + "," + s.lo,

@@ -30,7 +30,7 @@ RG.mergeWHS = function () {
 RG.whsBanner = function (name) {
   var w = RG.whsFind(name); if (!w) return "";
   return '<button class="whb whb--' + (w.ty === "自然" ? "n" : "c") + '" type="button" data-whs="' + esc(w.id) + '">' +
-    '<span class="whb__e">🌏</span><span class="whb__t"><b>世界遺産</b>「' + esc(w.s) + "」" + (w.pts.length > 1 || (w.c && /資産|基|遺跡|集落/.test(w.c)) ? "の一部" : "") +
+    '<span class="whb__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg></span><span class="whb__t"><b>世界遺産</b>「' + esc(w.s) + "」" + (w.pts.length > 1 || (w.c && /資産|基|遺跡|集落/.test(w.c)) ? "の一部" : "") +
     "<small>" + w.y + "年登録・" + w.ty + "遺産</small></span><span class=\"whb__m\">くわしく ›</span></button>";
 };
 document.addEventListener("click", function (e) {
@@ -41,21 +41,21 @@ RG.showWHS = function (id) {
   var w = byId(id); if (!w) return;
   var list = RG.WHS.slice(), i = list.indexOf(w), nat = w.ty === "自然";
   var html = '<div class="whs whs--' + (nat ? "n" : "c") + '">' +
-    '<div class="whs__hero"><span class="whs__badge">🌏 世界' + (nat ? "自然" : "文化") + "遺産</span>" +
+    '<div class="whs__hero"><span class="whs__badge"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 世界' + (nat ? "自然" : "文化") + "遺産</span>" +
       '<h3 class="whs__n">' + esc(w.n) + "</h3>" +
-      '<p class="whs__meta"><span>📅 ' + w.y + "年に登録</span><span>📍 " + esc(w.pf) + "</span><span>🧩 " + esc(w.c) + "</span></p></div>" +
+      '<p class="whs__meta"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> ' + w.y + "年に登録</span><span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-pin'></use></svg> " + esc(w.pf) + "</span><span>🧩 " + esc(w.c) + "</span></p></div>" +
     '<div class="whs__why"><b>🤔 なぜ世界遺産になったの？</b><p>' + esc(w.why) + "</p></div>" +
     '<div class="eh__kid">' + w.kid.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
-    '<div class="eh__hee"><b>💡 へぇ〜！ ちょっとした雑学</b><ul>' + w.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" +
-    (w.look ? '<p class="eh__look"><b>👀 行ったら見てみよう</b>' + esc(w.look) + "</p>" : "") +
-    (w.q ? '<details class="eh__q"><summary>❓ クイズ: ' + esc(w.q[0]) + "<span>こたえを見る</span></summary><p>" + esc(w.q[1]) + "</p></details>" : "") +
-    '<button class="whs__all-pts" type="button" data-whall="1">🗺️ ' + w.pts.length + " か所の地点を、地図にぜんぶ出す</button>" +   // v128: 押したときだけ印を出す
-    '<h4 class="whs__h">📍 地図で見る（おもな地点）</h4><div class="whs__pts">' +
+    '<div class="eh__hee"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-bulb"></use></svg> へぇ〜！ ちょっとした雑学</b><ul>' + w.hee.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" +
+    (w.look ? '<p class="eh__look"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-eye"></use></svg> 行ったら見てみよう</b>' + esc(w.look) + "</p>" : "") +
+    (w.q ? '<details class="eh__q"><summary><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-help"></use></svg> クイズ: ' + esc(w.q[0]) + "<span>こたえを見る</span></summary><p>" + esc(w.q[1]) + "</p></details>" : "") +
+    '<button class="whs__all-pts" type="button" data-whall="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> ' + w.pts.length + " か所の地点を、地図にぜんぶ出す</button>" +   // v128: 押したときだけ印を出す
+    '<h4 class="whs__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 地図で見る（おもな地点）</h4><div class="whs__pts">' +
       w.pts.map(function (p, j) { return '<button class="whs__pt" type="button" data-pt="' + j + '">' + (j ? "" : "⭐ ") + esc(p[0]) + "</button>"; }).join("") + "</div>" +
-    '<div class="wls"><a class="wl wl--w" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(w.wp || w.n) + '" target="_blank" rel="noopener">📖 Wikipedia</a>' +
-      '<a class="wl" href="https://www.bunka.go.jp/seisaku/bunkazai/shokai/sekai_isan/" target="_blank" rel="noopener">🏛️ 文化庁「世界遺産」</a>' +
+    '<div class="wls"><a class="wl wl--w" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(w.wp || w.n) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> Wikipedia</a>' +
+      '<a class="wl" href="https://www.bunka.go.jp/seisaku/bunkazai/shokai/sekai_isan/" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg> 文化庁「世界遺産」</a>' +
       '<a class="wl" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(w.s + " 世界遺産") + '" target="_blank" rel="noopener">▶️ 動画をさがす</a></div>' +
-    '<h4 class="whs__h">🗾 日本の世界遺産 ' + list.length + " 件（登録された順）</h4>" +
+    '<h4 class="whs__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 日本の世界遺産 ' + list.length + " 件（登録された順）</h4>" +
     '<div class="whs__all">' + list.map(function (x) {
       return '<button class="whs__c whs__c--' + (x.ty === "自然" ? "n" : "c") + (x === w ? " on" : "") + '" type="button" data-to="' + esc(x.id) + '"><small>' + x.y + "</small>" + esc(x.s) + "</button>"; }).join("") + "</div>" +
     '<div class="whs__nav">' + (i > 0 ? '<button class="whs__b" type="button" data-to="' + esc(list[i - 1].id) + '">‹ ' + esc(list[i - 1].s) + "</button>" : "<span></span>") +

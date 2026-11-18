@@ -52,7 +52,7 @@ RG.pinsOf = function (p) { return marks()[keyOf(p)] || []; };
 RG.pinRow = function (p) {
   var D = defs(), mine = RG.pinsOf(p);
   return '<div class="pins" data-pinkey="' + esc(keyOf(p)) + '">' +
-    '<div class="pins__h">📌 自分のピン<em>押すと付いたり外れたりします</em></div>' +
+    '<div class="pins__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 自分のピン<em>押すと付いたり外れたりします</em></div>' +
     '<div class="pins__b">' + D.map(function (d, i) {
       var on = mine.indexOf(i) >= 0;
       return '<button class="pin' + (on ? " on" : "") + '" type="button" data-pin="' + i + '">' +
@@ -95,7 +95,7 @@ RG.openPinFilter = function () {
         '<span class="legend__t"><b>' + esc(d.n) + "</b><i>ピン" + (i + 1) + "</i></span>" +
         '<span class="legend__n">' + cnt[i] + "件</span></button>";
     }).join("") + "</div>" +
-    '<div class="legend__foot"><button id="pf-edit" class="set__b2" type="button">✏️ 名前と絵文字を変える</button>' +
+    '<div class="legend__foot"><button id="pf-edit" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pencil"></use></svg> 名前と絵文字を変える</button>' +
     '<button id="pf-clear" class="set__b2" type="button">ピンをぜんぶ外す</button></div>';
   var mm = RG.openModal("📌 自分のピン", html);
   function pick(v) {
@@ -138,7 +138,7 @@ RG.openPinEdit = function () {
     }).join("") +
     '<div class="legend__foot"><button id="pe-save" class="set__b2" type="button">保存する</button>' +
     '<button id="pe-reset" class="set__b2" type="button">はじめに戻す</button>' +
-    '<button id="pe-import" class="set__b2" type="button">🖼️ 自分の絵を使う</button></div>';
+    '<button id="pe-import" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-image"></use></svg> 自分の絵を使う</button></div>';
   var m = RG.openModal("✏️ ピンの名前と絵文字", html);
   var cur = D.slice();
   $$("[data-pe-e]", m).forEach(function (b) {
@@ -188,7 +188,7 @@ RG.openPinImport = function () {
         '<span class="pi__sm"><img src="' + r.result + '" alt=""></span></div>';
       var n = $("#pi-note", m);
       n.hidden = false;
-      n.innerHTML = '<div class="tkt__note"><b>🚧 ここから先は工事中です</b>' +
+      n.innerHTML = '<div class="tkt__note"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-barrier"></use></svg> ここから先は工事中です</b>' +
         "<p>取り込んだ絵を<b>ピンとして保存し、地図に出す</b>ところからは " +
         "<b>有償プラン</b> の予定です。" +
         "…と言いたいところですが、その有償プランは<b>絶賛工事中</b>で、" +

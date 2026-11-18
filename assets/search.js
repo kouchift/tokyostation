@@ -138,7 +138,7 @@ RG.initSearchUI = function () {
     sug.innerHTML = "";
     if (!local.length && !remote.length) {
       sug.appendChild(el("div", { class: "sg__e", html:
-        "見つかりませんでした。<br>住所や建物名なら「🌏 地図で探す」を押してみてください。" }));
+        "見つかりませんでした。<br>住所や建物名なら「<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-globe'></use></svg> 地図で探す」を押してみてください。" }));
     }
     local.forEach(function (r) { sug.appendChild(row(r)); });
     if (remote.length) {

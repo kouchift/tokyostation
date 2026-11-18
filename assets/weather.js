@@ -230,7 +230,7 @@ RG.weatherModal = function () {
   }
   var html = '<div class="wxm">' +
     '<div class="wxm__hd"><span class="wxm__i">' + ic[0] + '</span><div><b class="wxm__t">' + Math.round(c.temperature_2m) + "°C</b> <span class=\"wxm__w\">" + esc(ic[1]) + "</span>" +
-      '<div class="wxm__p">📍 ' + esc(cur.place || "") + " ・ " + esc(hhmm(c.time)) + " 時点 ・ " + PH[ph] + (c.is_day ? "" : "・夜") + "</div></div></div>" +
+      '<div class="wxm__p"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> ' + esc(cur.place || "") + " ・ " + esc(hhmm(c.time)) + " 時点 ・ " + PH[ph] + (c.is_day ? "" : "・夜") + "</div></div></div>" +
     '<div class="wxm__g">' +
       '<div><span>体感</span><b>' + Math.round(c.apparent_temperature) + "°C</b></div>" +
       '<div><span>湿度</span><b>' + c.relative_humidity_2m + "%</b></div>" +
@@ -246,7 +246,7 @@ RG.weatherModal = function () {
     RG.weatherSwitchHTML(true) +
     '<p class="src">数値予報を合成した推定値で、観測値ではありません。</p></div>';
   html = '<div class="wxd" data-wxd hidden><button class="wxd__img" type="button" aria-label="天気のダッシュボードを大きく見る"></button><p class="wxd__hint">押すと大きく（スマホは横向きの全画面）</p></div>' +
-    '<details class="wxd__more"><summary>🔢 数字でくわしく・設定</summary>' + html + "</details>";
+    '<details class="wxd__more"><summary><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-list"></use></svg> 数字でくわしく・設定</summary>' + html + "</details>";
   var m = RG.openModal("🌤️ いまの天気", html);
   RG.weatherSwitchBind(m);
   /* v156: 池袋ナイトライフの «天気ダッシュボード» と同じ絵（assets/wxdash.js・押したときだけ読む） */
@@ -281,7 +281,7 @@ RG.weatherSwitchHTML = function (inModal) {
     '<label class="set__sw"><input id="wx-on" type="checkbox"' + (on1 ? " checked" : "") + "> <b>地図の右上に、いま見ている場所の天気を出す</b>（Open-Meteo。10 分ごと・場所が変わったとき）</label>" +
     '<label class="set__sw"><input id="wx-sky" type="checkbox"' + (on2 ? " checked" : "") + "> 🌇 昼夜の空の色を地図に重ねる（夕方は暖色、夜は青み。太陽の高さから計算）</label>" +
     '<label class="set__sw"><input id="wx-fx" type="checkbox"' + (on3 ? " checked" : "") + "> 🌧️ 雨・雪・きり・雷の演出（うっすら。端末の «動きを減らす» 設定では動きません）</label>" +
-    '<p class="deep__d">' + (inModal ? "" : '<button class="set__b" type="button" id="wx-now">🌤️ いまの天気をくわしく</button> ') + '<button class="set__b" type="button" id="wx-re">🔄 取り直す</button></p></div>';
+    '<p class="deep__d">' + (inModal ? "" : '<button class="set__b" type="button" id="wx-now">🌤️ いまの天気をくわしく</button> ') + '<button class="set__b" type="button" id="wx-re"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-refresh"></use></svg> 取り直す</button></p></div>';
 };
 RG.weatherSwitchBind = function (root) {
   function sw(id, key, fn) { var el = $(id, root); if (!el) return; el.addEventListener("change", function () { if (RG.settings) RG.settings[key] = this.checked; if (RG.saveSettings) RG.saveSettings(); fn(this.checked); }); }

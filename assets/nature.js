@@ -47,11 +47,11 @@ RG.sentoBlock = function (p) {
       (r.v ? '<span class="nat__tag">✔ 浴場組合の名簿に掲載</span>' : '<span class="nat__tag">未確認（地図データのみ）</span>') +
       (r.sauna ? '<span class="nat__tag nat__tag--sauna">🧖 サウナ</span>' : "") + "</div>" +
     (facts.length ? '<div class="nat__facts">' + facts.map(function (f) { return '<div class="nat__f"><span>' + esc(f[0]) + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("") + "</div>" : "") +
-    (r.ad ? '<p class="nat__d">🏠 ' + esc(r.ad) + "</p>" : "") +
+    (r.ad ? '<p class="nat__d"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-home"></use></svg> ' + esc(r.ad) + "</p>" : "") +
     '<div class="nat__lnks">' +
       (r.src ? '<a class="lnk lnk--k" href="' + esc(r.src) + '" target="_blank" rel="noopener"><span>' + (r.v ? "🛁" : "🗺️") + "</span>" + (r.v ? "浴場組合のページ" : "OpenStreetMap") + "</a>" : "") +
-      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span>🌐</span>公式サイト</a>' : "") +
-      '<a class="lnk" href="https://www.google.com/maps/search/' + q + '" target="_blank" rel="noopener"><span>🗺️</span>地図アプリで見る</a>' +
+      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg></span>公式サイト</a>' : "") +
+      '<a class="lnk" href="https://www.google.com/maps/search/' + q + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>地図アプリで見る</a>' +
     "</div>" +
     '<p class="mini">' + (r.sub === 1 ? "銭湯の入浴料は都道府県ごとに決まっています（大人の料金は各県の組合・県のページで確認）。" : "料金・営業時間は施設ごとに違います。公式・現地でご確認ください。") + "写真は組合・お店のページでご覧ください。" + (r.cc === "gsi" ? "位置は住所から求めたおおよその地点です。" : "") + "</p></div>";
 };
@@ -91,10 +91,10 @@ RG.viewBlock = function (p) {
     (r.k ? '<span class="nat__tag nat__tag--k">' + (KEMO[r.k] || "") + " " + esc(r.k) + "</span>" : "") + "</div>" +
     (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") +
     '<div class="nat__lnks">' +
-      (web ? '<a class="lnk" href="' + esc(web) + '" target="_blank" rel="noopener"><span>🏛️</span>' + esc(r.mu || "市区町村") + " の公式サイト（観光案内）</a>" : "") +
-      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span>🌐</span>スポットの公式サイト</a>' : "") +
-      '<a class="lnk" href="https://www.google.com/search?q=' + encodeURIComponent((r.mu || "") + " " + r.n + " 観光") + '&tbm=isch" target="_blank" rel="noopener"><span>🖼️</span>もっと写真をさがす</a>' +
-      '<button class="lnk" type="button" data-natnear="view_jp"><span>🔭</span>近くの絶景（同じ県）</button>' +
+      (web ? '<a class="lnk" href="' + esc(web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg></span>' + esc(r.mu || "市区町村") + " の公式サイト（観光案内）</a>" : "") +
+      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg></span>スポットの公式サイト</a>' : "") +
+      '<a class="lnk" href="https://www.google.com/search?q=' + encodeURIComponent((r.mu || "") + " " + r.n + " 観光") + '&tbm=isch" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-image"></use></svg></span>もっと写真をさがす</a>' +
+      '<button class="lnk" type="button" data-natnear="view_jp"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-telescope"></use></svg></span>近くの絶景（同じ県）</button>' +
     "</div>" +
     '<p class="mini">東京では得られない景色こそ、田舎へ行く理由。行き方・営業時間・季節（紅葉・雪・花）は市区町村の観光案内で必ず確認を。</p></div>';
 };
@@ -116,11 +116,11 @@ RG.onsenBlock = function (p) {
     (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") +
     (r.ev && Object.keys(r.ev).length ? '<details class="nat__ev"><summary>判定の根拠（Wikipedia の記述）</summary>' + Object.keys(r.ev).map(function (k) { return "<p><b>" + esc({ free: "無料", mixed: "混浴", hito: "秘湯", day: "日帰り", sauna: "サウナ", noyu: "野湯" }[k] || k) + "</b>: …" + esc(r.ev[k]) + "…</p>"; }).join("") + "</details>" : "") +
     '<div class="nat__lnks">' +
-      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span>🌐</span>公式サイト</a>' : "") +
-      (web ? '<a class="lnk" href="' + esc(web) + '" target="_blank" rel="noopener"><span>🏛️</span>' + esc(r.mu || "市区町村") + " の公式サイト</a>" : "") +
-      '<a class="lnk" href="https://www.google.com/maps/search/' + q + '" target="_blank" rel="noopener"><span>🗺️</span>地図アプリでクチコミを見る</a>' +
+      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg></span>公式サイト</a>' : "") +
+      (web ? '<a class="lnk" href="' + esc(web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg></span>' + esc(r.mu || "市区町村") + " の公式サイト</a>" : "") +
+      '<a class="lnk" href="https://www.google.com/maps/search/' + q + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>地図アプリでクチコミを見る</a>' +
       '<a class="lnk" href="https://www.jalan.net/kankou/?keyword=' + q + '" target="_blank" rel="noopener"><span>🛏️</span>じゃらんで宿・日帰りを探す</a>' +
-      '<button class="lnk" type="button" data-natnear="onsen_jp"><span>♨️</span>近くの温泉</button>' +
+      '<button class="lnk" type="button" data-natnear="onsen_jp"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-onsen"></use></svg></span>近くの温泉</button>' +
     "</div>" +
     '<p class="mini">クチコミ・最新の料金・営業状況は本サイトでは持たず、上のリンク先でご確認ください（規約上、口コミの転載はしません）。' + (r.ap ? "位置は市区町村の代表点（おおよそ）。" : "") + "</p></div>";
 };
@@ -409,7 +409,7 @@ RG.terraLOD = function () {
 };
 
 /* ---- POP ---- */
-function wpLink(wp) { return wp ? '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(wp) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' : ""; }
+function wpLink(wp) { return wp ? '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(wp) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' : ""; }
 function heroImg(img, alt) { return img ? '<img class="spotcard__i" src="' + esc(RG.cimg(img, 640)) + '" alt="' + esc(alt || "") + '" loading="lazy">' : ""; }
 function fitPts(pts) {
   var b = bboxOf(pts); if (RG.Map && RG.Map.fitBox) RG.Map.fitBox(b[0], b[1], b[2], b[3], 0.15);
@@ -417,12 +417,12 @@ function fitPts(pts) {
 RG.showRange = function (r) {
   var peaks = (RG.MOUNTAINS || []).filter(function (m) { return m.rg === r.n; }).sort(function (a, b) { return b.e - a.e; });
   var html = '<div class="spotcard terra-card">' + heroImg(r.img, r.n) +
-    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#8D6E63">⛰️</span><div><h3>' + esc(r.n) + '</h3><p class="spotcard__k">' + esc(r.k) + (r.hi ? " ・ 最高峰 " + esc(r.hi) + "（" + r.he.toLocaleString("ja-JP") + "m）" : "") + "</p></div></div>" +
+    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#8D6E63"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg></span><div><h3>' + esc(r.n) + '</h3><p class="spotcard__k">' + esc(r.k) + (r.hi ? " ・ 最高峰 " + esc(r.hi) + "（" + r.he.toLocaleString("ja-JP") + "m）" : "") + "</p></div></div>" +
     (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") +
     '<div class="exgrid">' + (RG.exrow ? RG.exrow("🗻 最高峰", r.hi || "—", r.he ? r.he.toLocaleString("ja-JP") + " m" : "") + RG.exrow("⛰️ 構成する山", r.m + " 座", "Wikipedia に記事のある山の数") : "") + "</div>" +
     (peaks.length ? '<div class="terra__peaks">' + peaks.slice(0, 12).map(function (m) { return '<button class="chip" type="button" data-mt="' + esc(m.n) + '">' + (m.h === 1 ? "🗻" : "⛰️") + " " + esc(m.n) + " <i>" + m.e.toLocaleString("ja-JP") + "m</i></button>"; }).join("") + "</div>" : "") +
-    '<div class="lnks">' + wpLink(r.wp) + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button>' +
-    '<button class="lnk" type="button" data-mts="1"><span>⛰️</span>山を地図に出す</button></div>' +
+    '<div class="lnks">' + wpLink(r.wp) + '<button class="lnk" type="button" data-fit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>全体を地図に</button>' +
+    '<button class="lnk" type="button" data-mts="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg></span>山を地図に出す</button></div>' +
     '<p class="src">山脈の線は、構成する山の位置から機械的に引いた中心線です（正確な稜線ではありません）。</p></div>';
   var m = RG.openCard("⛰️ " + r.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fitPts(r.pts); });
@@ -431,10 +431,10 @@ RG.showRange = function (r) {
 };
 RG.showRiver = function (r) {
   var html = '<div class="spotcard terra-card">' + heroImg(r.img, r.n) +
-    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#1565C0">🏞️</span><div><h3>' + esc(r.n) + '</h3><p class="spotcard__k">' + (r.grade === 1 ? "一級水系" + (r.sys && r.sys !== r.n ? "（" + esc(r.sys) + "水系）" : "") : "二級河川") + "</p></div></div>" +
+    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#1565C0"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-image"></use></svg></span><div><h3>' + esc(r.n) + '</h3><p class="spotcard__k">' + (r.grade === 1 ? "一級水系" + (r.sys && r.sys !== r.n ? "（" + esc(r.sys) + "水系）" : "") : "二級河川") + "</p></div></div>" +
     (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") +
     '<div class="exgrid">' + (RG.exrow ? RG.exrow("📏 幹川流路延長", r.len ? r.len.toLocaleString("ja-JP") + " km" : "—", "") + RG.exrow("🗺️ 流域面積", r.area ? r.area.toLocaleString("ja-JP") + " km²" : "—", "") + RG.exrow("🏠 流れる都道府県", (r.pf || []).length + " 都道府県", (r.pf || []).join("・")) : "") + "</div>" +
-    '<div class="lnks">' + wpLink(r.wp) + (r.src ? '<button class="lnk" type="button" data-src="1"><span>⛰️</span>源流へ</button>' : "") + '<button class="lnk" type="button" data-mouth="1"><span>🌊</span>河口へ</button>' + (r.pts ? '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button>' : "") + "</div>" +
+    '<div class="lnks">' + wpLink(r.wp) + (r.src ? '<button class="lnk" type="button" data-src="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg></span>源流へ</button>' : "") + '<button class="lnk" type="button" data-mouth="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wave"></use></svg></span>河口へ</button>' + (r.pts ? '<button class="lnk" type="button" data-fit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>全体を地図に</button>' : "") + "</div>" +
     '<p class="src">' + (r.ps === "wd" ? "川の線は支流の合流点をつないだ近似で、蛇行は再現していません。" : "") + "</p></div>";
   var m = RG.openCard("🏞️ " + r.n, html);
   var b;
@@ -447,14 +447,14 @@ RG.showCurrent = function (c) {
     '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + (c.warm ? "#E53935" : "#1E88E5") + '">' + (c.warm ? "🌡️" : "🧊") + '</span><div><h3>' + esc(c.n) + '</h3><p class="spotcard__k">' + (c.warm ? "暖流" : "寒流") + (c.spd ? " ・ 速さ " + esc(c.spd) : "") + "</p></div></div>" +
     '<div class="cur__dir"><span class="cur__ani cur__ani--' + (c.warm ? "w" : "c") + '"></span><span>矢印の向きに流れます。地図の破線も同じ向きに動いています</span></div>' +
     (c.d ? '<p class="nat__d">' + esc(c.d) + "</p>" : "") +
-    '<div class="lnks">' + wpLink(c.wp) + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button></div>' +
+    '<div class="lnks">' + wpLink(c.wp) + '<button class="lnk" type="button" data-fit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>全体を地図に</button></div>' +
     '<p class="src">流路は概略です（季節・年で大きく変わります）。</p></div>';
   var m = RG.openCard((c.warm ? "🌡️ " : "🧊 ") + c.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fitPts(c.pts); });
 };
 RG.showSea = function (s) {
   var html = '<div class="spotcard terra-card">' + heroImg(s.img, s.n) +
-    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#0277BD">🌊</span><div><h3>' + esc(s.n) + '</h3><p class="spotcard__k">' + esc(s.k) + "</p></div></div>" +
+    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#0277BD"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wave"></use></svg></span><div><h3>' + esc(s.n) + '</h3><p class="spotcard__k">' + esc(s.k) + "</p></div></div>" +
     (s.d ? '<p class="nat__d">' + esc(s.d) + "</p>" : "") +
     '<div class="lnks">' + wpLink(s.wp) + "</div></div>";
   RG.openCard("🌊 " + s.n, html);
@@ -465,15 +465,15 @@ RG.mountainBlock = function (p) {
   var r = p.mt; if (!r) return "";
   return '<div class="nat mtb"><div class="mtb__e"><b>' + r.e.toLocaleString("ja-JP") + '</b><i>m</i>' +
     '<button class="mtb__rk" type="button" data-mtrank="all">全国 ' + r.rk + ' 位 ▸ ランキング</button></div>' +
-    '<div class="nat__tags">' + (r.h === 1 ? '<span class="nat__tag nat__tag--k">🗻 日本百名山</span>' : r.h === 2 ? '<span class="nat__tag">日本二百名山</span>' : r.h === 3 ? '<span class="nat__tag">日本三百名山</span>' : "") +
+    '<div class="nat__tags">' + (r.h === 1 ? '<span class="nat__tag nat__tag--k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg> 日本百名山</span>' : r.h === 2 ? '<span class="nat__tag">日本二百名山</span>' : r.h === 3 ? '<span class="nat__tag">日本三百名山</span>' : "") +
     (r.rg ? '<button class="nat__tag nat__tag--b" type="button" data-range="' + esc(r.rg) + '">⛰️ ' + esc(r.rg) + "</button>" : "") +
     (r.pf ? '<span class="nat__tag">' + esc(r.pf) + "</span>" : "") + "</div>" +
     (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") + "</div>";
 };
 RG.riverBlock = function (p) {
   var r = p.river; if (!r) return "";
-  return '<div class="nat"><div class="nat__tags">' + (r.len ? '<span class="nat__tag nat__tag--k">📏 ' + r.len + " km</span>" : "") + (r.area ? '<span class="nat__tag">流域 ' + r.area.toLocaleString("ja-JP") + " km²</span>" : "") + "</div>" +
-    (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") + '<div class="nat__lnks"><button class="lnk" type="button" data-river="1"><span>🏞️</span>川の全体・源流・河口</button></div></div>';
+  return '<div class="nat"><div class="nat__tags">' + (r.len ? '<span class="nat__tag nat__tag--k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-ruler"></use></svg> ' + r.len + " km</span>" : "") + (r.area ? '<span class="nat__tag">流域 ' + r.area.toLocaleString("ja-JP") + " km²</span>" : "") + "</div>" +
+    (r.d ? '<p class="nat__d">' + esc(r.d) + "</p>" : "") + '<div class="nat__lnks"><button class="lnk" type="button" data-river="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-image"></use></svg></span>川の全体・源流・河口</button></div></div>';
 };
 RG.terraBind = function (root, p) {
   var b;

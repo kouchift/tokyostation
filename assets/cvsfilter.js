@@ -40,7 +40,7 @@ RG.cvsFilterHtml = function (cls) {
       return '<button type="button" class="cvsf__b' + (on ? " on" : "") + '" data-cvs="' + b.k + '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + esc(b.label) + (on ? "（表示中）" : "（非表示）") + '" title="' + esc(b.label) + '" style="--bc:' + b.c + '"><i>' + esc(b.mark) + "</i><span>" + esc(b.label.replace("ファミリーマート", "ファミマ").replace("セブン-イレブン", "セブン")) + "</span></button>";
     }).join("") +
     '<button type="button" class="cvsf__all' + (all ? " on" : "") + '" data-cvs-all="1" aria-pressed="' + (all ? "true" : "false") + '" title="3 社と、その他のコンビニもすべて表示">' + (all ? "すべて表示中" : "すべて") + "</button>" +
-    '<button type="button" class="cvsf__new' + (st.newOnly ? " on" : "") + '" data-cvs-new="1" aria-pressed="' + (st.newOnly ? "true" : "false") + '" title="開店から 90 日以内の店だけ（セブン・ファミマ・ローソン）">🆕 新店だけ</button></div>';
+    '<button type="button" class="cvsf__new' + (st.newOnly ? " on" : "") + '" data-cvs-new="1" aria-pressed="' + (st.newOnly ? "true" : "false") + '" title="開店から 90 日以内の店だけ（セブン・ファミマ・ローソン）"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-sparkle"></use></svg> 新店だけ</button></div>';
 };
 RG.cvsFilterBind = function (root) {
   Array.prototype.forEach.call(root.querySelectorAll("[data-cvs]"), function (b) {
@@ -64,8 +64,8 @@ function renderBar() {
   if (!on) return;
   var st = state(), n = { seven_eleven: 0, familymart: 0, lawson: 0, other: 0, shown: 0, nw: 0 };
   (RG.MAPPOI || []).forEach(function (p) { if (p.g !== "cvs") return; var k = RG.brandKey(p); n[k] = (n[k] || 0) + 1; if (p.isNew) n.nw++; if (RG.poiFilterPass(p)) n.shown++; });
-  bar.innerHTML = '<span class="cvsbar__l">🏪 コンビニ <b>' + n.shown.toLocaleString("ja-JP") + "</b>" + (allOn(st) ? "" : " <small>／その他 " + n.other.toLocaleString("ja-JP") + " は非表示</small>") +
-    (n.nw ? ' <small>／🆕 新店 ' + n.nw.toLocaleString("ja-JP") + "</small>" : "") + "</span>" + RG.cvsFilterHtml("cvsf--map");
+  bar.innerHTML = '<span class="cvsbar__l"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-store"></use></svg> コンビニ <b>' + n.shown.toLocaleString("ja-JP") + "</b>" + (allOn(st) ? "" : " <small>／その他 " + n.other.toLocaleString("ja-JP") + " は非表示</small>") +
+    (n.nw ? ' <small>／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-sparkle"></use></svg> 新店 ' + n.nw.toLocaleString("ja-JP") + "</small>" : "") + "</span>" + RG.cvsFilterHtml("cvsf--map");
   RG.cvsFilterBind(bar);
 }
 RG.cvsFilterInit = function () {

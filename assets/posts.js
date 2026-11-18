@@ -361,11 +361,11 @@ RG.postsShrink = shrink;
 RG.postsHtml = function (p) {
   if (!RG.postsEnabled()) return "";
   return '<section class="pst" data-pst="1"><h3 class="pst__h">' + esc(p.pt || "📷 みんなの写真と声") + ' <span class="pst__n" data-pst-n></span>' +
-      '<button type="button" class="pst__feed" data-feed="' + esc(prefOf(p.la, p.lo)) + '">🕒 みんなの新着</button></h3>' +
+      '<button type="button" class="pst__feed" data-feed="' + esc(prefOf(p.la, p.lo)) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> みんなの新着</button></h3>' +
     '<div class="pst__grid" data-pst-grid><p class="pst__ld">読み込んでいます…</p></div>' +
     '<div class="pst__up">' +
-      '<label class="pst__btn"><input type="file" accept="image/*" multiple hidden data-pst-file>📷 写真を投稿する（まとめて選べます）</label>' +
-      '<label class="pst__btn pst__btn--cam"><input type="file" accept="image/*" capture="environment" hidden data-pst-cam>📸 その場で撮る（現在地で確認）</label>' +
+      '<label class="pst__btn"><input type="file" accept="image/*" multiple hidden data-pst-file><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> 写真を投稿する（まとめて選べます）</label>' +
+      '<label class="pst__btn pst__btn--cam"><input type="file" accept="image/*" capture="environment" hidden data-pst-cam><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> その場で撮る（現在地で確認）</label>' +
       '<p class="pst__note">写真は機種に関係なく同じ画質にそろえて送ります（長辺 ' + MAX_EDGE + 'px まで・1 枚 約 ' + Math.round(BUDGET / 1024) + 'KB まで）。1 スポット ' + MAX_PER_SPOT + ' 枚まで。ご自身で撮った写真だけにしてください。人の顔・車のナンバーが写るものは避けてください。</p>' +
       '<div class="pst__queue" data-pst-queue hidden></div>' +
     "</div>" +
@@ -374,7 +374,7 @@ RG.postsHtml = function (p) {
       '<input class="pst__hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<input class="pst__name" name="name" maxlength="20" placeholder="名前（表示名）" value="' + esc(nick()) + '" required>' +
       '<textarea name="text" maxlength="300" rows="2" placeholder="' + esc(p.ph || "このスポットへのひとこと（300字まで）") + '" required></textarea>' +
-      '<button class="pst__send" type="submit">💬 書きこむ</button><span class="pst__st" data-pst-st></span>' +
+      '<button class="pst__send" type="submit"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-comment"></use></svg> 書きこむ</button><span class="pst__st" data-pst-st></span>' +
     "</form></section>";
 };
 
@@ -388,7 +388,7 @@ function renderSpot(root, p, d) {
   grid.innerHTML = ph.length ? ph.map(function (x, i) {
     var nc = d.comments.filter(function (c) { return c.pid === x.pid; }).length;
     return '<button type="button" class="pst__th' + (x.loc === "ok" ? "" : " pst__th--" + (LOC_LABEL[x.loc] ? x.loc : "none")) + '" data-ph="' + i + '" data-pid="' + esc(x.pid) + '" title="' + esc((x.cap || "") + " — " + x.name + (x.loc === "ok" ? "" : "（" + (LOC_LABEL[x.loc] || LOC_LABEL.none) + "）")) + '"><img src="' + esc(thumbUrl(x.f, 200)) + '" alt="' + esc(x.cap || p.n) + '" loading="lazy" decoding="async">' +
-      (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み">📍</b>' : "") + (nc ? "<i>💬" + nc + "</i>" : "") + (d.likes && d.likes[x.pid] ? '<i class="pst__lk">♥' + d.likes[x.pid] + "</i>" : "") + "</button>";
+      (x.loc === "ok" ? '<b class="pst__ok" title="撮影位置を確認済み"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg></b>' : "") + (nc ? "<i><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-comment'></use></svg>" + nc + "</i>" : "") + (d.likes && d.likes[x.pid] ? '<i class="pst__lk">♥' + d.likes[x.pid] + "</i>" : "") + "</button>";
   }).join("") : '<p class="pst__ld">まだ写真がありません。最初の 1 枚をどうぞ。</p>';
   var sc = d.comments.filter(function (c) { return !c.pid; }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
   cm.innerHTML = sc.length ? '<ul class="pst__list">' + sc.map(function (c) {
@@ -403,7 +403,7 @@ function renderSpot(root, p, d) {
   if (hole && ph.length && hole.__pst !== ph[0].pid + ph.length) {
     var first = !hole.__pst; hole.__pst = ph[0].pid + ph.length;
     hole.innerHTML = '<img class="spotcard__i" src="' + esc(thumbUrl(ph[0].f, 400)) + '" alt="" decoding="async">' +
-      '<span class="pst__credit">📷 ' + esc(ph[0].name) + " さんの投稿" + (ph.length > 1 ? "（ほか " + (ph.length - 1) + " 枚）" : "") + "</span>";
+      '<span class="pst__credit"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> ' + esc(ph[0].name) + " さんの投稿" + (ph.length > 1 ? "（ほか " + (ph.length - 1) + " 枚）" : "") + "</span>";
     hole.classList.add("spotcard__ph--user");
     if (first) hole.addEventListener("click", function () { var d2 = mem[RG.postKey(p)]; if (d2) viewer(p, d2.photos.slice().sort(byPriority), 0); });
   }
@@ -446,8 +446,8 @@ function swipeRow(li, onDone) {
   var fg = document.createElement("div"); fg.className = "sw__fg";
   while (li.firstChild) fg.appendChild(li.firstChild);
   var act = document.createElement("div"); act.className = "sw__act";
-  act.innerHTML = '<button type="button" class="sw__b sw__b--' + (hid ? "show" : "hide") + '" data-op="' + (hid ? "show" : "hide") + '">' + (hid ? "👁<span>公開に戻す</span>" : "🙈<span>非公開</span>") + "</button>" +
-    '<button type="button" class="sw__b sw__b--del" data-op="del">🗑<span>削除</span></button>';
+  act.innerHTML = '<button type="button" class="sw__b sw__b--' + (hid ? "show" : "hide") + '" data-op="' + (hid ? "show" : "hide") + '">' + (hid ? "<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-eye'></use></svg><span>公開に戻す</span>" : "🙈<span>非公開</span>") + "</button>" +
+    '<button type="button" class="sw__b sw__b--del" data-op="del"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-trash"></use></svg><span>削除</span></button>';
   var more = document.createElement("button"); more.type = "button"; more.className = "sw__more"; more.setAttribute("aria-label", "この投稿を削除・非公開にする"); more.textContent = "⋯";
   fg.appendChild(more); li.appendChild(act); li.appendChild(fg);
   var x = 0, W = 0;
@@ -577,10 +577,10 @@ RG.postsBind = function (m, p) {
       var nFar = res.filter(function (r) { return r.loc === "far"; }).length, nBlock = res.filter(function (r) { return r.loc === "block"; }).length;
       function row(f, i) {
         var r = res[i], st;
-        if (r.loc === "ok") st = '<i class="pst__lc pst__lc--ok">✅ 撮影位置OK（スポットから ' + (r.km < 1 ? Math.round(r.km * 1000) + "m" : r.km.toFixed(1) + "km") + "）</i>";
-        else if (r.loc === "here") st = '<i class="pst__lc pst__lc--here">📍 位置情報なし → 現在地で確認済み（スポットから ' + fmtKm(r.hereKm) + '・右上に «' + LOC_LABEL.here + '»）</i>';
-        else if (r.loc === "none") st = '<i class="pst__lc pst__lc--none">📍? 位置情報なし（右上に «' + LOC_LABEL.none + '» が入り、表示の順番が後ろになります）</i>';
-        else if (r.loc === "far") st = '<i class="pst__lc pst__lc--far">⚠️ 撮影位置がスポットから約 ' + r.km.toFixed(1) + " km 離れています</i>" +
+        if (r.loc === "ok") st = '<i class="pst__lc pst__lc--ok"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> 撮影位置OK（スポットから ' + (r.km < 1 ? Math.round(r.km * 1000) + "m" : r.km.toFixed(1) + "km") + "）</i>";
+        else if (r.loc === "here") st = '<i class="pst__lc pst__lc--here"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 位置情報なし → 現在地で確認済み（スポットから ' + fmtKm(r.hereKm) + '・右上に «' + LOC_LABEL.here + '»）</i>';
+        else if (r.loc === "none") st = '<i class="pst__lc pst__lc--none"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg>? 位置情報なし（右上に «' + LOC_LABEL.none + '» が入り、表示の順番が後ろになります）</i>';
+        else if (r.loc === "far") st = '<i class="pst__lc pst__lc--far"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> 撮影位置がスポットから約 ' + r.km.toFixed(1) + " km 離れています</i>" +
           '<label class="pst__okfar"><input type="checkbox" data-far="' + i + '"> それでもこのスポットの写真です（右上に «' + LOC_LABEL.far + '» が入り、いちばん後ろに表示）</label>';
         else st = '<i class="pst__lc pst__lc--ng">⛔ 撮影位置がスポットから約 ' + r.km.toFixed(0) + " km 離れているため投稿できません</i>";
         return '<li data-qi="' + i + '" class="' + (r.loc === "block" ? "ng" : "") + '"><span>' + esc(f.name) + '</span><em>' + (f.size / 1048576).toFixed(1) + "MB</em><b>" + (r.loc === "block" ? "対象外" : "待機中") + "</b>" + st + "</li>";
@@ -590,11 +590,11 @@ RG.postsBind = function (m, p) {
         '<p class="pst__note">写真の位置情報（EXIF）で、スポットで撮った写真かを確かめます（' + NEAR_KM + ' km 以内なら OK）。' +
           '公開する写真は縮めて作り直すので、位置・撮影日時・機種などの撮影データは残りません。撮影データは不正な投稿を防ぐため、管理人だけが見られる記録に保存します（公開しません）。' +
           '«現在地で確かめる» を使ったときは、確認できた写真についてだけ現在地（緯度経度・誤差）も同じ記録に保存します。</p>' +
-        (nNone ? '<div class="pst__geo" data-q-geo><p>📍 位置情報のない写真が <b>' + nNone + ' 枚</b>あります（スマホによっては、写真を選ぶときに位置情報が消されます。' +
+        (nNone ? '<div class="pst__geo" data-q-geo><p><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 位置情報のない写真が <b>' + nNone + ' 枚</b>あります（スマホによっては、写真を選ぶときに位置情報が消されます。' +
             'iPhone は写真を選ぶ画面の左下 «オプション» で «位置情報» をオンにすると残せます。«その場で撮る» の写真には位置情報が入らないので、現在地で確かめます）。' +
             'いまスポットの近く（' + NEAR_KM + ' km 以内）にいれば、撮りたての写真（' + FRESH_DAYS + ' 日以内）は<b>現在地</b>で確かめられます。' +
             '現在地は、確認できた写真についてだけ管理人向けの記録に残します（公開しません）。</p>' +
-            '<button type="button" class="pst__send pst__send--geo" data-q-here>📍 現在地で確かめる</button> <span class="pst__st" data-q-geost></span></div>' : "") +
+            '<button type="button" class="pst__send pst__send--geo" data-q-here><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地で確かめる</button> <span class="pst__st" data-q-geost></span></div>' : "") +
         (have >= MAX_PER_SPOT ? '<p class="pst__note pst__note--warn">このスポットは ' + MAX_PER_SPOT + ' 枚に達しています。' +
           (fits("ok") ? "撮影位置OKの写真は、位置情報なし・アンマッチの写真を表示枠の外へ押し出して載ります（押し出された写真は消えず、枠が空けば戻ります）。" : "撮影位置OKの写真だけで満杯のため、新しい写真は載せられません。") + "</p>" : "") +
         '<ol class="pst__ql">' + files.map(row).join("") + "</ol>" +
@@ -775,9 +775,9 @@ function viewer(p, list, i) {
         '<form class="pst__form" data-phv-form><input class="pst__hp" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true">' +
           '<input class="pst__name" name="name" maxlength="20" placeholder="名前（表示名）" value="' + esc(nick()) + '" required>' +
           '<textarea name="text" maxlength="300" rows="2" placeholder="この写真へのコメント" required></textarea>' +
-          '<button class="pst__send" type="submit">💬 コメントする</button><span class="pst__st" data-st></span></form>' +
-        (MYUID && x.uid === MYUID && OWN_V ? '<div class="phv__own"><button type="button" data-pown="hide">🙈 この写真を非公開にする</button><button type="button" data-pown="del">🗑 この写真を削除</button></div>' :   // v144: 自分の写真
-        '<button type="button" class="phv__rep" data-rep>🚩 不適切な写真を報告</button>') +
+          '<button class="pst__send" type="submit"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-comment"></use></svg> コメントする</button><span class="pst__st" data-st></span></form>' +
+        (MYUID && x.uid === MYUID && OWN_V ? '<div class="phv__own"><button type="button" data-pown="hide">🙈 この写真を非公開にする</button><button type="button" data-pown="del"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-trash"></use></svg> この写真を削除</button></div>' :   // v144: 自分の写真
+        '<button type="button" class="phv__rep" data-rep><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-flag"></use></svg> 不適切な写真を報告</button>') +
       "</div></div>" +
       '<button class="phv__x" type="button" aria-label="閉じる">✕</button>' +
       (list.length > 1 ? '<button class="phv__n phv__n--p" type="button" aria-label="前の写真">‹</button><button class="phv__n phv__n--n" type="button" aria-label="次の写真">›</button>' : "");
@@ -867,13 +867,13 @@ RG.showUser = function (u, name) {
           '<div class="seg" role="group" aria-label="並び順"><button type="button" data-ord="new" class="' + (userState.order === "new" ? "on" : "") + '">新しい順</button><button type="button" data-ord="old" class="' + (userState.order === "old" ? "on" : "") + '">古い順</button></div>' +
           '<select data-pf aria-label="都道府県で絞る"><option value="">すべての都道府県（' + items.length + "）</option>" +
             Object.keys(prefs).sort(function (a, b) { return prefs[b] - prefs[a]; }).map(function (k) { return '<option value="' + esc(k) + '"' + (userState.pf === k ? " selected" : "") + ">" + esc(k) + "（" + prefs[k] + "）</option>"; }).join("") + "</select>" +
-          '<button type="button" class="pst__send" data-map>🗺️ この人の投稿を地図にピンで出す</button>' +
+          '<button type="button" class="pst__send" data-map><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> この人の投稿を地図にピンで出す</button>' +
         "</div>" +
         (list.length ? '<ul class="usr__list">' + list.map(function (it, j) {
           var s = it.spot;
           return "<li" + ownAttr(it.x) + '><button type="button" class="usr__it' + (it.x.self === "hide" ? " usr__it--hid" : "") + '" data-it="' + j + '">' +
-            (it.type === "photo" ? '<img src="' + esc(thumbUrl(it.x.f, 100)) + '" alt="" loading="lazy" decoding="async">' : '<span class="usr__ic">💬</span>') +
-            '<span class="usr__tx"><b>' + esc(s.n) + (it.x.self === "hide" ? '<i class="usr__hid">🔒 非公開</i>' : "") + (it.x.gone ? '<i class="usr__hid">⚠ 管理人が非表示</i>' : "") + '</b><small>' + esc(it.pf || "") + " ・ " + fmtDate(it.ts) + (it.type === "comment" && it.x.pid ? " ・ 写真へのコメント" : "") + "</small>" +
+            (it.type === "photo" ? '<img src="' + esc(thumbUrl(it.x.f, 100)) + '" alt="" loading="lazy" decoding="async">' : '<span class="usr__ic"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-comment"></use></svg></span>') +
+            '<span class="usr__tx"><b>' + esc(s.n) + (it.x.self === "hide" ? '<i class="usr__hid"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-lock"></use></svg> 非公開</i>' : "") + (it.x.gone ? '<i class="usr__hid"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> 管理人が非表示</i>' : "") + '</b><small>' + esc(it.pf || "") + " ・ " + fmtDate(it.ts) + (it.type === "comment" && it.x.pid ? " ・ 写真へのコメント" : "") + "</small>" +
             (it.type === "photo" ? (it.x.cap ? "<em>" + esc(it.x.cap) + "</em>" : "") : "<em>" + esc(it.x.text) + "</em>") + "</span></button></li>";
         }).join("") + "</ul>" : '<p class="pst__ld">この条件の投稿はありません。</p>');
       Array.prototype.forEach.call(host.querySelectorAll("[data-ord]"), function (b) { b.addEventListener("click", function () { userState.order = b.dataset.ord; draw(); }); });
@@ -929,7 +929,7 @@ RG.postsMapUser = function (u, name, items) {
   RG.userPostFilter = u;
   if (!bar) { bar = document.createElement("div"); bar.className = "upbar"; (document.querySelector(".mapwrap") || document.body).appendChild(bar); }
   bar.hidden = false;
-  bar.innerHTML = '<span>👤 <b>' + esc(name || "投稿者") + "</b> " + esc(tag(u)) + " さんの投稿 " + keys.length + " か所を表示中</span>" +
+  bar.innerHTML = '<span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg> <b>' + esc(name || "投稿者") + "</b> " + esc(tag(u)) + " さんの投稿 " + keys.length + " か所を表示中</span>" +
     '<button type="button" data-up-list>一覧</button><button type="button" data-up-x aria-label="地図のしぼりこみを解除">✕ 解除</button>';
   bar.querySelector("[data-up-x]").addEventListener("click", function () { RG.postsMapClear(); });
   bar.querySelector("[data-up-list]").addEventListener("click", function () { RG.showUser(u, name); });
@@ -1031,7 +1031,7 @@ RG.showFeed = function (pf) {
   try { seen = +localStorage.getItem("tsg.feed.seen") || 0; } catch (e) {}
   function ctl() {
     host.querySelector(".feed__ctl").innerHTML =
-      '<select data-fpf aria-label="地域で絞る"><option value="">🗾 全国</option>' + PREFS.map(function (n) { return "<option" + (fs0.pf === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>" +
+      '<select data-fpf aria-label="地域で絞る"><option value=""><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 全国</option>' + PREFS.map(function (n) { return "<option" + (fs0.pf === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>" +
       (fs0.pf === "東京都" ? '<select data-fward aria-label="区で絞る"><option value="">23 区と多摩・島しょ すべて</option>' + WARDS.concat([TAMA]).map(function (n) { return "<option" + (fs0.ward === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>" : "") +
       '<div class="seg feed__ty" role="group" aria-label="種類">' + [["", "すべて"], ["p", "📷 写真"], ["c", "💬 声"]].map(function (t) { return '<button type="button" data-fty="' + t[0] + '" class="' + (fs0.ty === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + "</div>" +
       '<button type="button" class="feed__rl" data-frl aria-label="最新にする">↻</button>';
@@ -1046,7 +1046,7 @@ RG.showFeed = function (pf) {
     list.innerHTML = L.length ? L.map(function (it, j) {
       var x = it.x, ph = it.ty === "p", nw = new Date(it.ts).getTime() > seen && seen > 0;
       return '<li class="feed__li' + (nw ? " feed__li--new" : "") + '"' + ownAttr(x) + '><button type="button" class="feed__it" data-fi="' + j + '">' +
-        (ph ? '<img src="' + esc(thumbUrl(x.f, 72)) + '" alt="" loading="lazy" decoding="async" width="72" height="72">' : '<span class="feed__ic">💬</span>') +
+        (ph ? '<img src="' + esc(thumbUrl(x.f, 72)) + '" alt="" loading="lazy" decoding="async" width="72" height="72">' : '<span class="feed__ic"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-comment"></use></svg></span>') +
         '<span class="feed__tx"><b>' + esc(x.spot.n) + "</b><small>" + (nw ? '<em class="feed__nw">NEW</em>' : "") + esc(areaOf(it)) + " ・ " + ago(it.ts) +
           (ph ? "" : x.pid ? " ・ 写真へのコメント" : "") + "</small>" + (ph ? (x.cap ? "<i>" + esc(x.cap) + "</i>" : "") : "<i>" + esc(x.text) + "</i>") + "</span></button>" +
         '<div class="feed__by">' + nameBtn(x) + (x.uid === MYUID ? '<span class="feed__me">あなた</span>' : "") + "</div></li>";

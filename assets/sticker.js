@@ -66,9 +66,9 @@ function show(r) {
   var url = r.cv.toDataURL("image/png");
   var m = RG.openModal("🏷️ ステッカー", '<div class="stk"><div class="stk__prev"><img src="' + url + '" alt="' + esc(r.title) + ' のステッカー"></div>' +
     '<p class="set__d">背景が透明な PNG です。Instagram・LINE・X のストーリーや写真の上に貼れます（Instagram は «ステッカー» の «画像» から、LINE は写真の編集で）。</p>' +
-    '<div class="sh__btns"><button class="sh__b" type="button" data-stk-share>📤 共有する</button>' +
-    '<a class="sh__b" href="' + url + '" download="' + esc(r.name) + '">💾 保存する</a>' +
-    '<button class="sh__b" type="button" data-stk-copy>📋 コピー</button></div><p class="rc__hint" data-stk-hint></p></div>');
+    '<div class="sh__btns"><button class="sh__b" type="button" data-stk-share><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-share"></use></svg> 共有する</button>' +
+    '<a class="sh__b" href="' + url + '" download="' + esc(r.name) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> 保存する</a>' +
+    '<button class="sh__b" type="button" data-stk-copy><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> コピー</button></div><p class="rc__hint" data-stk-hint></p></div>');
   var hint = m.querySelector("[data-stk-hint]");
   r.cv.toBlob(function (blob) {
     var file = null; try { file = new File([blob], r.name, { type: "image/png" }); } catch (e) {}

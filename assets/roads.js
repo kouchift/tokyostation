@@ -174,10 +174,10 @@ RG.roadsBind = function (root, p) {
 };
 function fit(bb) { if (RG.Map && RG.Map.fitBox) RG.Map.fitBox(bb[0], bb[1], bb[2], bb[3], 0.12); }
 RG.showKaido = function (k) {
-  var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + k.c + '">🏮</span><div><h3>' + esc(k.n) + '</h3><p class="spotcard__k">' + k.stops.length + " 地点・宿場を直線で結んで約 " + Math.round(k.km || 0) + " km</p></div></div>" +
+  var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + k.c + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-lantern"></use></svg></span><div><h3>' + esc(k.n) + '</h3><p class="spotcard__k">' + k.stops.length + " 地点・宿場を直線で結んで約 " + Math.round(k.km || 0) + " km</p></div></div>" +
     (k.d ? '<p class="nat__d">' + esc(k.d) + "</p>" : "") +
     '<div class="kai__list">' + k.stops.map(function (s, i) { return '<button class="kai__s" type="button" data-i="' + i + '"><i>' + (s.no != null ? s.no : i) + "</i>" + esc(s.n) + (s.nowp ? '<small>（記事なし）</small>' : "") + "</button>"; }).join("") + "</div>" +
-    '<div class="lnks">' + (k.wp ? '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.wp) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' : "") + '<button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button></div>' +
+    '<div class="lnks">' + (k.wp ? '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.wp) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' : "") + '<button class="lnk" type="button" data-fit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>全体を地図に</button></div>' +
     '<p class="src">道筋は宿場間の直線で、実際の街道の線形ではありません。</p></div>';
   var m = RG.openModal("🏮 " + k.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fit(bboxOf([k.stops.map(function (s) { return [s.la, s.lo]; })])); });
@@ -185,9 +185,9 @@ RG.showKaido = function (k) {
 };
 RG.showHighway = function (h) {
   var ics = (RG.HWY_IC || []).filter(function (x) { return x.hw === h.n; });
-  var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + (HCOL[h.k] || "#2E7D32") + '">🛣️</span><div><h3>' + esc(h.n) + '</h3><p class="spotcard__k">' + esc(h.k) + (h.ln && h.ln !== h.n ? "・法定路線名 " + esc(h.ln) : "") + (h.km ? "・約 " + h.km + " km" : "") + (h.y ? "・供用開始 " + h.y + " 年" : "") + "</p></div></div>" +
+  var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + (HCOL[h.k] || "#2E7D32") + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-road"></use></svg></span><div><h3>' + esc(h.n) + '</h3><p class="spotcard__k">' + esc(h.k) + (h.ln && h.ln !== h.n ? "・法定路線名 " + esc(h.ln) : "") + (h.km ? "・約 " + h.km + " km" : "") + (h.y ? "・供用開始 " + h.y + " 年" : "") + "</p></div></div>" +
     (ics.length ? '<div class="kai__list">' + ics.map(function (ic) { return '<button class="kai__s kai__s--ic" type="button" data-la="' + ic.la + '" data-lo="' + ic.lo + '"><i>' + esc(ic.k) + "</i>" + esc(ic.n) + "</button>"; }).join("") + "</div>" : "") +
-    '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(h.n) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a><button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button></div>' +
+    '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(h.n) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a><button class="lnk" type="button" data-fit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>全体を地図に</button></div>' +
     '<p class="src">料金・渋滞は扱っていません。</p></div>';
   var m = RG.openModal("🛣️ " + h.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fit(bboxOf(polys(h.pts))); });
@@ -196,14 +196,14 @@ RG.showHighway = function (h) {
 RG.showIC = function (ic) {
   var h = (RG.HWY || []).filter(function (x) { return x.n === ic.hw; })[0];
   var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#2E7D32">' + (ic.k === "JCT" ? "🔀" : ic.k === "SA" || ic.k === "PA" ? "🅿️" : "🛣️") + '</span><div><h3>' + esc(ic.n) + '</h3><p class="spotcard__k">' + esc(ic.k) + "・" + esc(ic.hw || "") + (ic.y ? "・" + ic.y + " 年" : "") + "</p></div></div>" +
-    '<div class="lnks">' + (h ? '<button class="lnk" type="button" data-hw="1"><span>🛣️</span>' + esc(h.n) + " の全体</button>" : "") + '<a class="lnk" href="https://www.google.com/maps/search/?api=1&query=' + ic.la + "," + ic.lo + '" target="_blank" rel="noopener"><span>🗺️</span>Google マップ</a></div>' +
+    '<div class="lnks">' + (h ? '<button class="lnk" type="button" data-hw="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-road"></use></svg></span>' + esc(h.n) + " の全体</button>" : "") + '<a class="lnk" href="https://www.google.com/maps/search/?api=1&query=' + ic.la + "," + ic.lo + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>Google マップ</a></div>' +
     '</div>';
   var m = RG.openModal(esc(ic.n), html);
   var b = m.querySelector("[data-hw]"); if (b) b.addEventListener("click", function () { RG.showHighway(h); });
 };
 RG.showKokudo = function (k) {
-  var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#1565C0">🛣️</span><div><h3>' + esc(k.n) + '</h3><p class="spotcard__k">一般国道' + (k.km ? "・約 " + k.km + " km（1995 年時点の線形）" : "") + "</p></div></div>" +
-    '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.n) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a><button class="lnk" type="button" data-fit="1"><span>🗺️</span>全体を地図に</button></div>' +
+  var html = '<div class="spotcard terra-card"><div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:#1565C0"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-road"></use></svg></span><div><h3>' + esc(k.n) + '</h3><p class="spotcard__k">一般国道' + (k.km ? "・約 " + k.km + " km（1995 年時点の線形）" : "") + "</p></div></div>" +
+    '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.n) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a><button class="lnk" type="button" data-fit="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>全体を地図に</button></div>' +
     '<p class="src">1995 年時点の線形で、その後のバイパス開通などは反映されていません。</p></div>';
   var m = RG.openModal("🛣️ " + k.n, html);
   m.querySelector("[data-fit]").addEventListener("click", function () { RG.closeModal(); fit(bboxOf(polys(k.pts))); });

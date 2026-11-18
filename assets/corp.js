@@ -197,30 +197,30 @@ RG.showCorp = function (c) {
       (c.c ? '<span class="corpcard__c">' + esc(c.c) + "</span> " : "") +
       esc(c.i17 || "") + (c.i33 ? " ／ " + esc(c.i33) : "") + (c.sz && c.sz !== "-" ? " ／ " + esc(c.sz) : "") +
       "</p>" + (c.d ? '<p class="corpcard__d">' + esc(c.d) + "</p>" : "") + "</div></div>" +
-    (c.web ? '<a class="corpcard__web" href="' + esc(c.web) + '" target="_blank" rel="noopener">🌐 公式サイトへ <span>' + esc(c.web.replace(/^https?:\/\//, "").replace(/\/$/, "")) + "</span> ↗</a>"
+    (c.web ? '<a class="corpcard__web" href="' + esc(c.web) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 公式サイトへ <span>' + esc(c.web.replace(/^https?:\/\//, "").replace(/\/$/, "")) + "</span> ↗</a>"
            : '<p class="corpcard__noweb">公式サイトは未取得です。<a href="https://www.google.com/search?q=' + encodeURIComponent(c.n + " 公式サイト") + '" target="_blank" rel="noopener">検索して開く ↗</a></p>') +
     '<div class="wls">' + links.map(function (L) {
       return '<a class="wl ' + L.cls + '" href="' + esc(L.url(c)) + '" target="_blank" rel="noopener">' +
         '<span class="wl__e">' + L.e + "</span>" + L.label + "</a>"; }).join("") +
-      (c.wp ? '<a class="wl" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(c.wp) + '" target="_blank" rel="noopener"><span class="wl__e">📖</span>Wikipedia</a>' : "") +
+      (c.wp ? '<a class="wl" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(c.wp) + '" target="_blank" rel="noopener"><span class="wl__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' : "") +
     "</div>" +
     '<div class="crs"><div class="crs__h">主な数字<em>色は全社の中での位置（緑＝小 / 赤＝大）</em></div>' +
       row("cap", "🏦 資本金", c.cap, capStr) +
       row("emp", "👥 従業員数", emp, function (v) { return v.toLocaleString("ja-JP") + " 人"; }, Array.isArray(c.emp) ? c.emp[0] : null) +
       row("rev", "💰 売上高", rev, yen, Array.isArray(c.rev) && c.rev.length ? c.rev[c.rev.length - 1][0] : null) +
       revBars(c.rev) +
-      (c.y ? '<div class="cr"><span class="cr__k">📅 設立</span><span class="cr__v cr__v--p">' + esc(c.y) + " 年</span><span class=\"cr__r\">" + (new Date().getFullYear() - c.y) + "年</span></div>" : "") +
-      (c.fy ? '<div class="cr"><span class="cr__k">🗓️ 決算期</span><span class="cr__v cr__v--p">' + esc(c.fy) + '</span><span class="cr__r"></span></div>' : "") +
-      '<div class="cr"><span class="cr__k">🏛️ 法人番号</span><span class="cr__v cr__v--p">' + esc(c.cn || "未取得") + "</span>" +
+      (c.y ? '<div class="cr"><span class="cr__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> 設立</span><span class="cr__v cr__v--p">' + esc(c.y) + " 年</span><span class=\"cr__r\">" + (new Date().getFullYear() - c.y) + "年</span></div>" : "") +
+      (c.fy ? '<div class="cr"><span class="cr__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> 決算期</span><span class="cr__v cr__v--p">' + esc(c.fy) + '</span><span class="cr__r"></span></div>' : "") +
+      '<div class="cr"><span class="cr__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg> 法人番号</span><span class="cr__v cr__v--p">' + esc(c.cn || "未取得") + "</span>" +
       '<span class="cr__r">' + (c.ad ? esc((c.pf || "") + c.ad) : "") + "</span></div>" +
     "</div>" +
-    '<details class="corpdg" open><summary>📑 株主向けダイジェスト（20行）</summary><ol class="corpdg__l">' +
+    '<details class="corpdg" open><summary><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 株主向けダイジェスト（20行）</summary><ol class="corpdg__l">' +
       digest(c).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ol></details>" +
     (RG.enrichSlot && c.wp ? RG.enrichSlot() : "") +
     '<div class="lnks"><button class="lnk" type="button" data-ind="' + esc(c.i33 || "") +
-      '"><span>🔎</span>同じ業種（' + esc(c.i33 || "") + "）だけ表示</button>" +
+      '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-search"></use></svg></span>同じ業種（' + esc(c.i33 || "") + "）だけ表示</button>" +
       '<button class="lnk" type="button" data-bub="cap"><span>🫧</span>資本金のバブルで見る</button>' +
-      '<button class="lnk" type="button" data-cnear="1"><span>🚉</span>最寄り駅を見る</button></div>' +
+      '<button class="lnk" type="button" data-cnear="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>最寄り駅を見る</button></div>' +
     '<p class="src">本社の位置は所在地の町丁目の代表点です。' +
     "ロゴは各社の商標で、識別のために Wikimedia Commons から表示しています。従業員数・売上高は Wikidata に登録がある会社のみ（少数）で、最新とは限りません。" +
     "<b>投資の判断には必ず有価証券報告書・決算短信をご覧ください。</b></p></div>";
@@ -245,12 +245,12 @@ RG.showCorp = function (c) {
 /* ------------------------------------------------------------ 消えた会社 */
 RG.showCorpGone = function (g) {
   var html = '<div class="corpcard corpcard--gone">' +
-    '<div class="corpcard__hd"><span class="corpcard__e">🏚️</span><div><h3>' + esc(g.n) + '</h3>' +
+    '<div class="corpcard__hd"><span class="corpcard__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg></span><div><h3>' + esc(g.n) + '</h3>' +
     '<p class="corpcard__k"><span class="corpcard__mk corpcard__mk--gone">消滅</span> ' +
     (g.y ? esc(g.y) + "年 〜 " : "〜 ") + (g.yd ? esc(g.yd) + "年" : "") + (g.y && g.yd ? "（" + (g.yd - g.y) + "年間）" : "") + "</p>" +
     (g.d ? '<p class="corpcard__d">' + esc(g.d) + "</p>" : "") + (g.ind ? '<p class="corpcard__d">業種: ' + esc(g.ind) + "</p>" : "") + "</div></div>" +
-    '<div class="wls">' + (g.wp ? '<a class="wl" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(g.wp) + '" target="_blank" rel="noopener"><span class="wl__e">📖</span>Wikipedia で当時を読む</a>' : "") +
-      (g.q ? '<a class="wl" href="https://www.wikidata.org/wiki/' + esc(g.q) + '" target="_blank" rel="noopener"><span class="wl__e">🗄️</span>Wikidata</a>' : "") + "</div>" +
+    '<div class="wls">' + (g.wp ? '<a class="wl" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(g.wp) + '" target="_blank" rel="noopener"><span class="wl__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia で当時を読む</a>' : "") +
+      (g.q ? '<a class="wl" href="https://www.wikidata.org/wiki/' + esc(g.q) + '" target="_blank" rel="noopener"><span class="wl__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg></span>Wikidata</a>' : "") + "</div>" +
     (RG.enrichSlot && g.wp ? RG.enrichSlot() : "") +
     '<p class="corpcard__gone">この会社はもうありません。地図には「ここにあった」という記録として、灰色で残しています。' +
     "栄枯盛衰は会社にも、まちにも、人にもあります。</p>" +

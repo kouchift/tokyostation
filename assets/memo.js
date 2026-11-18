@@ -248,7 +248,7 @@ function backendOn() { var C = cfg(); return !!(C.memoForm && C.memoForm.action 
 RG.memoBackendOn = backendOn;
 function localNote() {
   if (backendOn()) return "";
-  return '<p class="mm__local">📱 いまは投稿が<b>この端末（このブラウザ）にだけ</b>残ります。ほかの人・ほかの端末には見えません。制作者が受け皿（無料の Google フォーム）を設定すると、みんなの声として共有されます。</p>';
+  return '<p class="mm__local"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-phone"></use></svg> いまは投稿が<b>この端末（このブラウザ）にだけ</b>残ります。ほかの人・ほかの端末には見えません。制作者が受け皿（無料の Google フォーム）を設定すると、みんなの声として共有されます。</p>';
 }
 function capLine(name) {
   var r = retained(name), viewers = RG.memoViewers(name);
@@ -466,7 +466,7 @@ RG.kidsHtml = function (name) {
   if (!step && !elev && !kidsTexts.length && !detEv) return "";
   return '<section class="sec sec--kids"><h3>子連れ情報 <small>現場メモから</small></h3><div class="mm__sum">' +
     row("👶", "ベビーカーでの移動しやすさ", step, ITEMS[1].lv) + row("🛗", "エレベーターのわかりやすさ", elev, ITEMS[5].lv) + "</div>" +
-    (detEv ? '<p class="nat__d">🛗 ' + esc(String(detEv)) + "</p>" : "") +
+    (detEv ? '<p class="nat__d"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-elevator"></use></svg> ' + esc(String(detEv)) + "</p>" : "") +
     (kidsTexts.length ? '<div class="mm__vh">子連れで通った人の声</div><ul class="mm__ts">' + kidsTexts.map(function (m) { return '<li class="mm__t">' + esc(m.text) + "<small>" + esc(m.nick || "匿名") + "</small></li>"; }).join("") + "</ul>" : "") +
     "</section>";
 };

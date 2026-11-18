@@ -46,9 +46,9 @@ RG.levechiBlock = function (p) {
       var v = String(ex[k]);
       return "<dt>" + esc(k) + "</dt><dd>" + (lk[k] ? '<a href="' + esc(lk[k]) + '" target="_blank" rel="noopener">' + esc(v) + " ↗</a>" : esc(v).replace(/／/g, "<wbr>／")) + "</dd>"; }).join("") + "</dl>" : "") +
     '<div class="lnks">' +
-      (r.url ? '<a class="lnk" href="' + esc(r.url) + '" target="_blank" rel="noopener"><span>🔗</span>公式サイト</a>' : "") +
-      '<a class="lnk" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.n + " " + (r.ad || "")) + '" target="_blank" rel="noopener"><span>🗺️</span>Google マップ</a>' +
-      '<button class="lnk" type="button" data-lvonly="1"><span>👑</span>レベチだけ表示</button>' +
+      (r.url ? '<a class="lnk" href="' + esc(r.url) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg></span>公式サイト</a>' : "") +
+      '<a class="lnk" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.n + " " + (r.ad || "")) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>Google マップ</a>' +
+      '<button class="lnk" type="button" data-lvonly="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-crown"></use></svg></span>レベチだけ表示</button>' +
     "</div></div>";
 };
 RG.levechiBind = function (root) {

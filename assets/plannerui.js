@@ -17,7 +17,7 @@ RG.Trip = Trip;
 function initBar() {
   var bar = $("#tripbar");
   bar.innerHTML =
-    '<button id="t-geo" class="tb__btn" type="button">📍 現在地</button>' +
+    '<button id="t-geo" class="tb__btn" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地</button>' +
     '<span id="t-from" class="tb__from">駅をタップ →「ここから出発」</span>' +
     '<input id="t-dt" class="tb__dt" type="datetime-local" aria-label="出発日時">' +
     '<button id="t-now" class="tb__btn" type="button">今</button>' +
@@ -27,10 +27,10 @@ function initBar() {
           (a.id === 1) + '" title="' + esc(a.tone) + '">' + a.emoji + " " + esc(a.label) + "</button>";
       }).join("") + "</span>" +
     '<button id="t-find" class="tb__btn tb__btn--go" type="button"><span class="ms" aria-hidden="true">navigation</span> 行き先をさがす</button>' +
-    '<button id="t-rescue" class="tb__btn tb__btn--night" type="button" hidden>🌙 終電を逃した</button>';
+    '<button id="t-rescue" class="tb__btn tb__btn--night" type="button" hidden><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-moon"></use></svg> 終電を逃した</button>';
 
   if (RG.secureOK && !RG.secureOK()) {
-    var g = $("#t-geo"); if (g) { g.classList.add("tb__btn--warn"); g.textContent = "📍 現在地 ⚠"; }
+    var g = $("#t-geo"); if (g) { g.classList.add("tb__btn--warn"); if (RG.iconifyText) RG.iconifyText(g, "📍 現在地 ⚠"); else g.textContent = "📍 現在地 ⚠"; }
   }
   setWhen(new Date());
   $("#t-dt").addEventListener("change", function () { if (this.value) { Trip.when = new Date(this.value); afterWhen(); } });
@@ -46,7 +46,7 @@ function initBar() {
   var hero = document.getElementById("hero"), pop = hero && hero.querySelector(".heroSearch__popular");
   if (hero && !document.getElementById("tripfold")) {
     var tf = document.createElement("button"); tf.id = "tripfold"; tf.className = "tripFold"; tf.type = "button"; tf.setAttribute("aria-expanded", "false"); tf.setAttribute("aria-controls", "tripbar");
-    tf.innerHTML = '<span class="ms" aria-hidden="true">schedule</span><span class="tripFold__t">出発: <b id="tf-from">東京駅</b>・<b id="tf-when">いま</b>・<b id="tf-aggr">標準</b><i id="tf-night" hidden>・🌙 終電後</i></span><span class="ms tripFold__x" aria-hidden="true">expand_more</span>';
+    tf.innerHTML = '<span class="ms" aria-hidden="true">schedule</span><span class="tripFold__t">出発: <b id="tf-from">東京駅</b>・<b id="tf-when">いま</b>・<b id="tf-aggr">標準</b><i id="tf-night" hidden>・<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-moon"></use></svg> 終電後</i></span><span class="ms tripFold__x" aria-hidden="true">expand_more</span>';
     tf.addEventListener("click", function () { RG.tripOpen(!document.body.classList.contains("trip-open")); });
     if (pop && pop.parentNode) pop.parentNode.insertBefore(tf, pop); else hero.appendChild(tf);
   }
@@ -142,12 +142,15 @@ var stTimer = null;
 function status(msg, kind, ms, html) {
   var s = $("#t-status");
   clearTimeout(stTimer);
-  if (html) s.innerHTML = msg || ""; else s.textContent = msg || "";     // v82: 4 つ目が true なら HTML（«消す» «解除» のボタン用）
+  s.__raw = msg || ""; s.__html = !!html;
+  if (html) s.innerHTML = msg || ""; else if (RG.iconifyText) RG.iconifyText(s, msg || ""); else s.textContent = msg || "";     // v82: 4 つ目が true なら HTML（«消す» «解除» のボタン用）。D-01: 平文の絵文字は表示時にアイコン化
   s.className = "tb__status" + (kind ? " " + kind : "");
   s.style.display = msg ? "block" : "none";
   if (msg && ms !== 0) stTimer = setTimeout(function () { s.style.display = "none"; }, ms || 5000);
 }
 RG.tripStatus = status;
+/* D-01: アイコンが後から届いたら、表示中の平文ステータスをアイコンで出し直す */
+document.addEventListener("rg:icons", function () { var s = $("#t-status"); if (s && s.__raw && !s.__html && RG.iconifyText) RG.iconifyText(s, s.__raw); });
 
 RG.tripMapLink = function () {
   return Trip.origin ? RG.mapLinks(Trip.origin, Trip.origin, "transit") : null;
@@ -164,7 +167,7 @@ function modal(title, html) {
     M = document.createElement("div"); M.className = "modal";
     M.setAttribute("role", "dialog"); M.setAttribute("aria-modal", "true"); M.setAttribute("aria-labelledby", "modal-title");   // v97: 読み上げに «ダイアログ» と伝える
     M.innerHTML = '<div class="modal__box"><div class="modal__hd"><b id="modal-title"></b>' +
-      '<button class="modal__map" type="button" hidden aria-label="地図を見る（読みかけはそのまま）">🗺️ 地図</button>' +
+      '<button class="modal__map" type="button" hidden aria-label="地図を見る（読みかけはそのまま）"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 地図</button>' +
       '<button class="modal__x" type="button" aria-label="閉じる">×</button><i class="modal__prog" aria-hidden="true"></i></div><div class="modal__bd" tabindex="-1"></div></div>';
     document.body.appendChild(M);
     M.addEventListener("click", function (e) {
@@ -184,7 +187,7 @@ function modal(title, html) {
   $(".modal__map", M).hidden = true; $(".modal__prog", M).style.transform = "scaleX(0)";
   if (RG.readBackHide) RG.readBackHide();
   if (!M.classList.contains("show")) mPrevFocus = document.activeElement;             // 閉じたら元の場所へ戻す
-  $(".modal__hd b", M).textContent = title;
+  M.__title = title; if (RG.iconifyText) RG.iconifyText($(".modal__hd b", M), title); else $(".modal__hd b", M).textContent = title;   // D-01: 見出しの絵文字は表示時にアイコン化（平文の置き場のため）
   $(".modal__bd", M).innerHTML = html;
   M.classList.add("show"); $(".modal__bd", M).scrollTop = 0;
   var bd = $(".modal__bd", M); try { bd.focus({ preventScroll: true }); } catch (e) { bd.focus(); }   // v97: フォーカスを中へ（Esc・Tab が中で効く）
@@ -198,6 +201,8 @@ RG.closeModal = function () {
   if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
 };
 RG.openModal = modal;
+/* D-01: アイコンが後から届いたら、開いている窓の見出しをアイコンで出し直す */
+document.addEventListener("rg:icons", function () { if (M && M.__title && RG.iconifyText) RG.iconifyText($(".modal__hd b", M), M.__title); });
 /* v166: スポット・駅・案内の «カード» は濃いめの半透明（.modal--dark）。設定など入力の多い画面は openModal（白）のまま */
 RG.openCard = function (title, html) { var m = modal(title, html); m.classList.add("modal--dark"); return m; };
 /* ---- v156: 読み物 ⇄ 地図 を軽く行き来する ----
@@ -228,7 +233,7 @@ RG.modalPeek = function (o) {
     });
   }
   RB.__s = { gen: gen, top: top, o: o };
-  RB.querySelector(".readback__go").textContent = "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる";
+  var rbg = RB.querySelector(".readback__go"); if (RG.iconifyText) RG.iconifyText(rbg, "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる"); else rbg.textContent = "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる";
   RB.hidden = false; requestAnimationFrame(function () { RB.classList.add("on"); });
 };
 RG.readBackHide = function () { if (RB) { RB.classList.remove("on"); RB.hidden = true; RB.__s = null; } };
@@ -300,11 +305,11 @@ RG.spotTip = function (p, P, isOwn) {
       (p.t && p.t !== g.label && p.t !== p.n ? " ・ " + esc(p.t) : "") + "</div>" +
     (p.s ? '<div class="pp__s">' + stars(p.s) + "</div>" : "") +
     (d && d.d ? '<div class="pp__d">' + esc(d.d) + "</div>" : "") +
-    (near ? '<div class="pp__n">🚉 ' + esc(near.t.n) + "駅から徒歩約" + near.min + "分（" +
+    (near ? '<div class="pp__n"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> ' + esc(near.t.n) + "駅から徒歩約" + near.min + "分（" +
        Math.round(near.km * 1000) + "m）</div>" : "") +
-    (p.ad ? '<div class="pp__n">🏠 ' + esc(p.ad) + "</div>" : "") +
-    (vc ? '<div class="pp__v">✅ ' + vc + "回 行ったことがあります</div>" : "") +
-    (p.g === "camera" && p.url ? '<div class="pp__cam">📹 クリックで映像が見られます</div>' : "") +
+    (p.ad ? '<div class="pp__n"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-home"></use></svg> ' + esc(p.ad) + "</div>" : "") +
+    (vc ? '<div class="pp__v"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> ' + vc + "回 行ったことがあります</div>" : "") +
+    (p.g === "camera" && p.url ? '<div class="pp__cam"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-video"></use></svg> クリックで映像が見られます</div>' : "") +
     '<div class="pp__a">' +
       '<button class="pp__b" type="button" id="pp-more">' +
         (p.g === "camera" && p.url ? "📹 映像を見る" : "くわしく見る") + " ▸</button>" +
@@ -347,7 +352,7 @@ function cameraBlock(p) {
   if (p.g !== "camera" || !(p.url || p.yt || p.ch)) return "";
   var id = p.yt || ytId(p.url);
   var src = p.by ? esc(p.by) + "（YouTube）" : "東京都（建設局・港湾局）のライブカメラ";
-  var head = '<div class="cam"><div class="cam__h">📹 いまの映像' +
+  var head = '<div class="cam"><div class="cam__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-video"></use></svg> いまの映像' +
     (p.kind ? '<span class="cam__k">' + esc(p.kind) + "</span>" : "") +
     (p.river ? '<span class="cam__k">' + esc(p.river) + "</span>" : "") + "</div>";
   if (!id && !p.ch) {
@@ -358,7 +363,7 @@ function cameraBlock(p) {
   // 押すまで読み込まない «軽い» 置きかた。押すとその場で再生が始まる。
   // チャンネルIDがあれば «いま配信中のもの» を指す埋め込みを優先（24h配信は再起動でIDが変わるため）
   var thumb = id ? '<img class="cam__th" src="https://i.ytimg.com/vi/' + esc(id) + '/hqdefault.jpg" alt="' + esc(p.n) + ' のライブ映像" loading="lazy">'
-                 : '<div class="cam__th cam__th--ph">📹</div>';
+                 : '<div class="cam__th cam__th--ph"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-video"></use></svg></div>';
   return head +
     '<div class="cam__w" data-yt="' + esc(id || "") + '" data-ch="' + esc(p.ch || "") + '">' + thumb +
       '<button class="cam__play" type="button" aria-label="映像を再生">▶</button>' +
@@ -441,7 +446,7 @@ RG.showSpot = function (p) {
     if (RG.hav([p.la, p.lo], [x.la, x.lo]) < 0.4) handy[x.g] = (handy[x.g] || 0) + 1;
   });
   var handyHtml = Object.keys(handy).length
-    ? '<div class="handy"><div class="handy__h">🧭 まわり400mにあるもの</div>' +
+    ? '<div class="handy"><div class="handy__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> まわり400mにあるもの</div>' +
       Object.keys(handy).map(function (k) {
         return '<span class="handy__i">' + HANDY[k] + " <b>" + handy[k] + "</b></span>"; }).join("") +
       "</div>" : "";
@@ -450,7 +455,7 @@ RG.showSpot = function (p) {
   if (Trip.origin) {
     var km0 = RG.hav(Trip.origin, [p.la, p.lo]);
     var Wk = RG.CONFIG.modes.walk, DTk = RG.CONFIG.detour.walk;
-    fromHtml = '<div class="fromhere"><span class="fromhere__h">🧳 ' + esc(Trip.label) + " から</span>" +
+    fromHtml = '<div class="fromhere"><span class="fromhere__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-luggage"></use></svg> ' + esc(Trip.label) + " から</span>" +
       '<span class="fromhere__v">直線 ' + km0.toFixed(1) + "km ・ 歩くと約" +
       Math.round(km0 * DTk / Wk.speed * 60) + "分</span>" +
       (nb ? '<button class="fromhere__b" type="button" data-dest2="' + esc(nb.t.id) +
@@ -478,7 +483,7 @@ RG.showSpot = function (p) {
         (p.t && p.t !== p.n ? " ・ " + esc(p.t) : "") + "</p></div></div>" +
     '<div class="spotcard__st">' + stars(p.s || 3) +
       '<span class="spotcard__why">行く価値のめやす</span>' +
-      (vcount ? '<span class="spotcard__v">✅ ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
+      (vcount ? '<span class="spotcard__v"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
     (RG.pinRow ? RG.pinRow(p) : "") +
     (RG.focusHtml ? RG.focusHtml(p.n) : "") +
     (RG.whsBanner ? RG.whsBanner(p.n) : "") +                           // v127: 世界遺産の一部なら帯
@@ -511,15 +516,15 @@ RG.showSpot = function (p) {
     handyHtml +
     sameGenre(p) +
     '<div class="lnks">' +
-      '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + q + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' +
-      (p.url ? '<a class="lnk" href="' + esc(p.url) + '" target="_blank" rel="noopener"><span>🔗</span>公式ページ</a>' : "") +
+      '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + q + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' +
+      (p.url ? '<a class="lnk" href="' + esc(p.url) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg></span>公式ページ</a>' : "") +
       '<a class="lnk" href="https://www.openstreetmap.org/?mlat=' + p.la + "&mlon=" + p.lo +
-        "#map=17/" + p.la + "/" + p.lo + '" target="_blank" rel="noopener"><span>🗾</span>地図で見る</a>' +
+        "#map=17/" + p.la + "/" + p.lo + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>地図で見る</a>' +
       '<a class="lnk" href="https://maps.gsi.go.jp/#17/' + p.la + "/" + p.lo +
-        '" target="_blank" rel="noopener"><span>🗺️</span>地理院地図</a>' +
+        '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>地理院地図</a>' +
       (near.length ? '<button class="lnk" type="button" data-goto="' + esc(near[0].t.id) +
-        '"><span>🚉</span>' + esc(near[0].t.n) + "駅を見る</button>" : "") +
-      '<button class="lnk" type="button" data-plan="1"><span>🧳</span>立ち寄る（リストに追加）</button>' +
+        '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>' + esc(near[0].t.n) + "駅を見る</button>" : "") +
+      '<button class="lnk" type="button" data-plan="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-luggage"></use></svg></span>立ち寄る（リストに追加）</button>' +
     "</div>" +
     RG.mapButtons(RG.Trip.origin, [p.la, p.lo], "walk", "出発地からの道順") +
     (p.chain && !p.shop ? '<p class="src od">' +
@@ -591,18 +596,18 @@ RG.showPlace = function (r) {
   near = near.slice(0, 4);
   var W = RG.CONFIG.modes.walk, DT = RG.CONFIG.detour.walk;
   var html = '<div class="spotcard"><div class="spotcard__hd">' +
-    '<span class="gbadge gbadge--b" style="--lc:#0055AD">📍</span>' +
+    '<span class="gbadge gbadge--b" style="--lc:#0055AD"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg></span>' +
     "<div><h3>" + esc(r.n) + '</h3><p class="spotcard__k">' + esc(r.sub || "") + "</p></div></div>" +
     '<div class="exgrid">' + (near.length
       ? near.map(function (x) {
-          return '<div class="ex"><span class="ex__k">🚉 ' + esc(x.t.n) + '駅</span><span class="ex__v">徒歩' +
+          return '<div class="ex"><span class="ex__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> ' + esc(x.t.n) + '駅</span><span class="ex__v">徒歩' +
             Math.round(x.km * DT / W.speed * 60) + '分</span><span class="ex__s">' +
             Math.round(x.km * 1000) + "m ・ " + ((x.t.ls || []).slice(0, 3).join(" / ") || "路線情報なし") + "</span></div>"; }).join("")
       : '<div class="ex"><span class="ex__k">最寄り駅</span><span class="ex__v">—</span>' +
         '<span class="ex__s">半径2.5km内に駅がありません</span></div>') + "</div>" +
     (near.length ? '<div class="lnks"><button class="lnk" type="button" data-goto="' + esc(near[0].t.id) +
-      '"><span>🚉</span>' + esc(near[0].t.n) + '駅のカードを見る</button>' +
-      '<button class="lnk" type="button" data-dest="1"><span>🧭</span>ここへ行く（手段をくらべる）</button></div>' : "") +
+      '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>' + esc(near[0].t.n) + '駅のカードを見る</button>' +
+      '<button class="lnk" type="button" data-dest="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg></span>ここへ行く（手段をくらべる）</button></div>' : "") +
     RG.mapButtons(RG.Trip.origin, [r.la, r.lo], "walk", "地図アプリで答え合わせ") +
     '<p class="src">' + esc(r.licence || "座標: このアプリの索引") + "</p></div>";
   var m = RG.openCard("📍 " + r.n, html);
@@ -639,7 +644,7 @@ RG.showEvents = function () {
           var e = x.e;
           return '<div class="ev' + (x.pass ? "" : " ev--dim") + '">' +
             '<div class="ev__t">' + badge(e.sc) + "<b>" + esc(e.n) + "</b></div>" +
-            '<div class="ev__d">📅 ' + esc(e.s === e.e ? e.s : e.s + " 〜 " + e.e) +
+            '<div class="ev__d"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> ' + esc(e.s === e.e ? e.s : e.s + " 〜 " + e.e) +
               (e.p ? " ／ 📍 " + esc(e.p) : "") + (e.f ? " ／ 💴 " + esc(e.f) : "") + "</div>" +
             (e.d ? '<div class="ev__x">' + esc(e.d) + "</div>" : "") +
             '<div class="ev__f"><span>' + esc(e.org) + " ・ 規模スコア " + e.sc + "</span>" +
@@ -694,9 +699,9 @@ RG.showRanking = function (focusId, scope) {
   var lineOpts = (RG.NET.lines || []).map(function (l) { return l.name; }).filter(function (n) { return n !== "乗り換え"; }).sort(function (a, b) { return a.localeCompare(b, "ja"); });
   var html =
     '<div class="rk__scope">' +
-      '<button class="rk__sc' + (scope.kind === "all" ? " on" : "") + '" type="button" data-scope="all">🗾 全国</button>' +
-      '<select id="rk-pref" class="rk__sel"><option value="">🏯 都道府県で…</option>' + prefs.map(function (p) { return '<option value="' + p + '"' + (scope.kind === "pref" && scope.pref === p ? " selected" : "") + ">" + p + (p === myPref ? "（この駅）" : "") + "</option>"; }).join("") + "</select>" +
-      '<select id="rk-line" class="rk__sel"><option value="">🚃 路線で…</option>' +
+      '<button class="rk__sc' + (scope.kind === "all" ? " on" : "") + '" type="button" data-scope="all"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 全国</button>' +
+      '<select id="rk-pref" class="rk__sel"><option value=""><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-castle"></use></svg> 都道府県で…</option>' + prefs.map(function (p) { return '<option value="' + p + '"' + (scope.kind === "pref" && scope.pref === p ? " selected" : "") + ">" + p + (p === myPref ? "（この駅）" : "") + "</option>"; }).join("") + "</select>" +
+      '<select id="rk-line" class="rk__sel"><option value=""><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-train"></use></svg> 路線で…</option>' +
         (myLines.length ? '<optgroup label="この駅の路線">' + myLines.map(function (L) { return '<option value="' + esc(L) + '"' + (scope.kind === "line" && scope.line === L ? " selected" : "") + ">" + esc(L) + "</option>"; }).join("") + "</optgroup>" : "") +
         '<optgroup label="すべての路線">' + lineOpts.map(function (L) { return '<option value="' + esc(L) + '"' + (scope.kind === "line" && scope.line === L && myLines.indexOf(L) < 0 ? " selected" : "") + ">" + esc(L) + "</option>"; }).join("") + "</optgroup></select>" +
     "</div>" +
@@ -865,7 +870,7 @@ function summaryHtml(r, s, rec) {
     '<div class="rs__acts"><button class="opt__b opt__b--nav" type="button" data-nav="' + rec.__i + '"><span class="ms" aria-hidden="true">map</span> 地図で経路を見る</button>' +
     '<button class="opt__b" type="button" data-add="' + rec.__i + '"><span class="ms" aria-hidden="true">playlist_add</span> リストに追加</button>' +
     '<button class="opt__b" type="button" data-jump="' + rec.__i + '"><span class="ms" aria-hidden="true">expand_circle_down</span> 詳細へ</button>' +
-    (RG.onsite && (Trip.id === "東京" || s.id === "東京" || (rec.rail && (rec.rail.board === "東京" || rec.rail.alight === "東京"))) ? '<button class="opt__b" type="button" data-onsite="exit">🚪 東京駅の出口を見る</button>' : "") +   // v96: 現地モードへ
+    (RG.onsite && (Trip.id === "東京" || s.id === "東京" || (rec.rail && (rec.rail.board === "東京" || rec.rail.alight === "東京"))) ? '<button class="opt__b" type="button" data-onsite="exit"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-door"></use></svg> 東京駅の出口を見る</button>' : "") +   // v96: 現地モードへ
     "</div></div>";
 }
 function axesHtml(ax) {
@@ -902,7 +907,7 @@ function showRoutes(destId) {
     '<div class="rt__meta">' + (r.at.getMonth() + 1) + "/" + r.at.getDate() + " " + hhmm(r.at) +
     " 発（" + kl + "）／直線 " + r.straightKm.toFixed(1) + "km／" +
     RG.CONFIG.aggr[r.aggr].emoji + RG.CONFIG.aggr[r.aggr].label + "</div></div>";
-  var night = r.night ? '<div class="nightbar">🌙 <b>終電後の時間帯です。</b>始発（' +
+  var night = r.night ? '<div class="nightbar"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-moon"></use></svg> <b>終電後の時間帯です。</b>始発（' +
     RG.CONFIG.service.firstTrain + "ごろ）まであと " + r.toFirstTrain + " 分。" +
     "電車の案は成立しないものとして下に降ろし、代わりに<b>組み合わせ案</b>を上位に出しています。</div>" : "";
   var ctx = { from: Trip.origin, to: [s.la, s.lo] };
@@ -934,7 +939,7 @@ function showRoutes(destId) {
   if (RG.heroLastRoute) RG.heroLastRoute();
   var html = head + night + summaryHtml(r, s, recOpt) + axesHtml(ax) + party + pareto(r) + sortBar +
     '<div class="opts">' + base.map(function (o) { return optCard(o, o.__i, ctx); }).join("") + "</div>" +
-    '<div class="disclaim">⚠ これはモデルによる<b>概算</b>です。時刻表・道路状況・バス系統・シェアサイクルの' +
+    '<div class="disclaim"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> これはモデルによる<b>概算</b>です。時刻表・道路状況・バス系統・シェアサイクルの' +
     "ポート位置は見ていません。前提の数字はすべて <code>data/config.js</code> にあります。" +
     "移動前に各事業者の公式情報で必ず確認してください。</div>";
   var m = modal("移動手段をくらべる", html);
@@ -1054,7 +1059,7 @@ function openRescue() {
     '<div class="rs__ctl"><label>タクシーに出せる予算 <output id="rs-out">3,000円</output>' +
     '<input id="rs-budget" type="range" min="500" max="15000" step="500" value="3000"></label></div>' +
     '<div id="rs-body"></div>' +
-    '<div class="disclaim">⚠ 終電・始発の時刻は<b>概算</b>（' + RG.CONFIG.service.lastTrain + "／" +
+    '<div class="disclaim"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> 終電・始発の時刻は<b>概算</b>（' + RG.CONFIG.service.lastTrain + "／" +
     RG.CONFIG.service.firstTrain + "）です。駅・路線ごとの実際の時刻は各社の時刻表で必ず確認してください。" +
     "深夜の徒歩・自転車は、明るい道を選び、無理をしないこと。</div>";
   var m = modal("🌙 終電を逃した — 深夜レスキュー", html);
@@ -1101,7 +1106,7 @@ function openRescue() {
         rsCard("🌅", "始発を待つ", "あと " + wait + " 分", "0円で全線が復活",
           "待てるなら、これがいちばん安い", "#A58000") +
       "</div>" +
-      '<p class="rs__hint">行き先の駅をタップして「🧭 ここへ行く」を押すと、' +
+      '<p class="rs__hint">行き先の駅をタップして「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> ここへ行く」を押すと、' +
       "この時刻での具体的な組み合わせ案（タクシー◯%＋徒歩、など）が出ます。</p>";
     RG.paintPick(reach.stations.map(function (x) { return x.id; }));
   }

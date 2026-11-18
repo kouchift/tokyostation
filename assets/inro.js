@@ -225,9 +225,9 @@ RG.inroForm = function (S, vid) {
       '<label>所属組織（任意・学校法人／塾／会社など）<input id="inro-org" maxlength="60" value="' + esc(S.org || "") + '"></label>' +
       '<label>拠点数（複数拠点の組織は、申し訳ないが拠点数分の投げ銭を）<input id="inro-sites" type="number" min="1" max="999" value="' + (S.sites || 1) + '"></label>' +
       '<p class="tj__hint">印字される金額: <b>¥' + amt.toLocaleString("ja-JP") + "</b>（この端末の投げ銭累計。100〜999,999 円）" + (prev ? "　／　発行済み: No. " + esc(prev.serial) + "（" + esc(prev.date) + "）→ 次は <b>再発行</b> になります" : "") + "</p>" +
-      '<div class="tj__row"><button id="inro-go" class="set__b2" type="button">🪪 ' + (prev ? "再発行する（PDF）" : "発行する（PDF）") + "</button></div>" +
+      '<div class="tj__row"><button id="inro-go" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-id"></use></svg> ' + (prev ? "再発行する（PDF）" : "発行する（PDF）") + "</button></div>" +
       '<div id="inro-res" class="tj__res"></div></div>'
-      : '<p class="tj__hint">まだこの端末での投げ銭記録がありません。☕ 投げ銭を 100 円以上行うと発行できます。</p>') +
+      : '<p class="tj__hint">まだこの端末での投げ銭記録がありません。<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 投げ銭を 100 円以上行うと発行できます。</p>') +
     '<p class="src">PDF は本文が画像で、複製・抽出・変更を不許可にした暗号化 PDF（印刷は可）。通し番号・照合 QR・マイクロ文字・透かし入り。再発行には「再発行」の印が付きますが、原本との違いによる影響は何もありません。発行者の事業所番号は印字されません（極小フォントで理由を記載）。</p></div>';
 };
 RG.inroBind = function (m, S, vid, save) {

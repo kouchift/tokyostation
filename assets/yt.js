@@ -72,7 +72,7 @@ RG.ytForStation = function (name) {
 };
 RG.showYtList = function (cat) {
   if (!RG.YT || !RG.YT.length) {
-    RG.openModal("▶️ YouTube で見る場所", '<div class="gate"><div class="gate__e">▶️🗾</div><p class="gate__t">動画のデータはまだ入っていません。</p>' +
+    RG.openModal("▶️ YouTube で見る場所", '<div class="gate"><div class="gate__e">▶️<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></div><p class="gate__t">動画のデータはまだ入っていません。</p>' +
       '<p class="gate__b">制作者の PC で <code>tools/build_youtube_spots.py</code> を YouTube Data API のキー（無料）で実行すると、人気 YouTuber 上位 120 チャンネル＋旅行・大食い・歴史・僻地系の動画から、場所が分かるものがスポットになります。</p></div>');
     return;
   }

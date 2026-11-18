@@ -54,19 +54,19 @@ RG.secureOK = secureOK;
 /* ------------------------------------------------------------ 手順の文言 */
 /* 「アドレスバーの鍵マーク」はどのブラウザでも共通の近道なので最初に置く */
 var QUICK = {
-  chrome: ["アドレスバー左の <b>🔒（鍵）</b> または <b>⚙</b> を押す",
+  chrome: ["アドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg>（鍵）</b> または <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-gear'></use></svg></b> を押す",
            "「サイトの設定」→「位置情報」を <b>許可</b> にする",
            "ページを再読み込みする"],
-  edge:   ["アドレスバー左の <b>🔒（鍵）</b> を押す",
+  edge:   ["アドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg>（鍵）</b> を押す",
            "「このサイトのアクセス許可」→「位置情報」を <b>許可</b> にする",
            "ページを再読み込みする"],
-  firefox:["アドレスバー左の <b>🔒</b> または <b>⚙</b> を押す",
+  firefox:["アドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg></b> または <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-gear'></use></svg></b> を押す",
            "「位置情報へのアクセス」の <b>ブロックを解除</b> する",
            "ページを再読み込みする"],
   safari: ["メニューバーの <b>Safari</b> →「設定」→「Webサイト」タブ",
            "左の一覧から <b>位置情報</b> を選ぶ",
            "このサイトを <b>許可</b> にする"],
-  samsung:["アドレスバー左の <b>🔒</b> を押す",
+  samsung:["アドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg></b> を押す",
            "「権限」→「位置情報」を <b>許可</b> にする",
            "ページを再読み込みする"],
   other:  ["アドレスバーの鍵マークやサイト情報のボタンを押す",
@@ -93,7 +93,7 @@ var OS_STEPS = {
   android: { title: "Android", steps: [
     "<b>設定</b> アプリ →「<b>位置情報</b>」をオンにする",
     "「設定 → アプリ → （Chrome など使っているブラウザ）→ 権限 → 位置情報」を <b>許可</b> にする",
-    "ブラウザで、アドレスバー左の <b>🔒</b> →「権限」→「位置情報」を <b>許可</b> にする",
+    "ブラウザで、アドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg></b> →「権限」→「位置情報」を <b>許可</b> にする",
     "ページを再読み込みして、もう一度「📍 現在地」を押す"
   ], note: "「位置情報の精度を上げる（Google 位置情報の精度）」をオンにすると当たりやすくなります。" },
   mac: { title: "Mac（macOS）", steps: [
@@ -101,7 +101,7 @@ var OS_STEPS = {
     "「<b>プライバシーとセキュリティ</b>」→「<b>位置情報サービス</b>」をオンにする",
     "同じ画面の一覧で、使っているブラウザ（Safari / Chrome など）を <b>オン</b> にする",
     "Safari のときは <b>Safari → 設定 → Webサイト → 位置情報</b> でこのサイトを「許可」にする",
-    "Chrome / Edge のときは アドレスバーの <b>🔒</b> →「サイトの設定」→「位置情報」を「許可」",
+    "Chrome / Edge のときは アドレスバーの <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg></b> →「サイトの設定」→「位置情報」を「許可」",
     "ページを再読み込みして、もう一度「📍 現在地」を押す"
   ], note: "macOS のバージョンによっては「システム環境設定 → セキュリティとプライバシー → プライバシー」です。" },
   win: { title: "Windows", steps: [
@@ -109,11 +109,11 @@ var OS_STEPS = {
     "「<b>位置情報</b>」を開き、「位置情報サービス」を <b>オン</b> にする",
     "同じ画面の「<b>アプリに位置情報へのアクセスを許可する</b>」も <b>オン</b> にする",
     "さらに下の「<b>デスクトップ アプリに位置情報へのアクセスを許可する</b>」も <b>オン</b> にする",
-    "ブラウザで、アドレスバー左の <b>🔒</b> →「サイトの設定」→「位置情報」を <b>許可</b>",
+    "ブラウザで、アドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg></b> →「サイトの設定」→「位置情報」を <b>許可</b>",
     "ページを再読み込みして、もう一度「📍 現在地」を押す"
   ], note: "Windows 10 では「設定 → プライバシー → 位置情報」です。デスクトップアプリの項目を忘れやすいので注意。" },
   linux: { title: "Linux", steps: [
-    "ブラウザのアドレスバー左の <b>🔒</b> から、位置情報を <b>許可</b> にする",
+    "ブラウザのアドレスバー左の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lock'></use></svg></b> から、位置情報を <b>許可</b> にする",
     "ディストリビューションによっては位置情報サービス（GeoClue）が入っていないことがあります",
     "取れない場合は、駅を指定する方法をお使いください"
   ], note: "デスクトップ Linux では位置情報が取れないことがよくあります。" },
@@ -194,8 +194,8 @@ RG.showGeoHelp = function (err, uaTest) {
       '<details class="gh__all"><summary>ほかの OS の手順も見る</summary>' + others + "</details>" +
 
       '<div class="gh__acts">' +
-        '<button id="gh-retry" class="pl__b1" type="button">📍 もう一度ためす</button>' +
-        '<button id="gh-station" class="set__b2" type="button">🚉 かわりに駅を指定する</button>' +
+        '<button id="gh-retry" class="pl__b1" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> もう一度ためす</button>' +
+        '<button id="gh-station" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> かわりに駅を指定する</button>' +
       "</div>" +
       '<p class="src">Web ページから OS やブラウザの設定画面を直接開くことは、' +
       "セキュリティ上どのブラウザでも許可されていません。そのため手順の案内という形にしています。" +

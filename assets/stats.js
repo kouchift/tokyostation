@@ -88,7 +88,7 @@ RG.statsInit = function () {
 /* 設定パネル: 送信の ON/OFF（endpoint があるときだけ意味がある） */
 RG.statsSwitchHTML = function () {
   if (!endpoint()) return "";
-  return '<div class="set__sec"><h4>📊 利用状況の送信（匿名）</h4><label class="set__sw"><input id="set-stats" type="checkbox"' + (RG.settings && RG.settings.statsOff ? "" : " checked") + '> 使い方の統計（ページ表示・検索・比較の回数）を制作者に送る</label>' +
+  return '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg> 利用状況の送信（匿名）</h4><label class="set__sw"><input id="set-stats" type="checkbox"' + (RG.settings && RG.settings.statsOff ? "" : " checked") + '> 使い方の統計（ページ表示・検索・比較の回数）を制作者に送る</label>' +
     '<p class="set__d">氏名・メール・位置情報・端末 ID は送りません。ブラウザの「追跡しない」が ON なら送りません。</p></div>';
 };
 RG.statsSwitchBind = function (m) { var c = m.querySelector("#set-stats"); if (c) c.addEventListener("change", function () { RG.settings.statsOff = !c.checked; if (RG.saveSettings) RG.saveSettings(); }); };
