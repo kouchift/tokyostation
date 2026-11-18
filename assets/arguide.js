@@ -75,7 +75,8 @@ RG.arOpen = function (o) {
     if (!S) return; S.pos = [p.coords.latitude, p.coords.longitude]; S.acc = p.coords.accuracy; paint();
   }, function (e) {
     if (!S) return; var a = ov.querySelector(".arv__acc");
-    a.textContent = e.code === 1 ? "⚠️ 現在地の利用が許可されていません（設定で許可してください）" : "⚠️ 現在地が取れません（屋内や地下では取れないことがあります）";
+    var emsg = e.code === 1 ? "⚠️ 現在地の利用が許可されていません（設定で許可してください）" : "⚠️ 現在地が取れません（屋内や地下では取れないことがあります）";
+    if (RG.iconifyText) RG.iconifyText(a, emsg); else a.textContent = emsg;   // D-01 第3周回: 平文の置き場は表示時にアイコン化
     a.classList.add("warn");
   }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
   document.addEventListener("visibilitychange", onHide);
@@ -124,7 +125,7 @@ function paint() {
   var FOV = 60;                                                      // カメラの横の見える角度（だいたい）
   if (up && Math.abs(rel) < FOV / 2 && !near) {
     pin.hidden = false; pin.style.left = (50 + rel / FOV * 100) + "%";
-    pin.querySelector("b").textContent = "📍 " + S.n; pin.querySelector("span").textContent = fmtDist(m);
+    var pb = pin.querySelector("b"); if (RG.iconifyText) RG.iconifyText(pb, "📍 " + S.n); else pb.textContent = "📍 " + S.n; pin.querySelector("span").textContent = fmtDist(m);   // D-01 第3周回
   } else pin.hidden = true;
 }
 /* v164: 案内中に «つぎの目印» が進んだら、矢印の先を変える（navui.js の update から） */

@@ -291,7 +291,8 @@ RG.setHeat = function (id) {
     if (hb) {
       var f = (RG.HEAT_FACTORS || []).filter(function (x) { return x.id === B.heat; })[0];
       hb.setAttribute("aria-pressed", String(!!f));
-      hb.textContent = "🌡️ " + (f ? f.label : "色分け") + " " + (B.qbHeat ? "▲" : "▼");
+      var hbt = "🌡️ " + (f ? f.label : "色分け") + " " + (B.qbHeat ? "▲" : "▼");
+      if (RG.iconifyText) RG.iconifyText(hb, hbt); else hb.textContent = hbt;   // D-01 第3周回: 🌡️ だけアイコン化（▲▼はタイポグラフィとして残す）
     }
   }
   save();

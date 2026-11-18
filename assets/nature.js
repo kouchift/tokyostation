@@ -509,7 +509,8 @@ RG.showMountainRank = function (pref) {
   bind();
   m.querySelector("#mk-pref").addEventListener("change", function () {
     cur = this.value; m.querySelector("#mk-body").innerHTML = rows();
-    var hd = m.querySelector(".modal__hd b"); if (hd) hd.textContent = "🗻 山の標高ランキング" + (cur ? "（" + cur + "）" : "（全国）");
+    var t2 = "🗻 山の標高ランキング" + (cur ? "（" + cur + "）" : "（全国）");
+    if (RG.setModalTitle) RG.setModalTitle(t2); else { var hd = m.querySelector(".modal__hd b"); if (hd) hd.textContent = t2; }   // D-01 第3周回: 見出し直書きをやめ、アイコン化と __title 同期の受け口へ
     bind();
   });
 };
