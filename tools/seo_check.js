@@ -138,6 +138,25 @@ ok("internal links", idx.filter((p) => p.rel !== "index.html").every((p) => { co
   ok("URL", !/^\//.test(m.start_url) && !/^\//.test(m.scope), "manifest の start_url/scope が / 始まり（project site ではサイトの外になる）");
 })();
 
+/* ---------- 5b. filehash 照合（data/filehash.json が実ファイルと合っているか） ---------- */
+(function () {
+  const G = "filehash";
+  if (!exists("data/filehash.json")) { ok(G, false, "data/filehash.json が無い"); return; }
+  const { spawnSync } = require("child_process");
+  let r;
+  try { r = spawnSync(process.execPath, [path.join(__dirname, "make_filehash.mjs"), "--check"], { encoding: "utf8", cwd: ROOT, timeout: 180000, maxBuffer: 4 * 1024 * 1024 }); }
+  catch (e) { ok(G, false, "make_filehash.mjs --check を実行できない: " + e.message); return; }
+  if (r.error) { ok(G, false, "make_filehash.mjs --check を実行できない: " + r.error.message); return; }
+  const out = (r.stdout || "") + (r.stderr || "");
+  const m = out.match(/filehash-check stale=(\d+) missing=(\d+) extra=(\d+) stored=(\d+) computed=(\d+)/);
+  if (!m) { ok(G, false, "make_filehash.mjs --check の出力が読めない: " + out.trim().split("\n").slice(-2).join(" / ").slice(0, 200)); return; }
+  const stale = +m[1], missing = +m[2], extra = +m[3];
+  if (r.status === 0 && stale === 0 && missing === 0 && extra === 0) { ok(G, true, "filehash 照合 OK"); return; }
+  const sample = (label) => { const mm = out.match(new RegExp("^\\s*" + label + " \\(\\d+\\): (.+)$", "m")); return mm ? mm[1].replace(/\s+…ほか \d+ 件$/, "").split(", ").slice(0, 3) : []; };
+  const names = [].concat(sample("stale"), sample("missing"), sample("extra")).slice(0, 5);
+  ok(G, false, "data/filehash.json が実ファイルと合っていない（stale " + stale + "／missing " + missing + "／extra " + extra + "）" + (names.length ? " 例: " + names.join(", ") : "") + " ― node tools/make_filehash.mjs で作り直し、同じ PR に入れる");
+})();
+
 /* ---------- 6. 公開中のサイト（--live） ---------- */
 async function live() {
   const G = "live";
@@ -160,7 +179,7 @@ async function live() {
 
 (async () => {
   if (LIVE) await live();
-  const order = ["robots.txt", "sitemap.xml", "canonical", "title", "meta description", "H1", "internal links", "OGP", "favicon", "JSON-LD", "404", "robots meta", "html basics", "img alt", "URL", "live"];
+  const order = ["robots.txt", "sitemap.xml", "canonical", "title", "meta description", "H1", "internal links", "OGP", "favicon", "JSON-LD", "404", "robots meta", "html basics", "img alt", "URL", "filehash", "live"];
   console.log("\n| チェック | 結果 | PASS | WARN | FAIL |\n|---|---|---|---|---|");
   order.concat(Object.keys(groups).filter((k) => !order.includes(k))).forEach((k) => { const g = groups[k]; if (!g) return; console.log(`| ${k} | ${g.FAIL ? "FAIL" : "PASS"}${g.WARN ? "（WARN " + g.WARN + "）" : ""} | ${g.PASS} | ${g.WARN} | ${g.FAIL} |`); });
   Object.keys(groups).forEach((k) => groups[k].msgs.forEach((m) => console.log(`  [${k}] ${m}`)));
