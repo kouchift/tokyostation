@@ -40,3 +40,5 @@ a{text-underline-offset:3px}
 .skip:focus{left:8px;top:8px}
 @media (prefers-reduced-motion:reduce){.btn,.rel li a,.chips a{transition:none}}
 @media (max-width:480px){h1{font-size:22px}table{font-size:13px}th,td{padding:7px 5px}.hide-sp{display:none}}
+/* 静的ページの分類・手段アイコン（D-01: 絵文字置換。絵柄は assets/icons-static.svg、.ic は大きさだけを決める） */
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-.12em;flex:none}
