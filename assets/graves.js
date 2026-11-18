@@ -27,9 +27,16 @@ function ensure(cb) {
 }
 RG.graveEnsure = ensure;
 RG.mergeGraves = function () {
-  if (!RG.GRAVES || RG.__graveMerged) return; RG.__graveMerged = 1;
+  if (!RG.GRAVES) return;
   RG.MAPPOI = RG.MAPPOI || [];
+  /* 第3周回B: whs.js と同じ理由（data/mappois.js の RG.MAPPOI 直接代入で消える）で、
+     取り込んだ配列が差し替わっていたら重複を避けて取り込み直す */
+  if (RG.__graveMerged && RG.__graveArr === RG.MAPPOI) return;
+  RG.__graveMerged = 1; RG.__graveArr = RG.MAPPOI;
+  var have = {};
+  RG.MAPPOI.forEach(function (p) { if (p.i && p.i.indexOf("grv") === 0) have[p.i] = 1; });
   G().forEach(function (x) {
+    if (have["grv" + x.id]) return;
     RG.MAPPOI.push({ i: "grv" + x.id, n: x.n.replace(/（.*?）/g, "") + "の墓", la: x.la, lo: x.lo, g: "grave", s: 4.2, ti: 0, sl: 40,
                      t: x.grave + "（" + x.life + "・" + x.era + "）", be: "🪦", bc: ERA_C[x.era] || "#5D4037", grave: x.id });
   });
