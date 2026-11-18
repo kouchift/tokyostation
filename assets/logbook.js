@@ -301,7 +301,8 @@ RG.bindLogs = function (m, redraw) {
       var pv = m.querySelector('[data-prev="' + b.dataset.mdp + '"]');
       pv.hidden = !pv.hidden;
       if (!pv.hidden) pv.textContent = RG.exportMd(P.logs[+b.dataset.mdp]).md;
-      b.textContent = pv.hidden ? "👀 中身を見る" : "👀 閉じる";
+      var lbt = pv.hidden ? "👀 中身を見る" : "👀 閉じる";
+      if (RG.iconifyText) RG.iconifyText(b, lbt); else b.textContent = lbt;   // D-01 第3周回
     });
   });
   $$("[data-ldel]", m).forEach(function (b) {
