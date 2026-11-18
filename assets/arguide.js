@@ -32,7 +32,7 @@ function fmtDist(m) { return m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 10
 
 RG.arBtn = function (n, la, lo) {
   if (la == null || lo == null) return "";
-  return '<button class="lnk arb" type="button" data-ar="' + esc(n || "") + '" data-ar-la="' + la + '" data-ar-lo="' + lo + '"><span>📷</span>AR で方角を見る</button>';
+  return '<button class="lnk arb" type="button" data-ar="' + esc(n || "") + '" data-ar-la="' + la + '" data-ar-lo="' + lo + '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg></span>AR で方角を見る</button>';
 };
 function supported() { return !!(navigator.geolocation); }
 
@@ -44,11 +44,11 @@ RG.arOpen = function (o) {
   ov.innerHTML = '<video class="arv__v" playsinline muted autoplay></video>' +
     '<div class="arv__pin" hidden><b></b><span></span></div>' +
     '<div class="arv__top"><button class="arv__x" type="button" aria-label="閉じる">' + (S.nav ? "🗺️ 地図に戻る" : "✕ 地図に戻る") + '</button><span class="arv__acc">📡 現在地を調べています…</span>' +
-      (S.nav ? '<span class="arv__nav">🧭 案内は続いています。つぎの目印：<b class="arv__tn">' + esc(S.n) + "</b></span>" : "") + "</div>" +
+      (S.nav ? '<span class="arv__nav"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> 案内は続いています。つぎの目印：<b class="arv__tn">' + esc(S.n) + "</b></span>" : "") + "</div>" +
     '<div class="arv__panel"><div class="arv__arrow" aria-hidden="true"><i></i></div>' +
       '<div class="arv__txt"><div class="arv__n">' + esc(S.n) + '</div><div class="arv__d">—</div><div class="arv__h">スマホを立てて、周りを見わたしてください</div></div></div>' +
     (S.nav ? '<div class="arv__tools"><div class="arv__step"></div>' +
-      '<button class="arv__x" type="button" data-arv="detail">📋 移動の詳細</button>' +
+      '<button class="arv__x" type="button" data-arv="detail"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> 移動の詳細</button>' +
       '<button class="arv__x arv__x--stop" type="button" data-arv="stop">案内をやめる</button></div>' : "") +
     '<p class="arv__note">直線の方角と距離です（道なりではありません）。位置は GPS、向きはスマホのコンパスで測っています。' + (S.nav ? "屋内や地下では取れないので、分かりにくいときは地図に戻ってください。" : "") + "</p>";
   document.body.appendChild(ov); S.ov = ov;

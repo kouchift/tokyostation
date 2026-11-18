@@ -196,8 +196,8 @@ RG.bindCounter = function (ta, span, max) {
 RG.renderLogs = function () {
   var P = RG.Plan;
   if (!P.logs.length) {
-    return '<p class="set__d">まだありません。<br>「📋 予定」タブで行き先を入れて、' +
-           "<b>✅ 行ってきた</b> を押すと、ここに事後の記録として残ります。</p>";
+    return '<p class="set__d">まだありません。<br>「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> 予定」タブで行き先を入れて、' +
+           "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-check'></use></svg> 行ってきた</b> を押すと、ここに事後の記録として残ります。</p>";
   }
   return P.logs.map(function (g, gi) {
     var sumA = 0, hasA = false;
@@ -224,13 +224,13 @@ RG.renderLogs = function () {
         '<label class="lg__l">日記 <span class="lg__cnt" data-cnt="diary_' + gi + '">' + cntText(g.diary, RG.LOG_LIMITS.diary) + '</span>' +
         '<textarea class="lg__rev" data-lf="diary" data-i="' + gi + '" maxlength="' + RG.LOG_LIMITS.diary + '" placeholder="日記（リンクに載らない、自分だけの所感メモ。Obsidianにそのまま入ります）">' +
           esc(g.diary || "") + "</textarea></label>" +
-        (g.exported ? '<p class="lg__done">✅ 書き出しずみ（訪問回数に反映されています）</p>' : "") +
+        (g.exported ? '<p class="lg__done"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> 書き出しずみ（訪問回数に反映されています）</p>' : "") +
         '<div class="lg__acts">' +
           '<button class="lg__b1" type="button" data-obs="' + gi + '">🟣 Obsidian へ送る</button>' +
-          '<button class="set__b2" type="button" data-mdc="' + gi + '">📋 Markdownをコピー</button>' +
-          '<button class="set__b2" type="button" data-mdd="' + gi + '">💾 .md を保存</button>' +
-          '<button class="set__b2" type="button" data-mdp="' + gi + '">👀 中身を見る</button>' +
-          '<button class="set__b2" type="button" data-ldel="' + gi + '">🗑️ 削除</button>' +
+          '<button class="set__b2" type="button" data-mdc="' + gi + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> Markdownをコピー</button>' +
+          '<button class="set__b2" type="button" data-mdd="' + gi + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> .md を保存</button>' +
+          '<button class="set__b2" type="button" data-mdp="' + gi + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-eye"></use></svg> 中身を見る</button>' +
+          '<button class="set__b2" type="button" data-ldel="' + gi + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-trash"></use></svg> 削除</button>' +
         "</div>" +
         '<pre class="lg__prev" data-prev="' + gi + '" hidden></pre>' +
       "</div></details>";

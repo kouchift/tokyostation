@@ -101,8 +101,8 @@ RG.tokyoShinkansen = function () {
   var info = skInfo(), t = tokyo(); if (!info || !t) return;
   var html = (RG.shinkansenHtml ? RG.shinkansenHtml("東京") : "") +
     '<div class="tk__note">改札: 新幹線のりばは八重洲側。日本橋口（北）・八重洲中央口・八重洲南口から。丸の内側からは 1 階の中央通路を東へ（徒歩 5〜7 分）。</div>' +
-    '<div class="lnks"><button class="lnk" type="button" data-tk-card="1"><span>🚉</span>東京駅のカードを開く</button>' +
-    '<button class="lnk" type="button" data-tk-dest="1"><span>🧭</span>新幹線で行き先をさがす</button></div>';
+    '<div class="lnks"><button class="lnk" type="button" data-tk-card="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>東京駅のカードを開く</button>' +
+    '<button class="lnk" type="button" data-tk-dest="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg></span>新幹線で行き先をさがす</button></div>';
   var m = RG.openModal("🚄 東京駅の新幹線", '<div class="tk">' + html + "</div>");
   if (RG.shinkansenBind) RG.shinkansenBind(m, "東京");
   bindCommon(m);
@@ -116,11 +116,11 @@ RG.tokyoSide = function (side) {
   RG.Map.gotoLatLng(t.la, t.lo + (S.dlo || 0), 240);
   var html = '<div class="tk">' +
     '<p class="tk__lead">' + esc(S.desc) + "</p>" +
-    '<div class="tk__h">🚪 出入口</div><div class="tk__list">' + ex.map(function (e) { return '<button class="tk__row" type="button" data-tk-ll="' + e.la + "," + e.lo + '" data-tk-n="' + esc(e.n) + '"><b>' + esc(e.n) + "</b><small>" + esc(e.note || "") + "</small></button>"; }).join("") + "</div>" +
-    (bl.length ? '<div class="tk__h">🏬 駅ビル・地下街</div><div class="tk__list">' + bl.map(function (b) { return '<button class="tk__row" type="button" data-tk-bldg="' + esc(b.n) + '"><b>' + esc(b.n) + "</b><small>" + esc(b.note || "") + "</small></button>"; }).join("") + "</div>" : "") +
-    (sp.length ? '<div class="tk__h">📍 この側の見どころ</div><div class="tk__list">' + sp.map(function (x) { var g = (RG.GENRES || []).filter(function (y) { return y.id === x.p.g; })[0] || {}; return '<button class="tk__row" type="button" data-tk-poi="' + esc(x.p.i) + '"><b>' + (x.p.be || g.e || "📍") + " " + esc(x.p.n) + "</b><small>" + esc(x.p.t || g.label || "") + " ・ 徒歩 " + walkMin(x.k) + " 分</small></button>"; }).join("") + "</div>" : "") +
-    (ns.length ? '<div class="tk__h">🚉 近い駅（乗り換えに）</div><div class="tk__list">' + ns.map(function (x) { return '<button class="tk__row" type="button" data-tk-st="' + esc(x.s.id) + '"><b>' + esc(x.s.n) + "駅</b><small>徒歩 " + walkMin(x.k) + " 分 ・ " + esc((x.s.ls || []).slice(0, 3).join(" / ")) + "</small></button>"; }).join("") + "</div>" : "") +
-    '<div class="lnks"><button class="lnk" type="button" data-tk-card="1"><span>🚉</span>東京駅のカードへ</button><button class="lnk" type="button" data-tk-dest="1"><span>🧭</span>ここから行き先をさがす</button></div>' +
+    '<div class="tk__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-door"></use></svg> 出入口</div><div class="tk__list">' + ex.map(function (e) { return '<button class="tk__row" type="button" data-tk-ll="' + e.la + "," + e.lo + '" data-tk-n="' + esc(e.n) + '"><b>' + esc(e.n) + "</b><small>" + esc(e.note || "") + "</small></button>"; }).join("") + "</div>" +
+    (bl.length ? '<div class="tk__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg> 駅ビル・地下街</div><div class="tk__list">' + bl.map(function (b) { return '<button class="tk__row" type="button" data-tk-bldg="' + esc(b.n) + '"><b>' + esc(b.n) + "</b><small>" + esc(b.note || "") + "</small></button>"; }).join("") + "</div>" : "") +
+    (sp.length ? '<div class="tk__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> この側の見どころ</div><div class="tk__list">' + sp.map(function (x) { var g = (RG.GENRES || []).filter(function (y) { return y.id === x.p.g; })[0] || {}; return '<button class="tk__row" type="button" data-tk-poi="' + esc(x.p.i) + '"><b>' + (x.p.be || g.e || "📍") + " " + esc(x.p.n) + "</b><small>" + esc(x.p.t || g.label || "") + " ・ 徒歩 " + walkMin(x.k) + " 分</small></button>"; }).join("") + "</div>" : "") +
+    (ns.length ? '<div class="tk__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 近い駅（乗り換えに）</div><div class="tk__list">' + ns.map(function (x) { return '<button class="tk__row" type="button" data-tk-st="' + esc(x.s.id) + '"><b>' + esc(x.s.n) + "駅</b><small>徒歩 " + walkMin(x.k) + " 分 ・ " + esc((x.s.ls || []).slice(0, 3).join(" / ")) + "</small></button>"; }).join("") + "</div>" : "") +
+    '<div class="lnks"><button class="lnk" type="button" data-tk-card="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>東京駅のカードへ</button><button class="lnk" type="button" data-tk-dest="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg></span>ここから行き先をさがす</button></div>' +
     '<p class="src">' + esc(d.src) + "。見どころ・近い駅は既存のデータから距離で選んでいます。</p></div>";
   var m = RG.openModal((side === "m" ? "🏛️ " : "🛍️ ") + S.label, html);
   bindCommon(m);
@@ -152,20 +152,20 @@ function modeHtml(asModal) {
       "<b>" + (side === "m" ? "🏛️ " : "🛍️ ") + esc(S.label) + "</b>" +
       (ex.length ? '<span class="tk__ex">出口: ' + esc(ex.join("・")) + "</span>" : "") +
       (sp.length ? '<span class="tk__sp">' + sp.map(function (x) { return esc(x.p.n); }).join(" ・ ") + "</span>" : "") +
-      (st.length ? '<span class="tk__st">🚉 ' + st.map(function (x) { return esc(x.s.n) + "（徒歩" + walkMin(x.k) + "分）"; }).join("・") + "</span>" : "") +
+      (st.length ? '<span class="tk__st"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> ' + st.map(function (x) { return esc(x.s.n) + "（徒歩" + walkMin(x.k) + "分）"; }).join("・") + "</span>" : "") +
       "</button>";
   }
   return '<section class="sec sec--tokyo tk' + (asModal ? " tk--modal" : "") + '">' +
-    '<div class="tk__top"><b>🚉 東京駅で迷わない</b><em>乗る・出る・行く</em></div>' +
+    '<div class="tk__top"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 東京駅で迷わない</b><em>乗る・出る・行く</em></div>' +
     '<div class="tk__ride">' +
-      (sk ? '<button class="tk__pill tk__pill--sk" type="button" data-tq="新幹線">🚄 新幹線 <small>' + sk.lines.length + " 路線 ・ " + sk.svcs.length + " 種</small></button>" : "") +
-      (L.jr.length ? '<button class="tk__pill" type="button" data-tk-lines="jr">🚆 JR <small>' + L.jr.length + " 路線</small></button>" : "") +
-      (L.metro.length ? '<button class="tk__pill" type="button" data-tk-lines="metro">🚇 ' + esc(L.metro.join("・")) + "</button>" : "") +
+      (sk ? '<button class="tk__pill tk__pill--sk" type="button" data-tq="新幹線"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-shinkansen"></use></svg> 新幹線 <small>' + sk.lines.length + " 路線 ・ " + sk.svcs.length + " 種</small></button>" : "") +
+      (L.jr.length ? '<button class="tk__pill" type="button" data-tk-lines="jr"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-train"></use></svg> JR <small>' + L.jr.length + " 路線</small></button>" : "") +
+      (L.metro.length ? '<button class="tk__pill" type="button" data-tk-lines="metro"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-train"></use></svg> ' + esc(L.metro.join("・")) + "</button>" : "") +
     "</div>" +
     '<div class="tk__lines" hidden data-tk-linebox="jr">' + L.jr.map(function (x) { return '<span class="tk__ln">' + esc(x) + "</span>"; }).join("") + "</div>" +
     '<div class="tk__sides">' + sideCard("m", mSp, mSt) + sideCard("y", ySp, ySt) + "</div>" +
     '<div class="tk__quick"><span>行き先:</span>' + quickChips("tk__q") + "</div>" +
-    (asModal ? '<div class="lnks"><button class="lnk" type="button" data-tk-card="1"><span>🚉</span>東京駅のカード（路線・時刻・声）</button></div>' : "") +
+    (asModal ? '<div class="lnks"><button class="lnk" type="button" data-tk-card="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>東京駅のカード（路線・時刻・声）</button></div>' : "") +
     '<p class="tk__src">' + esc(d ? d.src : "") + "</p>" +
     "</section>";
 }

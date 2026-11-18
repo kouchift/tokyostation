@@ -134,12 +134,12 @@ RG.showLine = function (name) {
         "地下 " + deep[0].d + " 階") : "") +
     "</div>" +
     '<div class="lnks">' +
-      '<button class="lnk" type="button" id="lc-hl"><span>✨</span>地図でこの路線を強調</button>' +
-      (stns.length ? '<button class="lnk" type="button" data-goto="' + esc(stns[0]) + '"><span>🚉</span>' +
+      '<button class="lnk" type="button" id="lc-hl"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-sparkle"></use></svg></span>地図でこの路線を強調</button>' +
+      (stns.length ? '<button class="lnk" type="button" data-goto="' + esc(stns[0]) + '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>' +
         esc(stns[0]) + "駅から見る</button>" : "") + "</div>" +
     // 駅の一覧（押すとその駅のカードへ）
     (stns.length
-      ? '<div class="lcst"><div class="lcst__h">🚉 この地図に出てくる駅<em>' + stns.length +
+      ? '<div class="lcst"><div class="lcst__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> この地図に出てくる駅<em>' + stns.length +
         "駅・押すとその駅がひらきます</em></div>" +
         '<div class="lcst__l">' + stns.map(function (id, i) {
           var d = (RG.DEPTH || {})[id];

@@ -143,7 +143,7 @@ RG.showBuzz = function (area, tab) {
                                       : function (a, b) { return (heatOf(b) - heatOf(a)) || (a.d < b.d ? 1 : -1); }).slice(0, 60);
   }
   var html = '<div class="bz">' +
-    '<p class="bz__lead">X・TikTok・Instagram で話題になった投稿と、<b>毎朝自動で拾う</b> «Google の急上昇ワード・ニュースに出た場所»（📰）を、<b>土地ごと</b>に追えます。' +
+    '<p class="bz__lead">X・TikTok・Instagram で話題になった投稿と、<b>毎朝自動で拾う</b> «Google の急上昇ワード・ニュースに出た場所»（<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg>）を、<b>土地ごと</b>に追えます。' +
     "鮮度枠は " + M.FRESH_DAYS + " 日で自動的に入れ替わり、インパクトの高いものだけ殿堂に残ります。並びは日替わり／週替わり。</p>" +
     '<div class="bz__tabs">' +
       (area ? ['stock|📦 ' + area.replace(/（.*$/, "") + "のストック " + (tab === "stock" ? list.length : (SI[area] ? SI[area].n : ""))] : []).concat(
@@ -320,11 +320,11 @@ RG.buzzBlockFill = function (root) {
     var N = RG.buzzNear(+c[0], +c[1], 1.2);
     if (!N.n) { el.remove(); return; }
     var top = N.now.slice(0, 3); top = top.concat(N.mem.slice(0, 4 - top.length)); top = top.concat(N.past.slice(0, 4 - top.length));
-    el.innerHTML = '<h3>🔥 この場所の話題 <small>まわり約1km</small></h3>' +
+    el.innerHTML = '<h3><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-fire"></use></svg> この場所の話題 <small>まわり約1km</small></h3>' +
       '<p class="bzp__sum">' + (N.now.length ? "いま <b>" + N.now.length + "</b> 件" : "いまの話題はなし") +
         (N.mem.length ? "・記憶に残る話題 <b>" + N.mem.length + "</b> 件" : "") + (N.past.length ? "・過去 <b>" + N.past.length + "</b> 件" : "") + "</p>" +
       '<div class="bzp__l">' + top.map(miniRow).join("") + "</div>" +
-      (N.n > top.length || N.past.length || N.mem.length ? '<button class="bzp__more" type="button" data-bzplace="1">🕰️ 過去の話題もさがす（' + N.n + " 件）</button>" : "");
+      (N.n > top.length || N.past.length || N.mem.length ? '<button class="bzp__more" type="button" data-bzplace="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> 過去の話題もさがす（' + N.n + " 件）</button>" : "");
     el.querySelectorAll("[data-bzone]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzzPlace(+c[0], +c[1], name, 1.2, b.dataset.bzone); }); });
     var mo = el.querySelector("[data-bzplace]"); if (mo) mo.addEventListener("click", function () { RG.showBuzzPlace(+c[0], +c[1], name, 1.2); });
   });
@@ -342,7 +342,7 @@ RG.showBuzzPlace = function (la, lo, name, km, focusId) {
       (N.n ? sec("🆕 いまの話題", "", N.now) + sec("🏆 記憶に残る話題", "インパクトが大きく、時間がたっても語られるもの。", N.mem) +
              Object.keys(years).sort().reverse().map(function (y) { return sec("🕰️ " + y + "年の話題", "", years[y]); }).join("")
            : '<p class="bz__none">このまわりには、まだ話題がありません。範囲を広げてみてください。</p>') +
-      '<p class="src">見出しは当サイトの要約か、ニュースの見出し（引用）です。投稿者・配信元が消すと見られなくなります。毎朝の自動収集（📰）は 21 日で «いま» から外れ、そのあとは «過去» としてここに残ります。</p></div>';
+      '<p class="src">見出しは当サイトの要約か、ニュースの見出し（引用）です。投稿者・配信元が消すと見られなくなります。毎朝の自動収集（<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg>）は 21 日で «いま» から外れ、そのあとは «過去» としてここに残ります。</p></div>';
     var m = RG.openModal("🔥 " + (name || "この場所") + " の話題", html);
     m.querySelectorAll("[data-km]").forEach(function (b) { b.addEventListener("click", function () { RG.showBuzzPlace(la, lo, name, +b.dataset.km); }); });
     m.querySelectorAll("[data-go]").forEach(function (b) { b.addEventListener("click", function () {

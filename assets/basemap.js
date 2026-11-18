@@ -352,7 +352,7 @@ function quickBar() {
     q.className = "quickbar mini";
     q.innerHTML = (RG.slimSpotHtml ? RG.slimSpotHtml() : "") +   // v103: スマホでは «📍 スポット» をここに（帯はやめた）
       '<button class="qb__open" type="button" id="qb-open"><span class="ms" aria-hidden="true">layers</span> 地図の設定</button>' +
-      '<button class="qb__open qb__open--hist" type="button" id="qb-hist">📜 れきし地図</button>' +   // v128
+      '<button class="qb__open qb__open--hist" type="button" id="qb-hist"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> れきし地図</button>' +   // v128
       (cur ? '<button class="qb__open qb__open--h" type="button" id="qb-open2">' +
         cur.e + " " + esc(cur.label) + "</button>" : "");
     return;
@@ -361,16 +361,16 @@ function quickBar() {
   q.className = "quickbar";
   q.innerHTML =
     '<div class="qb__row qb__row--m">' +
-      '<button class="qb__c" type="button" data-qb="relief" aria-pressed="' + !!B.relief + '">⛰️ 地形</button>' +
-      '<button class="qb__c" type="button" data-qb="flood" aria-pressed="' + !!B.flood + '">🌊 浸水</button>' +
-      '<button class="qb__c" type="button" data-qb="mode3d" aria-pressed="' + !!B.mode3d + '">🧊 3D</button>' +
+      '<button class="qb__c" type="button" data-qb="relief" aria-pressed="' + !!B.relief + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg> 地形</button>' +
+      '<button class="qb__c" type="button" data-qb="flood" aria-pressed="' + !!B.flood + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wave"></use></svg> 浸水</button>' +
+      '<button class="qb__c" type="button" data-qb="mode3d" aria-pressed="' + !!B.mode3d + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-ice"></use></svg> 3D</button>' +
       (B.mode3d ? '<button class="qb__c" type="button" data-qb="under" aria-pressed="' + !!B.under +
-        '">🕳️ 地下</button>' +
+        '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-hole"></use></svg> 地下</button>' +
         '<button class="qb__c" type="button" data-qb="seeUnder" aria-pressed="' + !!B.seeUnder +
         '">👓 すかす</button>' : "") +
-      '<button class="qb__c" type="button" data-qb="admin" aria-pressed="' + !!B.admin + '">🧭 行政区</button>' +
-      '<button class="qb__c" type="button" data-qb="labels" aria-pressed="' + !!B.labels + '">🏷️ 区名</button>' +
-      '<button class="qb__c" type="button" data-qb="blank" aria-pressed="' + !!B.blank + '">📄 白地図</button>' +
+      '<button class="qb__c" type="button" data-qb="admin" aria-pressed="' + !!B.admin + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> 行政区</button>' +
+      '<button class="qb__c" type="button" data-qb="labels" aria-pressed="' + !!B.labels + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-tag"></use></svg> 区名</button>' +
+      '<button class="qb__c" type="button" data-qb="blank" aria-pressed="' + !!B.blank + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 白地図</button>' +
       // 色分けは «開くボタン» ひとつだけ。中身は押したときに出す
       '<button class="qb__c qb__c--h" type="button" id="qb-heat" aria-expanded="' + !!B.qbHeat +
         '" aria-pressed="' + !!cur + '">🌡️ ' + (cur ? esc(cur.label) : "色分け") +
@@ -584,13 +584,13 @@ RG.basemapPanel = function () {
       '<input type="range" aria-label="レベル' + i + ' の線の太さ" data-lvw="' + i + '" min="0.2" max="6" step="0.1" value="' + s.w + '">' +
       '<output>' + s.w + "px</output></div>";
   }
-  return '<div class="set__sec"><h4>🗺️ 地図の表示</h4>' +
+  return '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 地図の表示</h4>' +
     '<label class="set__sw"><input id="bm-relief" type="checkbox"' + (B.relief ? " checked" : "") +
-      "> ⛰️ 地形（陰影起伏）を表示</label>" +
+      "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-mountain'></use></svg> 地形（陰影起伏）を表示</label>" +
     '<label class="set__sw"><input id="bm-flood" type="checkbox"' + (B.flood ? " checked" : "") +
-      "> 🌊 浸水予想区域を重ねる（神田川・隅田川・石神井川の3流域）</label>" +
+      "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-wave'></use></svg> 浸水予想区域を重ねる（神田川・隅田川・石神井川の3流域）</label>" +
     '<label class="set__sw"><input id="bm-3d" type="checkbox"' + (B.mode3d ? " checked" : "") +
-      "> 🧊 3D表示にする（高低差を斜めから見る）</label>" +
+      "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-ice'></use></svg> 3D表示にする（高低差を斜めから見る）</label>" +
     '<div class="set__row"><span>見おろす角度</span><input id="bm-tilt" type="range" aria-label="見おろす角度" min="15" max="75" step="1" value="' +
       B.tilt + '"><output id="bm-tilt-o">' + B.tilt + "°</output></div>" +
     '<div class="set__row"><span>高さの強調</span><input id="bm-ex" type="range" aria-label="高さの強調" min="0.3" max="4" step="0.1" value="' +
@@ -598,7 +598,7 @@ RG.basemapPanel = function () {
     '<p class="set__d">地形は国土地理院の標高タイルから作った画像1枚です。' +
     "3Dは地図全体を傾けて見せる方式なので、要素が増えず動作は軽いままです。</p></div>" +
 
-    '<div class="set__sec"><h4>🧭 行政区の線</h4>' +
+    '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> 行政区の線</h4>' +
     '<label class="set__sw"><input id="bm-admin" type="checkbox"' + (B.admin ? " checked" : "") +
       "> 行政区の境界を表示</label>" +
     '<label class="set__sw"><input id="bm-fill" type="checkbox"' + (B.fill ? " checked" : "") +
@@ -608,13 +608,13 @@ RG.basemapPanel = function () {
     lvRow(1, "都道府県") + lvRow(2, "市区町村") + lvRow(3, "町丁目（データ未収録）") +
     "</div>" +
 
-    '<div class="set__sec"><h4>📄 白地図モード</h4>' +
+    '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 白地図モード</h4>' +
     '<label class="set__sw"><input id="bm-blank" type="checkbox"' + (B.blank ? " checked" : "") +
       "> <b>路線・駅・スポットを隠す</b>（行政区だけの白地図になります）</label>" +
     '<p class="set__d">宿題の白地図づくりにも使えます。線の色と太さは上で変えられます。' +
     "画面のスクリーンショットを撮ってお使いください。</p></div>" +
 
-    '<div class="set__sec"><h4>🌡️ 区ごとのヒートマップ</h4>' +
+    '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-thermo"></use></svg> 区ごとのヒートマップ</h4>' +
     '<select id="bm-heat" class="bm__sel" aria-label="区の統計の色分け"><option value="">（表示しない）</option>' +
       (RG.HEAT_FACTORS || []).map(function (f) {
         return '<option value="' + f.id + '"' + (B.heat === f.id ? " selected" : "") + ">" +

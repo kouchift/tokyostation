@@ -57,7 +57,7 @@ RG.buildGroupBar = function () {
   if (!RG.__grpShow) {
     var picked = picked();
     host.className = "groupbar mini";
-    host.innerHTML = '<button class="gb__open" type="button" id="gb-open">📍 スポットをさがす' +
+    host.innerHTML = '<button class="gb__open" type="button" id="gb-open"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> スポットをさがす' +
       (picked.length ? '<span class="gb__cnt">' + picked.length + "</span>" : "") + " ▾</button>" +
       // いま何を選んでいるかを、名前つきの札で並べる
       (picked.length ? '<div class="sel">' + picked.map(function (id) {
@@ -93,7 +93,7 @@ RG.buildGroupBar = function () {
   host.innerHTML =
     '<div class="gb__row">' +
       '<button class="gb__g' + (!c.length ? " on" : "") + '" type="button" data-grp="__all">' +
-        '<span class="gb__e">🗺️</span><span class="gb__l">ぜんぶ</span></button>' +
+        '<span class="gb__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span><span class="gb__l">ぜんぶ</span></button>' +
       GROUPS.map(function (G) {
         var mine = G.ids.filter(function (i) { return c.indexOf(i) >= 0; }).length;
         return '<button class="gb__g' + (open === G.id ? " open" : "") + (mine ? " has" : "") +
@@ -214,7 +214,7 @@ RG.showOsm10 = function (p) {
       row("🚑 救急", r.emer === "yes" ? "対応しています" : r.emer === "no" ? "対応していません" : "") +
       row("🚲 台数", r.capa) +
       row("🏅 種目", r.spor) +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
     "</div>" +
     (r.phon ? '<a class="wl wl--o wl--full" href="tel:' + esc(r.phon.replace(/[^0-9+]/g, "")) +
@@ -278,9 +278,9 @@ RG.showKantoLM = function (p) {
     (RG.whsBanner ? RG.whsBanner(r.n) : "") + (RG.eduHistHtml ? RG.eduHistHtml(r.n) : "") + (RG.buzzBlock ? RG.buzzBlock({ la: p.la, lo: p.lo, n: r.n }) : "") +   // v126
     (RG.enrichSlot ? RG.enrichSlot() : "") +
     '<div class="smkg">' +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
-      (r.sl ? '<div class="smkr"><span>🌏 知られかた</span><b>' + r.sl +
+      (r.sl ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 知られかた</span><b>' + r.sl +
         " の言語版に記事があります</b></div>" : "") +
     "</div>" +
     RG.outLinks({ wiki: "https://ja.wikipedia.org/wiki/" + encodeURIComponent(r.n),

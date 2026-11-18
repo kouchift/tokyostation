@@ -11,7 +11,7 @@ RG.focusHtml = function (key) {
   var f = get(key); if (!f) return "";
   var h = '<section class="focus' + (f.special ? " focus--special" : "") + '">' +
     (f.special ? '<div class="focus__ribbon">★ SPECIAL ★ このサイトが特別扱いしている場所</div>' : "") +
-    '<div class="focus__h">🔎 深掘り <em>' + (f.special ? "ほかの場所とは、あきらかに扱いが違います" : "このサイトが特に大事にしている場所") + "</em></div>" +
+    '<div class="focus__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-search"></use></svg> 深掘り <em>' + (f.special ? "ほかの場所とは、あきらかに扱いが違います" : "このサイトが特に大事にしている場所") + "</em></div>" +
     '<p class="focus__lead">' + esc(f.lead) + "</p>";
   if (f.facts && f.facts.length) h += '<div class="focus__facts">' + f.facts.map(function (x) {
     return '<div class="focus__f"><span class="focus__k">' + esc(x.k) + '</span><b>' + esc(x.v) + "</b>" + (x.s ? "<i>" + esc(x.s) + "</i>" : "") + "</div>"; }).join("") + "</div>";

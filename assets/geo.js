@@ -222,7 +222,7 @@ RG.showMuni = function (info) {
   }).join("");
   var wikiT = full;
   var html = '<div class="wardcard mucard">' +
-    '<div class="wardcard__hd"><span class="wardcard__ph">🏘️</span><div><h3>' + esc(full) + "</h3>" +
+    '<div class="wardcard__hd"><span class="wardcard__ph"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-home"></use></svg></span><div><h3>' + esc(full) + "</h3>" +
       '<p class="wardcard__k">' + esc(pn) + (adm && adm.pop ? " ・ 人口 約" + Number(adm.pop).toLocaleString("ja-JP") + "人" : "") + (info.c ? " ・ 団体コード " + esc(info.c) : "") + "</p></div></div>" +
     (RG.focusHtml ? RG.focusHtml(full) : "") +
     (RG.enrichSlot ? RG.enrichSlot() : "") +
@@ -248,10 +248,10 @@ RG.showMuni = function (info) {
 function outLinksMuni(name, pn) {
   var q = encodeURIComponent(name);
   return '<div class="lnks">' +
-    '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + q + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' +
-    '<a class="lnk" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(pn + name) + '" target="_blank" rel="noopener"><span>🗺️</span>Google マップ</a>' +
+    '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + q + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' +
+    '<a class="lnk" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(pn + name) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>Google マップ</a>' +
     '<a class="lnk" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(name + " 観光") + '" target="_blank" rel="noopener"><span>▶️</span>YouTube</a>' +
-    '<a class="lnk" href="https://news.google.com/search?q=' + q + '&hl=ja" target="_blank" rel="noopener"><span>📰</span>ニュース</a></div>';
+    '<a class="lnk" href="https://news.google.com/search?q=' + q + '&hl=ja" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg></span>ニュース</a></div>';
 }
 /* 緯度経度 → 市区町村（詳しい境界を読み込んである県だけ） */
 RG.muniAt = function (la, lo) {

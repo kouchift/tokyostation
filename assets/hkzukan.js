@@ -102,7 +102,7 @@ function render(keep) {
   var cats = {}; all.forEach(function (x) { cats[x.cat] = (cats[x.cat] || 0) + 1; });
   var nRead = all.filter(function (x) { return rd[x.id]; }).length;
   var html = '<div class="hkz">' +
-    '<div class="hkz__top"><button class="hkz__chg" type="button" data-hkchg="1">🗾 ' + esc(I.n) + " ▾</button>" +
+    '<div class="hkz__top"><button class="hkz__chg" type="button" data-hkchg="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> ' + esc(I.n) + " ▾</button>" +
       '<span class="hkz__prog" title="読んだカード"><b style="width:' + Math.round(nRead / Math.max(1, all.length) * 100) + '%"></b><i>制覇 ' + nRead + " / " + all.length + "</i></span></div>" +
     '<input class="hkz__q" type="search" placeholder="🔎 ことば・人物・地名でさがす" value="' + esc(S.q) + '" data-hkq="1">' +
     chips("rank", Object.keys(RANK_N).map(function (k) { return [k, RANK_N[k]]; }), "ランク") +
@@ -199,7 +199,7 @@ RG.wpGallery = function (box, titles, likeKey, pre) {
   if (RG.QOS && RG.QOS.lite() && !box.__go) {
     var n0 = pre && pre.length ? pre.length : 0;
     box.innerHTML = (pre && pre[0] && RG.wmImg ? '<figure class="hkg__one">' + RG.wmImg(pre[0][0], 120, { ow: pre[0][1], oh: pre[0][2] }) + "</figure>" : "") +
-      '<button type="button" class="imgtap" data-galgo>📷 写真を表示' + (n0 ? "（" + n0 + " 枚）" : "") + '<small>通信を節約中のため、押したときだけ読みます</small></button>';
+      '<button type="button" class="imgtap" data-galgo><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> 写真を表示' + (n0 ? "（" + n0 + " 枚）" : "") + '<small>通信を節約中のため、押したときだけ読みます</small></button>';
     box.querySelector("[data-galgo]").addEventListener("click", function () { box.__go = 1; RG.wpGallery(box, titles, likeKey, pre); });
     return;
   }
@@ -214,7 +214,7 @@ RG.wpGallery = function (box, titles, likeKey, pre) {
         '<img src="' + esc(RG.wmNormalize ? RG.wmNormalize(x.src, 500) : x.src) + '" alt="" loading="' + (i < 2 ? "eager" : "lazy") + '" decoding="async" onerror="var f=this.closest(\'figure\');if(f)f.remove()">';
       return '<figure class="hkg__f"><a href="' + esc(x.page) + '" target="_blank" rel="noopener">' + im + "</a>" +
         '<figcaption>' + esc(x.cap.slice(0, 40)) + (likeKey && RG.likeBtn ? RG.likeBtn(likeKey, "g" + RG.hash16(x.f)) : "") + "</figcaption></figure>"; }).join("") + "</div>" +
-      '<p class="hkg__n">📷 ' + L.length + " 枚 ― 横にすべらせて見る。押すと元のページ（撮影者・ライセンス）</p>";
+      '<p class="hkg__n"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> ' + L.length + " 枚 ― 横にすべらせて見る。押すと元のページ（撮影者・ライセンス）</p>";
     if (likeKey && RG.likeFill) RG.likeFill(box, likeKey);
   }
 };
@@ -246,25 +246,25 @@ RG.hkCard = function (id) {
       '<h3 class="hkc__n">' + esc(x.n) + "<small>" + esc(x.yomi) + "</small></h3></div>" +
     '<p class="hp__hook">🤔 ' + esc(x.hook) + "</p>" +
     '<p class="hkc__meta">' + x.era.map(function (e) { return "<span>" + esc(ERA_N[e]) + "</span>"; }).join("") + "<span>" + esc(x.cat) + "</span>" +
-      (x.sh ? '<span class="hkc__sh">🏛️ ' + esc(x.sh) + "</span>" : "") + "<span>📍 " + esc(x.ad) + "</span>" + (x.st ? "<span>🚉 " + esc(x.st) + "</span>" : "") + "</p>" +
+      (x.sh ? '<span class="hkc__sh"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg> ' + esc(x.sh) + "</span>" : "") + "<span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-pin'></use></svg> " + esc(x.ad) + "</span>" + (x.st ? "<span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> " + esc(x.st) + "</span>" : "") + "</p>" +
     '<p class="hkc__lead">' + esc(x.lead) + "</p>" +
-    '<h4 class="hkc__h">📖 物語</h4><div class="hkc__story">' + x.story.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
-    (x.tl && x.tl.length ? '<h4 class="hkc__h">🕰️ 年表</h4><ol class="hkc__tl">' + x.tl.map(function (t) { return "<li><b>" + esc(t[0]) + "</b><span>" + esc(t[1]) + "</span></li>"; }).join("") + "</ol>" : "") +
-    (x.who && x.who.length ? '<h4 class="hkc__h">👤 登場人物</h4><div class="hkc__who">' + x.who.map(function (w) {
+    '<h4 class="hkc__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> 物語</h4><div class="hkc__story">' + x.story.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</div>" +
+    (x.tl && x.tl.length ? '<h4 class="hkc__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> 年表</h4><ol class="hkc__tl">' + x.tl.map(function (t) { return "<li><b>" + esc(t[0]) + "</b><span>" + esc(t[1]) + "</span></li>"; }).join("") + "</ol>" : "") +
+    (x.who && x.who.length ? '<h4 class="hkc__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg> 登場人物</h4><div class="hkc__who">' + x.who.map(function (w) {
       return '<div><b>' + esc(w[0]) + "</b><span>" + esc(w[1]) + "</span></div>"; }).join("") + "</div>" : "") +
-    '<div class="hkc__deep"><b>🔍 歴オタメモ（深掘り・諸説・細部）</b><ul>' + x.deep.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" +
-    (x.look && x.look.length ? '<div class="hkc__look"><b>👀 現地で見るべきポイント</b><ul>' + x.look.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
-    (x.koji && x.koji.length ? '<div class="hp__koji"><b>📜 故事成語・名言</b>' + x.koji.map(function (k) { return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span></div>"; }).join("") + "</div>" : "") +
-    (x.q ? '<details class="eh__q"><summary>❓ クイズ: ' + esc(x.q[0]) + "<span>こたえを見る</span></summary><p>" + esc(x.q[1]) + "</p></details>" : "") +
-    (x.myth ? '<p class="hkc__myth">⚠️ ' + esc(x.myth) + "</p>" : "") +
-    (evs.length || (rel.grave || []).length ? '<h4 class="hkc__h">🔗 つながり</h4><div class="whs__pts">' +
+    '<div class="hkc__deep"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-search"></use></svg> 歴オタメモ（深掘り・諸説・細部）</b><ul>' + x.deep.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" +
+    (x.look && x.look.length ? '<div class="hkc__look"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-eye"></use></svg> 現地で見るべきポイント</b><ul>' + x.look.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
+    (x.koji && x.koji.length ? '<div class="hp__koji"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 故事成語・名言</b>' + x.koji.map(function (k) { return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span></div>"; }).join("") + "</div>" : "") +
+    (x.q ? '<details class="eh__q"><summary><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-help"></use></svg> クイズ: ' + esc(x.q[0]) + "<span>こたえを見る</span></summary><p>" + esc(x.q[1]) + "</p></details>" : "") +
+    (x.myth ? '<p class="hkc__myth"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> ' + esc(x.myth) + "</p>" : "") +
+    (evs.length || (rel.grave || []).length ? '<h4 class="hkc__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg> つながり</h4><div class="whs__pts">' +
       evs.map(function (e) { return '<button class="grv__c" type="button" data-hkev="' + esc(e.id) + '">📜 ' + esc(String(e.t).split(" ―")[0]) + "<small>れきし地図</small></button>"; }).join("") +
       (rel.grave || []).map(function (g) { return '<button class="grv__c" type="button" data-grave="' + esc(g[0]) + '">🪦 ' + esc(g[1]) + "<small>偉人の墓</small></button>"; }).join("") + "</div>" : "") +
-    (near.length ? '<h4 class="hkc__h">🚶 近くの図鑑カード（はしご歴散歩）</h4><div class="whs__pts">' + near.map(function (o) {
+    (near.length ? '<h4 class="hkc__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-walk"></use></svg> 近くの図鑑カード（はしご歴散歩）</h4><div class="whs__pts">' + near.map(function (o) {
       return '<button class="grv__c" type="button" data-hkc="' + esc(o.y.id) + '">' + esc(o.y.n.replace(/（.*?）/g, "")) + "<small>" + (o.d < 1 ? Math.round(o.d * 1000) + "m" : o.d.toFixed(1) + "km") + "・歩いて約" + Math.max(1, Math.round(o.d * 1000 / 80)) + "分</small></button>"; }).join("") + "</div>" : "") +
-    '<div class="grv__acts"><button class="grv__go" type="button" data-hkfly="1">📍 地図で見る</button>' +
-      '<a class="grv__go grv__go--l" href="https://www.google.com/maps/search/?api=1&query=' + x.la + "," + x.lo + '" target="_blank" rel="noopener">🧭 行き方</a>' +
-      '<a class="grv__go grv__go--l" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(x.wp || x.n) + '" target="_blank" rel="noopener">📖 Wikipedia</a></div>' +
+    '<div class="grv__acts"><button class="grv__go" type="button" data-hkfly="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 地図で見る</button>' +
+      '<a class="grv__go grv__go--l" href="https://www.google.com/maps/search/?api=1&query=' + x.la + "," + x.lo + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> 行き方</a>' +
+      '<a class="grv__go grv__go--l" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(x.wp || x.n) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> Wikipedia</a></div>' +
     (RG.postsEnabled && RG.postsEnabled() && RG.postsHtml ? RG.postsHtml(P) : "") +
     '<div class="whs__nav">' + (i > 0 ? '<button class="whs__b" type="button" data-hkc="' + esc(L[i - 1].id) + '">‹ ' + esc(L[i - 1].n.replace(/（.*?）/g, "").slice(0, 12)) + "</button>" : "<span></span>") +
       (i >= 0 && i < L.length - 1 ? '<button class="whs__b" type="button" data-hkc="' + esc(L[i + 1].id) + '">' + esc(L[i + 1].n.replace(/（.*?）/g, "").slice(0, 12)) + " ›</button>" : "") + "</div>" +

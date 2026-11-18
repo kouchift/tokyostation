@@ -73,29 +73,29 @@ RG.chainBlock = function (p) {
   var a = chainAttrs(p.attrs);
   var tags = [];
   if (a) {
-    if (a.wifi === "free") tags.push('<span class="nat__tag nat__tag--k">📶 Wi-Fi 無料</span>'); else if (a.wifi === "paid") tags.push('<span class="nat__tag">📶 Wi-Fi（有料）</span>');
-    if (a.smoke === "yes") tags.push('<span class="nat__tag" style="--lc:#2E7D32">🚬 喫煙可</span>'); else if (a.smoke === "no") tags.push('<span class="nat__tag">🚭 禁煙</span>'); else if (a.smoke === "sep") tags.push('<span class="nat__tag">🚬 分煙・喫煙室</span>');
-    if (a.h24) tags.push('<span class="nat__tag">🕛 24時間</span>');
+    if (a.wifi === "free") tags.push('<span class="nat__tag nat__tag--k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-signal"></use></svg> Wi-Fi 無料</span>'); else if (a.wifi === "paid") tags.push('<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-signal"></use></svg> Wi-Fi（有料）</span>');
+    if (a.smoke === "yes") tags.push('<span class="nat__tag" style="--lc:#2E7D32"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg> 喫煙可</span>'); else if (a.smoke === "no") tags.push('<span class="nat__tag">🚭 禁煙</span>'); else if (a.smoke === "sep") tags.push('<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg> 分煙・喫煙室</span>');
+    if (a.h24) tags.push('<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> 24時間</span>');
     if (a.drive) tags.push('<span class="nat__tag">🚗 ドライブスルー</span>');
     if (a.take) tags.push('<span class="nat__tag">🥡 テイクアウト</span>');
     if (a.deliv) tags.push('<span class="nat__tag">🛵 デリバリー</span>');
-    if (a.wheel) tags.push('<span class="nat__tag">♿ 車いす可</span>');
+    if (a.wheel) tags.push('<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wheelchair"></use></svg> 車いす可</span>');
     if (a.atm) tags.push('<span class="nat__tag">🏧 ATM</span>');
     if (a.park) tags.push('<span class="nat__tag">🅿️ 駐車場</span>');
     if (a.eat) tags.push('<span class="nat__tag">🍴 イートイン</span>');
     if (a.copy) tags.push('<span class="nat__tag">🖨️ マルチコピー</span>');
     if (a.sake) tags.push('<span class="nat__tag">🍶 お酒</span>');
-    if (a.tabaco) tags.push('<span class="nat__tag">🚬 たばこ販売</span>');
+    if (a.tabaco) tags.push('<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-smoke"></use></svg> たばこ販売</span>');
     if (a.med) tags.push('<span class="nat__tag">💊 くすり</span>');
     a.pay.forEach(function (k) { tags.push('<span class="nat__tag nat__tag--pay">' + esc(PAY[k] || k) + "</span>"); });
   }
   var off = b.src === "official" && p.shop;
   return '<div class="nat chb">' + (b.logo ? '<img class="chb__logo" src="' + esc(RG.cimg(b.logo, 240)) + '" alt="" loading="lazy">' : "") +
-    (p.open ? '<p class="nat__d">' + (p.isNew ? '<b class="chb__new">🆕 新店</b> ' : "") + "開店 " + ymdStr(p.open) + (p.isNew ? "（開店から " + Math.max(0, Math.round((Date.now() - new Date(ymdStr(p.open)).getTime()) / 864e5)) + " 日）" : "") + "</p>" : "") +
+    (p.open ? '<p class="nat__d">' + (p.isNew ? '<b class="chb__new"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-sparkle"></use></svg> 新店</b> ' : "") + "開店 " + ymdStr(p.open) + (p.isNew ? "（開店から " + Math.max(0, Math.round((Date.now() - new Date(ymdStr(p.open)).getTime()) / 864e5)) + " 日）" : "") + "</p>" : "") +
     (tags.length ? '<div class="nat__tags">' + tags.join("") + "</div>" : '<p class="nat__d nat__d--dim">Wi-Fi・喫煙・決済の情報は OpenStreetMap にこの店の登録がありません（登録されている店だけ出ます）。</p>') +
-    (p.hours ? '<p class="nat__d">🕒 ' + esc(p.hours) + "</p>" : "") +
-    '<div class="nat__lnks">' + (off && OFFICIAL_URL[p.brand] ? '<a class="lnk lnk--k" href="' + esc(OFFICIAL_URL[p.brand] + p.shop) + '" target="_blank" rel="noopener"><span>🏪</span>この店の公式ページ（営業時間・サービス）</a>' : "") +
-    (b.web ? '<a class="lnk' + (off ? "" : " lnk--k") + '" href="' + esc(b.web) + '" target="_blank" rel="noopener"><span>🔗</span>' + esc(b.n) + " 公式サイト</a>" : "") +
+    (p.hours ? '<p class="nat__d"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> ' + esc(p.hours) + "</p>" : "") +
+    '<div class="nat__lnks">' + (off && OFFICIAL_URL[p.brand] ? '<a class="lnk lnk--k" href="' + esc(OFFICIAL_URL[p.brand] + p.shop) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-store"></use></svg></span>この店の公式ページ（営業時間・サービス）</a>' : "") +
+    (b.web ? '<a class="lnk' + (off ? "" : " lnk--k") + '" href="' + esc(b.web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg></span>' + esc(b.n) + " 公式サイト</a>" : "") +
     (b.camp ? '<a class="lnk" href="' + esc(b.camp) + '" target="_blank" rel="noopener"><span>🎁</span>キャンペーン・期間限定メニュー</a>' : "") +
     (b.web && !b.camp ? '<a class="lnk" href="' + esc(b.web) + '" target="_blank" rel="noopener"><span>🎁</span>キャンペーンは公式サイトで</a>' : "") + "</div>" +
     (off ? '<p class="src">店舗・営業時間・サービスは ' + esc(b.n) + " の公式店舗検索（" + esc(b.built || "") + " 取得・毎月更新）。開店 90 日以内の店は地図に 🆕 で出ます。最新の情報は店の公式ページでご確認ください。" :
@@ -105,7 +105,7 @@ RG.fuelBlock = function (p) {
   if (!p.fuel) return "";
   var b = RG.FUEL_BRANDS[p.fuel[2]] || {}, a = p.fuel[4] || "";
   return '<div class="nat"><div class="nat__tags"><span class="nat__tag nat__tag--k" style="--lc:' + (b.c || "#888") + '">⛽ ' + esc(b.n) + "</span>" +
-    (a.indexOf("S") >= 0 ? '<span class="nat__tag">セルフ</span>' : "") + (a.indexOf("24") >= 0 ? '<span class="nat__tag">🕛 24時間</span>' : "") + (a.indexOf("W") >= 0 ? '<span class="nat__tag">🚿 洗車機</span>' : "") + "</div>" +
+    (a.indexOf("S") >= 0 ? '<span class="nat__tag">セルフ</span>' : "") + (a.indexOf("24") >= 0 ? '<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> 24時間</span>' : "") + (a.indexOf("W") >= 0 ? '<span class="nat__tag">🚿 洗車機</span>' : "") + "</div>" +
     '<p class="src">価格は表示していません（各社の公式アプリ・看板でご確認ください）。</p></div>';
 };
 RG.koshinBlock = function (p) {
@@ -116,7 +116,7 @@ RG.koshinBlock = function (p) {
 };
 RG.zooBlock = function (p) {
   var r = p.zoo; if (!r) return "";
-  return '<div class="nat"><div class="nat__tags"><span class="nat__tag nat__tag--k">' + (p.be || "") + " " + esc(r.k) + "</span>" + (r.hours ? '<span class="nat__tag">🕒 ' + esc(r.hours) + "</span>" : "") + (r.tel ? '<span class="nat__tag">☎ ' + esc(r.tel) + "</span>" : "") + "</div>" +
+  return '<div class="nat"><div class="nat__tags"><span class="nat__tag nat__tag--k">' + (p.be || "") + " " + esc(r.k) + "</span>" + (r.hours ? '<span class="nat__tag"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> ' + esc(r.hours) + "</span>" : "") + (r.tel ? '<span class="nat__tag">☎ ' + esc(r.tel) + "</span>" : "") + "</div>" +
     '<p class="nat__d nat__d--dim">この施設ならではの特徴（飼育種・見どころ）は、カードを開いたときに Wikipedia の記事から自動で取り込みます（記事がある施設のみ）。</p></div>';
 };
 

@@ -119,7 +119,7 @@ U.candsHtml = function () {
   return '<div class="nav__cands" id="nv-cands">' +
     (cands.length > 1 ? cands.map(function (c) { return chip(c, n.opt); }).join("") : "") +
     (more && n.destId ? '<button class="nav__cand nav__cand--more" type="button" id="nv-more" title="候補をくらべる">ほか ' + more + " 案 ▸</button>" : "") +
-    '<button class="nav__cand nav__cand--redo" type="button" id="nv-redo" title="現在地を出発地にして見積もり直す">🔁 ' +
+    '<button class="nav__cand nav__cand--redo" type="button" id="nv-redo" title="現在地を出発地にして見積もり直す"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-repeat"></use></svg> ' +
     (cands.length > 1 ? "やり直す" : "現在地から案内し直す") + "</button></div>";
 };
 U.bind = function (b) {
@@ -200,9 +200,9 @@ function renderDetail(D) {
     (rr ? "　乗換 " + rr.transfers + " 回" : "") + "</div>" +
     '<div class="nd__tools">' +
       '<button class="lvb" type="button" id="nd-map"><span class="ms" aria-hidden="true">map</span> 地図を見る</button>' +
-      (RG.arOpen ? '<button class="lvb" type="button" id="nd-ar">📷 AR で方角を見る</button>' : "") +
+      (RG.arOpen ? '<button class="lvb" type="button" id="nd-ar"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> AR で方角を見る</button>' : "") +
       (n.destId ? '<button class="lvb" type="button" id="nd-cmp">⚖️ 候補をくらべる</button>' : "") +
-      '<button class="lvb" type="button" id="nd-redo">🔁 現在地からやり直す</button>' +
+      '<button class="lvb" type="button" id="nd-redo"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-repeat"></use></svg> 現在地からやり直す</button>' +
       '<button class="lvb lvb--x" type="button" id="nd-stop">案内をやめる</button>' +
     "</div></div>";
   var cands = candidates(4), more = nMore(4);
@@ -212,7 +212,7 @@ function renderDetail(D) {
   if (r) {
     var b = RG.byId[r.board], a = RG.byId[r.alight];
     var km1 = here ? RG.hav(here, [b.la, b.lo]) : 0;
-    steps.push('<div class="nd__step"><div class="nd__t">🚶 ' + esc(nm(r.board)) + "まで歩く <span>約" + walkMin(km1) + "分・" + Math.round(km1 * 1000) + "m</span></div></div>");
+    steps.push('<div class="nd__step"><div class="nd__t"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-walk"></use></svg> ' + esc(nm(r.board)) + "まで歩く <span>約" + walkMin(km1) + "分・" + Math.round(km1 * 1000) + "m</span></div></div>");
     r.legs.forEach(function (L, i) {
       var from = RG.byId[L.from], to = RG.byId[L.to], next = r.legs[i + 1], Dto = D[to.n], Dfrom = D[from.n];
       var dirHint = Dfrom && (Dfrom.dirLeft || Dfrom.dirRight) ? "方面の目安：" + [Dfrom.dirLeft, Dfrom.dirRight].filter(Boolean).join("／") : "";
@@ -221,12 +221,12 @@ function renderDetail(D) {
         '<div class="nd__sub"><b>' + esc(nm(L.from)) + "で乗る</b>" + trackHtml(Dfrom, L.line, dirHint) +
           (next ? carsHtml(to.n, Dto, "transfer") : carsHtml(to.n, Dto, "exit")) +
           '<div class="lvt">' + (next ? esc(nm(L.to)) + "での乗換に近い号車" : esc(nm(L.to)) + "の改札・出口に近い号車") + "</div></div>" +
-        (next ? '<div class="nd__sub"><b>🔀 ' + esc(nm(L.to)) + "で乗換</b> → " + esc(next.line) + trackHtml(Dto, next.line, "") + "</div>" : "") +
+        (next ? '<div class="nd__sub"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-transfer"></use></svg> ' + esc(nm(L.to)) + "で乗換</b> → " + esc(next.line) + trackHtml(Dto, next.line, "") + "</div>" : "") +
         '<button class="lvb" type="button" data-st="' + esc(to.id) + '">' + esc(nm(L.to)) + "のカード ▸</button></div>");
     });
     var egKm = RG.hav([a.la, a.lo], n.dest), eg = rr && rr.egressMin != null ? Math.round(rr.egressMin) : walkMin(egKm);
     var same = egKm < 0.05 || n.destName === nm(r.alight);                               // 降りる駅がそのまま目的地（«徒歩約0分» とは出さない）
-    steps.push('<div class="nd__step"><div class="nd__t">🚶 ' + (same ? esc(nm(r.alight)) + "に着いたら" : esc(nm(r.alight)) + "から " + esc(n.destName) + " へ <span>徒歩約" + eg + "分</span>") + "</div>" +
+    steps.push('<div class="nd__step"><div class="nd__t"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-walk"></use></svg> ' + (same ? esc(nm(r.alight)) + "に着いたら" : esc(nm(r.alight)) + "から " + esc(n.destName) + " へ <span>徒歩約" + eg + "分</span>") + "</div>" +
       '<div class="nd__sub">' + exitHtml(D[a.n]) + "</div></div>");
   } else {
     var km = here ? RG.hav(here, n.dest) : n.startKm;

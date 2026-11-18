@@ -71,9 +71,9 @@ RG.ichiBlock = function (p) {
       (rest.length ? '<details class="ichb__more"><summary>由緒・歴史をもっと読む</summary>' + rest.map(function (s) { return '<p class="nat__d">' + esc(s) + "</p>"; }).join("") + "</details>" : "") +
       '<p class="mini">概要の出典: <a href="' + esc(r.wp || "https://ja.wikipedia.org/wiki/" + encodeURIComponent(p.n)) + '" target="_blank" rel="noopener">Wikipedia「' + esc(p.n) + "」</a>（CC BY-SA 4.0・抜粋）</p></div>" : "") +
     '<div class="nat__lnks">' +
-      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span>🌐</span>公式サイト（写真・参拝案内）</a>' : "") +
+      (r.web ? '<a class="lnk" href="' + esc(r.web) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg></span>公式サイト（写真・参拝案内）</a>' : "") +
       (r.jp ? '<a class="lnk" href="' + esc(r.jp) + '" target="_blank" rel="noopener"><span>🎌</span>一の宮巡拝会のページ</a>' : "") +
-      '<button class="lnk" type="button" data-ichinear="1"><span>🗾</span>' + esc(r.pf || "") + "の一之宮</button>" +
+      '<button class="lnk" type="button" data-ichinear="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span>' + esc(r.pf || "") + "の一之宮</button>" +
     "</div>" +
     '<p class="mini">写真は各社の公式サイト・一の宮巡拝会でご覧ください（本サイトでは転載しません）。参拝時間・行事・御朱印は公式で確認を。' +
       (r.cc === "gsi" ? "位置は住所から求めたおおよその地点です。" : "") + "</p></div>";
@@ -251,11 +251,11 @@ RG.kuniAt = function (la, lo) {
 RG.showKuni = function (k) {
   var col = DO_COL[k["dō"]] || "#607D8B";
   var html = '<div class="spotcard terra-card">' + (k.img ? '<img class="spotcard__i spotcard__i--map" src="' + esc(RG.cimg(k.img, 640)) + '" alt="" loading="lazy">' : "") +
-    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + col + '">🗾</span><div><h3>' + esc(k.n) + (k.y ? ' <small>（' + esc(k.y) + "）</small>" : "") + '</h3><p class="spotcard__k">' + esc(k["dō"]) + (k.late ? "（明治以降の区分）" : "") + "</p></div></div>" +
+    '<div class="spotcard__hd"><span class="gbadge gbadge--b" style="--lc:' + col + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg></span><div><h3>' + esc(k.n) + (k.y ? ' <small>（' + esc(k.y) + "）</small>" : "") + '</h3><p class="spotcard__k">' + esc(k["dō"]) + (k.late ? "（明治以降の区分）" : "") + "</p></div></div>" +
     '<div class="nat__tags"><span class="nat__tag nat__tag--k" style="--lc:' + col + '">' + esc(k["dō"]) + "</span>" + (k.pf || []).map(function (p) { return '<span class="nat__tag">' + esc(p) + "</span>"; }).join("") + (k.kf ? '<span class="nat__tag">国府: ' + esc(k.kf) + "</span>" : "") + "</div>" +
     (k.d ? '<p class="nat__d">' + esc(k.d) + "</p>" : "") +
-    '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.wp || k.n) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' +
-    '<button class="lnk" type="button" data-go="1"><span>📍</span>国府のあたりへ</button></div>' +
+    '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(k.wp || k.n) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' +
+    '<button class="lnk" type="button" data-go="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg></span>国府のあたりへ</button></div>' +
     '<p class="src">境界は1871年ごろの国界と、記事の「領域」節から市区町村単位で組み立てた近似です。埋立地や境界変更の前の姿と一致しないことがあります。</p></div>';
   var m = RG.openCard("🗾 " + k.n, html);
   m.querySelector("[data-go]").addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(k.la, k.lo, 3000); });
@@ -264,19 +264,19 @@ RG.showKuni = function (k) {
 /* ---- 設定の切り替え（設定パネルの奥） ---- */
 RG.geoSwitchHTML = function () {
   var on = function (k) { return RG.settings && RG.settings[k] === false ? "" : " checked"; };
-  return '<div class="set__sec"><h4>🗾 地図に描くもの（地理・歴史）</h4>' +
-    '<label class="set__sw"><input id="gs-kuni" type="checkbox"' + (RG.settings && RG.settings.kuni ? " checked" : "") + "> 🗾 旧国名（令制国）で見る — 国ごとの色分けと国名。国を押すと説明</label>" +
-    '<label class="set__sw"><input id="gs-range" type="checkbox"' + on("terraRange") + "> ⛰️ 山脈・山地の線と名前</label>" +
-    '<label class="set__sw"><input id="gs-river" type="checkbox"' + on("terraRiver") + "> 🏞️ 一級河川の線と名前</label>" +
-    '<label class="set__sw"><input id="gs-sea" type="checkbox"' + on("terraSea") + "> 🌊 海・湾・海峡の名前</label>" +
-    '<label class="set__sw"><input id="gs-cur" type="checkbox"' + on("terraCur") + "> 🌡️ 海流（動く矢印。暖流は赤・寒流は青）</label>" +
-    '<label class="set__sw"><input id="gs-hwy" type="checkbox"' + on("roadHwy") + "> 🛣️ 高速道路（線・名前・IC/JCT は寄ると）</label>" +
-    '<label class="set__sw"><input id="gs-kok" type="checkbox"' + (RG.settings && RG.settings.roadKok ? " checked" : "") + "> 🛣️ 一般国道（1995年の線形。既定はオフ）</label>" +
-    '<label class="set__sw"><input id="gs-kai" type="checkbox"' + on("roadKaido") + "> 🏮 五街道（東海道・中山道…）の道筋</label>" +
-    '<label class="set__sw"><input id="gs-quake" type="checkbox"' + on("quake") + "> 🌏 地震情報を受信（P2P地震情報・緊急地震速報を地図に）</label>" +
-    '<p class="deep__d"><button class="set__b" type="button" id="gs-quakel">🌏 最近の地震</button></p>' +
+  return '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 地図に描くもの（地理・歴史）</h4>' +
+    '<label class="set__sw"><input id="gs-kuni" type="checkbox"' + (RG.settings && RG.settings.kuni ? " checked" : "") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-map'></use></svg> 旧国名（令制国）で見る — 国ごとの色分けと国名。国を押すと説明</label>" +
+    '<label class="set__sw"><input id="gs-range" type="checkbox"' + on("terraRange") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-mountain'></use></svg> 山脈・山地の線と名前</label>" +
+    '<label class="set__sw"><input id="gs-river" type="checkbox"' + on("terraRiver") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-image'></use></svg> 一級河川の線と名前</label>" +
+    '<label class="set__sw"><input id="gs-sea" type="checkbox"' + on("terraSea") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-wave'></use></svg> 海・湾・海峡の名前</label>" +
+    '<label class="set__sw"><input id="gs-cur" type="checkbox"' + on("terraCur") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-thermo'></use></svg> 海流（動く矢印。暖流は赤・寒流は青）</label>" +
+    '<label class="set__sw"><input id="gs-hwy" type="checkbox"' + on("roadHwy") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-road'></use></svg> 高速道路（線・名前・IC/JCT は寄ると）</label>" +
+    '<label class="set__sw"><input id="gs-kok" type="checkbox"' + (RG.settings && RG.settings.roadKok ? " checked" : "") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-road'></use></svg> 一般国道（1995年の線形。既定はオフ）</label>" +
+    '<label class="set__sw"><input id="gs-kai" type="checkbox"' + on("roadKaido") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-lantern'></use></svg> 五街道（東海道・中山道…）の道筋</label>" +
+    '<label class="set__sw"><input id="gs-quake" type="checkbox"' + on("quake") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-globe'></use></svg> 地震情報を受信（P2P地震情報・緊急地震速報を地図に）</label>" +
+    '<p class="deep__d"><button class="set__b" type="button" id="gs-quakel"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 最近の地震</button></p>' +
     '<p class="deep__d">山・城・川・動物園などはスポットのジャンル（画面下のアイコン）から出せます。' +
-    '<button class="set__b" type="button" id="gs-mtrank">🗻 山の標高 TOP100</button> <button class="set__b" type="button" id="gs-hanrank">🏯 藩の石高ランキング</button></p></div>';
+    '<button class="set__b" type="button" id="gs-mtrank"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-mountain"></use></svg> 山の標高 TOP100</button> <button class="set__b" type="button" id="gs-hanrank"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-castle"></use></svg> 藩の石高ランキング</button></p></div>';
 };
 RG.geoSwitchBind = function (root) {
   function sw(id, key, fn) { var el = $(id, root); if (!el) return; el.addEventListener("change", function () { if (RG.settings) RG.settings[key] = this.checked; if (RG.saveSettings) RG.saveSettings(); fn(this.checked); }); }

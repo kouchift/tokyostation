@@ -284,7 +284,7 @@ RG.tinfoFocus = function (on, it) {
     });
     if (isFinite(x0)) try { RG.Map.fitBox(x0, y0, x1, y1, 1.25); } catch (e) {}
   }
-  if (on && RG.tripStatus) RG.tripStatus("🚦 運行に影響のある路線だけを色で表示しています。<button class=\"tsx\" onclick=\"RG.tinfoFocus(false)\">戻す</button>", "warn", 8000, true);
+  if (on && RG.tripStatus) RG.tripStatus("<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-traffic'></use></svg> 運行に影響のある路線だけを色で表示しています。<button class=\"tsx\" onclick=\"RG.tinfoFocus(false)\">戻す</button>", "warn", 8000, true);
 };
 
 RG.showTrainInfo = function () {
@@ -301,15 +301,15 @@ RG.showTrainInfo = function () {
       (it.text ? '<p class="ti__x">' + esc(it.text) + "</p>" : "") +
       (ls.length ? '<p class="ti__a">地図の路線: ' + ls.map(function (n) { return '<span class="ti__ln" style="--lc:' + ((RG.lineColor || {})[n] || "#888") + '">' + esc(n) + (it.map.lines.indexOf(n) < 0 ? "（一部）" : "") + "</span>"; }).join("") + "</p>"
                  : '<p class="ti__a ti__a--none">この地図の路線とは結びつけられませんでした（経路さがしには反映していません）</p>') +
-      (ls.length ? '<button class="lnk lnk--s" type="button" data-tif="' + i + '">🗺️ 地図で見る</button>' : "") +
+      (ls.length ? '<button class="lnk lnk--s" type="button" data-tif="' + i + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 地図で見る</button>' : "") +
       "</li>";
   }).join("");
   var old = ST.fetched && Date.now() - ST.fetched > 10 * 60e3;
   var html = '<div class="ti">' +
-    (ST.demo ? '<p class="ti__demo">⚠ これは <b>見本のデータ</b> です（URL の ?tinfo=demo）。本物の運行情報ではありません。</p>' : "") +
+    (ST.demo ? '<p class="ti__demo"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> これは <b>見本のデータ</b> です（URL の ?tinfo=demo）。本物の運行情報ではありません。</p>' : "") +
     '<p class="ti__lead">いま運行に影響が出ている路線です。<b>止まっている路線は、ルートの検索で自動的に避けます</b>（遅れている路線は所要時間に目安を足します）。</p>' +
     (rows ? '<ul class="ti__list">' + rows + "</ul>" : '<p class="ti__lead">いま影響の出ている路線はありません。</p>') +
-    '<div class="lnks"><button class="lnk" type="button" id="ti-focus"><span>🚦</span>影響のある路線だけ地図に</button></div>' +
+    '<div class="lnks"><button class="lnk" type="button" id="ti-focus"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-traffic"></use></svg></span>影響のある路線だけ地図に</button></div>' +
     '<p class="src">出典: ' + esc(ST.src || "公共交通オープンデータセンター") + "（" + (ST.at ? esc(hm(ST.at)) + " 時点・" : "") + esc(ST.fetched ? mins(ST.fetched) : "") + "に取得）" +
       (old ? ' <b style="color:#D0021B">※ 10 分以上更新できていません</b>' : "") +
       "。各社の発表から数分遅れることがあります。対象は受け皿が取れる事業者だけで、全国すべてではありません。乗る前に各社の公式の運行情報も確かめてください。</p></div>";
@@ -334,8 +334,8 @@ function checkNav() {
     (top.text ? '<p class="ti__x">' + esc(top.text) + "</p>" : "") +
     (hit.length > 1 ? '<p class="ti__lead">ほかにも ' + (hit.length - 1) + " 件、この経路に影響があります。</p>" : "") +
     '<p class="ti__lead">いま案内している経路で使う路線です。' + (top.sev >= 3 ? "止まっている路線を避けた経路を探し直せます。" : "遅れを見込んだ経路を探し直せます。") + "</p>" +
-    '<div class="nav__btns"><button id="ti-re" class="nav__b nav__b--main" type="button">🔁 避けて案内し直す</button>' +
-    '<button id="ti-list" class="nav__b" type="button">🚦 影響のある路線を見る</button>' +
+    '<div class="nav__btns"><button id="ti-re" class="nav__b nav__b--main" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-repeat"></use></svg> 避けて案内し直す</button>' +
+    '<button id="ti-list" class="nav__b" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-traffic"></use></svg> 影響のある路線を見る</button>' +
     '<button id="ti-keep" class="nav__b" type="button">このまま進む</button></div></div>';
   var m = RG.openModal("🚨 経路の路線に運行の影響", html);
   m.querySelector("#ti-re").addEventListener("click", function () { RG.closeModal(); if (RG.navReroute) RG.navReroute("運行情報"); });

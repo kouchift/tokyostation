@@ -54,13 +54,13 @@ RG.shinkansenHtml = function (name) {
     s.pax ? [s.pax.k || "乗車人員", s.pax.v.toLocaleString("ja-JP") + " 人/日（" + s.pax.y + "年）"] : null,
     s.bldg ? ["駅ビル・駅ナカ", s.bldg] : null
   ].filter(Boolean).map(function (f) { return '<div class="skf"><span>' + esc(f[0]) + "</span><b>" + esc(f[1]) + "</b></div>"; }).join("");
-  return '<div class="sec sec--sk"><div class="sec__h"><b>🚄 新幹線の駅</b><em>' + esc((s.lines || []).join("・")) + "</em></div>" +
+  return '<div class="sec sec--sk"><div class="sec__h"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-shinkansen"></use></svg> 新幹線の駅</b><em>' + esc((s.lines || []).join("・")) + "</em></div>" +
     '<div class="sk__lines">' + lines + "</div>" +
     '<div class="sk__trains">' + trains + "</div>" +
     (pass.length ? '<p class="mini">通過: ' + esc(pass.join("・")) + "</p>" : "") +
     '<div class="skfs">' + facts + "</div>" +
-    '<div class="sk__act"><button class="lnk" type="button" data-skfare="1"><span>🎫</span>この駅から新幹線で行ける主な駅と概算運賃</button>' +
-    '<button class="lnk" type="button" data-skshop="1"><span>🛍️</span>構内・駅前のお店（ジャンル別）</button></div>' +
+    '<div class="sk__act"><button class="lnk" type="button" data-skfare="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-ticket"></use></svg></span>この駅から新幹線で行ける主な駅と概算運賃</button>' +
+    '<button class="lnk" type="button" data-skshop="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-bags"></use></svg></span>構内・駅前のお店（ジャンル別）</button></div>' +
     '<div class="sk__more" hidden></div>' +
     '<p class="src">' +
     "一部停車の列車は時刻表で確認を。車体アイコンは本アプリの独自描画で、各社の意匠・ロゴは使っていません。</p></div>";
@@ -84,7 +84,7 @@ RG.shinkansenBind = function (root, name) {
     more.hidden = false;
     more.innerHTML = '<div class="sk__line"><b>' + esc(L) + "</b>" + (Lm.ops ? ' <span class="mini">' + esc(Lm.ops) + "</span>" : "") +
       '<div class="sk__seq">' + (Lm.stations || []).map(function (n) { return '<button type="button" class="hop' + (n === s.n ? " on" : "") + '" data-hop2="' + esc(n) + '">' + esc(n) + "</button>"; }).join('<i>›</i>') + "</div>" +
-      (Lm.wp ? '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(Lm.wp) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia で ' + esc(L) + " を読む</a>" : "") + "</div>";
+      (Lm.wp ? '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(Lm.wp) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia で ' + esc(L) + " を読む</a>" : "") + "</div>";
     bindHops(more);
     if (RG.Map && RG.Map.highlightLine) RG.Map.highlightLine(L);
   }); });

@@ -575,7 +575,7 @@ function showBldg(b) {
             '<button class="gal__nav gal__nav--n" type="button" data-gal-n>›</button>' +
             '<span class="gal__c" id="gal-c">1 / ' + pics.length + "</span>" : "") +
           '<a class="gal__src" id="gal-src" href="' + esc(RG.cpage(pics[0])) +
-            '" target="_blank" rel="noopener">📷 出典と大きな画像</a>' +
+            '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> 出典と大きな画像</a>' +
         "</div>" +
         (pics.length > 1
           ? '<div class="gal__thumbs">' + pics.map(function (f, i) {
@@ -590,11 +590,11 @@ function showBldg(b) {
         '<span class="spotcard__pht">自由に使える写真がありません。下のリンクから外観を見られます</span></div>') +
     '<div class="bldg__go">' +
       '<a class="bldg__b bldg__b--g" href="https://www.google.com/maps/search/?api=1&query=' +
-        encodeURIComponent(ll) + '" target="_blank" rel="noopener">🗺️ Google マップで見る</a>' +
+        encodeURIComponent(ll) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> Google マップで見る</a>' +
       '<a class="bldg__b bldg__b--s" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' +
-        encodeURIComponent(ll) + '" target="_blank" rel="noopener">👀 ストリートビューで外観を見る</a>' +
+        encodeURIComponent(ll) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-eye"></use></svg> ストリートビューで外観を見る</a>' +
       '<a class="bldg__b" href="https://www.google.com/search?tbm=isch&q=' +
-        encodeURIComponent(b.n) + '" target="_blank" rel="noopener">📷 写真をさがす</a>' +
+        encodeURIComponent(b.n) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> 写真をさがす</a>' +
     "</div>" +
     '<div class="exgrid">' +
       ex("📏 高さ", b.h + " m", b.fl ? "地上 " + b.fl + " 階" : "") +
@@ -605,10 +605,10 @@ function showBldg(b) {
       (b.f ? ex("📐 建物のかたち", b.f.length + " 角形", "OpenStreetMap の輪郭を使っています") : "") +
     "</div>" +
     '<div class="lnks"><a class="lnk" href="https://ja.wikipedia.org/wiki/' +
-      encodeURIComponent(b.n) + '" target="_blank" rel="noopener"><span>📖</span>Wikipedia</a>' +
+      encodeURIComponent(b.n) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' +
       '<a class="lnk" href="https://maps.apple.com/?q=' + encodeURIComponent(ll) +
       '" target="_blank" rel="noopener"><span>🍎</span>Apple マップ</a>' +
-      (near ? '<button class="lnk" type="button" data-goto="' + esc(near.t.id) + '"><span>🚉</span>' +
+      (near ? '<button class="lnk" type="button" data-goto="' + esc(near.t.id) + '"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg></span>' +
         esc(near.t.n) + "駅を見る</button>" : "") + "</div>" +
     '</div>';
   var m = RG.openModal(b.e + " " + b.n, html);

@@ -672,14 +672,14 @@ RG.pvFlow = function (kind, proceed, items, opts) {
   RG.pvLastSpec = spec;                                                  // 試験用
   var m = RG.openModal("🎬 ルート PV を作っています（" + spec.dur + "秒）", '<div class="pv"><p class="set__d">' + esc(spec.title) + " の " + spec.dur + " 秒動画をこの端末で作っています。作り終わると " + (kind === "obsidian" ? "Obsidian に送ります" : kind === "mail" ? "メールを開きます" : "共有に進みます") + "。</p>" +
     '<div class="pv__here" id="pv-here"></div>' +
-    '<label class="pv__day">📅 移動予定日 <input id="pv-day" type="date" value="' + spec.dayStr + '"></label>' +
+    '<label class="pv__day"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> 移動予定日 <input id="pv-day" type="date" value="' + spec.dayStr + '"></label>' +
     '<div class="pv__bar"><i id="pv-bar"></i></div><canvas id="pv-cv" width="' + dims(spec).W + '" height="' + dims(spec).H + '" class="pv__cv' + (spec.vertical ? " pv__cv--v" : "") + '"></canvas><p class="src">字幕は乗る線・乗り換える駅から自動で入ります。日付を変えると作り直します。' +
     (spec.captions ? "メモ・感想・ひとことは «まとめ» の場面に出ます。" : "メモ欄に書いておくと «まとめ» の場面に字幕で入ります。") + "動画は端末内だけで作られ、どこにも送信されません。</p></div>");
   var cv = $("#pv-cv", m), c = cv.getContext("2d"), bar = $("#pv-bar", m), hereEl = $("#pv-here", m);
   draw = makeDrawer(spec);
   function hereLine() {
     if (!hereEl) return;
-    if (opts.here === undefined) { hereEl.innerHTML = "📍 現在地を入れる: <b>取得中…</b>（ブラウザが位置情報の許可を聞いたら「許可」を押してください）"; hereEl.className = "pv__here"; return; }
+    if (opts.here === undefined) { hereEl.innerHTML = "<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-pin'></use></svg> 現在地を入れる: <b>取得中…</b>（ブラウザが位置情報の許可を聞いたら「許可」を押してください）"; hereEl.className = "pv__here"; return; }
     hereEl.textContent = hereText(spec); hereEl.className = "pv__here" + (spec.here && spec.here.real ? "" : " pv__here--no");
   }
   hereLine();
@@ -722,13 +722,13 @@ RG.pvShow = function (rec, kind, proceed) {
   var postTxt = "【東京移動メモ】" + rec.title + (rec.dayText ? "\n移動予定：" + rec.dayText : "") + "\n" + (rec.dur || 20) + "秒のルートPV" + (rec.tags && rec.tags.length ? "\n" + rec.tags.join(" ") : "") + "\n\n地図で確認 → " + link;
   var html = '<div class="pv"><video id="pv-v" class="pv__v' + (rec.vertical ? " pv__v--v" : "") + '" src="' + url + '" controls autoplay muted playsinline></video>' +
     '<div class="pv__exp">⏳ この動画の保有期限: <b>' + expStr + '</b>（1週間）。応援の有無にかかわらず、期限を過ぎると消える可能性があります。</div>' +
-    (rec.dayText ? '<div class="pv__dayline">📅 移動予定：<b>' + esc(rec.dayText) + '</b>　<button class="pv__lnk" type="button" id="pv-link" data-link="' + esc(link) + '">🔗 このルートのリンクをコピー</button><br><small>リンクを開いた相手の端末でも、同じ日付・字幕の PV ができます（現在地はリンクに入りません）。</small></div>' : "") +
+    (rec.dayText ? '<div class="pv__dayline"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg> 移動予定：<b>' + esc(rec.dayText) + '</b>　<button class="pv__lnk" type="button" id="pv-link" data-link="' + esc(link) + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg> このルートのリンクをコピー</button><br><small>リンクを開いた相手の端末でも、同じ日付・字幕の PV ができます（現在地はリンクに入りません）。</small></div>' : "") +
     (RG.snsPanelHTML ? RG.snsPanelHTML({ video: true, main: "youtube" }) : "") +
     '<div class="sh__btns">' +
       '<a class="sh__b" href="' + url + '" download="' + esc(rec.name) + '">💾 動画を保存（' + (isMp4 ? "MP4" : "WebM") + '・' + (rec.blob.size / 1048576).toFixed(1) + ' MB）</a>' +
       (proceed ? '<button class="sh__b" type="button" id="pv-go">' + (kind === "obsidian" ? "🟣 Obsidian に送る（続ける）" : kind === "mail" ? "📧 メールに進む" : "📤 共有に進む") + "</button>" : "") +
       (rec.again ? '<button class="sh__b" type="button" id="pv-again">' + (rec.vertical ? "🖥️ 横（YouTube・X 向け）で作り直す" : "📱 縦（TikTok・リール・ショート向け）で作り直す") + "</button>" : "") +
-      '<button class="sh__b" type="button" id="pv-tip">☕ 応援する</button>' +
+      '<button class="sh__b" type="button" id="pv-tip"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 応援する</button>' +
     "</div>" +
     '<p class="rc__hint" id="pv-hint"></p>' +
     '<p class="src">' + (sns ? "MP4（H.264）なので YouTube・X・Instagram・TikTok・LINE にそのまま投稿できます。" + (mobile ? "スマホは各ボタンで OS の共有シートが開き、動画と本文がいっしょに渡ります。そこで YouTube／LINE／X／Instagram／TikTok／Discord を選ぶだけです（iPhone は「ビデオを保存」で写真アプリにも入ります）。" : "PC は YouTube・TikTok・Instagram・Discord・WeChat に Web から動画を直接渡す入口が無いので、ボタン 1 回で «動画を保存＋本文をコピー＋そのサービスのアップロード画面を開く» まで進めます。あとは開いた画面に動画をドラッグして本文を貼るだけです。") :
@@ -738,7 +738,7 @@ RG.pvShow = function (rec, kind, proceed) {
   var v = $("#pv-v", m);
   var hint = $("#pv-hint", m);
   // v87: 再生が終わっても投げ銭の画面を勝手に開かない（押しつけない）。ひとことと «応援する» への誘導だけ
-  if (v) v.addEventListener("ended", function () { if (hint && !hint.textContent) hint.innerHTML = "🎬 ここまで見てくれてありがとうございます。よければ <b>☕ 応援する</b>（1 タップで送金アプリが開きます）。"; });
+  if (v) v.addEventListener("ended", function () { if (hint && !hint.textContent) hint.innerHTML = "<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-video'></use></svg> ここまで見てくれてありがとうございます。よければ <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-cafe'></use></svg> 応援する</b>（1 タップで送金アプリが開きます）。"; });
   /* v84: SNS の並びは共通（assets/sns.js）。スマホは共有シートに動画と本文を載せて渡す。PC は保存＋本文コピー＋投稿画面 */
   if (RG.snsBind) RG.snsBind(m.querySelector(".snsp"), function () {
     return { title: "ルート PV: " + rec.title, text: postTxt.replace("\n\n地図で確認 → " + link, ""), url: link, file: file, blobUrl: url, fileName: rec.name, kind: "video" };
@@ -753,7 +753,7 @@ RG.pvShow = function (rec, kind, proceed) {
 RG.pvList = function () {
   all().then(function (rs) {
     rs = rs.filter(function (r) { return r.expires > Date.now(); }).sort(function (a, b) { return b.created - a.created; });
-    var html = '<div class="pv"><p class="set__d">この端末に残っている PV（期限つき）。</p>' + (rs.length ? rs.map(function (r) { var e = new Date(r.expires); return '<button class="ytl" type="button" data-pv="' + r.id + '"><span class="ytl__b"><b>🎬 ' + esc(r.title) + "</b><i>" + (r.dayText ? "移動予定 " + esc(r.dayText) + "・" : "") + "期限 " + e.getFullYear() + "/" + (e.getMonth() + 1) + "/" + e.getDate() + "・" + (r.blob.size / 1048576).toFixed(1) + " MB</i></span></button>"; }).join("") : '<p class="set__d">ありません。おでかけプランの「📤 共有」や「🎬 PV を作る」で作れます。</p>') + "</div>";
+    var html = '<div class="pv"><p class="set__d">この端末に残っている PV（期限つき）。</p>' + (rs.length ? rs.map(function (r) { var e = new Date(r.expires); return '<button class="ytl" type="button" data-pv="' + r.id + '"><span class="ytl__b"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-video"></use></svg> ' + esc(r.title) + "</b><i>" + (r.dayText ? "移動予定 " + esc(r.dayText) + "・" : "") + "期限 " + e.getFullYear() + "/" + (e.getMonth() + 1) + "/" + e.getDate() + "・" + (r.blob.size / 1048576).toFixed(1) + " MB</i></span></button>"; }).join("") : '<p class="set__d">ありません。おでかけプランの「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-share"></use></svg> 共有」や「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-video"></use></svg> PV を作る」で作れます。</p>') + "</div>";
     var m = RG.openModal("🎬 ルート PV の一覧", html);
     Array.prototype.forEach.call(m.querySelectorAll("[data-pv]"), function (b) { b.addEventListener("click", function () { var r = rs.filter(function (x) { return x.id === b.dataset.pv; })[0]; if (r) RG.pvShow(r, null, null); }); });
   }).catch(function () { RG.openModal("🎬 ルート PV", '<p class="set__d">この端末では保存領域が使えません。</p>'); });

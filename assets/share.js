@@ -73,8 +73,8 @@ RG.shareOpen = function () {
     '<div class="sh__pv"><p class="mini">画像をつくっています…</p></div>' +
     (RG.snsPanelHTML ? RG.snsPanelHTML({ main: "x" }) : "") +
     '<div class="sh__btns">' +
-      '<button class="sh__b" type="button" id="sh-copy">🔗 リンクをコピー</button>' +
-      '<a class="sh__b" id="sh-dl" download="tokyostation.png" href="#">💾 画像を保存</a>' +
+      '<button class="sh__b" type="button" id="sh-copy"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg> リンクをコピー</button>' +
+      '<a class="sh__b" id="sh-dl" download="tokyostation.png" href="#"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> 画像を保存</a>' +
     "</div>" +
     '<p class="mini">スマホは各ボタンで共有シートが開き、画像と文を一緒に渡せます。PC の X は画像をクリップボードに入れて投稿画面を開きます（貼り付けるだけ）。' +
     "画像の右下にはクレジット「" + esc(CREDIT) + "」、左上にサイトのURLが入ります。</p></div>");

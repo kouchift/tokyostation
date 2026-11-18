@@ -108,15 +108,15 @@ function brandMark(k) {
   return b ? '<i class="os__br" style="background:' + b.c + '">' + b.mark + "</i>" : "";
 }
 function listHtml(cat) {
-  if (!O.anchor) return '<p class="os__e">基準の場所がありません。「📍 現在地」か「🚉 駅」を選んでください。</p>';
+  if (!O.anchor) return '<p class="os__e">基準の場所がありません。「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地」か「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 駅」を選んでください。</p>';
   if (cat.heavy && RG.ensureData && !(RG.spotsReady && RG.spotsReady())) {
-    if (RG.spotsFailed && RG.spotsFailed() && !O.loading) return '<p class="os__e">⚠️ お店のデータを読み込めませんでした。通信を確認してください。</p><button class="os__retry" type="button" data-os-retry="1">🔄 もう一度読み込む</button>';
+    if (RG.spotsFailed && RG.spotsFailed() && !O.loading) return '<p class="os__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> お店のデータを読み込めませんでした。通信を確認してください。</p><button class="os__retry" type="button" data-os-retry="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-refresh"></use></svg> もう一度読み込む</button>';
     if (!O.loading) { O.loading = 1; RG.ensureData("spots", function () { O.loading = 0; if (O.on) render(); }); }
-    return '<p class="os__e">🏪 お店のデータ（約 6MB・はじめての 1 回だけ）を読み込んでいます…</p>';
+    return '<p class="os__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-store"></use></svg> お店のデータ（約 6MB・はじめての 1 回だけ）を読み込んでいます…</p>';
   }
   O.__list = null; var L = itemsCached(cat);
   var destQ = cat.kind === "dest" ? '<div class="os__q"><input class="os__qin" type="search" autocomplete="off" enterkeyhint="search" placeholder="行き先をさがす（駅名・地名）" aria-label="行き先をさがす"><div class="os__qsug" hidden></div></div>' : "";
-  if (!L.length && cat.heavy && RG.dataFailed && RG.dataFailed.length) return '<p class="os__e">⚠️ お店のデータの一部（' + RG.dataFailed.length + ' 件）を読み込めませんでした。通信を確認してください。</p><button class="os__retry" type="button" data-os-retry="partial">🔄 もう一度読み込む</button>';
+  if (!L.length && cat.heavy && RG.dataFailed && RG.dataFailed.length) return '<p class="os__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> お店のデータの一部（' + RG.dataFailed.length + ' 件）を読み込めませんでした。通信を確認してください。</p><button class="os__retry" type="button" data-os-retry="partial"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-refresh"></use></svg> もう一度読み込む</button>';
   if (!L.length && cat.id === "cvs" && RG.cvsFilterHtml) return RG.cvsFilterHtml("cvsf--os") + '<p class="os__e">' + esc(O.anchorName) + " から " + m(R) + " 以内に、選んだコンビニがありません。「すべて」で戻せます。</p>";
   if (!L.length) {
     if (cat.kind === "dest") return destQ + '<p class="os__e">目的地はまだありません。上で行き先をさがすか、入口の検索で選ぶと、ここに «前回の行き先» が出ます。</p>';
@@ -125,7 +125,7 @@ function listHtml(cat) {
   }
   var cvsQ = cat.id === "cvs" && RG.cvsFilterHtml ? RG.cvsFilterHtml("cvsf--os") : "";   // v99: 7／F／L（地図と同じ状態）
   var exQ = cat.kind === "exit" ? guideHtml() + carHtml() : "";
-  var exSrc = cat.kind === "exit" && !nearTokyo() ? '<p class="os__src">出入口データ: © OpenStreetMap contributors（ODbL 1.0）。「⚠未確認」は事業者の公式案内と照合できていない出入口です。位置は目安なので、現地の案内表示を優先してください。</p>' : "";
+  var exSrc = cat.kind === "exit" && !nearTokyo() ? '<p class="os__src">出入口データ: © OpenStreetMap contributors（ODbL 1.0）。「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg>未確認」は事業者の公式案内と照合できていない出入口です。位置は目安なので、現地の案内表示を優先してください。</p>' : "";
   return destQ + cvsQ + exQ + L.map(function (x, i) {
     return '<button class="os__row" type="button" data-os-i="' + i + '">' +
       (RG.gIconHtml && x.poi && !x.poi.e && RG.hasIcon(x.poi.g) ? RG.gIconHtml(x.poi.g, x.e, "os__e2") : '<span class="os__e2">' + esc(x.e) + "</span>") +   // v101
@@ -147,7 +147,7 @@ function guideHtml() {
 }
 function guideInner() {
   var G = O.guide, here = O.gpos;
-  if (!here) return '<span class="os__garr" aria-hidden="true">🧭</span><span class="os__gtx"><b>' + esc(G.n) + " へ</b><small>現在地を確かめています…（地下では位置が取れないことがあります）</small></span>";
+  if (!here) return '<span class="os__garr" aria-hidden="true"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg></span><span class="os__gtx"><b>' + esc(G.n) + " へ</b><small>現在地を確かめています…（地下では位置が取れないことがあります）</small></span>";
   var km = RG.hav(here, [G.la, G.lo]), deg = bearing(here, [G.la, G.lo]);
   var rel = O.heading != null ? (deg - O.heading + 360) % 360 : deg;       // 端末の向きが分かれば «進む向き» に合わせて矢印を回す
   var arrived = km < 0.025;
@@ -199,7 +199,7 @@ function carHtml() {
   for (var i = 1; i <= 16; i++) opts += '<option value="' + i + '"' + (i === car ? " selected" : "") + ">" + i + "号車</option>";
   var ex = ES.tokyo ? ((RG.TOKYO_STATION && RG.TOKYO_STATION.exits) || []).map(function (x) { return x.n; }) : ES.x.map(function (x) { return x[0]; });
   return '<div class="os__car">' +
-    '<label class="os__carl">🚃 いま乗っている号車 <select data-os-car aria-label="いま乗っている号車">' + opts + "</select></label>" +
+    '<label class="os__carl"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-train"></use></svg> いま乗っている号車 <select data-os-car aria-label="いま乗っている号車">' + opts + "</select></label>" +
     '<small>車内のドアの上や車両のつなぎ目にある «○号車» の表示を見て選んでください</small>' +
     '<div class="os__tips" data-os-tips>' + tipsHtml(ES.n) + "</div>" +
     (RG.postsEnabled && RG.postsEnabled() ?
@@ -317,7 +317,7 @@ function bind(el, cat) {
       if (!rows.length) { qs.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした</div>'; qs.hidden = false; return; }
       rows.forEach(function (r) {
         var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t;
-        b.innerHTML = r.t === "station" ? "<b>🚉 " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small>" : "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small>";
+        b.innerHTML = r.t === "station" ? "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small>" : "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small>";
         b.addEventListener("click", function () { qi.value = r.n; pick(r); });
         qs.appendChild(b);
       });

@@ -34,7 +34,7 @@ RG.showAdultGate = function () {
     '<p class="gate__b">このサイトは小学生からお年寄りまで使います。' +
     "そのため、ラブホテルやアダルトショップは<b>はじめから地図に出しません</b>。</p>" +
     '<p class="gate__b">ご覧になるには <b>2つ</b> が必要です。<br>' +
-    "① <b>⚙️設定 → いちばん下の «くわしい設定» → «表示するものを増やす»</b> まで進む<br>" +
+    "① <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-gear'></use></svg>設定 → いちばん下の «くわしい設定» → «表示するものを増やす»</b> まで進む<br>" +
     "② <b>有償プランの合いことば</b>を入れる</p>" +
     '<p class="gate__b gate__b--s">なお、有償プランのお申し込み口は絶賛工事中です。' +
     "いまのところ新しくご加入いただく方法はありません。</p>" +
@@ -52,13 +52,13 @@ RG.showAdult = function (a) {
       '<span class="smk__e">' + (K.e || "🔞") + "</span>" +
       "<div><h3>" + esc(a.n) + '</h3><p class="smk__k">' + esc(K.label || "") + "</p></div></div>" +
     '<div class="smkg">' +
-      (a.op ? '<div class="smkr"><span>🕐 営業時間</span><b>' + esc(a.op) + "</b></div>" : "") +
-      (a.br ? '<div class="smkr"><span>🏢 チェーン</span><b>' + esc(a.br) + "</b></div>" : "") +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (a.op ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg> 営業時間</span><b>' + esc(a.op) + "</b></div>" : "") +
+      (a.br ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg> チェーン</span><b>' + esc(a.br) + "</b></div>" : "") +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
-      '<div class="smkr"><span>💰 料金・くわしい情報</span><b class="na">有償プラン（工事中）</b></div>' +
+      '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg> 料金・くわしい情報</span><b class="na">有償プラン（工事中）</b></div>' +
     "</div>" +
-    '<button class="gate__more" type="button" id="ad-more">💰 くわしい情報を見る</button>' +
+    '<button class="gate__more" type="button" id="ad-more"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg> くわしい情報を見る</button>' +
     RG.outLinks({ site: a.web, map: a.la + "," + a.lo }) +
     '<p class="src">' +
     "<b>18歳未満の方は利用できません。</b>営業の有無・料金は変わります。" +
@@ -67,7 +67,7 @@ RG.showAdult = function (a) {
   var b = $("#ad-more", m);
   if (b) b.addEventListener("click", function () {
     RG.openModal("🚧 くわしい情報は工事中です", '<div class="gate">' +
-      '<div class="gate__e">🚧😅</div>' +
+      '<div class="gate__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-barrier"></use></svg>😅</div>' +
       '<p class="gate__t">料金・部屋の様子などのくわしい情報は <b>有償プラン</b> の予定です。</p>' +
       '<p class="gate__b">その有償プランは<b>絶賛工事中</b>で、いつできるかは決まっていません。' +
       "作るかどうかは、みなさんの声（VOC）だけで決めます。</p>" +
@@ -92,13 +92,13 @@ RG.adultSwitchHTML = function () {
       '<details class="deep deep--in"><summary>表示するものを増やす</summary>' +
         '<div class="deep__b">' +
           '<label class="set__sw"><input id="ad-sw" type="checkbox"' + (on() ? " checked" : "") +
-          "> 🔞 おとな向けの施設を地図に出す（ラブホテル・アダルトショップ）</label>" +
+          "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-prohibit'></use></svg> おとな向けの施設を地図に出す（ラブホテル・アダルトショップ）</label>" +
           '<p class="deep__d">18歳未満の方は入れないでください。' +
           "既定では出しません。切り替えると " + ((RG.ADULT || []).length) +
           " 件が地図に出ます。</p>" +
           '<label class="set__sw"><input id="cs-sw" type="checkbox"' +
           ((RG.settings && RG.settings.camspot) ? " checked" : "") +
-          "> 📷 防犯カメラの設置場所を地図に出す（映像は見られません）</label>" +
+          "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-camera'></use></svg> 防犯カメラの設置場所を地図に出す（映像は見られません）</label>" +
           '<p class="deep__d">まちに置かれている防犯カメラの位置です。' +
           ((RG.CAMSPOT || []).length) + " 件。映像は公開されていません。</p>" +
         "</div></details>" +
@@ -155,7 +155,7 @@ RG.bindAdultSwitch = function (root) {
 /* ------------------------------------------- 有償プランの合いことばを聞く */
 RG.askAdultPass = function (onOK) {
   var html = '<div class="pw">' +
-    '<div class="pw__e">🔐</div>' +
+    '<div class="pw__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-lock"></use></svg></div>' +
     '<p class="pw__t">ここから先は <b>有償プラン</b> の方だけがご覧になれます。</p>' +
     '<p class="pw__b">おとな向けの施設（ラブホテル・アダルトショップ）と、' +
     "おとな向けのライブ映像は、<b>有償プランにご加入いただいた方にお伝えする合いことば</b>を" +
@@ -164,7 +164,7 @@ RG.askAdultPass = function (onOK) {
       'autocomplete="off" placeholder="合いことば" maxlength="24">' +
       '<button id="pw-go" type="button">確かめる</button></div>' +
     '<p class="pw__ng" id="pw-ng" hidden>合いことばがちがいます。</p>' +
-    '<div class="pw__note"><b>💰 ご加入について</b>' +
+    '<div class="pw__note"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg> ご加入について</b>' +
     "<p>有償プランのお申し込み口は<b>絶賛工事中</b>で、いつできるかは決まっていません。" +
     "作るかどうかは、みなさんの声（VOC）だけで決めます。<br>" +
     "つまり、いまのところ新しくご加入いただく方法はありません。</p>" +
@@ -225,14 +225,14 @@ RG.mergeCamSpot = function () {
 RG.showCamSpot = function (c) {
   var near = RG.nearestStation ? RG.nearestStation(c.la, c.lo) : null;
   RG.openCard("📷 " + (c.n || "防犯カメラ"), '<div class="smk">' +
-    '<div class="smk__hd" style="--lc:#5A6472"><span class="smk__e">📷</span>' +
+    '<div class="smk__hd" style="--lc:#5A6472"><span class="smk__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg></span>' +
     "<div><h3>" + esc(c.n || "防犯カメラ") + '</h3><p class="smk__k">設置場所の記録</p></div></div>' +
     '<p class="smk__d">まちに置かれている防犯カメラの位置です。' +
     "<b>映像は公開されていません。</b>ここで見ることはできません。</p>" +
     '<div class="smkg">' +
-      (c.z ? '<div class="smkr"><span>👁 写している場所</span><b>' + esc(c.z) + "</b></div>" : "") +
-      (c.by ? '<div class="smkr"><span>🏢 設置者</span><b>' + esc(c.by) + "</b></div>" : "") +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (c.z ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-eye"></use></svg> 写している場所</span><b>' + esc(c.z) + "</b></div>" : "") +
+      (c.by ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg> 設置者</span><b>' + esc(c.by) + "</b></div>" : "") +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
     "</div>" +
     RG.outLinks({ map: c.la + "," + c.lo }) +

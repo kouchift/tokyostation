@@ -61,7 +61,7 @@ function yen(v) { return "¥" + Math.round(v).toLocaleString("ja-JP"); }
 function feeHead(f, web) {
   if (f === "national") {
     return '<div class="fee fee--n">' +
-      '<div class="fee__h">💰 学費（国が決めた標準額）</div>' +
+      '<div class="fee__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg> 学費（国が決めた標準額）</div>' +
       '<div class="fee__g">' +
         '<div class="fee__c"><span>入学料</span><b>' + yen(NAT.enter) + "</b></div>" +
         '<div class="fee__c"><span>前期（半年）</span><b>' + yen(NAT.year / 2) + "</b></div>" +
@@ -71,7 +71,7 @@ function feeHead(f, web) {
       '<p class="fee__s">文部科学省令の標準額です。大学によってこれと違うことがあります。</p></div>';
   }
   return '<div class="fee fee--x">' +
-    '<div class="fee__h">💰 学費</div>' +
+    '<div class="fee__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg> 学費</div>' +
     '<div class="fee__g">' +
       '<div class="fee__c"><span>入学料</span><b>—</b></div>' +
       '<div class="fee__c"><span>前期</span><b>—</b></div>' +
@@ -112,7 +112,7 @@ RG.showUniv = function (idx) {
       "（CC BY-SA 4.0）</p></div>" : "") +
     ((bun.length || ri.length)
       ? '<div class="fac">' +
-        (bun.length ? '<div class="fac__g fac__g--b"><div class="fac__h">📖 文系' +
+        (bun.length ? '<div class="fac__g fac__g--b"><div class="fac__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> 文系' +
           '<span class="fac__n">' + bun.length + "</span></div>" +
           '<div class="fac__t">' + bun.map(function (f) {
             return '<span class="fac__i">' + esc(f.n) + "</span>"; }).join("") + "</div></div>" : "") +
@@ -124,7 +124,7 @@ RG.showUniv = function (idx) {
         "最新の学部構成は公式サイトでご確認ください。</p></div>"
       : "") +
     (u.cmp && u.cmp.length
-      ? '<div class="camp"><div class="camp__h">🏫 同じ大学のほかの場所（' + u.cmp.length + "か所）</div>" +
+      ? '<div class="camp"><div class="camp__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-school"></use></svg> 同じ大学のほかの場所（' + u.cmp.length + "か所）</div>" +
         '<div class="camp__l">' + u.cmp.map(function (j) {
           var c = RG.UNIV[j];
           return '<button class="camp__b" type="button" data-camp="' + j + '">' +
@@ -132,9 +132,9 @@ RG.showUniv = function (idx) {
         '<p class="fac__s">押すとその場所のカードに切り替わり、地図もそこへ動きます。</p></div>'
       : "") +
     '<div class="smkg">' +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
-      (u.sl ? '<div class="smkr"><span>🌏 注目度</span><b>' + u.sl + " 言語版</b></div>" : "") +
+      (u.sl ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-globe"></use></svg> 注目度</span><b>' + u.sl + " 言語版</b></div>" : "") +
     "</div>" +
     RG.outLinks({ site: u.web,
                   wiki: u.t ? "https://ja.wikipedia.org/wiki/" + encodeURIComponent(u.t) : null,
@@ -165,7 +165,7 @@ RG.showHigh = function (idx) {
   var near = RG.nearestStation ? RG.nearestStation(s.la, s.lo) : null;
   RG.openCard("🏫 " + s.n, '<div class="uni">' +
     '<div class="uni__hd" style="--lc:' + (F.c || "#888") + '">' +
-      '<span class="uni__e">🏫</span>' +
+      '<span class="uni__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-school"></use></svg></span>' +
       "<div><h3>" + esc(s.n) + '</h3><p class="uni__k">' +
       '<span class="uni__f">' + esc(F.label || "") + "</span> 高等学校</p></div>" +
       (h ? '<span class="uni__h" style="background:' + h.c + '">偏差値<b>' + h.v + "</b>" +
@@ -174,7 +174,7 @@ RG.showHigh = function (idx) {
            '">偏差値<b>＋</b><i>入れる</i></button>') +
     "</div>" +
     '<div class="smkg">' +
-      (near ? '<div class="smkr"><span>🚉 最寄り駅</span><b>' + esc(near.t.n) +
+      (near ? '<div class="smkr"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 最寄り駅</span><b>' + esc(near.t.n) +
         "駅 徒歩約" + near.min + "分</b></div>" : "") +
     "</div>" +
     RG.outLinks({ site: s.web,

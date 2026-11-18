@@ -80,15 +80,15 @@ RG.setMapFocus = function (on, remember) {
 /* ---- 設定パネルの節 ---- */
 RG.mapFocusSwitchHTML = function () {
   var p = pref();
-  return '<div class="set__sec"><h4>🗺️ 地図ファースト（v102）</h4>' +
+  return '<div class="set__sec"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 地図ファースト（v102）</h4>' +
     '<p class="set__d">入口カード「東京駅から、どこへ行く？」の出しかたと、地図だけの画面。</p>' +
     '<div class="set__seg" role="radiogroup" aria-label="入口カードの出しかた">' +
       ['auto|自動でたたむ|地図を動かしたら 1 行に', 'mini|いつも小さく|起動時から 1 行。押すと開く', 'full|いつも表示|自動ではたたまない'].map(function (s) {
         var a = s.split("|");
         return '<label class="set__segi"><input type="radio" name="gs-herofold" value="' + a[0] + '"' + (p === a[0] ? " checked" : "") + "><b>" + a[1] + "</b><small>" + a[2] + "</small></label>";
       }).join("") + "</div>" +
-    '<label class="set__sw"><input id="gs-mapfocus" type="checkbox"' + (RG.mapFocus() ? " checked" : "") + "> ⛶ 地図を広く（ヘッダー・出発バー・下のチップを隠す。右下の ⛶ でも切り替え）</label>" +
-    '<label class="set__sw"><input id="gs-tripalways" type="checkbox"' + (RG.settings && RG.settings.tripAlways ? " checked" : "") + "> 🧭 出発バー（出発地・時刻・攻めかた）をいつも出す（既定: PC は入口カードの «出発:» の行から開く。スマホはルート比較を始めたら出る）</label></div>";
+    '<label class="set__sw"><input id="gs-mapfocus" type="checkbox"' + (RG.mapFocus() ? " checked" : "") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-fullscreen'></use></svg> 地図を広く（ヘッダー・出発バー・下のチップを隠す。右下の <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-fullscreen'></use></svg> でも切り替え）</label>" +
+    '<label class="set__sw"><input id="gs-tripalways" type="checkbox"' + (RG.settings && RG.settings.tripAlways ? " checked" : "") + "> <svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-compass'></use></svg> 出発バー（出発地・時刻・攻めかた）をいつも出す（既定: PC は入口カードの «出発:» の行から開く。スマホはルート比較を始めたら出る）</label></div>";
 };
 RG.mapFocusSwitchBind = function (root) {
   Array.prototype.forEach.call(root.querySelectorAll('input[name="gs-herofold"]'), function (r) {

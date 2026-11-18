@@ -106,8 +106,8 @@ function stepHtml() {
     return '<button class="nav__step" id="nv-fit" type="button" title="経路の全体を地図に出す">' + esc(RG.NavUI.nextStepText()) + "</button>";
   if (!segs.length) return "";
   var o = N.opt && N.opt.rail, s0 = RG.byId[segs[0].ids[0]], out = [];
-  if (s0 && !(o && o.accessMin != null && o.accessMin < 1)) out.push("🚶 <b>" + esc(RG.stLabel(s0)) + "</b>まで" + (o && o.accessMin != null ? "徒歩" + Math.round(o.accessMin) + "分" : "歩く"));
-  else if (s0) out.push("🚉 <b>" + esc(RG.stLabel(s0)) + "</b>から");
+  if (s0 && !(o && o.accessMin != null && o.accessMin < 1)) out.push("<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-walk'></use></svg> <b>" + esc(RG.stLabel(s0)) + "</b>まで" + (o && o.accessMin != null ? "徒歩" + Math.round(o.accessMin) + "分" : "歩く"));
+  else if (s0) out.push("<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> <b>" + esc(RG.stLabel(s0)) + "</b>から");
   segs.slice(0, 3).forEach(function (g) {
     var t = RG.byId[g.ids[g.ids.length - 1]];
     out.push('<i style="background:' + esc((RG.lineColor && RG.lineColor[g.line]) || "#0B5394") + '"></i><b>' + esc(g.line) + "</b>" + (t ? " → " + esc(RG.stLabel(t)) : ""));
@@ -175,9 +175,9 @@ function askReroute(offM, here) {
     (near ? '<p class="nav__n">いまいちばん近い駅は <b>' + esc(near.t.n) + "駅</b>（約" +
       Math.round(near.km * 1000) + "m）です。</p>" : "") +
     '<div class="nav__btns">' +
-      '<button id="nv-re" class="nav__b nav__b--main" type="button">🔁 ここから案内し直す</button>' +
+      '<button id="nv-re" class="nav__b nav__b--main" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-repeat"></use></svg> ここから案内し直す</button>' +
       '<button id="nv-keep" class="nav__b" type="button">このまま進む<br><small>寄り道中ならこちら</small></button>' +
-      '<button id="nv-mute" class="nav__b nav__b--mute" type="button">🔕 この移動のあいだ、もう聞かない</button>' +
+      '<button id="nv-mute" class="nav__b nav__b--mute" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-belloff"></use></svg> この移動のあいだ、もう聞かない</button>' +
     "</div></div>";
   var m = RG.openModal("🧭 ルートから外れています", html);
   $("#nv-re", m).addEventListener("click", function () {
@@ -208,15 +208,15 @@ function bar(off, rest, acc) {
   b.innerHTML =
     '<div class="nav__bar">' +
       (U ? '<button class="nav__main" id="nv-detail" type="button" title="移動の詳細（乗り場・号車・出口）">' : '<span class="nav__main">') +
-      '<span class="nav__i">🧭</span>' +
+      '<span class="nav__i"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg></span>' +
       '<span class="nav__t"><b>' + esc(N.destName) + "</b> へ案内中" + (U ? ' <u class="nav__more">詳細 ▸</u>' : "") +
         '<i>' + esc(N.modeLabel) +
         (rest != null ? " ・ のこり約 " + rest.toFixed(1) + "km" : "") +
         (off != null ? " ・ ルートから " + Math.round(off) + "m" : "") +
         (acc ? " ・ 精度±" + Math.round(acc) + "m" : "") + "</i></span>" +
       (U ? "</button>" : "</span>") +
-      (U && RG.arOpen ? '<button class="nav__x nav__x--ar" id="nv-ar" type="button" title="カメラで方角を見る（AR）">📷 AR</button>' : "") +
-      (N.muted ? '<button class="nav__x" id="nv-unmute" type="button" title="お知らせを再開">🔕</button>' : "") +
+      (U && RG.arOpen ? '<button class="nav__x nav__x--ar" id="nv-ar" type="button" title="カメラで方角を見る（AR）"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> AR</button>' : "") +
+      (N.muted ? '<button class="nav__x" id="nv-unmute" type="button" title="お知らせを再開"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-belloff"></use></svg></button>' : "") +
       '<button class="nav__x" id="nv-stop" type="button">' + (U ? "やめる" : "案内をやめる") + "</button>" +
     "</div>" +
     stepHtml() +

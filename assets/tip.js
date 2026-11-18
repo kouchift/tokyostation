@@ -105,7 +105,7 @@ RG.tipInit = function () {
 /* ---- カードの «制作者へ更新を依頼する» アイコン（全駅・全スポット） → 窓口へ ---- */
 RG.reqHtml = function (kind, name) {
   return '<div class="req"><button class="req__b" type="button" data-req="' + esc(name || "") + '" data-reqkind="' + esc(kind || "") + '">' +
-    '<span class="req__i">📮</span><span class="req__t">' + (kind === "station" ? "駅詳細情報の更新を制作者へ依頼する" : "スポット情報の更新を制作者へ依頼する") + "</span>" +
+    '<span class="req__i"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-postbox"></use></svg></span><span class="req__t">' + (kind === "station" ? "駅詳細情報の更新を制作者へ依頼する" : "スポット情報の更新を制作者へ依頼する") + "</span>" +
     '<span class="req__s">（依頼は投げ銭窓口から。実装見込みは極端に低い前提で）</span></button></div>';
 };
 RG.reqBind = function (root) {
@@ -119,10 +119,10 @@ RG.reqBind = function (root) {
 /* ---- 設定パネルに差し込む入口 ---- */
 RG.tipEntryHTML = function () {
   var S = st();
-  return '<div class="set__sec tjin"><h4>☕ 制作者へ（応援・改善要望）</h4>' +
+  return '<div class="set__sec tjin"><h4><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 制作者へ（応援・改善要望）</h4>' +
     '<p class="set__d">この地図を、現場の声で育て続けたいと思っています。<br>もし少しでも役に立ったら、応援してもらえると嬉しいです。改善のご要望もここから。</p>' +
-    '<div class="tj__row"><button id="tip-open" class="set__b2" type="button">☕ 応援する</button>' +
-    '<button id="tip-hist" class="set__b" type="button">📜 応援の履歴' + (S.count ? "（" + S.count + "回・" + yen(S.total) + "）" : "") + "</button></div></div>";
+    '<div class="tj__row"><button id="tip-open" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 応援する</button>' +
+    '<button id="tip-hist" class="set__b" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 応援の履歴' + (S.count ? "（" + S.count + "回・" + yen(S.total) + "）" : "") + "</button></div></div>";
 };
 RG.tipBind = function (root) {
   var b = $("#tip-open", root); if (b) b.addEventListener("click", function () { RG.tipQuick(); });   // v87: 確認POPを挟まず «押すだけ» へ
@@ -173,8 +173,8 @@ function gedatsuBadge(S) {
 RG.gedatsuBadge = function () { return gedatsuBadge(st()); };
 
 /* ---- 107 の手段 ---- */
-var SCHOOL_NOTE = '<div class="tj__school">🏫 <b>学校法人（幼稚園・小学校は免除）・学習塾・セミナー</b>など、第三者から対価を得て開催される場で本サイトを使う場合は、' +
-  "社会人である閲覧者からの<b>最低 100 円</b>の投げ銭を渇望しています。一度でも投げ銭をすると、所属組織（複数拠点なら拠点数分）またはご本人に永続利用の <b>🪪 デジタル印籠</b> を発行します。</div>";
+var SCHOOL_NOTE = '<div class="tj__school"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-school"></use></svg> <b>学校法人（幼稚園・小学校は免除）・学習塾・セミナー</b>など、第三者から対価を得て開催される場で本サイトを使う場合は、' +
+  "社会人である閲覧者からの<b>最低 100 円</b>の投げ銭を渇望しています。一度でも投げ銭をすると、所属組織（複数拠点なら拠点数分）またはご本人に永続利用の <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-id'></use></svg> デジタル印籠</b> を発行します。</div>";
 function waysHTML(C, S) {
   var M = (RG.PAYMETHODS || []).slice().sort(function (a, b) { return (b.ease + b.users) - (a.ease + a.users) || b.users - a.users; });
   var cats = []; M.forEach(function (x) { if (cats.indexOf(x.cat) < 0) cats.push(x.cat); });
@@ -213,7 +213,7 @@ RG.bankForm = function (fromId) {
   var C = cfg(), B = C.bank || {}, S = st();
   var ready = !!(B.code && B.branch && B.number);
   var html = '<div class="bank">' +
-    '<p class="tj__lead">🏦 銀行振込（ゆうちょ銀行 ほか）。振込先は制作者が <code>data/support.js</code> の <code>bank</code> に登録したものを使います。' + (ready ? "" : "<b>まだ未登録です</b>（制作者の準備待ち。フォームの動きは試せます）。") + "</p>" +
+    '<p class="tj__lead"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg> 銀行振込（ゆうちょ銀行 ほか）。振込先は制作者が <code>data/support.js</code> の <code>bank</code> に登録したものを使います。' + (ready ? "" : "<b>まだ未登録です</b>（制作者の準備待ち。フォームの動きは試せます）。") + "</p>" +
     '<div class="bank__to"><b>振込先</b><div>' + esc(B.bankName || "ゆうちょ銀行") + "　" + (B.symbol ? "記号 " + esc(B.symbol) + "　番号 " + esc(B.number || "") : "店名 " + esc(B.branchName || "―") + "（" + esc(B.branch || "―") + "）　普通 " + esc(B.number || "―")) + "　" + esc(B.holder || "受取人名 ―") + "</div></div>" +
     '<div class="tj__form"><label>振込人名（半角カナは FB データ用に自動変換されません。カナ欄に入力）<input id="bk-name" maxlength="40" value="' + esc(S.name || "") + '"></label>' +
     '<label>振込人名（半角カナ・FBデータ用）<input id="bk-kana" maxlength="30" placeholder="ﾀﾅｶ ﾀﾛｳ"></label>' +
@@ -221,7 +221,7 @@ RG.bankForm = function (fromId) {
     '<label>振込指定日<input id="bk-date" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></label>' +
     '<label>ご自身の金融機関コード（4桁・FBデータの仕向銀行）<input id="bk-mycode" maxlength="4" placeholder="9900"></label>' +
     '<div class="tj__row"><button id="bk-slip" class="set__b2" type="button">🖨️ 振込依頼書を表示・印刷</button>' +
-    '<button id="bk-fb" class="set__b2" type="button">💾 FBデータ（全銀フォーマット）を作る</button>' +
+    '<button id="bk-fb" class="set__b2" type="button"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> FBデータ（全銀フォーマット）を作る</button>' +
     '<button id="bk-done" class="set__b" type="button">振込みました（記録する）</button></div><div id="bk-res" class="tj__res"></div></div>' +
     '<p class="src">FB データは全銀協 総合振込フォーマット（120 バイト固定長・Shift_JIS 想定の半角カナ）で、多くの法人向けインターネットバンキングで取り込めます。振込依頼書は窓口用の様式（当サイト独自）です。振込手数料はご負担ください。</p></div>';
   var m = RG.openModal("🏦 銀行振込", html);
@@ -253,7 +253,7 @@ RG.bankForm = function (fromId) {
     var end = "9" + pad("", 119, true);
     var txt = [hdr, dat, trl, end].map(function (l) { return pad(l, 120, true); }).join("\r\n") + "\r\n";
     var blob = new Blob([txt], { type: "text/plain" }), url = URL.createObjectURL(blob);
-    $("#bk-res", m).innerHTML = '<a class="set__b2" download="fb_sougou_' + d + '.txt" href="' + url + '">💾 FBデータを保存</a> <span class="tj__hint">半角カナは Shift_JIS で保存し直す必要がある銀行もあります（テキストエディタで文字コードを変更）。</span>';
+    $("#bk-res", m).innerHTML = '<a class="set__b2" download="fb_sougou_' + d + '.txt" href="' + url + '"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-save"></use></svg> FBデータを保存</a> <span class="tj__hint">半角カナは Shift_JIS で保存し直す必要がある銀行もあります（テキストエディタで文字コードを変更）。</span>';
   });
   $("#bk-done", m).addEventListener("click", function () { var amt = Math.max(100, Math.min(999999, +$("#bk-amt", m).value || 0)); var S2 = record(amt, "bank"); afterTip(S2, amt); });
 };
@@ -297,10 +297,10 @@ function payHTML(C, S) {
     '<div class="tj__amts">' + (C.amounts || [100, 500, 1000, 3000]).map(function (a) {
       var e = a >= 3000 ? "💎" : a >= 1000 ? "🍱" : a >= 500 ? "☕" : "🍬";
       return '<button class="tj__amt' + (S.lastAmount === a ? " on" : "") + '" type="button" data-amt="' + a + '"><span>' + e + "</span>" + yen(a) + "</button>"; }).join("") +
-    '<button class="tj__amt tj__amt--poor" type="button" data-poor="1"><span>💬</span>感想・応援の<br>お言葉</button></div>' +
+    '<button class="tj__amt tj__amt--poor" type="button" data-poor="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-comment"></use></svg></span>感想・応援の<br>お言葉</button></div>' +
     '<div id="tip-how" class="tj__how"></div>' +
-    (S.lastAmount ? '<p class="tj__last">前回: ' + yen(S.lastAmount) + "（" + appName(S.app) + "）。同じ額をくり返すなら「🔁 くり返し」へ。</p>" : "") +
-    (isMobile() ? '<p class="tj__hint">📱 スマホなら <button class="tj__lnk" type="button" data-quick="1">☕ 押すだけ投げ銭</button> が 1 タップです（ID を自動コピーしてアプリを開きます）。</p>' : "");
+    (S.lastAmount ? '<p class="tj__last">前回: ' + yen(S.lastAmount) + "（" + appName(S.app) + "）。同じ額をくり返すなら「<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-repeat'></use></svg> くり返し」へ。</p>" : "") +
+    (isMobile() ? '<p class="tj__hint"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-phone"></use></svg> スマホなら <button class="tj__lnk" type="button" data-quick="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 押すだけ投げ銭</button> が 1 タップです（ID を自動コピーしてアプリを開きます）。</p>' : "");
 }
 function link(C, app) { var l = app === "kyash" ? C.kyashLink : C.paypayLink; return l ? l : null; }
 function scheme(app) { return app === "kyash" ? "kyash://" : "paypay://"; }
@@ -336,7 +336,7 @@ function afterTip(S2, amt) {
     applyPatron();
     RG.openModal("🎉 初回の投げ銭、確かに", '<div class="tj tj--c">' +
       '<p class="tj__big">ありがとうございます。<b>画面が変わりました</b>。</p>' +
-      "<p>ヘッダーに <b>🪙 支援者</b> の印がつき、地図の縁がほんのり金色になりました（この端末だけの記録です）。</p>" +
+      "<p>ヘッダーに <b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-yen'></use></svg> 支援者</b> の印がつき、地図の縁がほんのり金色になりました（この端末だけの記録です）。</p>" +
       '<p>そして、ここからが大事なお知らせです。<b>2回目以降は、何度投げても画面は変わりません。</b>' +
       "これが世の中の世知辛さであり、この事実は本サイトの更新に限らず、輪廻転生した地球のあらゆる場所に存在しています。</p>" +
       "<p>それでも投げ銭が積み上がれば、制作者はサイトのビジュアルを<b>よりリアルに、より高解像に、より充実したコンテンツに</b>していく努力をするつもりです。" +
@@ -448,7 +448,7 @@ RG.tipQuick = function (preAmt) {
     '<div class="tq__id">送り先 ID <b>' + esc(id) + '</b> <button class="tj__cp" type="button" data-cp="' + esc(id) + '">コピー</button>' +
       (direct ? '<small>（リンクで開くので、ふつうは不要）</small>' : "") + "</div>" +
     '<div id="tq-res" class="tq__res" aria-live="polite"></div>' +
-    '<div class="tq__more"><button class="tq__moreb" type="button" id="tq-more" aria-expanded="' + (focusSvc ? "true" : "false") + '" aria-controls="tq-svc">💳 ほかの方法 <small>ことら送金・PayPal・楽天ペイ・d払い・au PAY・COIN+</small><i>▾</i></button>' +
+    '<div class="tq__more"><button class="tq__moreb" type="button" id="tq-more" aria-expanded="' + (focusSvc ? "true" : "false") + '" aria-controls="tq-svc"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-card"></use></svg> ほかの方法 <small>ことら送金・PayPal・楽天ペイ・d払い・au PAY・COIN+</small><i>▾</i></button>' +
       '<div id="tq-svc" class="tq__svc"' + (focusSvc ? "" : " hidden") + "></div></div>" +
     '<p class="tq__hint">押した時点で «送った» として履歴に残ります（まちがえたら「取り消す」）。当サイトはお金も個人情報もあずかりません。' +
       (S.count ? "これまで " + S.count + " 回・" + yen(S.total) + "。" : "") +
@@ -489,7 +489,7 @@ RG.tipQuick = function (preAmt) {
     bindSend(res);
   }
   function paintWaiting() {
-    res.innerHTML = '<div class="tq__wait">📋 ID をコピーしました。' + name + " を開いています…<small>戻ってきたら、ここに «もう一回» が出ます</small></div>";
+    res.innerHTML = '<div class="tq__wait"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-clipboard"></use></svg> ID をコピーしました。' + name + " を開いています…<small>戻ってきたら、ここに «もう一回» が出ます</small></div>";
   }
   function paintFallback() {
     res.innerHTML = '<div class="tq__fb"><b>' + name + " が開かないようです。</b>" +
@@ -635,7 +635,7 @@ RG.tipServicesBind = function (root, getAmt, onRecorded) {
 
 /* ---- くり返し（前回の金額 × 回数） ---- */
 function loopHTML(C, S) {
-  if (!S.lastAmount) return '<p class="tj__lead">まだ投げ銭の記録がありません。まず「☕ 投げ銭」で1回送ると、ここで同じ額のくり返しができます。</p>';
+  if (!S.lastAmount) return '<p class="tj__lead">まだ投げ銭の記録がありません。まず「<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 投げ銭」で1回送ると、ここで同じ額のくり返しができます。</p>';
   return '<p class="tj__lead">前回の <b>' + yen(S.lastAmount) + "</b>（" + appName(S.app) + "）を、何回くり返しますか？ 1回ごとに手順（またはアプリ）を開き、「送りました」で次へ進みます。</p>" +
     '<div class="tj__loopset"><label>回数 <input id="tip-n" type="number" min="1" max="99" value="' + (S.loopN || 3) + '"></label>' +
     '<span id="tip-sum" class="tj__sum"></span>' +
@@ -692,7 +692,7 @@ function bindHist(m, C) {
         '<img class="gd__gif" src="' + (RG.withV ? RG.withV("assets/img/gedatsu.gif") : "assets/img/gedatsu.gif") + '" alt="解脱の壁のグラフ">' +
         "<p>2 回目までは上限なしで容易に解脱できましたが、3 回目からは <b>1 万円</b>、以降は <b>×2.155 の等比級数</b>で壁が高くなり、9 回目の <b>999,999 円</b>が天井です（そこで寄付も打ち止め）。" +
         "べらぼうに上がっていくのが、解脱の厳しさです。ここで初めてお伝えしました。</p>" +
-        '<div class="tj__row"><button class="set__b2" type="button" id="gd-pay">☕ 投げ銭で壁を越える</button><button class="set__b" type="button" onclick="RG.closeModal()">今日は俗世で</button></div></div>');
+        '<div class="tj__row"><button class="set__b2" type="button" id="gd-pay"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-cafe"></use></svg> 投げ銭で壁を越える</button><button class="set__b" type="button" onclick="RG.closeModal()">今日は俗世で</button></div></div>');
       var gp = document.getElementById("gd-pay"); if (gp) gp.addEventListener("click", function () { RG.showTip("pay"); });
       return;
     }
@@ -728,11 +728,11 @@ function rebirth() {
 /* ---- 感想・要望 ---- */
 function msgHTML(C, S) {
   var left = S.lastMsgAt ? Math.ceil((S.lastMsgAt + 600000 - Date.now()) / 60000) : 0;
-  return '<p class="tj__lead">💬 ご感想やご要望をお聞かせください。お名前とひとことを入れて「制作者へ届け！」を押すと、制作者のもとへ届きます。改善のご指摘やご提案が、地図をより良くしていきます。</p>' +
+  return '<p class="tj__lead"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-comment"></use></svg> ご感想やご要望をお聞かせください。お名前とひとことを入れて「制作者へ届け！」を押すと、制作者のもとへ届きます。改善のご指摘やご提案が、地図をより良くしていきます。</p>' +
     '<div class="tj__form"><label>お名前（ニックネーム可）<input id="tip-name" maxlength="40" value="' + esc(S.name || "") + '"></label>' +
     '<label>ひとこと・ご要望（400字まで）<textarea id="tip-text" maxlength="400" rows="4">' + esc(S.reqFor || "") + '</textarea></label>' +
-    (S.reqFor ? '<p class="tj__hint">📮 更新依頼として下書きを入れました。ご要望とともに投げ銭をいただくと、制作者のやる気が高まります。</p>' : "") +
-    '<div class="tj__row"><button id="tip-send" class="set__b2" type="button"' + (left > 0 ? " disabled" : "") + ">📨 制作者へ届け！</button>" +
+    (S.reqFor ? '<p class="tj__hint"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-postbox"></use></svg> 更新依頼として下書きを入れました。ご要望とともに投げ銭をいただくと、制作者のやる気が高まります。</p>' : "") +
+    '<div class="tj__row"><button id="tip-send" class="set__b2" type="button"' + (left > 0 ? " disabled" : "") + "><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-mail'></use></svg> 制作者へ届け！</button>" +
     (left > 0 ? '<span class="tj__hint">連投よけのため、あと約 ' + left + " 分お待ちください。</span>" : "") + "</div>" +
     '<div id="tip-msgres" class="tj__res"></div></div>' +
     '<p class="tj__hint">送り先: ' + (C.discordWebhook ? "制作者の Discord" : (C.googleForm && C.googleForm.action) ? "制作者の受信箱（フォーム）" : "制作者（メールアプリが開きます）") +

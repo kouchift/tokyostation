@@ -1749,14 +1749,14 @@ var Card = (function () {
     var f = RG.FLOOD && RG.FLOOD.st && RG.FLOOD.st[st.id];
     if (f) {
       var lv = f >= 3 ? "深い" : f >= 1 ? "ふつう" : "浅い";
-      out += '<div class="risk risk--f"><span class="risk__e">🌊</span>' +
+      out += '<div class="risk risk--f"><span class="risk__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wave"></use></svg></span>' +
         '<span class="risk__k">大雨のときの想定浸水深</span>' +
         '<span class="risk__v">' + f + '<i>m</i></span>' +
         '<span class="risk__t">' + lv + "・駅のまわり約100mの最大値。避難場所の確認を</span></div>";
     }
     var L = RG.OD2 && RG.OD2.landSta && RG.OD2.landSta[st.n];
     if (L) {
-      out += '<div class="risk risk--l"><span class="risk__e">💰</span>' +
+      out += '<div class="risk risk--l"><span class="risk__e"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-yen"></use></svg></span>' +
         '<span class="risk__k">この駅が最寄りの地価（令和8年公示）</span>' +
         '<span class="risk__v">' + num(L.m) + '<i>円/m²</i></span>' +
         '<span class="risk__t">標準地 ' + L.n + "地点の中央値</span></div>";
@@ -1772,12 +1772,12 @@ var Card = (function () {
     var d = RG.DEPTH && RG.DEPTH[st.id];
     if (!d) return "";
     var t = [];
-    if (d.d) t.push('<div class="dep dep--u"><span class="dep__k">🕳️ ホームの深さ</span>' +
+    if (d.d) t.push('<div class="dep dep--u"><span class="dep__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-hole"></use></svg> ホームの深さ</span>' +
       '<span class="dep__v">地下 ' + d.d + " 階</span>" +
       '<span class="dep__s">およそ ' + d.m + "m（地下1階を6.5mとした推定）" +
       (d.l ? " ／ " + esc(d.l.join("・")) : "") + "</span>" +
       '<span class="dep__g"><i style="height:' + Math.min(100, d.d / 7 * 100) + '%"></i></span></div>');
-    if (d.u) t.push('<div class="dep dep--o"><span class="dep__k">🏗️ 高架ホーム</span>' +
+    if (d.u) t.push('<div class="dep dep--o"><span class="dep__k"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-barrier"></use></svg> 高架ホーム</span>' +
       '<span class="dep__v">' + d.u + " 階</span>" +
       '<span class="dep__s">地上より高い位置にホームがあります</span></div>');
     if (!t.length) return "";
@@ -1850,7 +1850,7 @@ var Card = (function () {
       '<div class="cong"><div class="cong__row"><span class="cong__lb">駅全体の規模</span>' +
       '<span class="cong__bar">' + bar(lv) + '</span><span class="cong__v">' +
       "●".repeat(lv) + "○".repeat(4 - lv) + "</span></div></div>" +
-      '<p class="mini">⚠ 時間帯別の実測ではありません。ホームで数えた値を <code>congestion</code> に入れると置き換わります。</p></div>';
+      '<p class="mini"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> 時間帯別の実測ではありません。ホームで数えた値を <code>congestion</code> に入れると置き換わります。</p></div>';
   }
 
   function town(s, d) {
@@ -1903,7 +1903,7 @@ var Card = (function () {
     var credit = [p.lic || "ライセンスは画像ページ参照", p.by].filter(Boolean).join(" / ");
     return '<figure class="hero"><img src="' + esc(cimg(p.img, 640)) + '" alt="' + esc(st.n) + '駅の写真" ' +
       'loading="lazy" decoding="async">' +
-      '<figcaption>📷 <a href="' + esc(cpage(p.img) || "#") + '" target="_blank" rel="noopener">Wikimedia Commons</a>' +
+      '<figcaption><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> <a href="' + esc(cpage(p.img) || "#") + '" target="_blank" rel="noopener">Wikimedia Commons</a>' +
       " — " + esc(credit) + "</figcaption></figure>";
   }
 
@@ -1951,7 +1951,7 @@ var Card = (function () {
                : '<span class="spot__ph">' + (x.cat === "worship" ? "⛩️" : x.cat === "heritage" ? "🏛️" : "🌳") + "</span>") +
         '<span class="spot__n">' + esc(x.n) + "</span>" +
         '<span class="spot__t">' + esc(x.tag) + " ・ " + x.d + "m</span>" +
-        (x.lic ? '<span class="spot__c">📷 ' + esc(x.lic) + "</span>" : "") + "</a>";
+        (x.lic ? '<span class="spot__c"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-camera"></use></svg> ' + esc(x.lic) + "</span>" : "") + "</a>";
     }).join("") + "</div>" : '<div class="todo">この駅の徒歩10分圏には、Wikidataに登録された文化財・社寺の記録がありません。' +
       "歩いて見つけたものを追記すると、あなたが最初の記録者になります。</div>";
     return '<div class="sec">' + head + grid + "</div>";
@@ -2120,7 +2120,7 @@ var Card = (function () {
       if (!rows.length) { sug.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした。駅名・地名・建物名で</div>'; sug.hidden = false; return; }
       rows.forEach(function (r) {
         var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");
-        b.innerHTML = r.t === "station" ? "<b>🚉 " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>"
+        b.innerHTML = r.t === "station" ? "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>"
                                         : "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small><span>" + esc(r.sub || "") + "</span>";
         b.addEventListener("click", function (e) { e.stopPropagation(); input.value = r.n; close(); go(r); });
         sug.appendChild(b);
@@ -2628,7 +2628,7 @@ RG.initHeroSearch = function () {
     rows.forEach(function (r) {
       var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");
       if (r.t === "station") {
-        b.innerHTML = "<b>🚉 " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>";
+        b.innerHTML = "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>";
         b.addEventListener("click", function () { input.value = r.n; close(); selectHeroDestination(r.id); });
       } else {
         b.innerHTML = "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small><span>" + esc(r.sub || "") + "</span>";
@@ -2691,7 +2691,7 @@ RG.heroLastRoute = function () {
   var L = RG.lastRoute;
   if (!L) { if (box) box.remove(); return; }
   if (!box) { box = document.createElement("div"); box.className = "heroSearch__last"; var acts = hero.querySelector(".heroSearch__actions"); acts.parentNode.insertBefore(box, acts); }
-  box.innerHTML = '<button type="button" class="heroLast" data-relast="1"><span>🔁</span><b>' + esc((L.label || "").replace(/^出発：/, "")) + " → " + esc(L.to) + "駅</b>" +
+  box.innerHTML = '<button type="button" class="heroLast" data-relast="1"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-repeat"></use></svg></span><b>' + esc((L.label || "").replace(/^出発：/, "")) + " → " + esc(L.to) + "駅</b>" +
     (L.rec ? "<small>" + L.rec.e + " 約" + L.rec.min + "分・¥" + L.rec.yen.toLocaleString("ja-JP") + "</small>" : "") + "<i>もう一度</i></button>";
   box.querySelector("[data-relast]").addEventListener("click", function () { RG.reopenLastRoute(); });
 };

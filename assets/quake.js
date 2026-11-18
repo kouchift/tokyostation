@@ -51,7 +51,7 @@ function banner(q, alarm) {
   if (!b) { b = document.createElement("div"); b.id = "qkbar"; document.body.appendChild(b); }
   b.className = "qkbar" + (alarm ? " qkbar--alarm" : "") + " show";
   b.innerHTML = '<span class="qkbar__i">' + (alarm ? "⚠️ 緊急地震速報（警報）" : "🌏 地震情報") + "</span><b>" + esc(q.name || "震源不明") + "</b>" + (q.mag ? " M" + q.mag : "") + (q.max ? " 最大震度 " + esc(scaleTxt(q.max)) : "") + (q.depth != null ? " 深さ " + q.depth + "km" : "") +
-    '<span class="qkbar__t">' + esc(String(q.time || "").slice(5, 16)) + "</span>" + (q.tsunami && q.tsunami !== "None" && q.tsunami !== "Unknown" ? '<span class="qkbar__ts">🌊 津波: ' + esc({ Checking: "調査中", NonEffective: "若干の海面変動", Watch: "注意報", Warning: "警報" }[q.tsunami] || q.tsunami) + "</span>" : "") +
+    '<span class="qkbar__t">' + esc(String(q.time || "").slice(5, 16)) + "</span>" + (q.tsunami && q.tsunami !== "None" && q.tsunami !== "Unknown" ? '<span class="qkbar__ts"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-wave"></use></svg> 津波: ' + esc({ Checking: "調査中", NonEffective: "若干の海面変動", Watch: "注意報", Warning: "警報" }[q.tsunami] || q.tsunami) + "</span>" : "") +
     '<button class="qkbar__b" type="button" data-go>震源へ</button><button class="qkbar__x" type="button" data-x aria-label="閉じる">×</button>';
   b.querySelector("[data-go]").onclick = function () { if (q.la != null) RG.Map.gotoLatLng(q.la, q.lo, 3000); RG.showQuake(q); };
   b.querySelector("[data-x]").onclick = function () { b.classList.remove("show"); };
@@ -60,7 +60,7 @@ function banner(q, alarm) {
 RG.showQuake = function (q) {
   var html = '<div class="qkm"><div class="qkm__hd"><span class="qkm__mag">M' + (q.mag != null ? q.mag : "?") + '</span><div><b>' + esc(q.name || "震源不明") + "</b><div class=\"qkm__m\">" + esc(q.time || "") + (q.depth != null ? "・深さ " + q.depth + "km" : "") + (q.max ? "・最大震度 " + esc(scaleTxt(q.max)) : "") + "</div></div></div>" +
     (q.points && q.points.length ? '<div class="qkm__pts">' + q.points.map(function (p) { return '<span class="qkm__p">震度' + esc(scaleTxt(p.scale)) + " " + esc(p.pref || "") + " " + esc(p.addr || "") + "</span>"; }).join("") + "</div>" : "") +
-    '<div class="lnks">' + (q.la != null ? '<button class="lnk" type="button" data-go><span>📍</span>震源を地図で</button>' : "") + '<a class="lnk" href="https://www.jma.go.jp/bosai/map.html#contents=earthquake_map" target="_blank" rel="noopener"><span>🏛️</span>気象庁の地震情報</a><a class="lnk" href="https://www.p2pquake.net/" target="_blank" rel="noopener"><span>📡</span>P2P地震情報</a></div>' +
+    '<div class="lnks">' + (q.la != null ? '<button class="lnk" type="button" data-go><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg></span>震源を地図で</button>' : "") + '<a class="lnk" href="https://www.jma.go.jp/bosai/map.html#contents=earthquake_map" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-museum"></use></svg></span>気象庁の地震情報</a><a class="lnk" href="https://www.p2pquake.net/" target="_blank" rel="noopener"><span>📡</span>P2P地震情報</a></div>' +
     '<p class="src">情報源: 気象庁の発表を P2P地震情報 API が中継したもの（' + esc((q.issue && q.issue.source) || "気象庁") + "）。速報値で、その後訂正されることがあります。身の安全の確保が最優先です。</p></div>";
   var m = RG.openModal("🌏 地震", html);
   var g = m.querySelector("[data-go]"); if (g) g.addEventListener("click", function () { RG.closeModal(); RG.Map.gotoLatLng(q.la, q.lo, 3000); draw(q, q.code === 556); });

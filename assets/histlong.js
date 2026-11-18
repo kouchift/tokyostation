@@ -81,7 +81,7 @@ RG.histLong = function (id) {
     var i = lv1.indexOf(e), prev = lv1[i - 1], next = lv1[i + 1], D = done(), nd = lv1.filter(function (v) { return D[v.id]; }).length;
     var html = '<div class="hl" style="--ec:' + E.c + '">' +
       '<div class="hkc__gal hl__gal" data-hlgal="1"></div>' +
-      '<p class="hl__meta"><span style="background:' + E.c + '">' + esc(E.n) + "</span><span>📅 " + esc(e.ys) + "</span>" + (e.gg ? "<span>🏷️ " + esc(e.gg) + "</span>" : "") +
+      '<p class="hl__meta"><span style="background:' + E.c + '">' + esc(E.n) + "</span><span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-calendar'></use></svg> " + esc(e.ys) + "</span>" + (e.gg ? "<span><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-tag'></use></svg> " + esc(e.gg) + "</span>" : "") +
         "<span>⏱️ 約 " + (x.read || 10) + " 分</span>" + (D[id] ? '<span class="hl__ok">✔ 読んだ</span>' : "") + "</p>" +
       '<h2 class="hl__t">' + esc(e.t) + "</h2>" +
       '<p class="hl__intro">' + esc(x.intro) + "</p>" +
@@ -92,21 +92,21 @@ RG.histLong = function (id) {
            s.img ? '<figure class="hl__fig" data-th="' + esc(s.img) + '"><a target="_blank" rel="noopener"><img alt="" loading="lazy" decoding="async"></a>' + (s.cap ? "<figcaption>" + esc(s.cap) + "</figcaption>" : "") + "</figure>" : "") +
           s.p.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + "</section>";
       }).join("") +
-      (x.num && x.num.length ? '<h3 class="hl__h">🔢 数字で見る</h3><div class="hl__num">' + x.num.map(function (n) { return "<div><b>" + esc(n[0]) + "</b><span>" + esc(n[1]) + "</span></div>"; }).join("") + "</div>" : "") +
-      (x.who && x.who.length ? '<h3 class="hl__h">👤 登場人物</h3><div class="hl__who">' + x.who.map(function (w) {
+      (x.num && x.num.length ? '<h3 class="hl__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-list"></use></svg> 数字で見る</h3><div class="hl__num">' + x.num.map(function (n) { return "<div><b>" + esc(n[0]) + "</b><span>" + esc(n[1]) + "</span></div>"; }).join("") + "</div>" : "") +
+      (x.who && x.who.length ? '<h3 class="hl__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg> 登場人物</h3><div class="hl__who">' + x.who.map(function (w) {
         return '<div class="hl__wi">' + (w[3] && RG.wmImg ? '<figure class="hl__who-i"><a href="' + esc(RG.wmPage(w[3][0])) + '" target="_blank" rel="noopener">' + RG.wmImg(w[3][0], 56, { ow: w[3][1], oh: w[3][2], onerr: false }) + "</a></figure>" :
           '<figure class="hl__who-i" data-th="' + esc(w[2] || w[0]) + '"><a target="_blank" rel="noopener"><img alt="" loading="lazy" decoding="async"></a></figure>') + '<div><b>' + esc(w[0]) + "</b><span>" + esc(w[1]) + "</span></div></div>"; }).join("") + "</div>" : "") +
-      (x.now && x.now.length ? '<div class="hl__now"><b>🏠 いまの暮らしとのつながり</b><ul>' + x.now.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
+      (x.now && x.now.length ? '<div class="hl__now"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-home"></use></svg> いまの暮らしとのつながり</b><ul>' + x.now.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div>" : "") +
       (x.moshi ? '<div class="hl__moshi"><b>💭 もしも…？</b><p>' + esc(x.moshi) + "</p></div>" : "") +
-      (e.koji && e.koji.length ? '<div class="hp__koji"><b>📜 故事成語・名言</b>' + e.koji.map(function (k) { return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span></div>"; }).join("") + "</div>" : "") +
-      (x.words && x.words.length ? '<details class="hl__words"><summary>📚 ことばの意味（' + x.words.length + "）</summary><dl>" + x.words.map(function (w) { return "<dt>" + esc(w[0]) + "</dt><dd>" + esc(w[1]) + "</dd>"; }).join("") + "</dl></details>" : "") +
-      (x.quiz && x.quiz.length ? '<h3 class="hl__h">❓ チャレンジクイズ</h3>' + x.quiz.map(function (q, k) {
+      (e.koji && e.koji.length ? '<div class="hp__koji"><b><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-doc"></use></svg> 故事成語・名言</b>' + e.koji.map(function (k) { return '<div class="hp__kj"><q>' + esc(k.w) + "</q><span>意味: " + esc(k.m) + "</span></div>"; }).join("") + "</div>" : "") +
+      (x.words && x.words.length ? '<details class="hl__words"><summary><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> ことばの意味（' + x.words.length + "）</summary><dl>" + x.words.map(function (w) { return "<dt>" + esc(w[0]) + "</dt><dd>" + esc(w[1]) + "</dd>"; }).join("") + "</dl></details>" : "") +
+      (x.quiz && x.quiz.length ? '<h3 class="hl__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-help"></use></svg> チャレンジクイズ</h3>' + x.quiz.map(function (q, k) {
         return '<div class="hl__q" data-hlq="' + k + '"><p>Q' + (k + 1) + ". " + esc(q[0]) + "</p><div>" + q[1].map(function (c, j) { return '<button type="button" data-hlc="' + j + '">' + ["A", "B", "C", "D"][j] + ". " + esc(c) + "</button>"; }).join("") + '</div><p class="hl__ans" hidden></p></div>'; }).join("") +
         '<p class="hl__score" data-hlscore hidden></p>' : "") +
       '<button class="hl__done' + (D[id] ? " on" : "") + '" type="button" data-hldone="1">' + (D[id] ? "✔ 読みました（大項目 " + nd + " / " + lv1.length + " 読破）" : "📗 読んだ！スタンプを押す") + "</button>" +
-      (x.note ? '<p class="hkc__myth">⚠️ ' + esc(x.note) + "</p>" : "") +
-      '<div class="grv__acts"><button class="grv__go" type="button" data-hlmap="1">🗺️ 地図で場所を見る</button>' +
-        (e.wp ? '<a class="grv__go grv__go--l" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(e.wp) + '" target="_blank" rel="noopener">📖 Wikipedia</a>' : "") + "</div>" +
+      (x.note ? '<p class="hkc__myth"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> ' + esc(x.note) + "</p>" : "") +
+      '<div class="grv__acts"><button class="grv__go" type="button" data-hlmap="1"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-map"></use></svg> 地図で場所を見る</button>' +
+        (e.wp ? '<a class="grv__go grv__go--l" href="https://ja.wikipedia.org/wiki/' + encodeURIComponent(e.wp) + '" target="_blank" rel="noopener"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg> Wikipedia</a>' : "") + "</div>" +
       (RG.postsEnabled && RG.postsEnabled() && RG.postsHtml ? RG.postsHtml(spot(e)) : "") +
       '<div class="whs__nav">' + (prev ? '<button class="whs__b" type="button" data-hlto="' + prev.id + '">‹ ' + esc(prev.t.split(" ―")[0].slice(0, 12)) + "</button>" : "<span></span>") +
         (next ? '<button class="whs__b" type="button" data-hlto="' + next.id + '">' + esc(next.t.split(" ―")[0].slice(0, 12)) + " ›</button>" : "") + "</div>" +
