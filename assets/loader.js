@@ -340,6 +340,11 @@ function armOnDemandTriggers() {
   // 検索を始めた（索引に全スポットが要る）
   var q = document.getElementById("q");
   if (q) { q.addEventListener("focus", go, { once: true }); q.addEventListener("input", go, { once: true }); }
+  /* 第3周回B: v172 で検索の入口は #hero-q（ヒーロー検索）に一本化され、上の #q は存在しないため
+     この仕掛けが効いていなかった。ヒーロー検索も RG.searchLocal の索引を使うので、同じ仕掛けを付ける
+     （ensureSpots は第3周回Bで histcluster も同梱＝世界遺産・偉人の墓も索引に入る） */
+  var hq = document.getElementById("hero-q");
+  if (hq) { hq.addEventListener("focus", go, { once: true }); hq.addEventListener("input", go, { once: true }); }
   // 設定パネル（喫煙・おとな向け・業種など）
   var st = document.getElementById("btn-set");
   if (st) st.addEventListener("click", go, { once: true });
