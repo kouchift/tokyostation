@@ -2232,6 +2232,10 @@ var Card = (function () {
     /* 第2周回E: 駅のまわりの情報（data/poi.js・ONDEMAND "poi"）は駅カードを開いた瞬間に読む。
        届いたら loader の flush が Score を捨てて Card.refresh() で描き直すので、開いたまま反映される */
     if (!RG.POI && RG.ensureData) RG.ensureData("poi");
+    /* 第3周回B: 読み物・履歴クラスタ（ONDEMAND "histcluster"）も駅カードが使う瞬間。帯（世界遺産・
+       偉人の墓・教科書の解説）と AR ボタンはカードの中身なので、開いた瞬間に読み、届いたら loader の
+       flush が Card.refresh() で描き直す（poi と同じ形。失敗時は帯なしでそのまま開く） */
+    if (!RG.histOpen && RG.ensureHist) RG.ensureHist();
     var opener = RG.openCard || RG.openModal; if (!opener) return;
     var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + render(id, null) + "</div>");
     m.__card = id;
@@ -2823,7 +2827,16 @@ function bootRest(step) {
   // ---- ここから下は «無くても地図は見られる» もの ----
   step("検索窓", function () { (RG.initSearchUI ? RG.initSearchUI() : initSearch()); });
   step("メイン検索", function () { if (RG.initHeroSearch) RG.initHeroSearch(); });   // v89: 東京駅から、どこへ行く？
-  step("共有リンクの復元", function () { if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl(); if (RG.histFromUrl) RG.histFromUrl(); if (RG.hkFromUrl) RG.hkFromUrl(); });   // v91: ?from=&to=
+  step("共有リンクの復元", function () {   // v91: ?from=&to=
+    if (RG.restoreRouteFromUrl) RG.restoreRouteFromUrl();
+    /* 第3周回B: ?hist= / ?hk= の共有リンクのときだけクラスタを先に読んでから復元する
+       （パラメータが無い通常の起動ではクラスタを読まない。従来も両関数はパラメータ無しで即 return） */
+    var needHist = false;
+    try { var qp = new URLSearchParams(location.search); needHist = !!(qp.get("hist") || qp.get("hk")); } catch (e) {}
+    if (needHist && RG.ensureHist) RG.ensureHist(function () { if (RG.histFromUrl) RG.histFromUrl(); if (RG.hkFromUrl) RG.hkFromUrl(); });
+    else if (!needHist) { /* 復元するものが無い */ }
+    else { if (RG.histFromUrl) RG.histFromUrl(); if (RG.hkFromUrl) RG.hkFromUrl(); }
+  });
   step("お気に入りと履歴", function () { if (RG.favs) RG.favs.init(); });   // v92: この端末だけ（tsg.fav.v1）
   step("現地モード", function () { if (RG.onsite) RG.onsite.init(); });   // v95: 下のパネル（押したときだけ位置情報）
   step("コンビニの絞り込み", function () { if (RG.cvsFilterInit) RG.cvsFilterInit(); });   // v99: 7／F／L

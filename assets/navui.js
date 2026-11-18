@@ -141,12 +141,17 @@ U.openDetail = function () {
   names = names.filter(function (x, i, a) { return a.indexOf(x) === i; });
   var m = (RG.openCard || RG.openModal)("🧭 移動の詳細", '<div class="nd"><p class="lvt">しらべています…</p></div>');
   detailOpen = true; var gen = m.__gen;
-  loadAll(names, function (D) {
+  /* 第3周回B: AR ボタンはクラスタ側。詳細を開くのが使う瞬間なので、駅データと並べて読み、
+     そろってから描く（失敗時は AR ボタンなしでそのまま描く。ensureHist は失敗でも cb を呼ぶ） */
+  if (!RG.arOpen && RG.ensureHist && !(RG.dataGroupState && RG.dataGroupState("histcluster") === "failed")) {
+    RG.ensureHist(function () { loadAll(names, function (D) { render(D); }); });
+  } else loadAll(names, function (D) { render(D); });
+  function render(D) {
     if (!detailOpen || m.__gen !== gen || !m.classList.contains("show")) return;
     var bd = m.querySelector(".modal__bd");
     bd.innerHTML = renderDetail(D);
     bind(m);
-  });
+  }
 };
 function closeDetail() { if (detailOpen) { detailOpen = false; RG.closeModal(); } }
 function bind(m) {
@@ -261,7 +266,11 @@ U.redo = function () {
 
 /* ---------------------------------------------------------- AR（arguide.js の RG.arOpen を案内用に使う） */
 U.openAR = function () {
-  var n = N(); if (!n.on || !RG.arOpen) return;
+  var n = N(); if (!n.on) return;
+  if (!RG.arOpen) {   // 第3周回B: 未読なら読んでから開き直す（失敗時は開かない）
+    if (RG.ensureHist && !(RG.dataGroupState && RG.dataGroupState("histcluster") === "failed")) RG.ensureHist(function () { U.openAR(); });
+    return;
+  }
   var wp = U.nextWaypoint();
   RG.arOpen({ n: wp.name, la: wp.coord[0], lo: wp.coord[1], nav: true });
 };

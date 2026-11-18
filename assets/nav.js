@@ -117,6 +117,9 @@ function stepHtml() {
 }
 /* v164: ctx = {result, destId, destName}（比較結果。候補の切替・やり直しに使う。navui.js） */
 RG.startNav = function (destCoord, destName, opt, ctx) {
+  /* 第3周回B: 案内中の AR ボタン（arguide）はクラスタ側。案内開始が使う瞬間なので読み始める
+     （帯は位置更新のたびに描き直されるので、届いたら AR ボタンが後から出る） */
+  if (!RG.arOpen && RG.ensureHist) RG.ensureHist();
   if (!navigator.geolocation) { RG.tripStatus("この端末では位置情報が使えないため、案内モードは始められません。", "warn"); return; }
   if (RG.secureOK && !RG.secureOK()) { if (RG.showGeoHelp) RG.showGeoHelp({ code: 0 }); return; }
   if (!RG.Trip.origin) { RG.tripStatus("先に出発地を決めてください。", "warn"); return; }

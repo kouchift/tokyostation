@@ -427,8 +427,18 @@ RG.showSpot = function (p) {
   if (p.adult && RG.showAdult) { RG.showAdult(p.adult); return; }
   if (p.camspot && RG.showCamSpot) { RG.showCamSpot(p.camspot); return; }
   if (p.buzz && RG.showBuzz) { RG.showBuzz(p.buzz, "fresh"); return; }
-  if (p.whs && RG.showWHS) { RG.showWHS(p.whs); return; }            // v127: 世界遺産の印
-  if (p.grave && RG.showGrave) { RG.showGrave(p.grave); return; }    // v133: 偉人の墓
+  if (p.whs) {   // v127: 世界遺産の印。第3周回B: クラスタ未読なら読んでから開く（失敗時は通常カードに倒す）
+    if (RG.showWHS) { RG.showWHS(p.whs); return; }
+    if (RG.ensureHist) { RG.ensureHist(function () { if (RG.showWHS) RG.showWHS(p.whs); else RG.showSpot(p); }); return; }
+  }
+  if (p.grave) {   // v133: 偉人の墓（同上）
+    if (RG.showGrave) { RG.showGrave(p.grave); return; }
+    if (RG.ensureHist) { RG.ensureHist(function () { if (RG.showGrave) RG.showGrave(p.grave); else RG.showSpot(p); }); return; }
+  }
+  /* 第3周回B: 通常のスポットカードも帯（世界遺産・偉人の墓・教科書）と AR ボタンが中身。
+     未読なら読み始め、届いたら loader の flush が RG.__spotCur を見て開いたまま描き直す */
+  RG.__spotCur = p;
+  if (!RG.histOpen && RG.ensureHist) RG.ensureHist();
   if (p.osm10 && RG.showOsm10) { RG.showOsm10(p); return; }
   if (p.klm && RG.showKantoLM) { RG.showKantoLM(p); return; }
   if (p.univ != null && RG.showUniv) { RG.showUniv(p.univ); return; }

@@ -18,9 +18,18 @@ function idx() {
 }
 RG.whsFind = function (name) { var I = idx(); return I && name ? I[name] || I[String(name).replace(/駅$/, "")] || null : null; };
 RG.mergeWHS = function () {
-  if (!RG.WHS || RG.__whsMerged) return; RG.__whsMerged = 1;
+  if (!RG.WHS) return;
   RG.MAPPOI = RG.MAPPOI || [];
+  /* 第3周回B: data/mappois.js は RG.MAPPOI を «直接代入» で差し替える。差し替え前に取り込むと
+     POI ごと消え、従来の __whsMerged ガードでは二度と戻らなかった（遅い回線で IDLE の間隔が
+     flush の 250ms を超えると実際に起きる）。取り込んだ配列を覚え、差し替わっていたら
+     重複を避けて取り込み直す */
+  if (RG.__whsMerged && RG.__whsArr === RG.MAPPOI) return;
+  RG.__whsMerged = 1; RG.__whsArr = RG.MAPPOI;
+  var have = {};
+  RG.MAPPOI.forEach(function (p) { if (p.i && p.i.indexOf("whs") === 0) have[p.i] = 1; });
   RG.WHS.forEach(function (w) {
+    if (have["whs" + w.id]) return;
     var p = w.pts[0];
     RG.MAPPOI.push({ i: "whs" + w.id, n: w.s, la: p[1], lo: p[2], g: "whs", s: 5, ti: 0, sl: 60,
                      t: "世界遺産（" + w.y + "年・" + w.ty + "遺産）", be: "🌏", bc: w.ty === "自然" ? "#1B7F3B" : "#0B5394", whs: w.id });

@@ -96,7 +96,18 @@ var ONDEMAND = [
   { f: "data/koyomi.js",    key: "koyomi",    label: "こよみ",             group: "koyomi" },                  // 週カレンダーに触れた／月・日のカードを開いたとき
   { f: "data/auto/buzz_auto.js", key: "buzzauto", label: "話題の場所（自動更新）", group: "buzz" },           // 話題の一覧・マージのとき（buzz.js）
   { f: "data/poi.js",       key: "poi",       label: "駅のまわりの情報",   group: "poi" },                     // 駅カードを開いたとき（app.js の Card.open）
-  { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮",           group: "ichinomiya" }               // 一之宮ジャンルを選んだとき／スポット一式と一緒
+  { f: "data/ichinomiya.js", key: "ichinomiya", label: "一之宮",           group: "ichinomiya" },               // 一之宮ジャンルを選んだとき／スポット一式と一緒
+  /* 第3周回B (P-03): 読み物・履歴クラスタの «コード» 8本（元は app.extra.js に同梱・原寸 約129KB）。
+     データではなくプログラムなので、届いた時点で RG.* の入口がそろう。反映は flush() の histc_* 分岐
+     （世界遺産・偉人の墓の POI 取り込み＋開いているカードの描き直し）が担う。並びは元のバンドル順 */
+  { f: "assets/eduhist.js",  key: "histc_eduhist",  label: "歴史のやさしい解説", group: "histcluster" },
+  { f: "assets/whs.js",      key: "histc_whs",      label: "世界遺産の解説",     group: "histcluster" },
+  { f: "assets/graves.js",   key: "histc_graves",   label: "偉人の墓",           group: "histcluster" },
+  { f: "assets/hkzukan.js",  key: "histc_hkzukan",  label: "歴オタ図鑑",         group: "histcluster" },
+  { f: "assets/hklong.js",   key: "histc_hklong",   label: "図鑑の読み物",       group: "histcluster" },
+  { f: "assets/histlong.js", key: "histc_histlong", label: "歴史の読み物",       group: "histcluster" },
+  { f: "assets/histmap.js",  key: "histc_histmap",  label: "れきし地図",         group: "histcluster" },
+  { f: "assets/arguide.js",  key: "histc_arguide",  label: "ARガイド",           group: "histcluster" }
 ];
 
 var loaded = {}, inflight = {};
@@ -178,8 +189,9 @@ RG.runTasks = runTasks;
 function flush(urgent, done) {
   if (urgent !== true && busy()) { flushT = setTimeout(flush, 350); return; }
   var keys = Object.keys(pendingKeys); pendingKeys = {};
-  var base = false, poi = false, card = false;
+  var base = false, poi = false, card = false, histc = false;
   keys.forEach(function (k) { if (BASE_KEYS[k]) base = true; if (POI_KEYS[k]) poi = true;
+                              if (k.indexOf("histc_") === 0) histc = true;
                               if (k === "poi" || k === "descs" || k === "depth" || k === "shinkansen") card = true; });
   var T = [];
   if (keys.indexOf("geopref") >= 0 && RG.buildGeoPref) T.push(function () { RG.buildGeoPref(); });
@@ -202,6 +214,20 @@ function flush(urgent, done) {
   if (keys.indexOf("support") >= 0 && RG.tipInit) T.push(function () { RG.tipInit(); });
   if (card) T.push(function () { if (keys.indexOf("poi") >= 0 && RG.Score && RG.Score.reset) RG.Score.reset(); if (RG.Card && RG.Card.refresh) RG.Card.refresh(); });   // 第2周回E: poi が後から届いたら、POIなしで計算済みのスコアを捨てる
   if (keys.indexOf("landmarks") >= 0) T.push(function () { if (RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks(); });
+  if (histc) {
+    /* 第3周回B: クラスタのコードが届いた。データ（世界遺産・偉人の墓）が先に届いていれば POI に取り込み、
+       索引と地図を作り直す（データが後なら、データ側の flush の mergeExtraPois が同じ取り込みをする）。
+       開いたままのカードは描き直して、帯（世界遺産・偉人の墓・教科書）や AR ボタンを後から出す */
+    T.push(function () { if (RG.mergeWHS) RG.mergeWHS(); if (RG.mergeGraves) RG.mergeGraves(); });
+    if (RG.WHS || RG.GRAVES) {
+      if (RG.Map && RG.Map.rebuildPOI) T.push(function () { RG.Map.rebuildPOI(); });
+      T.push(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
+      if (RG.buildGroupBar) T.push(function () { RG.buildGroupBar(); });
+    }
+    T.push(function () { if (RG.Card && RG.Card.refresh && RG.Card.current && RG.Card.current()) RG.Card.refresh(); });
+    T.push(function () { if (RG.__spotCur && RG.showSpot && document.querySelector(".modal.show .spotcard")) RG.showSpot(RG.__spotCur); });
+    T.push(function () { if (RG.__klmCur && RG.showKantoLM && document.querySelector(".modal.show .smk")) RG.showKantoLM(RG.__klmCur); });
+  }
   T.push(function () { document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } })); });
   runTasks(T, done);
 }
@@ -247,7 +273,8 @@ RG.ensureData = function (group, cb) {
   if (groupState[group] === "loading") return;
   groupState[group] = "loading";
   var toast = null;
-  if (RG.tripStatus) RG.tripStatus("📦 スポットのデータを読み込んでいます…（はじめての1回だけ）", "info", 6000);
+  var noun = group === "histcluster" ? "歴史の読みもの" : "スポットのデータ";   // 第3周回B: コードのグループでも文言が合うように
+  if (RG.tripStatus) RG.tripStatus("📦 " + noun + "を読み込んでいます…（はじめての1回だけ）", "info", 6000);
   var n = 0;
   runQueue(items, function (item, i, total) {
     setProgress(item.label + " をよみこんでいます", (i / total) * 100);
@@ -255,12 +282,12 @@ RG.ensureData = function (group, cb) {
     setProgress("", 100);
     if (failed >= items.filter(function (x) { return !x.opt; }).length) {                                                       // v97: ぜんぶ失敗＝通信が切れている。«そろいました» と言わない
       groupState[group] = "failed";
-      if (RG.tripStatus) RG.tripStatus("⚠️ スポットのデータを読み込めませんでした（通信を確認して、もう一度お試しください）", "warn", 8000);
+      if (RG.tripStatus) RG.tripStatus("⚠️ " + noun + "を読み込めませんでした（通信を確認して、もう一度お試しください）", "warn", 8000);
       document.dispatchEvent(new CustomEvent("rg:ondemand:" + group, { detail: { failed: failed, total: items.length } }));
       return;
     }
     groupState[group] = "done";
-    if (failed && RG.tripStatus) RG.tripStatus("⚠️ スポットのデータの一部（" + failed + "／" + items.length + "）を読み込めませんでした。無いぶんは出ません", "warn", 7000);
+    if (failed && RG.tripStatus) RG.tripStatus("⚠️ " + noun + "の一部（" + failed + "／" + items.length + "）を読み込めませんでした。無いぶんは出ません", "warn", 7000);
     // 升目（見ている範囲だけ読む追加スポット）があれば、ここから使えるようにする
     if (group === "spots" && RG.initTiles) RG.initTiles(function (meta) {
       if (meta && RG.Map && RG.Map.poiLOD) RG.Map.poiLOD();
@@ -268,12 +295,21 @@ RG.ensureData = function (group, cb) {
     // まとめて反映（250ms 待たずに・小分けにして）。反映し終えてから «そろった» を知らせる
     clearTimeout(flushT);
     flush(true, function () {
-      if (!failed && RG.tripStatus) RG.tripStatus("✅ スポットのデータがそろいました", "ok", 2500);
+      if (!failed && RG.tripStatus) RG.tripStatus("✅ " + noun + "がそろいました", "ok", 2500);
       document.dispatchEvent(new CustomEvent("rg:ondemand:" + group));
     });
   }, true);
 };
-RG.ensureSpots = function (cb) { RG.ensureData("ichinomiya"); RG.ensureData("spots", cb); };   // 第2周回E: 一之宮はスポット索引の一部なので、スポット一式と一緒に読む
+RG.ensureSpots = function (cb) { RG.ensureData("ichinomiya"); RG.ensureData("histcluster"); RG.ensureData("spots", cb); };   // 第2周回E: 一之宮はスポット索引の一部なので、スポット一式と一緒に読む。第3周回B: 世界遺産・偉人の墓の POI も索引の一部（mergeWHS / mergeGraves がクラスタ側）なので、クラスタも一緒に読む
+/* 第3周回B: 読み物・履歴クラスタを使う瞬間の共通の入口。既に届いていればすぐ、失敗済みなら
+   «そのまま開く» 側に倒すため cb は必ず1回呼ぶ（呼び手は cb の中で RG.histOpen 等の有無を見て、
+   無ければ諦める＝再試行ループにしない。koyomi.js / buzz.js の第2周回Eパターンと同じ） */
+RG.ensureHist = function (cb) {
+  if (RG.histOpen || !RG.ensureData) { cb && cb(); return; }
+  if (RG.dataGroupState && RG.dataGroupState("histcluster") === "failed") { cb && cb(); return; }
+  RG.ensureData("histcluster", function () { cb && cb(); });
+};
+RG.histReady = function () { return !!RG.histOpen; };
 RG.spotsReady = function () { return groupState.spots === "done"; };
 RG.spotsFailed = function () { return groupState.spots === "failed"; };
 RG.dataGroupState = function (g) { return groupState[g] || null; };
@@ -292,6 +328,7 @@ function armOnDemandTriggers() {
       var heavy = real && list.some(function (g) { return !LIGHT[g]; });
       if (heavy) RG.ensureSpots(function () { orig(list); });
       if (real && list.indexOf("ichinomiya") >= 0) RG.ensureData("ichinomiya", function () { orig(list); });   // 第2周回E: 一之宮は軽いジャンル扱いだが、データ本体は専用グループから
+      if (real && (list.indexOf("whs") >= 0 || list.indexOf("grave") >= 0)) RG.ensureHist(function () { orig(list); });   // 第3周回B: 世界遺産・偉人の墓も軽いジャンル扱いだが、POI の取り込み（mergeWHS / mergeGraves）はクラスタ側。届いたら選び直して印を出す
       orig(list);
     };
   }
@@ -303,6 +340,11 @@ function armOnDemandTriggers() {
   // 検索を始めた（索引に全スポットが要る）
   var q = document.getElementById("q");
   if (q) { q.addEventListener("focus", go, { once: true }); q.addEventListener("input", go, { once: true }); }
+  /* 第3周回B: v172 で検索の入口は #hero-q（ヒーロー検索）に一本化され、上の #q は存在しないため
+     この仕掛けが効いていなかった。ヒーロー検索も RG.searchLocal の索引を使うので、同じ仕掛けを付ける
+     （ensureSpots は第3周回Bで histcluster も同梱＝世界遺産・偉人の墓も索引に入る） */
+  var hq = document.getElementById("hero-q");
+  if (hq) { hq.addEventListener("focus", go, { once: true }); hq.addEventListener("input", go, { once: true }); }
   // 設定パネル（喫煙・おとな向け・業種など）
   var st = document.getElementById("btn-set");
   if (st) st.addEventListener("click", go, { once: true });
