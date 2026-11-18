@@ -247,7 +247,7 @@ RG.inroBind = function (m, S, vid, save) {
       $("#inro-res", m).innerHTML = '<img class="inro__pv" src="' + preview + '" alt="印籠のプレビュー">' +
         '<a class="set__b2" download="digital-inro-' + serial + '.pdf" href="' + url + '">💾 PDF を保存（' + Math.round(pdf.length / 1024) + ' KB）</a> ' +
         '<span class="tj__hint">No. ' + esc(serial) + (reissue ? "（再発行）" : "（原本）") + "。保存できないときは長押し／右クリックで保存。</span>";
-      b.disabled = false; b.textContent = "🪪 再発行する（PDF）";
+      b.disabled = false; if (RG.iconifyText) RG.iconifyText(b, "🪪 再発行する（PDF）"); else b.textContent = "🪪 再発行する（PDF）";   // D-01 第3周回
     });
   });
 };

@@ -516,7 +516,8 @@ RG.openPlan = function () {
       var pv = $("#pl-preview", m);
       pv.hidden = !pv.hidden;
       if (!pv.hidden) pv.textContent = txtNow();
-      this.textContent = pv.hidden ? "👀 送る内容を見る" : "👀 閉じる";
+      var plt = pv.hidden ? "👀 送る内容を見る" : "👀 閉じる";
+      if (RG.iconifyText) RG.iconifyText(this, plt); else this.textContent = plt;   // D-01 第3周回
     });
     $("#pl-copy", m).addEventListener("click", function () {
       var txt = txtNow();

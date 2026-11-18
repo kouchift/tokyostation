@@ -522,7 +522,7 @@ RG.postsBind = function (m, p) {
   // 写真が取れなかった枠に «写真を投稿» の入口
   var hole = m.querySelector(".spotcard__ph");
   if (hole && !hole.querySelector(".pst__cta")) {
-    var cta = document.createElement("button"); cta.type = "button"; cta.className = "pst__cta"; cta.textContent = "📷 写真を投稿する";
+    var cta = document.createElement("button"); cta.type = "button"; cta.className = "pst__cta"; if (RG.iconifyText) RG.iconifyText(cta, "📷 写真を投稿する"); else cta.textContent = "📷 写真を投稿する";   // D-01 第3周回
     cta.addEventListener("click", function (e) { e.stopPropagation(); root.querySelector("[data-pst-file]").click(); });
     hole.appendChild(cta);
   }
@@ -605,7 +605,8 @@ RG.postsBind = function (m, p) {
       var goBtn = q.querySelector("[data-q-go]");
       function sum() {
         var c = { ok: 0, here: 0, none: 0, far: 0, block: 0 }; res.forEach(function (r) { c[r.loc]++; });
-        q.querySelector("[data-q-sum]").textContent = "✅ " + c.ok + (c.here ? " ・ 📍現地 " + c.here : "") + " ・ 📍? " + c.none + " ・ ⚠️ " + c.far + " ・ ⛔ " + c.block;
+        var qsum = "✅ " + c.ok + (c.here ? " ・ 📍現地 " + c.here : "") + " ・ 📍? " + c.none + " ・ ⚠️ " + c.far + " ・ ⛔ " + c.block;
+        var qse = q.querySelector("[data-q-sum]"); if (RG.iconifyText) RG.iconifyText(qse, qsum); else qse.textContent = qsum;   // D-01 第3周回: ✅📍⚠️ はアイコン化、⛔ は symbol が無いため絵文字のまま残る
       }
       sum();
       // 現在地で確かめる（位置情報のない写真だけ «現地で確認» にする。現在地は管理人向けの記録にだけ残す）
@@ -791,7 +792,7 @@ function viewer(p, list, i) {
     Array.prototype.forEach.call(box.querySelectorAll("[data-pown]"), function (b) {
       b.addEventListener("click", function () {
         var op = b.dataset.pown;
-        if (op === "del" && !b.__ok) { b.__ok = 1; b.textContent = "🗑 本当に削除する（もう一度押す）"; setTimeout(function () { if (b.isConnected) { b.__ok = 0; b.textContent = "🗑 この写真を削除"; } }, 3500); return; }
+        if (op === "del" && !b.__ok) { b.__ok = 1; if (RG.iconifyText) RG.iconifyText(b, "🗑 本当に削除する（もう一度押す）"); else b.textContent = "🗑 本当に削除する（もう一度押す）"; setTimeout(function () { if (b.isConnected) { b.__ok = 0; if (RG.iconifyText) RG.iconifyText(b, "🗑 この写真を削除"); else b.textContent = "🗑 この写真を削除"; } }, 3500); return; }   // D-01 第3周回
         b.disabled = true;
         ownOp(x.pid, op).then(function () {
           forget(x.pid, op); list.splice(i, 1);

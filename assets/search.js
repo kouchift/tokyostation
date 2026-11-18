@@ -142,7 +142,9 @@ RG.initSearchUI = function () {
     }
     local.forEach(function (r) { sug.appendChild(row(r)); });
     if (remote.length) {
-      sug.appendChild(el("div", { class: "sg__h", text: "🌏 地図の検索結果（OpenStreetMap）" }));
+      var sgh = el("div", { class: "sg__h", text: "🌏 地図の検索結果（OpenStreetMap）" });
+      if (RG.iconifyText) RG.iconifyText(sgh, "🌏 地図の検索結果（OpenStreetMap）");   // D-01 第3周回: RG.el の text は textContent 直通のため、作ったあとでアイコン化
+      sug.appendChild(sgh);
       remote.forEach(function (r) { sug.appendChild(row(r)); });
       sug.appendChild(el("div", { class: "sg__c", text: "© OpenStreetMap contributors (ODbL)" }));
     } else if (note) {

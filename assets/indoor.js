@@ -156,12 +156,12 @@ function setArea(id, near) {
 function extRow() {
   var a = areaOf(I.id), row = S.ov.querySelector(".ind__row--x"), b = S.ov.querySelector("[data-ext]");
   row.hidden = !(a && a.xkb);
-  if (a && a.xkb) b.textContent = I._x ? "🌳 駅の外（まわりの歩道）とつないでいます" : "🌳 駅の外の目的地まで（まわりの歩道をつなぐ・" + a.xkb + "KB）";
+  if (a && a.xkb) { var xt = I._x ? "🌳 駅の外（まわりの歩道）とつないでいます" : "🌳 駅の外の目的地まで（まわりの歩道をつなぐ・" + a.xkb + "KB）"; if (RG.iconifyText) RG.iconifyText(b, xt); else b.textContent = xt; }   // D-01 第3周回
   b.disabled = !!I._x;
 }
 function loadExt(cb) {
   var id = I.id; if (I._x) { if (cb) cb(); return; }
-  var b = S.ov.querySelector("[data-ext]"); b.textContent = "🌳 読み込んでいます…"; b.disabled = true;
+  var b = S.ov.querySelector("[data-ext]"); if (RG.iconifyText) RG.iconifyText(b, "🌳 読み込んでいます…"); else b.textContent = "🌳 読み込んでいます…"; b.disabled = true;   // D-01 第3周回
   script("data/indoor/" + id + "__out.js", function () {
     var J = RG.INDOOR[id], X = RG.INDOORX && RG.INDOORX[id]; if (!J || !X || J._x) return;
     var n0 = J.nd.length / 3, lk = J.lk.slice(), i;

@@ -67,7 +67,7 @@ function applyPatron() {
   document.documentElement.classList.toggle("patron", on);
   var mark = document.querySelector(".hdr__mark span"), b = mark && mark.querySelector(".patron__b");
   if (on && mark && !b) {
-    b = document.createElement("i"); b.className = "patron__b"; b.title = "投げ銭ありがとうございます（この端末での記録）"; b.textContent = "🪙 支援者";
+    b = document.createElement("i"); b.className = "patron__b"; b.title = "投げ銭ありがとうございます（この端末での記録）"; if (RG.iconifyText) RG.iconifyText(b, "🪙 支援者"); else b.textContent = "🪙 支援者";   // D-01 第3周回
     mark.appendChild(b);
   } else if (!on && b) b.remove();
 }
@@ -85,7 +85,7 @@ RG.tipInit = function () {
   var zb = document.querySelector(".zoombar");
   if (zb && !document.getElementById("tipfab") && RG.settings && RG.settings.tipFab === true) {   // v79: 既定では出さない（応援の導線はカード・投稿後・現場メモの下だけ）
     var fb = document.createElement("button");
-    fb.id = "tipfab"; fb.className = "sm tipfab"; fb.type = "button"; fb.textContent = "☕";
+    fb.id = "tipfab"; fb.className = "sm tipfab"; fb.type = "button"; if (RG.iconifyText) RG.iconifyText(fb, "☕"); else fb.textContent = "☕";   // D-01 第3周回
     fb.setAttribute("aria-label", "応援する"); fb.title = "応援する（この地図を現場の声で育て続けたい）";
     fb.addEventListener("click", function () { RG.tipQuick(); });
     zb.appendChild(fb);

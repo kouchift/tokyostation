@@ -634,7 +634,8 @@ var Rail = (function () {
     var hb2 = $("[data-hv]", box);
     if (hb2) {
       hb2.setAttribute("aria-pressed", String(!!ST.hideVisited));
-      hb2.textContent = ST.hideVisited ? "👣 未踏だけ表示中" : "✅ 訪問済みを隠す";
+      var hbt2 = ST.hideVisited ? "👣 未踏だけ表示中" : "✅ 訪問済みを隠す";
+      if (RG.iconifyText) RG.iconifyText(hb2, hbt2); else hb2.textContent = hbt2;   // D-01 第3周回: ✅ はアイコン化、👣 は symbol が無いため絵文字のまま残る
     }
     RG.Map.setGenres(cur);
   }

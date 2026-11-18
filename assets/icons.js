@@ -77,9 +77,16 @@ RG.uiIcon = function (name, cls) {
   if (!have["ui-" + name]) return "";
   return '<svg class="uic' + (cls ? " " + cls : "") + '" aria-hidden="true" focusable="false"><use href="#ui-' + name + '"></use></svg>';
 };
+/* D-01 第3周回: スプライト未着のあいだに iconifyText で出した要素は生テキストを
+   覚えておき、rg:icons が届いたらまとめてアイコンで出し直す（plannerui.js が
+   モーダル見出し・ステータス行でやっていた «生テキスト保持＋再描画» の共通化。
+   呼び出し側は iconifyText を 1 回呼ぶだけでよい） */
+var pendingIconText = [];
 RG.iconifyText = function (el, text) {
   if (!el) return;
   text = String(text == null ? "" : text);
+  el.__iconText = text;
+  if (!ready && pendingIconText.indexOf(el) < 0) pendingIconText.push(el);
   el.textContent = "";
   if (!ready) { el.textContent = text; return; }
   var re = new RegExp("(" + Object.keys(RG.UI_EMOJI).sort(function (a, b) { return b.length - a.length; }).map(function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
@@ -96,6 +103,13 @@ RG.iconifyText = function (el, text) {
   }
   el.appendChild(frag);
 };
+document.addEventListener("rg:icons", function () {
+  var els = pendingIconText; pendingIconText = [];
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (el.isConnected && el.__iconText != null) RG.iconifyText(el, el.__iconText);
+  }
+});
 function inject(txt) {
   if (ready || !/<symbol/.test(txt)) { if (!ready) throw new Error("bad sprite"); return; }
   var host = document.createElement("div");
