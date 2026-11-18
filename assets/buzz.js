@@ -247,7 +247,7 @@ RG.buzzRailRefresh = function (force) {
 /* ヘッダーのボタン */
 RG.buzzBind = function () {
   var b = document.getElementById("btn-buzz");
-  if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("buzz"); RG.showBuzz(null, "fresh"); }); }   // v183: グループ名は文字列に直した（以前は ["buzz"] という配列で、どのグループにも一致しなかった）
+  if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("buzz"); RG.showBuzz(null, "fresh"); }); }
 };
 /* =========================================================================
    v126: 場所を追う «この場所の話題»
