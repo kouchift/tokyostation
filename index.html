@@ -131,7 +131,6 @@ html:not(.css-ok) body>:not(.app):not(#sheet):not(#scrim):not(script):not(noscri
     <div id="skel" class="skel" aria-hidden="true"><i></i><span>路線図を用意しています…</span></div>
     <!-- v89: 最初の 3 秒で «東京駅から、どこへ行く？» が分かる入口。既存の検索索引・ルート比較にそのままつなぐ -->
     <section id="hero" class="heroSearch" aria-label="目的地を検索">
-      <div class="heroSearch__eyebrow">東京ステーションガイド <a class="heroSearch__guide" href="guide/index.html" title="東京駅から新宿・渋谷・羽田空港などへの行き方（静的ページ）">📖 行き方ガイド</a></div>
       <p class="heroSearch__sub">全国 <span id="hero-stat">8,381 駅・818 路線＋船・ヘリなど 18</span>の路線図から、移動手段を比べられます。</p>
       <hr>
       <h1>東京駅から、<br class="mobileOnly">どこへ行く？</h1>
@@ -285,15 +284,9 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
      アプリ（.app）の DOM・レイアウトには触れていない。写真の出典は写真ごとに «PHOTO:» で明記 -->
 <section class="tsg-show" id="cx-showcase" aria-label="東京駅エリアガイド">
   <div class="cx-hero cx-wrap">
-    <p class="cx-hero-en" aria-hidden="true">TOKYO STATION</p>
     <h2>東京<span class="cx-accent">駅</span>、<br>歩く理由が増えた。</h2>
     <p class="cx-lead">1914年開業、日本の玄関口。<span>赤レンガの駅舎を中心に、丸の内・八重洲・日本橋・大手町——徒歩圏に4つの顔を持つ「駅が街になる」エリアの案内です。行き方を探すときは、上の路線図で駅や地名を検索してください。</span></p>
-    <div class="cx-stats" role="list" aria-label="東京駅の基本データ">
-      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="1914">1,914</span><em>年</em></div><div class="cx-lbl">開業</div></div>
-      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="335">335</span><em>m</em></div><div class="cx-lbl">丸の内駅舎の全長</div></div>
-      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="2012">2,012</span><em>年</em></div><div class="cx-lbl">駅舎の保存・復原が完成</div></div>
-      <div class="cx-stat" role="listitem"><div class="cx-num"><span data-count="4">4</span><em>エリア</em></div><div class="cx-lbl">徒歩圏の街</div></div>
-    </div>
+    <p class="cx-facts">東京駅は<strong>1914年</strong>に開業し、丸の内駅舎の全長は<strong>335m</strong>あります。駅舎の保存・復原は<strong>2012年</strong>に完成し、徒歩圏には<strong>4つのエリア</strong>が広がります。</p>
     <div class="cx-chips" aria-label="エリアへ移動">
       <button class="cx-chip" type="button" data-goto-area="marunouchi"><small>01</small>丸の内</button>
       <button class="cx-chip" type="button" data-goto-area="yaesu"><small>02</small>八重洲</button>
@@ -302,11 +295,26 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
     </div>
   </div>
 
-  <div class="cx-marquee" aria-hidden="true">
-    <div class="cx-marquee-track" id="cx-marquee-track">
+  <div class="cx-marquee">
+    <div class="cx-marquee-track" id="cx-marquee-track" aria-hidden="true">
       <span>MARUNOUCHI <b>●</b> YAESU <b>●</b> NIHONBASHI <b>●</b> OTEMACHI <b>●</b> GINZA <b>●</b> IMPERIAL PALACE <b>●</b> SINCE 1914 <b>●</b>&nbsp;</span>
     </div>
+    <button class="cx-marquee-toggle" id="cx-marquee-toggle" type="button" aria-pressed="false">一時停止</button>
   </div>
+  <script>
+  /* マーキー（流れる帯）の一時停止／再開ボタン */
+  (function () {
+    var btn = document.getElementById("cx-marquee-toggle");
+    var track = document.getElementById("cx-marquee-track");
+    if (!btn || !track) return;
+    btn.addEventListener("click", function () {
+      var paused = track.style.animationPlayState === "paused";
+      track.style.animationPlayState = paused ? "running" : "paused";
+      btn.setAttribute("aria-pressed", paused ? "false" : "true");
+      btn.textContent = paused ? "一時停止" : "再開";
+    });
+  })();
+  </script>
 
   <section class="cx-wrap cx-sec" aria-labelledby="cx-h-station">
     <div class="cx-sec-head">
