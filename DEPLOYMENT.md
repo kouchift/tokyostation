@@ -102,6 +102,8 @@ node --check assets/app.bundle.js
 node --check data/version.js
 ```
 
+> **PR 方式で版を上げる場合（`node tools/release.mjs` を通らないとき）** は、版上げ（`index.html` の data-build と `?v=`・`sw.js` のキャッシュ名・`data/version.js`）と `node tools/make_filehash.mjs` による `data/filehash.json` の再生成を**必ず同じ PR** に入れ、マージ前に `node tools/seo_check.js` を実行して FAIL 0（filehash グループを含む）を確認すること。`node tools/release.mjs` を使う経路では filehash の再生成は自動で行われる。詳しい手順は CLAUDE.md の「公開の手順」を参照。
+
 ---
 
 ## 6. 作業中の変更
