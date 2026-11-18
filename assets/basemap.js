@@ -336,7 +336,11 @@ function bindQuick() {
     if (t.closest("#qb-heat")) { B.qbHeat = !B.qbHeat; quickBar(); return; }
     if (t.closest("#qb-mini")) { B.qbMini = true; B.qbHeat = false; quickBar(); save(); return; }
     if (t.closest("#qb-open")) { B.qbMini = false; quickBar(); save(); return; }
-    if (t.closest("#qb-hist")) { if (RG.histOpen) RG.histOpen(); return; }   // v128: れきし地図
+    if (t.closest("#qb-hist")) {   // v128: れきし地図。第3周回B: クラスタ未読なら使う瞬間に読んでから開く（失敗時は開かない＝ボタンは死なないよう次回また試せる）
+      if (RG.histOpen) RG.histOpen();
+      else if (RG.ensureHist) RG.ensureHist(function () { if (RG.histOpen) RG.histOpen(); });
+      return;
+    }
     if (t.closest("#qb-open2")) { B.qbMini = false; B.qbHeat = true; quickBar(); save(); return; }
   });
 }

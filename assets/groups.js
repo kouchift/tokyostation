@@ -269,6 +269,10 @@ RG.showOsm10 = function (p) {
 
 /* ------------------------------------------------ 関東の見どころのカード */
 RG.showKantoLM = function (p) {
+  /* 第3周回B: このカードも世界遺産・教科書の帯が中身。未読なら読み始め、届いたら loader の
+     flush が RG.__klmCur を見て開いたまま描き直す（駅カードの poi と同じ形） */
+  RG.__klmCur = p;
+  if (!RG.histOpen && RG.ensureHist) RG.ensureHist();
   var r = p.klm, near = RG.nearestStation ? RG.nearestStation(p.la, p.lo) : null;
   var m = RG.openModal(r.e + " " + r.n, '<div class="smk">' +
     '<div class="smk__hd" style="--lc:' + r.c + '">' +
