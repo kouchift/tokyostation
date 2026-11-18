@@ -62,6 +62,40 @@ RG.setIcon = function (node, gid, x, y, size) {
   node.setAttribute("width", size.toFixed(2)); node.setAttribute("height", size.toFixed(2));
   return node;
 };
+
+/* =========================================================================
+   D-01: UI アイコン（ui-*）— ジャンル以外の «分類・ボタン・見出し» の印
+   ・絵柄は assets/icons.svg の <symbol id="ui-…">（ジャンルと同じスプライトに同居）
+   ・RG.uiIcon(name): HTML 文字列用のマークアップ（<svg class="uic">）
+   ・RG.iconifyText(el, text): textContent でしか出せない場所（モーダルの見出し・
+     ステータス行など平文の置き場）で、対応表の絵文字をアイコンの要素に替える。
+     スプライト未着・失敗時は絵文字のまま出す（意味は失われない）。
+   ・対応表 UI_EMOJI は tools/replace_emoji_app.mjs の MAP と同じ（正本は道具側）
+   ========================================================================= */
+RG.UI_EMOJI = { "📍": "pin", "📌": "pin", "🗺️": "map", "🗺": "map", "🗾": "map", "🚉": "station", "🚃": "train", "🚆": "train", "🚇": "train", "🚄": "shinkansen", "📖": "book", "📚": "book", "📗": "book", "⚠️": "warn", "⚠": "warn", "🚨": "warn", "📷": "camera", "📸": "camera", "📹": "video", "🎬": "video", "🧭": "compass", "💾": "save", "🏛️": "museum", "🏛": "museum", "🏦": "museum", "📜": "doc", "📄": "doc", "📑": "doc", "📰": "doc", "🗄️": "doc", "🗄": "doc", "📅": "calendar", "🗓️": "calendar", "🗓": "calendar", "☕": "cafe", "🚬": "smoke", "🔁": "repeat", "🔀": "transfer", "🔄": "refresh", "📋": "clipboard", "🔒": "lock", "🔐": "lock", "🔓": "lock", "🪦": "grave", "🌏": "globe", "🌐": "globe", "💬": "comment", "💰": "yen", "💴": "yen", "🪙": "yen", "🔗": "link", "✅": "check", "📤": "share", "🏢": "building", "🏬": "building", "🏚️": "building", "🏚": "building", "🚧": "barrier", "🏗️": "barrier", "🏗": "barrier", "🌊": "wave", "🏫": "school", "🗑️": "trash", "🗑": "trash", "♿": "wheelchair", "👀": "eye", "👁️": "eye", "👁": "eye", "❓": "help", "🏯": "castle", "🛣️": "road", "🛣": "road", "🚶": "walk", "🕒": "clock", "🕐": "clock", "🕘": "clock", "🕛": "clock", "🕰️": "clock", "🕰": "clock", "🔎": "search", "🔍": "search", "🔥": "fire", "🆕": "sparkle", "✨": "sparkle", "🏪": "store", "🏠": "home", "🏘️": "home", "🏘": "home", "🗻": "mountain", "⛰️": "mountain", "⛰": "mountain", "📝": "memo", "🧳": "luggage", "🏷️": "tag", "🏷": "tag", "🌡️": "thermo", "🌡": "thermo", "📮": "postbox", "🔭": "telescope", "🛗": "elevator", "🚪": "door", "⚙️": "gear", "⚙": "gear", "🔞": "prohibit", "🛍️": "bags", "🛍": "bags", "👑": "crown", "💡": "bulb", "🖼️": "image", "🖼": "image", "🏞️": "image", "🏞": "image", "🏮": "lantern", "📶": "signal", "🌙": "moon", "🚦": "traffic", "♨️": "onsen", "♨": "onsen", "✏️": "pencil", "✏": "pencil", "📊": "chart", "📈": "chart", "🔢": "list", "☰": "list", "📏": "ruler", "🔕": "belloff", "🌋": "volcano", "🚩": "flag", "💳": "card", "🪪": "id", "📧": "mail", "📨": "mail", "✉️": "mail", "✉": "mail", "📱": "phone", "👤": "user", "👥": "user", "⛶": "fullscreen", "🏆": "trophy", "🎫": "ticket", "🧊": "ice", "⛩️": "shrine", "⛩": "shrine", "🌳": "tree", "🕳️": "hole", "🕳": "hole" };
+RG.uiIcon = function (name, cls) {
+  if (!have["ui-" + name]) return "";
+  return '<svg class="uic' + (cls ? " " + cls : "") + '" aria-hidden="true" focusable="false"><use href="#ui-' + name + '"></use></svg>';
+};
+RG.iconifyText = function (el, text) {
+  if (!el) return;
+  text = String(text == null ? "" : text);
+  el.textContent = "";
+  if (!ready) { el.textContent = text; return; }
+  var re = new RegExp("(" + Object.keys(RG.UI_EMOJI).sort(function (a, b) { return b.length - a.length; }).map(function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
+  var parts = text.split(re), frag = document.createDocumentFragment();
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i]; if (!p) continue;
+    var name = RG.UI_EMOJI[p];
+    if (name && have["ui-" + name]) {
+      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "uic"); svg.setAttribute("aria-hidden", "true"); svg.setAttribute("focusable", "false");
+      var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+      use.setAttribute("href", "#ui-" + name); svg.appendChild(use); frag.appendChild(svg);
+    } else frag.appendChild(document.createTextNode(p));
+  }
+  el.appendChild(frag);
+};
 function inject(txt) {
   if (ready || !/<symbol/.test(txt)) { if (!ready) throw new Error("bad sprite"); return; }
   var host = document.createElement("div");

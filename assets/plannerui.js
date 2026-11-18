@@ -30,7 +30,7 @@ function initBar() {
     '<button id="t-rescue" class="tb__btn tb__btn--night" type="button" hidden>🌙 終電を逃した</button>';
 
   if (RG.secureOK && !RG.secureOK()) {
-    var g = $("#t-geo"); if (g) { g.classList.add("tb__btn--warn"); g.textContent = "📍 現在地 ⚠"; }
+    var g = $("#t-geo"); if (g) { g.classList.add("tb__btn--warn"); if (RG.iconifyText) RG.iconifyText(g, "📍 現在地 ⚠"); else g.textContent = "📍 現在地 ⚠"; }
   }
   setWhen(new Date());
   $("#t-dt").addEventListener("change", function () { if (this.value) { Trip.when = new Date(this.value); afterWhen(); } });
@@ -142,12 +142,15 @@ var stTimer = null;
 function status(msg, kind, ms, html) {
   var s = $("#t-status");
   clearTimeout(stTimer);
-  if (html) s.innerHTML = msg || ""; else s.textContent = msg || "";     // v82: 4 つ目が true なら HTML（«消す» «解除» のボタン用）
+  s.__raw = msg || ""; s.__html = !!html;
+  if (html) s.innerHTML = msg || ""; else if (RG.iconifyText) RG.iconifyText(s, msg || ""); else s.textContent = msg || "";     // v82: 4 つ目が true なら HTML（«消す» «解除» のボタン用）。D-01: 平文の絵文字は表示時にアイコン化
   s.className = "tb__status" + (kind ? " " + kind : "");
   s.style.display = msg ? "block" : "none";
   if (msg && ms !== 0) stTimer = setTimeout(function () { s.style.display = "none"; }, ms || 5000);
 }
 RG.tripStatus = status;
+/* D-01: アイコンが後から届いたら、表示中の平文ステータスをアイコンで出し直す */
+document.addEventListener("rg:icons", function () { var s = $("#t-status"); if (s && s.__raw && !s.__html && RG.iconifyText) RG.iconifyText(s, s.__raw); });
 
 RG.tripMapLink = function () {
   return Trip.origin ? RG.mapLinks(Trip.origin, Trip.origin, "transit") : null;
@@ -184,7 +187,7 @@ function modal(title, html) {
   $(".modal__map", M).hidden = true; $(".modal__prog", M).style.transform = "scaleX(0)";
   if (RG.readBackHide) RG.readBackHide();
   if (!M.classList.contains("show")) mPrevFocus = document.activeElement;             // 閉じたら元の場所へ戻す
-  $(".modal__hd b", M).textContent = title;
+  M.__title = title; if (RG.iconifyText) RG.iconifyText($(".modal__hd b", M), title); else $(".modal__hd b", M).textContent = title;   // D-01: 見出しの絵文字は表示時にアイコン化（平文の置き場のため）
   $(".modal__bd", M).innerHTML = html;
   M.classList.add("show"); $(".modal__bd", M).scrollTop = 0;
   var bd = $(".modal__bd", M); try { bd.focus({ preventScroll: true }); } catch (e) { bd.focus(); }   // v97: フォーカスを中へ（Esc・Tab が中で効く）
@@ -198,6 +201,8 @@ RG.closeModal = function () {
   if (p && p.focus && document.contains(p) && p !== document.body) { try { p.focus({ preventScroll: true }); } catch (e) {} }
 };
 RG.openModal = modal;
+/* D-01: アイコンが後から届いたら、開いている窓の見出しをアイコンで出し直す */
+document.addEventListener("rg:icons", function () { if (M && M.__title && RG.iconifyText) RG.iconifyText($(".modal__hd b", M), M.__title); });
 /* v166: スポット・駅・案内の «カード» は濃いめの半透明（.modal--dark）。設定など入力の多い画面は openModal（白）のまま */
 RG.openCard = function (title, html) { var m = modal(title, html); m.classList.add("modal--dark"); return m; };
 /* ---- v156: 読み物 ⇄ 地図 を軽く行き来する ----
@@ -228,7 +233,7 @@ RG.modalPeek = function (o) {
     });
   }
   RB.__s = { gen: gen, top: top, o: o };
-  RB.querySelector(".readback__go").textContent = "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる";
+  var rbg = RB.querySelector(".readback__go"); if (RG.iconifyText) RG.iconifyText(rbg, "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる"); else rbg.textContent = "📖 «" + String(o.n || title).replace(/^[^\w぀-鿿]+/, "").slice(0, 18) + "» にもどる";
   RB.hidden = false; requestAnimationFrame(function () { RB.classList.add("on"); });
 };
 RG.readBackHide = function () { if (RB) { RB.classList.remove("on"); RB.hidden = true; RB.__s = null; } };

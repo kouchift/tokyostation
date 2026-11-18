@@ -3940,6 +3940,9 @@ body.onsite-on .cvsbar{display:none}
 body{background:var(--tsg-bg);color:var(--tsg-ink)}
 /* ---- ジャンルアイコン（共通） ---- */
 .gic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;color:currentColor;flex:0 0 auto;line-height:1}
+/* D-01: UIアイコン（icons.svg の ui-*。.gic と同じ大きさの決まり） */
+.uic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;color:currentColor;flex:0 0 auto;line-height:1}
+svg.uic use{pointer-events:none}
 .gic--e{font-style:normal;text-align:center;line-height:1;width:auto;height:auto;vertical-align:baseline}
 svg.gic use{pointer-events:none}
 .gi__e.gic{width:22px;height:22px;color:var(--tsg-ink)} .gi.on .gi__e.gic{color:#fff}
