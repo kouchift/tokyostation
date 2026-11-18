@@ -134,7 +134,7 @@ function monthHTML(y, m) {
     "うすい日付は、いまのプランでは開けません（今日の1か月前 〜 1年後まで）。</p>";
 }
 
-/* v183: こよみデータ（data/koyomi.js）は ONDEMAND "koyomi"。月・日のカードを開く瞬間に読み、届いたら開き直す。
+/* 第2周回E: こよみデータ（data/koyomi.js）は ONDEMAND "koyomi"。月・日のカードを開く瞬間に読み、届いたら開き直す。
    読み込みに失敗したときは、六曜・祝日なしでそのまま開く（壊れない） */
 function ensureKoyomi(reopen) {
   if (RG.ROKU || !RG.ensureData) return false;

@@ -259,7 +259,7 @@ button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
 }
 @media (hover:none){ .hovercard{display:none!important} }
 @media (hover:hover){ .sheet,.scrim{display:none!important} }
-@media (prefers-reduced-motion:reduce){ *{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important} }   /* v183: animation:none の «全部殺し» をやめ、長さをほぼ0にする（animationend を待つ仕組みが壊れない。トークン側も reduce で --t-* を 0ms にしている） */
+@media (prefers-reduced-motion:reduce){ *{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important} }   /* 第2周回E: animation:none の «全部殺し» をやめ、長さをほぼ0にする（animationend を待つ仕組みが壊れない。トークン側も reduce で --t-* を 0ms にしている） */
 
 /* =========================================================================
    v2 追加：出発バー／比較ビュー／目的地さがし

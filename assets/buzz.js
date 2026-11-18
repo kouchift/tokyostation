@@ -60,7 +60,7 @@ RG.buzzLists = function () {
 /* 地図に «話題の山» を置く（土地ごとに1つ） */
 RG.mergeBuzz = function () {
   if (!RG.BUZZ) return;
-  /* v183: 自動更新ぶん（data/auto/buzz_auto.js）は ONDEMAND "buzz"（showBuzz・話題ボタンで読む）。
+  /* 第2周回E: 自動更新ぶん（data/auto/buzz_auto.js）は ONDEMAND "buzz"（showBuzz・話題ボタンで読む）。
      ここでは «届いている分だけ» で山を作る。自動ぶんが後から届いたら（flush が buzzauto を POI 扱いで
      mergeExtraPois に流す）、山だけを作り直す。一覧（buzzLists）は開くたびに withAuto で足すので常に最新 */
   if (RG.__buzzMerged) {
@@ -118,7 +118,7 @@ function stkArea(a, cb) {
   });
 }
 RG.showBuzz = function (area, tab) {
-  /* v183: 自動更新ぶんがまだなら読んでから開き直す（失敗時は手集めぶんだけで開く） */
+  /* 第2周回E: 自動更新ぶんがまだなら読んでから開き直す（失敗時は手集めぶんだけで開く） */
   if (!RG.BUZZ_AUTO && RG.ensureData && RG.dataGroupState && RG.dataGroupState("buzz") !== "failed" && RG.dataGroupState("buzz") !== "done") { RG.ensureData("buzz", function () { RG.showBuzz(area, tab); }); return; }
   if (area && !tab) tab = "stock";
   if (tab === "stock" && !area) tab = "fresh";
