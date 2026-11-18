@@ -134,7 +134,17 @@ function monthHTML(y, m) {
     "うすい日付は、いまのプランでは開けません（今日の1か月前 〜 1年後まで）。</p>";
 }
 
+/* v183: こよみデータ（data/koyomi.js）は ONDEMAND "koyomi"。月・日のカードを開く瞬間に読み、届いたら開き直す。
+   読み込みに失敗したときは、六曜・祝日なしでそのまま開く（壊れない） */
+function ensureKoyomi(reopen) {
+  if (RG.ROKU || !RG.ensureData) return false;
+  if (RG.dataGroupState && RG.dataGroupState("koyomi") === "failed") return false;
+  RG.ensureData("koyomi", reopen);
+  return true;
+}
+
 RG.showMonth = function (ym) {
+  if (ensureKoyomi(function () { RG.showMonth(ym); })) return;
   var cur = ym ? parse(ym + "-01") : (RG.calCursor ? parse(RG.calCursor) : new Date());
   var y = cur.getFullYear(), m = cur.getMonth();
   var m2 = RG.openModal("📅 カレンダー", '<div class="mc" id="mc-host"></div>');
@@ -245,6 +255,7 @@ RG.gotoPlace = function (n) {
 };
 
 RG.showDay = function (s) {
+  if (ensureKoyomi(function () { RG.showDay(s); })) return;
   var d = parse(s);
   var him = (RG.HIMEKURI || {})[key4(d)] || {};
   var hol = (RG.HOLIDAY || {})[key8(d)];

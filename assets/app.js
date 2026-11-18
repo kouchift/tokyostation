@@ -2229,6 +2229,9 @@ var Card = (function () {
   function open(id, ev) {
     var s = RG.byId[id]; if (!s) return;
     cur = id; Map.select(id); Map.focus(id, 260);
+    /* v183: 駅のまわりの情報（data/poi.js・ONDEMAND "poi"）は駅カードを開いた瞬間に読む。
+       届いたら loader の flush が Score を捨てて Card.refresh() で描き直すので、開いたまま反映される */
+    if (!RG.POI && RG.ensureData) RG.ensureData("poi");
     var opener = RG.openCard || RG.openModal; if (!opener) return;
     var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + render(id, null) + "</div>");
     m.__card = id;

@@ -59,7 +59,11 @@ RG.buzzLists = function () {
 
 /* 地図に «話題の山» を置く（土地ごとに1つ） */
 RG.mergeBuzz = function () {
-  if (!RG.BUZZ || RG.__buzzMerged) return; RG.__buzzMerged = 1;
+  if (!RG.BUZZ || RG.__buzzMerged) return;
+  /* v183: 自動更新ぶん（data/auto/buzz_auto.js）は ONDEMAND "buzz"。まだなら先に読み、マージは届いてから
+     （flush が buzzauto を POI 扱いで mergeExtraPois に流すので、ここに戻ってくる）。失敗したら手集めぶんだけでマージする */
+  if (!RG.BUZZ_AUTO && RG.ensureData && RG.dataGroupState && RG.dataGroupState("buzz") !== "failed") { RG.ensureData("buzz"); return; }
+  RG.__buzzMerged = 1;
   RG.MAPPOI = RG.MAPPOI || [];
   var L = RG.buzzLists(), live = L.fresh.concat(L.borrow, L.ever), byArea = {};
   live.forEach(function (b) { var a = areaOf(b); (byArea[a] = byArea[a] || []).push(b); });
@@ -108,6 +112,8 @@ function stkArea(a, cb) {
   });
 }
 RG.showBuzz = function (area, tab) {
+  /* v183: 自動更新ぶんがまだなら読んでから開き直す（失敗時は手集めぶんだけで開く） */
+  if (!RG.BUZZ_AUTO && RG.ensureData && RG.dataGroupState && RG.dataGroupState("buzz") !== "failed" && RG.dataGroupState("buzz") !== "done") { RG.ensureData("buzz", function () { RG.showBuzz(area, tab); }); return; }
   if (area && !tab) tab = "stock";
   if (tab === "stock" && !area) tab = "fresh";
   if (tab === "stock" && !(RG.BUZZ_STOCK && RG.BUZZ_STOCK[area]) && !STK["tried" + area]) { STK["tried" + area] = 1; stkArea(area, function () { RG.showBuzz(area, tab); }); return; }
@@ -241,7 +247,7 @@ RG.buzzRailRefresh = function (force) {
 /* ヘッダーのボタン */
 RG.buzzBind = function () {
   var b = document.getElementById("btn-buzz");
-  if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData(["buzz"]); RG.showBuzz(null, "fresh"); }); }
+  if (b && !b.__bz) { b.__bz = 1; b.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("buzz"); RG.showBuzz(null, "fresh"); }); }   // v183: グループ名は文字列に直した（以前は ["buzz"] という配列で、どのグループにも一致しなかった）
 };
 /* =========================================================================
    v126: 場所を追う «この場所の話題»
