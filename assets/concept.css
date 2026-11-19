@@ -153,7 +153,7 @@
 /* エリアのタブ */
 .cx-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
 .cx-tab{border:1px solid var(--cx-line);background:transparent;color:var(--cx-dim);border-radius:12px;padding:10px 18px;min-height:48px;
-  font-weight:900;font-size:1rem;letter-spacing:.05em;display:inline-flex;align-items:baseline;gap:9px;transition:all .2s}
+  font-weight:900;font-size:1rem;letter-spacing:.05em;display:inline-flex;align-items:baseline;gap:9px;transition:background-color .2s,color .2s,border-color .2s}
 .cx-tab small{font-family:var(--cx-mono);font-weight:400;font-size:0.6875rem;letter-spacing:.22em}
 .cx-tab[aria-selected="true"]{background:var(--cx-ink);color:#06080d;border-color:var(--cx-ink)}
 .cx-tab[aria-selected="true"] small{color:var(--cx-accent-hot)}
@@ -231,3 +231,6 @@ a.cx-dest:hover{border-color:rgba(255,138,60,.55);transform:translateY(-2px)}
   .cx-marquee-track{animation:none}
   .cx-card,.cx-dest,.cx-chip{transition:none}
 }
+
+/* 第4周回: 固定ヘッダーにアンカー先の見出しが隠れないように */
+.cx-sec h2[id],.cx-sec h3[id]{scroll-margin-top:110px}
