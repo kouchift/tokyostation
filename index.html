@@ -94,6 +94,7 @@ html:not(.css-ok) body>:not(.app):not(#sheet):not(#scrim):not(script):not(noscri
 </style>
 </head>
 <body>
+<a class="skip" href="#tsg-main">本文へスキップ</a>
 <script>/* v170: スマホの «細身» の形（body.slim）は、描く前に決める（あとから付けると画面がずれる） */try{if(matchMedia("(max-width:720px)").matches)document.body.className+=" slim";}catch(e){}</script>
 <div class="app">
   <header class="hdr">
@@ -575,7 +576,7 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
      検索エンジンと JavaScript が使えない環境にも «サイトの内容» が伝わるよう、要約と主要ページへのリンクを静的 HTML で置く。
      アプリのレイアウト（.app は 100dvh・body は overflow:hidden）には触れていないので、アプリの動作は従来どおり -->
 <style>
-.tsg-static{max-width:880px;margin:0 auto;padding:28px 18px 40px;color:#1d2733;font-size:15px;line-height:1.8}
+.skip{position:fixed;left:-9999px;top:0;background:#00224A;color:#fff;padding:10px 16px;z-index:300;border-radius:0 0 8px 0}.skip:focus{left:8px;top:8px}.tsg-static{max-width:880px;margin:0 auto;padding:28px 18px 40px;color:#1d2733;font-size:15px;line-height:1.8}
 .tsg-static h2{font-size:21px;margin:0 0 10px}
 .tsg-static h3{font-size:16px;margin:24px 0 6px}
 .tsg-static p{margin:0 0 10px}
@@ -584,7 +585,7 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
 .tsg-static a{color:#0055AD}
 .tsg-static small{color:#5A6472}
 </style>
-<footer class="tsg-static">
+<main class="tsg-static" id="tsg-main" tabindex="-1">
   <h2>東京駅の行き方・出口・乗り換えガイド</h2>
   <p>東京ステーションガイドは、東京駅から主要な駅・空港への行き方を、電車・徒歩・自転車・バス・タクシーなどの手段別に、所要時間・料金・乗り換え回数で比較できるガイドです。上の路線図アプリでは、全国8,000駅以上の路線図から目的地までの移動方法を検索できます。JavaScript が使えない環境では、このページ下部の静的ガイドをご利用ください。</p>
 
@@ -623,6 +624,6 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
     <li>東京駅での空き時間プラン: <a href="plan/tokyo/30min/">30分</a>・<a href="plan/tokyo/1hour/">1時間</a>・<a href="plan/tokyo/2hours/">2時間</a></li>
   </ul>
   <p><small>所要時間・料金は当サイトの推定による概算です。運賃は距離から計算した目安で、実際の運賃・時刻表・出口の工事状況は各交通事業者・施設の公式情報でご確認ください。</small></p>
-</footer>
+</main>
 </body>
 </html>
