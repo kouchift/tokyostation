@@ -389,7 +389,7 @@ function planPage(h, pl, exitsSlug) {
 <link rel="icon" href="${P}assets/favicon-96.png" type="image/png" sizes="96x96">
 <link rel="apple-touch-icon" href="${P}assets/icon-192.png">
 <script type="application/ld+json">${JSON.stringify(ldj)}</script>
-<style>${CSS}</style>
+<link rel="stylesheet" href="${P}assets/guide.css">
 </head>
 <body>
 <header class="top"><div class="wrap"><a href="${P}">🚉 ${esc(SITE.siteName)}</a><small>空き時間の寄り道</small></div></header>
@@ -397,18 +397,18 @@ function planPage(h, pl, exitsSlug) {
 <nav class="bc" aria-label="パンくず"><a href="${P}">トップ</a> › <a href="${P}station/${h.slug}/">${esc(h.name)}駅</a> › ${esc(pl.label)}の空き時間</nav>
 <h1>${esc(h.name)}駅で${esc(pl.label)}の空き時間にできること</h1>
 <p class="lead"><b>片道 ${pl.walk} 分以内で行ける寄り道先が ${xs.length} か所。</b>往復の徒歩を引いた «滞在できる時間» の目安を付けています（徒歩は直線距離 ÷ 分速 80m。改札や出口の位置で長くなることがあります）。営業時間・休館日・料金は各施設の公式情報で確かめてください。</p>
-<div class="cta"><a class="btn" href="${P}?st=${encodeURIComponent(h.id)}">🗺️ 地図で位置を見る</a>${exitsSlug ? `<a class="btn sec" href="${P}guide/${exitsSlug}.html">出口ガイド</a>` : ""}</div>`;
+<div class="cta"><a class="btn" href="${P}?st=${encodeURIComponent(h.id)}"><svg class="ic" aria-hidden="true"><use href="${P}assets/icons-static.svg#i-map"/></svg> 地図で位置を見る</a>${exitsSlug ? `<a class="btn sec" href="${P}guide/${exitsSlug}.html">出口ガイド</a>` : ""}</div>`;
   if (pl.slug === "30min" && h.tokyo && h.tokyo.bldg && h.tokyo.bldg.length) {
     const B = h.tokyo.bldg;
     o += `<h2>改札を出ずに・出てすぐ（駅ビル・地下街）</h2><p>30 分なら、まず駅の中と直結の施設が確実です。</p><table><thead><tr><th>場所</th><th>どちら側</th><th>使いどころ</th></tr></thead><tbody>${B.map((b) => `<tr><td><b>${esc(b.n)}</b></td><td>${esc(b.side === "m" ? "丸の内側" : b.side === "y" ? "八重洲側" : "改札内")}</td><td>${esc(b.note || "")}</td></tr>`).join("")}</tbody></table>`;
   }
-  const groups = [["🖼️", "見る"], ["🏬", "買う・食べる"], ["🏯", "歩く・歴史"], ["🛁", "ひと休み"]];
+  const groups = [["i-museum", "見る"], ["i-building", "買う・食べる"], ["i-landmark", "歩く・歴史"], ["i-bath", "ひと休み"]];
   const gk = (x) => (/博物館|美術館|劇場|レジャー/.test(x.g) ? 0 : /ショッピング|レストラン|レベチ|カフェ/.test(x.g) ? 1 : /銭湯|温泉|図書館/.test(x.g) ? 3 : 2);
   o += `<h2>片道 ${pl.walk} 分以内の寄り道先</h2>`;
   if (!xs.length) o += `<p>この範囲に登録されている見どころはまだありません。</p>`;
   groups.forEach((g, gi) => {
     const ys = xs.filter((x) => gk(x) === gi); if (!ys.length) return;
-    o += `<h3>${g[0]} ${g[1]}</h3><table><thead><tr><th>場所</th><th>種類</th><th>徒歩（片道）</th><th>滞在の目安</th></tr></thead><tbody>${ys.map((x) => `<tr><td>${esc(x.n)}</td><td>${esc(x.g)}</td><td class="num">約${wmin(x.m)}分</td><td class="num">約${stay(x.m)}分</td></tr>`).join("")}</tbody></table>`;
+    o += `<h3><svg class="ic" aria-hidden="true"><use href="${P}assets/icons-static.svg#${g[0]}"/></svg> ${g[1]}</h3><table><thead><tr><th>場所</th><th>種類</th><th>徒歩（片道）</th><th>滞在の目安</th></tr></thead><tbody>${ys.map((x) => `<tr><td>${esc(x.n)}</td><td>${esc(x.g)}</td><td class="num">約${wmin(x.m)}分</td><td class="num">約${stay(x.m)}分</td></tr>`).join("")}</tbody></table>`;
   });
   o += `<h2>時間が違うとき</h2><ul class="rel">${PLANS.filter((q) => q.slug !== pl.slug).map((q) => `<li><a href="../${q.slug}/">${esc(h.name)}駅で ${q.label}<br><small>${esc(q.sub)}</small></a></li>`).join("")}<li><a href="${P}station/${h.slug}/">${esc(h.name)}駅の案内<br><small>路線・行き方・見どころ</small></a></li></ul>
 <footer>
