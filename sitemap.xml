@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- tools/build_sitemap.js が自動生成（手で編集しない）。載せる条件: noindex でない・canonical が自分自身 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://kouchift.github.io/tokyostation/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://kouchift.github.io/tokyostation/station/ikebukuro/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://kouchift.github.io/tokyostation/station/shibuya/</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://kouchift.github.io/tokyostation/station/shinagawa/</loc><lastmod>2026-11-19</lastmod></url>
@@ -32,7 +32,7 @@
   <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-ueno.html</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://kouchift.github.io/tokyostation/guide/tokyo-to-yokohama.html</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://kouchift.github.io/tokyostation/guide/yokohama-to-tokyo.html</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/1hour/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/2hours/</loc><lastmod>2026-11-19</lastmod></url>
-  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/30min/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/1hour/</loc><lastmod>2026-11-20</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/2hours/</loc><lastmod>2026-11-20</lastmod></url>
+  <url><loc>https://kouchift.github.io/tokyostation/plan/tokyo/30min/</loc><lastmod>2026-11-20</lastmod></url>
 </urlset>
