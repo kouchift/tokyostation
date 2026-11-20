@@ -2741,8 +2741,8 @@ html,body{max-width:100vw;overflow-x:hidden}
 .lr__i--txt{width:auto;min-width:40px;padding:0 3px}
 .lbadge--t{font-size:var(--fs-11);letter-spacing:-.3px;padding:0 5px;min-width:30px;height:30px;line-height:1.1;white-space:nowrap}
 .lr__rows--bz{padding:6px 10px}
-.bzr__h{font-size:var(--fs-13);margin:2px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.bzr__l{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px;max-height:180px;overflow:auto}
+.bzr__h{font-size:var(--fs-13);margin:2px 0 6px;padding:0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bzr__l{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px;max-height:180px;overflow:auto;padding:0 10px}
 .bzr__i{display:grid;grid-template-columns:44px 64px 1fr 18px;gap:6px;align-items:center;text-align:left;border:1px solid var(--line);background:#fff;border-radius:var(--r-sm);padding:5px 8px;font-size:var(--fs-12);cursor:pointer}
 .bzr__i.far{opacity:.92}   /* v170: 薄くしすぎると日付の文字が 3:1 になる */
 .bzr__d{color:var(--muted,#5F6772);font-size:var(--fs-11)}.bzr__a{color:var(--ink-2);font-size:var(--fs-11);background:var(--paper-2);border-radius:var(--r-xs);padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3808,7 +3808,7 @@ body.route-active .heroSearch:hover,body.route-active .heroSearch:focus-within{o
    ========================================================================= */
 .cardActs{display:grid;grid-template-columns:1.4fr 1fr;gap:6px;margin-top:10px}
 .cact{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"i b" "i s";column-gap:8px;align-items:center;text-align:left;min-height:48px;padding:6px 12px;border-radius:var(--r-md);border:1px solid var(--lb600,var(--brand));background:#fff;color:var(--lb900,var(--brand));font:inherit;cursor:pointer}
-.cact .ms{grid-area:i;font-size:var(--fs-22)}.cact b{grid-area:b;font-size:var(--fs-14);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cact small{grid-area:s;font-size:var(--fs-11);opacity:.85;white-space:nowrap}
+.cact .ms{grid-area:i;font-size:var(--fs-22)}.cact b{grid-area:b;font-size:var(--fs-14);line-height:1.2;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}.cact small{grid-area:s;font-size:var(--fs-11);opacity:.85;white-space:nowrap}
 .cact--p{background:var(--lb900,var(--brand));color:#fff;border-color:var(--lb900,var(--brand))}
 .cact:hover{filter:brightness(1.06)}.cact[disabled]{opacity:.55;cursor:default;filter:none}
 .cardActs__mini{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
@@ -4538,7 +4538,7 @@ body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2
 .hkc__story,.hkc__deep,.hkc__look,.hkc__tl,.hkc__who{content-visibility:auto;contain-intrinsic-size:auto 400px}
 .modal{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.qos-weak *,html.qos-lite *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}
+/* A-02: qos 時の .hdr 明色上書きは削除（concept の暗背景が正。理由は PR 参照） */
 
 /* v147: 地図の隅の出典は «最初の 5 秒だけ全部 → ⓘ に畳む»（OSM の表示の決まり: 最初は見える・畳んでも ⓘ から見られる）。
    文字は小さく・薄く。ただし «読める» の最低ライン（背景とのコントラスト約 3.5:1）は守る。地形を出している間は «地理院» を残す */
@@ -4947,7 +4947,7 @@ body.hero-mini .heroSearch.heroSearch--mini>h1{display:block !important;position
 .btn--s:hover,.opt__b:hover,.lr__c:hover,.cmini:hover,.set__b2:hover,.sortbar__b:hover{background:var(--line);filter:none}
 .lr__c[aria-pressed=true],.sortbar__b[aria-pressed=true],.opt__b[aria-pressed=true]{background:var(--brand);color:#fff;border-color:var(--brand)}
 /* 主ボタン（1 画面に 1〜2 個。青の面・白い字） */
-.btn--p,.opt__b.opt__b--nav,.opt__b--nav,.rc__a--main,.cact--p,.heroAction--primary,.tb__btn--go,.set__b,.pl__share,.readback__go,.rc__make,
+.btn--p,.opt__b.opt__b--nav,.opt__b--nav,.rc__a--main,.cact--p,.heroAction--primary,.tb__btn--go,.set__b,.readback__go,.rc__make,
 .modal--dark .cact--p{
   background:var(--brand);color:#fff;border:1px solid var(--brand);border-radius:var(--r-pill);font-weight:700;box-shadow:var(--sh-1)}
 .btn--p:hover,.opt__b--nav:hover,.rc__a--main:hover,.cact--p:hover,.heroAction--primary:hover,.tb__btn--go:hover,.set__b:hover{background:var(--brand);border-color:var(--brand);filter:none}

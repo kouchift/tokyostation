@@ -60,9 +60,9 @@
 .heroLast{background:rgba(255,255,255,.06);border-color:rgba(255,176,58,.45);color:#eef2f8}
 .heroLast small{color:#9fb0c9}
 .heroLast i{color:#ffcf7d}
-.fv{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);color:#eef2f8}
-.fv:hover{background:rgba(255,255,255,.14)}
-.fv--all{color:#ffcf7d}
+.heroSearch .fv{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);color:#eef2f8}
+.heroSearch .fv:hover{background:rgba(255,255,255,.14)}
+.heroSearch .fv--all{color:#ffcf7d}
 
 /* =========================================================================
    静的区画 «エリアガイド»（.tsg-show）— コンセプトの夜の世界

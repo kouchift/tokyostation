@@ -1,4 +1,4 @@
 /* いま動いている版 */
-RG.VERSION = "v186";
-RG.BUILT = "2026-11-19 21:40";
+RG.VERSION = "v187";
+RG.BUILT = "2026-11-20 10:18";
 /* v139: 変わったことの一覧（CHANGELOG）は data/changelog.js へ分けた（起動のたびに 16KB 読まないように。設定を開いたときだけ読む） */
