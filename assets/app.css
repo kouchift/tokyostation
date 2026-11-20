@@ -4538,7 +4538,7 @@ body.zipmode #hero-q,body.zipmode #q{outline:2px solid #C62828;outline-offset:-2
 .hkc__story,.hkc__deep,.hkc__look,.hkc__tl,.hkc__who{content-visibility:auto;contain-intrinsic-size:auto 400px}
 .modal{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.qos-weak *,html.qos-lite *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-html.qos-weak .hdr,html.qos-lite .hdr{background:rgba(247,249,255,.97)}
+/* A-02: qos 時の .hdr 明色上書きは削除（concept の暗背景が正。理由は PR 参照） */
 
 /* v147: 地図の隅の出典は «最初の 5 秒だけ全部 → ⓘ に畳む»（OSM の表示の決まり: 最初は見える・畳んでも ⓘ から見られる）。
    文字は小さく・薄く。ただし «読める» の最低ライン（背景とのコントラスト約 3.5:1）は守る。地形を出している間は «地理院» を残す */
