@@ -111,9 +111,12 @@ function addRows(rows) {
       if (r[k] != null) p[k] = r[k];
     });
     if (r.osm10) p.osm10 = r.osm10;
+    if (RG.projectPoi) RG.projectPoi(p);   // 第6周回 S1: 投影は足すときに済ませる
     RG.MAPPOI.push(p);
   });
-  if (RG.Map && RG.Map.rebuildPOI) RG.Map.rebuildPOI();
+  /* 第6周回 S1: タイル到着ごとの全再構築はやめ、dirty フラグ経由で1回にまとめる（索引は増分追加） */
+  if (RG.Map && RG.Map.markPoiDirty) RG.Map.markPoiDirty();
+  else if (RG.Map && RG.Map.rebuildPOI) RG.Map.rebuildPOI();
   return n;
 }
 RG.tilesLoaded = function () { return Object.keys(loaded).length; };
