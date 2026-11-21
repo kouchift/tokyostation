@@ -1686,6 +1686,7 @@ RG.execSummary = execSummary; RG.nearbyStations = nearbyStations; RG.headline = 
 /* ============================================== 駅カード */
 var Card = (function () {
   var hover, sheet, scrim, timer = null, cur = null, tab = "food", pinned = false;
+  var cardGen = 0;   // S7: 段組み描画の世代番号（古いカードの続きで新しいカードを上書きしないため）
 
   function loadDetail(key, cb) {
     var d = RG.details[key];
@@ -2066,34 +2067,40 @@ var Card = (function () {
   }
 
   /* 情報の鮮度順に並べる：上＝いま使う情報／下＝変わりにくい情報 */
-  function render(id, d) {
-    var s = RG.byId[id]; if (!s) return "";
+  /* 第6周回 S7（§3.7）: 駅カードの節ごとの生成関数。全部を順に評価して join した文字列は
+     従来の render() と完全一致する（open はこの節を yield を挟んで段階的に差し込む） */
+  function renderPartFns(id, d) {
+    var s = RG.byId[id]; if (!s) return [];
     var nav = (RG.arBtn ? RG.arBtn(s.n + "駅", s.la, s.lo) : "") + (RG.indoorBtn ? RG.indoorBtn(s.la, s.lo, s.n) : "");   // v150: AR で方角・構内図
-    return plate(s) +
+    return [
+      function () { return plate(s) +
            (nav ? '<div class="lnks lnks--nav">' + nav + "</div>" : "") +
            (RG.whsBanner ? RG.whsBanner(s.n) : "") +
            (RG.graveBanner ? RG.graveBanner(s.la, s.lo) : "") +                                                                   // v133: 近くに眠る偉人                                                                              // v127: 世界遺産の一部なら帯
            (RG.eduHistHtml ? RG.eduHistHtml(s.n) : "") +                                                                          // v126: 教科書にでてくる場所
            (RG.buzzBlock ? RG.buzzBlock({ la: s.la, lo: s.lo, n: RG.stLabel(s) }) : "") +                                     // v126: この場所の話題（いま・過去）
-           '<section class="sec sec--term" data-term="' + esc(s.id) + '" hidden><h3>主要駅へのアクセス <small>この駅から・日中の目安</small></h3><div class="term__l"></div></section>' +   // v86: 中身は開いたあとに計算して入れる（termFill）
-           nearSpotsHtml(s) +                                                                                                      // v94: 近くのスポット
+           '<section class="sec sec--term" data-term="' + esc(s.id) + '" hidden><h3>主要駅へのアクセス <small>この駅から・日中の目安</small></h3><div class="term__l"></div></section>'; },   // v86: 中身は開いたあとに計算して入れる（termFill）
+      function () { return nearSpotsHtml(s) +                                                                                                      // v94: 近くのスポット
            (RG.focusHtml ? RG.focusHtml(s.n) : "") +
            (RG.shinkansenHtml ? RG.shinkansenHtml(s.n) : "") +
-           (RG.ytForStation ? RG.ytForStation(s.n) : "") +
-
-           hero(s) +
+           (RG.ytForStation ? RG.ytForStation(s.n) : ""); },
+      function () { return hero(s) +
            (RG.enrichSlot ? RG.enrichSlot() : "") +
            scoreBlock(s) +
            congestion(s, d) +
            boarding(s, d) +
            town(s, d) +
            depthRow(s) +
-      summary(s) +
-           heritageBlock(s) +
+           summary(s); },
+      function () { return heritageBlock(s) +
            videoBlock(s, d) +
            linksBlock(s) +
            sources(s, d) +
-           (RG.reqHtml ? RG.reqHtml("station", s.n) : "");
+           (RG.reqHtml ? RG.reqHtml("station", s.n) : ""); }
+    ];
+  }
+  function render(id, d) {
+    return renderPartFns(id, d).map(function (f) { return f(); }).join("");
   }
 
   function launcherHtml(id, line) {
@@ -2302,15 +2309,35 @@ var Card = (function () {
        flush が Card.refresh() で描き直す（poi と同じ形。失敗時は帯なしでそのまま開く） */
     if (!RG.histOpen && RG.ensureHist) RG.ensureHist();
     var opener = RG.openCard || RG.openModal; if (!opener) return;
-    var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + render(id, null) + "</div>");
+    /* S7: 殻＋主要部（駅名プレート等）を先に描き、残りの節は yield を挟んで段階的に足す。
+       節の内容・順序は render() と同一（renderPartFns の join が従来文字列と一致） */
+    var gen = ++cardGen;
+    var fns = renderPartFns(id, null);
+    if (!fns.length) return;
+    var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + fns[0]() + "</div>");
     m.__card = id;
-    bind(m, id, null);
-    loadDetail(s.n, function (d) {
-      if (cur !== id || m.__card !== id) return;
-      var host = m.querySelector(".card__scroll"), top = host ? host.scrollTop : 0;
-      if (!host) return;
-      host.innerHTML = render(id, d); bind(m, id, d); host.scrollTop = top;
-    });
+    cur = id;   // opener の modal() が «前の駅カード» の close で cur を null にするため、このカードのものとして戻す（段組みの継続条件）
+    var host = m.querySelector(".card__scroll");
+    function alive() { return gen === cardGen && cur === id && m.__card === id && host && document.contains(host); }
+    function finish() {
+      bind(m, id, null);
+      loadDetail(s.n, function (d) {
+        if (gen !== cardGen || cur !== id || m.__card !== id) return;
+        var host2 = m.querySelector(".card__scroll"), top = host2 ? host2.scrollTop : 0;
+        if (!host2) return;
+        host2.innerHTML = render(id, d); bind(m, id, d); host2.scrollTop = top;
+      });
+    }
+    function stage(i2) {
+      if (!alive()) return;
+      if (i2 >= fns.length) { finish(); return; }
+      try {
+        var html = fns[i2]();
+        if (html) { var tmp = document.createElement("div"); tmp.innerHTML = html; while (tmp.firstChild) host.appendChild(tmp.firstChild); }
+      } catch (e) {}
+      if (RG.yieldMain) RG.yieldMain().then(function () { stage(i2 + 1); }); else stage(i2 + 1);
+    }
+    if (RG.yieldMain) RG.yieldMain().then(function () { stage(1); }); else stage(1);
   }
   function close() {
     var was = cur; cur = null; pinned = false; Map.select(null);
