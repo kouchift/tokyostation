@@ -32,15 +32,48 @@
       mouse.y = 1 - (e.clientY / Math.max(1, window.innerHeight));
       mouse.active = 1;
     }, { passive: true });
-    document.addEventListener('visibilitychange', function () { running = !document.hidden; });
+    document.addEventListener('visibilitychange', function () { running = !document.hidden; if (running) kickLoops(); });
 
+    /* ---- 第6周回 S8（§3.8）: 常駐描画のゲート ----
+       ・#tsg-gl が画面外のあいだは描画ループ自体を止める（IntersectionObserver）。
+       ・利用者の対話中（押下・スクロール・入力など）は描画を後回しにし、
+         対話の Input Delay / Presentation を底上げしない。
+       ・canvas のサイズ読み書きはリサイズ時だけ（毎フレームは読まない）。
+       画面内での描画結果（粒子の動き・色）は従来どおり変えない。 */
+    var inView = true;                    // IO が無い環境では常時 true（従来どおり）
+    var ptrDown = false, interactUntil = 0;
+    function interacting() { return ptrDown || performance.now() < interactUntil; }
+    function canDraw() { return running && inView; }
+    var kickFns = [];
+    function kickLoops() { for (var i = 0; i < kickFns.length; i++) { try { kickFns[i](); } catch (e) {} } }
+    if ('IntersectionObserver' in window) {
+      try {
+        new IntersectionObserver(function (en) {
+          inView = en[0].isIntersecting;
+          if (inView) kickLoops();
+        }, { threshold: 0 }).observe(canvas);
+      } catch (e) {}
+    }
+    window.addEventListener('pointerdown', function () { ptrDown = true; interactUntil = performance.now() + 300; }, { passive: true });
+    ['pointerup', 'pointercancel'].forEach(function (t) {
+      window.addEventListener(t, function () { ptrDown = false; interactUntil = performance.now() + 200; kickLoops(); }, { passive: true });
+    });
+    ['wheel', 'touchmove', 'scroll', 'keydown'].forEach(function (t) {
+      window.addEventListener(t, function () { interactUntil = performance.now() + 200; }, { passive: true });
+    });
+
+    var fitSize = null, fitDirty = true;
     function fitCanvas(c) {
+      if (!fitDirty && fitSize) return fitSize;
       var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       var w = Math.floor((c.clientWidth || 0) * dpr), h = Math.floor((c.clientHeight || 0) * dpr);
       if (w < 2 || h < 2) return null;
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
-      return { w: w, h: h };
+      fitSize = { w: w, h: h }; fitDirty = false;
+      return fitSize;
     }
+    window.addEventListener('resize', function () { fitDirty = true; kickLoops(); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { fitDirty = true; });
 
     /* ---------- WebGPU ---------- */
     var WGSL = [
@@ -190,10 +223,19 @@
       rp.end();
       gpu.device.queue.submit([enc.finish()]);
     }
-    function startGPULoop() {
-      if (reduced) { requestAnimationFrame(gpuFrame); return; }
-      (function loop(ts) { gpuFrame(ts); requestAnimationFrame(loop); })(0);
+    var gpuAlive = false;
+    function gpuLoop(ts) {
+      if (!canDraw()) { gpuAlive = false; return; }        // 画面外・裏タブでは止める
+      if (!interacting()) gpuFrame(ts);                    // 対話中は描画を後回し
+      requestAnimationFrame(gpuLoop);
     }
+    function startGPULoop() {
+      if (reduced) { requestAnimationFrame(gpuFrame); return; }   // 静止表示は従来どおり1枚だけ
+      if (gpuAlive) return;
+      gpuAlive = true;
+      requestAnimationFrame(gpuLoop);
+    }
+    kickFns.push(startGPULoop);
 
     /* ---------- Canvas 2D フォールバック ---------- */
     function init2D() {
@@ -205,9 +247,12 @@
       for (var i = 0; i < N; i++) {
         ps.push({ x: Math.random(), y: Math.random(), vx: 0, vy: 0, s: Math.random(), hue: Math.random(), sz: .8 + Math.random() * 2.1 });
       }
+      var d2Alive = false;
       function frame() {
+        if (!canDraw()) { d2Alive = false; return; }        // 画面外・裏タブでは止める
+        if (!reduced && interacting()) { requestAnimationFrame(frame); return; }   // 対話中は描画を後回し
         var size = fitCanvas(canvas);
-        if (!size) { if (!reduced) requestAnimationFrame(frame); return; }
+        if (!size) { if (!reduced) requestAnimationFrame(frame); else d2Alive = false; return; }
         var w = size.w, h = size.h;
         var t = performance.now() / 1000;
         ctx2.clearRect(0, 0, w, h);
@@ -227,10 +272,16 @@
           ctx2.fillStyle = p.hue < .62 ? 'rgba(216,84,26,.5)' : 'rgba(13,89,191,.45)';
           ctx2.fill();
         }
-        if (!reduced && running) requestAnimationFrame(frame);
-        else if (!reduced) requestAnimationFrame(frame);
+        if (!reduced) requestAnimationFrame(frame);
+        else d2Alive = false;
       }
-      requestAnimationFrame(frame);
+      function start2D() {
+        if (d2Alive) return;
+        d2Alive = true;
+        requestAnimationFrame(frame);
+      }
+      kickFns.push(start2D);
+      start2D();
     }
 
     initWebGPU().then(function (ok) { if (!ok) init2D(); }).catch(function () { init2D(); });
@@ -346,19 +397,39 @@
     }, { passive: true });
     stage.addEventListener('pointerleave', function () { target.x = .70; target.y = .42; }, { passive: true });
 
+    /* 第6周回 S8: 画面外では rAF 自体を止め、ステージの大きさは
+       リサイズ時だけ測る（従来は画面外でも毎フレーム測り続けていた）。
+       画面内での描画結果は従来どおり。 */
+    var lensAlive = false, sizeCache = null, sizeDirty = true;
+    function kickLens() {
+      if (lensAlive || failed) return;
+      lensAlive = true;
+      requestAnimationFrame(drawFrame);
+    }
     if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (en) { inView = en[0].isIntersecting; }, { threshold: .05 }).observe(stage);
+      new IntersectionObserver(function (en) { inView = en[0].isIntersecting; if (inView) kickLens(); }, { threshold: .05 }).observe(stage);
     } else { inView = true; }
-
-    function drawFrame(ts) {
-      if (failed) return;
+    if ('ResizeObserver' in window) {
+      try { new ResizeObserver(function () { sizeDirty = true; }).observe(stage); } catch (e) {}
+    }
+    window.addEventListener('resize', function () { sizeDirty = true; });
+    function stageSize() {
+      if (!sizeDirty && sizeCache) return sizeCache;
       var r = stage.getBoundingClientRect();
       var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      var W = Math.max(2, Math.floor(r.width * dpr)), H = Math.max(2, Math.floor(r.height * dpr));
+      sizeCache = { W: Math.max(2, Math.floor(r.width * dpr)), H: Math.max(2, Math.floor(r.height * dpr)), dpr: dpr };
+      sizeDirty = false;
+      return sizeCache;
+    }
+
+    function drawFrame(ts) {
+      if (failed) { lensAlive = false; return; }
+      if (!inView || document.hidden) { lensAlive = false; return; }   // 画面外・裏タブでは止める
+      var sz = stageSize();
+      var dpr = sz.dpr, W = sz.W, H = sz.H;
       if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, W, H);
-      if (!inView) { if (!reduced) requestAnimationFrame(drawFrame); return; }
 
       if (reduced || !ts) { lensPos.x = target.x; lensPos.y = target.y; }
       else {
@@ -370,7 +441,7 @@
       var cy = (lensPos.y + Math.cos(t * .3) * .012) * H;
       var R = Math.min(W, H) * .34;
       var cw = card.offsetWidth * dpr, ch = card.offsetHeight * dpr;
-      if (cw < 4 || ch < 4) { if (!reduced) requestAnimationFrame(drawFrame); return; }
+      if (cw < 4 || ch < 4) { if (!reduced) requestAnimationFrame(drawFrame); else lensAlive = false; return; }
 
       try {
         var step = Math.max(3, Math.round(5 * dpr));
@@ -406,8 +477,9 @@
         return;
       }
       if (!reduced) requestAnimationFrame(drawFrame);
+      else lensAlive = false;
     }
-    requestAnimationFrame(drawFrame);
+    kickLens();
     /* drawElementImage が «ある» だけの環境では、カードに大きさが付かず何も描けない。
        少し待っても大きさが付かないときは、通常カード表示に倒す（正直なフォールバック） */
     setTimeout(function () {
@@ -421,8 +493,8 @@
       }
     }, 900);
     if (reduced) {
-      window.addEventListener('resize', function () { drawFrame(0); });
-      stage.addEventListener('pointermove', function () { drawFrame(0); });
+      window.addEventListener('resize', function () { kickLens(); });
+      stage.addEventListener('pointermove', function () { kickLens(); });
     }
   }
 
