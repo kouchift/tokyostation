@@ -61,7 +61,7 @@ function extractInPage(cfg) {
     }));
     const train = opts.filter((o) => o.id === "train")[0] || null;
     const segs = rp ? rp.segs.map((s) => ({ line: s.line, from: byId[s.ids[0]] ? byId[s.ids[0]].n : s.ids[0], to: byId[s.ids[s.ids.length - 1]] ? byId[s.ids[s.ids.length - 1]].n : s.ids[s.ids.length - 1], stops: s.ids.length - 1 })) : [];
-    return { slug: r.slug, q: r.q, intent: r.intent, why: r.why, fromId: from.id, from: from.n, toId: to.id, to: to.n, toLa: to.la, toLo: to.lo,
+    return { slug: r.slug, q: r.q, intent: r.intent, why: r.why, extra: r.extra || null, fromId: from.id, from: from.n, toId: to.id, to: to.n, toLa: to.la, toLo: to.lo,
       km: +est.straightKm.toFixed(1), hourKind: est.hourKind, opts, train, segs, board: rp && byId[rp.board] ? byId[rp.board].n : from.n, alight: rp && byId[rp.alight] ? byId[rp.alight].n : to.n,
       toLines: lines(to), fromLines: lines(from), spots: spots(to, 6), sk: RG.shinkansenOf ? !!RG.shinkansenOf(to.n) : false };
   }
@@ -206,6 +206,8 @@ function routePage(r, all) {
   h += `<h2>${esc(r.to)}駅について</h2>
 <p><b>乗り入れ路線（${r.toLines.length}）:</b></p><div class="chips">${r.toLines.map((l) => "<span>" + esc(l) + "</span>").join("")}</div>`;
   if (r.spots.length) h += `<h3>駅の近くの見どころ（900m 以内）</h3><div class="chips">${r.spots.map((s) => "<span>" + esc(s.g.split(" ")[0]) + " " + esc(s.n) + " <small>" + s.m + "m</small></span>").join("")}</div>`;
+  /* D-10（第6周回）: ページ固有本文。intent_pages.json の extra{h, ps[]} を «駅について» の後・FAQ の前に出す（再生成で消えないように） */
+  if (r.extra && r.extra.h && (r.extra.ps || []).length) h += `<h2>${esc(r.extra.h)}</h2>\n` + r.extra.ps.map((p) => `<p>${esc(p)}</p>`).join("") + `\n`;
   h += `<h2>よくある質問</h2><dl class="faq">${faq.map((f) => "<dt>Q. " + esc(f[0]) + "</dt><dd>A. " + esc(f[1]) + "</dd>").join("")}</dl>
 <h2>ほかの行き先</h2><ul class="rel">${rel.map((x) => `<li><a href="${x.slug}.html">${esc(x.from)}駅 → ${esc(x.to)}駅${x.train ? "<br><small>🚃 約" + x.train.min + "分・" + yen(x.train.yen) + "</small>" : ""}</a></li>`).join("")}</ul>
 <div class="cta"><a class="btn" href="${appUrl}">🗺️ アプリで同じ条件を開く</a></div>`;
