@@ -297,6 +297,175 @@ P.railFieldCached = function (from, date) {
   return f;
 };
 P.clearFieldCache = function () { fieldCache = []; };
+/* 計算済みの field を railFieldCached と同じキーでキャッシュへ差し込む（第6周回 S5:
+   showRoutes が分割計算した field を estimate の同期経路に warm で渡すため） */
+P.primeFieldCache = function (from, date, f) {
+  if (!f) return;
+  var key = from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+date / 600000) + "|" + KIDS.aggr + (KIDS.on ? "k" : "") + "|t" + (RG.tinfoVer || 0) + (P.__noBlock ? "nb" : "");
+  for (var i = 0; i < fieldCache.length; i++) if (fieldCache[i].k === key) { fieldCache[i].f = f; return; }
+  fieldCache.push({ k: key, f: f }); if (fieldCache.length > 8) fieldCache.shift();
+};
+/* cold 構築のうち同期で重いキャッシュ（重複ラベル表）を idle 時に先に作る（第6周回 S5 の事前ウォームアップ） */
+P.warmupCaches = function () { try { dupLabels(); } catch (e) {} };
+
+/* ============================================================ 鉄道探索（非同期・分割版）
+   第6周回 INP是正 S4/S5（design/cycle6-inp-design.md §3.4/§3.5）:
+   railField と «計算順序・アルゴリズム・戻り値の契約» は完全に同一で、実行の区切りだけを足した版。
+   ・乗車候補の hav 走査と、全駅分の後処理は RG.chunked（50ms 予算）で処理する
+   ・Dijkstra の展開ループはバッチ化し、40ms を超えたら RG.yieldMain() で息つぎする
+   ・shouldAbort() が true を返したら計算を破棄して null を返す（古い出発地の結果を反映しないため）
+   途中結果は返さず、完了した field だけを返す。同期版 railField は従来どおり残す（estimate 等の同期経路用）。 */
+function accessPointsAsync(coord, limitMin, kmMax) {
+  var w = RG.CONFIG.modes.walk, dt = RG.CONFIG.detour.walk, out = [];
+  var work = RG.chunked ? RG.chunked(RG.NET.stations, function (s) {
+    var km = hav(coord, [s.la, s.lo]);
+    if (km > (kmMax || 2.5)) return;
+    var wm = km * dt / w.speed * 60;
+    if (wm <= limitMin) out.push({ id: s.id, min: wm, km: km * dt });
+  }) : Promise.resolve();
+  return work.then(function () {
+    out.sort(function (a, b) { return a.min - b.min; });
+    return out.slice(0, 5);
+  });
+}
+function railFieldAsync(from, date, shouldAbort) {
+  var aborted = function () { return !!(shouldAbort && shouldAbort()); };
+  var C = RG.CONFIG, T = C.modes.train, kids = KIDS.on, peak = P.hourKind(date) === "peak", xp = xferPref(), DUP = dupLabels();
+  var W = C.modes.walk, WD = C.detour.walk;
+  return accessPointsAsync(from, 25, 3.0).then(function (ins) {
+    if (!ins.length) return {};
+    if (aborted()) return null;
+    var dist = {}, S = {}, heap = new Heap();
+    var TI = P.__noBlock ? null : (RG.tinfoLine || null);
+    var EX = (RG.EXT && RG.EXT.lines) || {}, EXL = (RG.EXT && RG.EXT.link) || {}, T0 = date.getHours() * 60 + date.getMinutes();
+    function relax(key, d, st) { if (dist[key] == null || d < dist[key]) { dist[key] = d; S[key] = st; heap.push(d, key); } }
+    ins.forEach(function (i) {
+      relax(i.id + SEP, i.min, { id: i.id, line: "", access: i.min, km: {}, transfers: 0, board: i.id, prev: null, real: i.min, boarded: false });
+    });
+    var done = {};
+    function expand() {
+      /* 1 バッチ = 40ms 予算。バッチ内の処理順序は同期版の while ループと同一 */
+      while (heap.a.length) {
+        var tBatch = performance.now(), pops = 0;
+        while (heap.a.length) {
+          var top = heap.pop(), key = top[1];
+          if (done[key]) continue; done[key] = 1;
+          var iu = S[key], u = iu.id, adj = RG.adj[u]; if (!adj) continue;
+          for (var a = 0; a < adj.length; a++) {
+            var e = adj[a], line = e.line || "(不明)", step, pen = 0, xfer = 0, nkm = null, nline = line, boarded = true;
+            var xl = null, xdep = null, nlb = iu.lb, ntrip = null;
+            if (line === "乗り換え") {
+              if (!iu.line) continue;
+              var lk = EXL[u + "|" + e.to];
+              step = lk ? lk.min : e.km * WD / W.speed * 60 + (T.walkXferMin || 2);
+              xfer = 1; nline = ""; boarded = iu.boarded;
+              pen += xp + (kids ? stepBonus(u) : 0);
+            } else if ((xl = EX[line])) {
+              var k2 = u + ">" + e.to, clock = T0 + iu.real, same = iu.line === line, tr = same ? iu.trip : null;
+              var cont = tr ? xl.tn[tr.id + "|" + k2] : null;
+              if (cont != null) { step = tr.day + cont - clock; ntrip = tr; xdep = iu.dep; }
+              else {
+                var ready = clock + (same ? 0 : (xl.spec.checkin || 0)), deps = xl.dep[k2];
+                if (deps && deps.length) {
+                  var day = Math.floor(ready / 1440) * 1440, pick = null;
+                  for (var q = 0; q < deps.length && !pick; q++) if (day + deps[q][0] >= ready) pick = deps[q];
+                  if (!pick) { pick = deps[0]; day += 1440; }
+                  xdep = day + pick[0]; step = (day + pick[1]) - clock; ntrip = { id: pick[3], day: day };
+                } else if (xl.hop[k2] != null) {
+                  if (same) step = xl.hop[k2];
+                  else {
+                    var w0 = xl.spec.wait || 30, tod = ((ready % 1440) + 1440) % 1440, h = xl.spec.hours;
+                    if (h && (tod < h[0] || tod > h[1])) w0 += (tod < h[0] ? h[0] - tod : 1440 - tod + h[0]);
+                    step = (xl.spec.checkin || 0) + w0 + xl.hop[k2];
+                  }
+                } else continue;
+                if (!same) { nlb = u; if (iu.line) { xfer = 1; pen += xp; } }
+                else if (xdep != null && iu.dep != null) xdep = iu.dep;
+              }
+              nkm = {}; for (var k3 in iu.km) nkm[k3] = iu.km[k3];
+              var lb = iu.line === line ? iu.lb : u, f1 = xl.fare(lb, e.to), f0 = lb === u ? 0 : xl.fare(lb, u);
+              if (f1 == null || f0 == null) { nkm.UNK = 1; if (!same) pen += 25000 / 2000; }
+              else { nkm.FIX = (nkm.FIX || 0) + f1 - f0; pen += (f1 - f0) / 2000; }
+            } else {
+              var shin = /新幹線|博多南線/.test(line);
+              var dz = TI ? TI(line, u, e.to) : null;
+              if (dz && dz.sev >= 3 && dz.exact) continue;
+              var seg = hopMin(line, e.km, T);
+              if (dz && iu.line !== line) seg += dz.sev >= 3 ? 30 : dz.sev === 2 ? (dz.dmin || 10) : 2;
+              if (iu.line === line) step = seg;
+              else if (!iu.line) step = seg + T.waitMin;
+              else if (DUP[iu.line] && DUP[iu.line][line]) step = seg + 2;
+              else { step = seg + T.transferMin; xfer = 1; }
+              if (shin && iu.line !== line) step += 14;
+              else if (iu.line !== line && RX_LINER.test(line) && !RX_AGT.test(line)) step += 12;
+              if (xfer) pen += xp;
+              if (kids && xfer) pen += stepBonus(u);
+              if (kids && peak && crowdedLine(line)) pen += seg * 0.15;
+              nkm = {}; for (var k in iu.km) nkm[k] = iu.km[k];
+              var fk = fareKeyOf(line), fkm = e.km / 1.08;
+              nkm[fk] = (nkm[fk] || 0) + fkm;
+              if (shin) nkm.SHIN = (nkm.SHIN || 0) + fkm;
+            }
+            var nd = top[0] + step + pen;
+            relax(e.to + SEP + nline, nd, { id: e.to, line: nline, access: iu.access, km: nkm || iu.km, transfers: iu.transfers + xfer,
+                                             board: iu.board, prev: key, real: iu.real + step, boarded: boarded, lb: nlb, dep: xdep != null ? xdep : (iu.line === line ? iu.dep : null), trip: ntrip });
+          }
+          pops++;
+          if ((pops & 255) === 0 && performance.now() - tBatch >= 40) break;
+        }
+        if (heap.a.length) {
+          if (aborted()) return Promise.resolve(null);
+          return RG.yieldMain().then(function () { return aborted() ? null : expand(); });
+        }
+      }
+      return Promise.resolve(1);
+    }
+    return expand().then(function (ok) {
+      if (!ok) return null;
+      /* 駅ごとに «いちばん早い状態» を代表にする（同期版と同一の後処理を、40ms 予算で区切って行う） */
+      var out = {}, best = {};
+      var dkeys = Object.keys(dist), di = 0;
+      function phase1() {
+        var tA = performance.now();
+        while (di < dkeys.length) {
+          var key = dkeys[di++], st = S[key]; if (!st.boarded) continue;
+          if (best[st.id] == null || dist[key] < best[st.id]) { best[st.id] = dist[key]; out[st.id] = key; }
+          if ((di & 511) === 0 && performance.now() - tA >= 40) break;
+        }
+        if (di < dkeys.length) { if (aborted()) return Promise.resolve(null); return RG.yieldMain().then(phase1); }
+        return Promise.resolve(1);
+      }
+      return phase1().then(function (ok1) {
+        if (!ok1) return null;
+        var okeys = Object.keys(out), oi = 0;
+        function phase2() {
+          var tB = performance.now();
+          while (oi < okeys.length) {
+            var id = okeys[oi++], key = out[id], i = S[key], yen = 0, note = [];
+            Object.keys(i.km).forEach(function (fk) {
+              if (fk === "FIX") { yen += i.km.FIX; note.push("船・ヘリ・島の飛行機・水上バス " + Math.round(i.km.FIX).toLocaleString() + "円（公式の運賃表）"); return; }
+              if (fk === "UNK") { note.push("⚠ 運賃が決まっていない区間があります（合計に入っていません）"); return; }
+              var f = C.fares.rail[fk]; if (!f) return;
+              var v = tableFare(f.table, i.km[fk]);
+              yen += v; note.push(f.operator + " " + i.km[fk].toFixed(1) + "km → " + v + "円");
+            });
+            out[id] = { min: i.real, score: dist[key], yen: yen, transfers: i.transfers, board: i.board, accessMin: i.access, fareNote: note,
+                        prev: i.prev ? S[i.prev].id : null, sk: key };
+            if ((oi & 511) === 0 && performance.now() - tB >= 40) break;
+          }
+          if (oi < okeys.length) { if (aborted()) return Promise.resolve(null); return RG.yieldMain().then(phase2); }
+          return Promise.resolve(1);
+        }
+        return phase2().then(function (ok2) {
+          if (!ok2) return null;
+          Object.defineProperty(out, "__st", { value: S, enumerable: false });
+          return out;
+        });
+      });
+    });
+  });
+}
+P.railFieldAsync = railFieldAsync;
 /* 乗車駅→降車駅の駅列（状態の prev をたどる）。PV 動画や地図の線に使う。
    segs: [{line, ids}] 路線ごとの区間（乗り換え表示・カードの路線名に使う） */
 P.railPath = function (from, to, date) {
@@ -556,6 +725,26 @@ P.isochrone = function (from, date) {
     out[s.id] = Math.round(f ? Math.min(f.min, walk) : walk);
   });
   return out;
+};
+
+/* 第6周回 S4: isochrone の非同期・分割版。結果（各駅の所要分）は P.isochrone と完全一致させる。
+   計算中は途中結果を返さず、完了してから out を一括で返す。shouldAbort() が true なら null を返す */
+P.isochroneAsync = function (from, date, shouldAbort) {
+  var C = RG.CONFIG;
+  return railFieldAsync(from, date, shouldAbort).then(function (field) {
+    if (!field) return null;
+    if (shouldAbort && shouldAbort()) return null;
+    var out = {};
+    var work = RG.chunked ? RG.chunked(RG.NET.stations, function (s) {
+      var walk = hav(from, [s.la, s.lo]) * C.detour.walk / C.modes.walk.speed * 60;
+      var f = field[s.id];
+      out[s.id] = Math.round(f ? Math.min(f.min, walk) : walk);
+    }) : Promise.resolve();
+    return work.then(function () {
+      if (shouldAbort && shouldAbort()) return null;
+      return out;
+    });
+  });
 };
 
 P.discover = function (from, date, budget, moods, aggr) {
