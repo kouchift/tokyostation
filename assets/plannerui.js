@@ -474,6 +474,7 @@ RG.showSpot = function (p) {
   var W = RG.CONFIG.modes.walk, DT = RG.CONFIG.detour.walk;
   var q = encodeURIComponent(p.n);
   // 半径400m にある便利施設を数える（トイレ・AED・Wi-Fi・授乳・銭湯）
+  function handyHtmlFn() {
   var HANDY = { toilet: "🚻 トイレ", aed: "🅰️ AED", wifi: "📶 Wi-Fi",
                 baby: "👶 授乳・おむつ", sento: "🛁 銭湯", onsen: "♨️ 温泉",
                 cycle: "🅿️ 駐輪場", shelter: "🏳️ 避難場所" };
@@ -482,11 +483,13 @@ RG.showSpot = function (p) {
     if (!HANDY[x.g] || x.i === p.i) return;
     if (RG.hav([p.la, p.lo], [x.la, x.lo]) < 0.4) handy[x.g] = (handy[x.g] || 0) + 1;
   });
-  var handyHtml = Object.keys(handy).length
+  return Object.keys(handy).length
     ? '<div class="handy"><div class="handy__h"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-compass"></use></svg> まわり400mにあるもの</div>' +
       Object.keys(handy).map(function (k) {
         return '<span class="handy__i">' + HANDY[k] + " <b>" + handy[k] + "</b></span>"; }).join("") +
       "</div>" : "";
+  }
+  function fromHtmlFn() {
   // 出発地からの行き方（出発地が決まっているときだけ）
   var fromHtml = "";
   if (Trip.origin) {
@@ -498,8 +501,10 @@ RG.showSpot = function (p) {
       (nb ? '<button class="fromhere__b" type="button" data-dest2="' + esc(nb.t.id) +
         '">🧭 ' + esc(nb.t.n) + "駅までの行き方をくらべる</button>" : "") + "</div>";
   }
+    return fromHtml;
+  }
   var vcount = RG.visitCount ? RG.visitCount(p.n) : 0;
-  var html = '<div class="spotcard">' +
+  var headHtml = '<div class="spotcard">' +
     (p.img
       ? '<img class="spotcard__i" src="' + esc(RG.cimg(p.img, 640)) + '" alt="" loading="lazy">'
       : p.chain
@@ -521,8 +526,9 @@ RG.showSpot = function (p) {
     '<div class="spotcard__st">' + stars(p.s || 3) +
       '<span class="spotcard__why">行く価値のめやす</span>' +
       (vcount ? '<span class="spotcard__v"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg> ' + vcount + "回 訪問ずみ</span>" : "") + "</div>" +
-    (RG.pinRow ? RG.pinRow(p) : "") +
-    (RG.focusHtml ? RG.focusHtml(p.n) : "") +
+    (RG.pinRow ? RG.pinRow(p) : "")
+  function stage1Html() {
+    return (RG.focusHtml ? RG.focusHtml(p.n) : "") +
     (RG.whsBanner ? RG.whsBanner(p.n) : "") +                           // v127: 世界遺産の一部なら帯
     (RG.graveBanner ? RG.graveBanner(p.la, p.lo) : "") +                // v133: 近くに眠る偉人
     (RG.eduHistHtml ? RG.eduHistHtml(p.n) : "") +                       // v126: 教科書にでてくる場所
@@ -533,9 +539,10 @@ RG.showSpot = function (p) {
     (RG.chainBlock ? RG.chainBlock(p) : "") + (RG.fuelBlock ? RG.fuelBlock(p) : "") + (RG.koshinBlock ? RG.koshinBlock(p) : "") + (RG.zooBlock ? RG.zooBlock(p) : "") +
     (RG.ytBlock ? RG.ytBlock(p) : "") + (RG.airportBlock ? RG.airportBlock(p) : "") + (RG.shukubaBlock ? RG.shukubaBlock(p) : "") +
     (RG.enrichSlot && (!p.chain || p.zoo || p.airport) && !p.od ? RG.enrichSlot() : "") +
-    cameraBlock(p) +
-    fromHtml +
-    (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
+    cameraBlock(p);
+  }
+  function stage3Html() {
+    return (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
     '<div class="exgrid">' +
       exrow("📍 最寄り駅", near.length ? RG.stLabel(near[0].t) : "—",
             near.length ? "徒歩 約" + Math.round(near[0].km * DT / W.speed * 60) + "分（" +
@@ -549,10 +556,10 @@ RG.showSpot = function (p) {
       (p.fee ? exrow("💴 めやすの料金", "1人 ¥" + Number(p.fee).toLocaleString("ja-JP"),
                      "おでかけプランに入れると人数分で計算します") : "") +
       (p.note ? exrow("📝 自分のメモ", "—", p.note) : "") +
-    "</div>" +
-    handyHtml +
-    sameGenre(p) +
-    '<div class="lnks">' +
+    "</div>";
+  }
+  function stage6Html() {
+    return '<div class="lnks">' +
       '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + q + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' +
       (p.url ? '<a class="lnk" href="' + esc(p.url) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg></span>公式ページ</a>' : "") +
       '<a class="lnk" href="https://www.openstreetmap.org/?mlat=' + p.la + "&mlon=" + p.lo +
@@ -574,8 +581,35 @@ RG.showSpot = function (p) {
     (RG.reqHtml ? RG.reqHtml("spot", p.n) : "") +
     '<p class="src">☆は「行く価値のめやす」です。文化財は指定の格（国宝5.0／重要文化財4.5／史跡4.5／登録有形3.5…）、' +
     "それ以外は Wikipedia の言語版数と写真の有無から機械的に付けています。" +
-    "<b>レビューサイトの評価点ではありません。</b></p></div>";
-  var m = RG.openCard(g.e + " " + p.n, html);
+    "<b>レビューサイトの評価点ではありません。</b></p>";;
+  }
+  /* 第6周回 S7（§3.7）: カードは段組みで描く。殻＋主要部（写真・名前・評価）を先に出し、
+     残りの節は yield を挟んで順に足す。足す順序と内容は従来の一括構築と同一 */
+  var m = RG.openCard(g.e + " " + p.n, headHtml + "</div>");
+  var spotGen = m.__gen, cardEl = m.querySelector(".spotcard");
+  function spotAlive() { return cardEl && document.contains(cardEl) && m.__gen === spotGen && m.classList.contains("show") && RG.__spotCur === p; }
+  function appendSpotHtml(html) {
+    if (!html) return;
+    var tmp = document.createElement("div"); tmp.innerHTML = html;
+    while (tmp.firstChild) cardEl.appendChild(tmp.firstChild);
+  }
+  var spotStages = [
+    function () { return stage1Html(); },
+    function () { return fromHtmlFn(); },
+    function () { return stage3Html(); },
+    function () { return handyHtmlFn(); },
+    function () { return sameGenre(p); },
+    function () { return stage6Html(); }
+  ];
+  function runSpotStage(i2) {
+    if (!spotAlive()) return;
+    if (i2 >= spotStages.length) { bindSpot(); return; }
+    try { appendSpotHtml(spotStages[i2]()); } catch (e) {}
+    if (RG.yieldMain) RG.yieldMain().then(function () { runSpotStage(i2 + 1); }); else runSpotStage(i2 + 1);
+  }
+  if (RG.yieldMain) RG.yieldMain().then(function () { runSpotStage(0); }); else runSpotStage(0);
+  function bindSpot() {
+  if (!spotAlive()) return;
   if (RG.enrichIn && (!p.chain || p.zoo || p.airport) && !p.od) RG.enrichIn(m, { name: p.n, la: p.la, lo: p.lo, kind: "spot", hasHero: !!p.img, hasIntro: !!(RG.DESCS && RG.DESCS[p.n]), noExtract: !!p.ichi, q: p.q || null,
                                                                         wp: p.wp || (p.mt && p.mt.wp) || (p.castle && p.castle.wp) || (p.river && p.river.wp) || (p.view && p.view.wp) || (p.onsen && p.onsen.wp) || (p.zoo && p.zoo.wp) || (p.koshin && p.koshin.wp) || null });
   if (RG.reqBind) RG.reqBind(m);
@@ -612,6 +646,7 @@ RG.showSpot = function (p) {
       if (q2) { RG.Map.gotoLatLng(q2.la, q2.lo, 180); RG.showSpot(q2); }
     });
   });
+  }
   function exrow(k, v, sub) {
     return '<div class="ex"><span class="ex__k">' + esc(k) + '</span><span class="ex__v">' + esc(v) + "</span>" +
       (sub ? '<span class="ex__s">' + esc(sub) + "</span>" : "") + "</div>";
