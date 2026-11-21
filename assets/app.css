@@ -332,6 +332,9 @@ button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
 @media (min-width:721px){ .modal{align-items:center} .modal__box{border-radius:var(--r-lg);max-height:86dvh} }
 
 /* ---------- 比較ビュー ---------- */
+/* 第6周回 S5: ルート表示の殻（読み込み中）の最小限の見た目。骨組みは既存の .enr__sk を流用 */
+.rt__wait{padding:10px 2px}
+.rt__waitt{font-size:var(--fs-13);color:var(--label);margin-top:8px}
 .rt__hd{margin-bottom:10px}
 .rt__hd b{font-size:var(--fs-16)}
 .rt__meta{font-size:var(--fs-11);color:var(--label);margin-top:3px}
