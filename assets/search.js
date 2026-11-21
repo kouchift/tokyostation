@@ -10,39 +10,137 @@
 "use strict";
 var $ = RG.$, el = RG.el, esc = RG.esc;
 
-var IDX = null;
+/* =========================================================================
+   第6周回 INP是正・段2（design/cycle6-inp-design.md §3.3 S3）
+   索引は «区画（セグメント）» ごとに持ち、並びは従来の全再構築と完全に同じ
+   （駅 → スポット → エリア → 自分の場所 → 住所複製）にする。
+   ・hay（検索用文字列）はエントリを作るときに1回だけ連結して持たせる。
+     クエリ時は連結せず indexOf だけ（文字列の一時生成と GC を消す）。
+   ・スポット区画は増分: MAPPOI の末尾に増えた分だけ append する
+     （RG.appendSearchIndex / RG.syncSearchIndex）。配列の差し替え・縮小・
+     削除を伴うマージのときだけスポット区画を作り直す（RG.invalidateSearchPoiIndex）。
+   ・ジャンル引きは GENRES.filter の線形探索をやめ、id→genre マップ引きにする。
+   ========================================================================= */
+var SEG = null;          // { st:[], spot:[], area:[], own:[], addr:[] }
+var IDX = null;          // buildSearchIndex() 用の連結済みキャッシュ（SEG が変わると捨てる）
+var GMAP = null, GMAPSrc = null;
+function genreMap() {
+  if (GMAP && GMAPSrc === RG.GENRES) return GMAP;
+  GMAP = {}; GMAPSrc = RG.GENRES || null;
+  (RG.GENRES || []).forEach(function (g) { GMAP[g.id] = g; });
+  return GMAP;
+}
+function hayOf(n, k, sub, extra) { return n + " " + k + " " + (sub || "") + " " + (extra || ""); }
+function stationEntry(s) {
+  var e = { t: "station", id: s.id, n: s.n, k: s.k || "",
+            sub: (s.ls || []).slice(0, 3).join(" / "),
+            extra: (s.ls || []).join(" "), la: s.la, lo: s.lo,
+            pri: 0, rank: s.rank };
+  e.hay = hayOf(e.n, e.k, e.sub, e.extra); return e;
+}
+function spotEntry(p) {
+  var g = genreMap()[p.g] || {};
+  var e = { t: "spot", id: p.i, n: p.n, k: "", sub: (g.e || "") + " " + (g.label || "") + (p.t ? " ・ " + p.t : ""),
+            extra: (p.ad || "") + " " + (g.label || ""), la: p.la, lo: p.lo,
+            pri: p.ti === 0 ? 1 : 3, star: p.s, poi: p };
+  e.hay = hayOf(e.n, e.k, e.sub, e.extra); return e;
+}
+function addrEntry(p) {
+  var e = { t: "addr", id: p.i, n: p.ad, k: "", sub: "📍 " + p.n,
+            extra: p.n, la: p.la, lo: p.lo, pri: 4, poi: p };
+  e.hay = hayOf(e.n, e.k, e.sub, e.extra); return e;
+}
+function areaEntry(a) {
+  var e = { t: "area", id: a.n, n: a.n, k: "", sub: a.k + "（このあたりを表示）",
+            extra: a.k, la: a.la, lo: a.lo, z: a.z, pri: 2 };
+  e.hay = hayOf(e.n, e.k, e.sub, e.extra); return e;
+}
+function ownEntry(L) {
+  var e = { t: "own", id: L.id, n: L.n, k: "", sub: L.e + " 自分で追加した場所",
+            extra: "", la: L.la, lo: L.lo, pri: 1, own: L };
+  e.hay = hayOf(e.n, e.k, e.sub, e.extra); return e;
+}
+var poiArr = null, poiN = 0, poiDirty = false;
+var stSrc = null, areaSrc = null, ownSrc = null, genreSrcAtPoiBuild = null;
+function buildPoiSegments() {
+  var arr = RG.MAPPOI || [];
+  SEG.spot = []; SEG.addr = [];
+  for (var i = 0; i < arr.length; i++) {
+    SEG.spot.push(spotEntry(arr[i]));
+    if (arr[i].ad) SEG.addr.push(addrEntry(arr[i]));
+  }
+  poiArr = arr; poiN = arr.length; poiDirty = false; genreSrcAtPoiBuild = RG.GENRES || null;
+  IDX = null;
+}
+function appendPoiRange(from) {
+  var arr = RG.MAPPOI || [];
+  for (var i = from; i < arr.length; i++) {
+    SEG.spot.push(spotEntry(arr[i]));
+    if (arr[i].ad) SEG.addr.push(addrEntry(arr[i]));
+  }
+  poiArr = arr; poiN = arr.length;
+  IDX = null;
+}
+/* スポット区画を MAPPOI の現在状態に合わせる（増えた分は append、差し替え・縮小・ジャンル表の差し替えは作り直し） */
+function syncPoi() {
+  var arr = RG.MAPPOI || [];
+  if (poiDirty || arr !== poiArr || arr.length < poiN || genreSrcAtPoiBuild !== (RG.GENRES || null)) { buildPoiSegments(); return; }
+  if (arr.length > poiN) appendPoiRange(poiN);
+}
 function build() {
-  if (IDX) return IDX;
-  IDX = [];
-  RG.NET.stations.forEach(function (s) {
-    IDX.push({ t: "station", id: s.id, n: s.n, k: s.k || "",
-               sub: (s.ls || []).slice(0, 3).join(" / "),
-               extra: (s.ls || []).join(" "), la: s.la, lo: s.lo,
-               pri: 0, rank: s.rank });
-  });
-  (RG.MAPPOI || []).forEach(function (p) {
-    var g = (RG.GENRES || []).filter(function (x) { return x.id === p.g; })[0] || {};
-    IDX.push({ t: "spot", id: p.i, n: p.n, k: "", sub: (g.e || "") + " " + (g.label || "") + (p.t ? " ・ " + p.t : ""),
-               extra: (p.ad || "") + " " + (g.label || ""), la: p.la, lo: p.lo,
-               pri: p.ti === 0 ? 1 : 3, star: p.s, poi: p });
-  });
-  (RG.AREAS || []).forEach(function (a) {
-    IDX.push({ t: "area", id: a.n, n: a.n, k: "", sub: a.k + "（このあたりを表示）",
-               extra: a.k, la: a.la, lo: a.lo, z: a.z, pri: 2 });
-  });
-  (RG.LANDMARKS_OWN || []).forEach(function (L) {
-    IDX.push({ t: "own", id: L.id, n: L.n, k: "", sub: L.e + " 自分で追加した場所",
-               extra: "", la: L.la, lo: L.lo, pri: 1, own: L });
-  });
-  // 郵便番号は温泉銭湯データにあるものだけ索引化（他は Nominatim にまかせる）
-  (RG.MAPPOI || []).forEach(function (p) {
-    if (p.ad) IDX.push({ t: "addr", id: p.i, n: p.ad, k: "", sub: "📍 " + p.n,
-                         extra: p.n, la: p.la, lo: p.lo, pri: 4, poi: p });
-  });
+  if (!SEG) {
+    if (!RG.NET || !RG.NET.stations) return null;   // 駅データがまだ無いときは作らない（次回に作る）
+    SEG = { st: [], spot: [], area: [], own: [], addr: [] };
+    stSrc = RG.NET.stations;
+    RG.NET.stations.forEach(function (s) { SEG.st.push(stationEntry(s)); });
+    areaSrc = RG.AREAS || null;
+    (RG.AREAS || []).forEach(function (a) { SEG.area.push(areaEntry(a)); });
+    ownSrc = RG.LANDMARKS_OWN || null;
+    (RG.LANDMARKS_OWN || []).forEach(function (L) { SEG.own.push(ownEntry(L)); });
+    poiArr = null; poiN = 0; buildPoiSegments();
+    IDX = null;
+  } else {
+    // 駅・エリア・自分の場所は基本不変だが、出典が差し替わったらその区画だけ作り直す
+    if (RG.NET && RG.NET.stations && RG.NET.stations !== stSrc) {
+      stSrc = RG.NET.stations; SEG.st = [];
+      RG.NET.stations.forEach(function (s) { SEG.st.push(stationEntry(s)); });
+      IDX = null;
+    }
+    if ((RG.AREAS || null) !== areaSrc) {
+      areaSrc = RG.AREAS || null; SEG.area = [];
+      (RG.AREAS || []).forEach(function (a) { SEG.area.push(areaEntry(a)); });
+      IDX = null;
+    }
+    if ((RG.LANDMARKS_OWN || null) !== ownSrc) {
+      ownSrc = RG.LANDMARKS_OWN || null; SEG.own = [];
+      (RG.LANDMARKS_OWN || []).forEach(function (L) { SEG.own.push(ownEntry(L)); });
+      IDX = null;
+    }
+    syncPoi();
+  }
+  if (!IDX) IDX = SEG.st.concat(SEG.spot, SEG.area, SEG.own, SEG.addr);
   return IDX;
 }
 RG.buildSearchIndex = build;
-RG.resetSearchIndex = function () { IDX = null; };
+/* 全再構築の予約（従来互換）。次回 build/search のときに作り直す */
+RG.resetSearchIndex = function () { SEG = null; IDX = null; poiArr = null; poiN = 0; poiDirty = false; };
+/* 削除・入替を伴うマージ（whs/grave の再投入・一之宮の重複除去など）のあとに呼ぶ。
+   スポット区画だけを次回同期時に作り直す */
+RG.invalidateSearchPoiIndex = function () { poiDirty = true; };
+/* POI が増えた分だけ索引へ足す。pois が MAPPOI の «まだ索引化していない末尾» と
+   一致すればそのまま append し、そうでなければ安全側に倒して次回同期で合わせる。
+   索引がまだ無いときは何もしない（初回の build が MAPPOI 全体から作る）。 */
+RG.appendSearchIndex = function (pois) {
+  if (!SEG || !pois || !pois.length) return;
+  var arr = RG.MAPPOI || [];
+  if (arr === poiArr && !poiDirty && arr[poiN] === pois[0] && arr[poiN + pois.length - 1] === pois[pois.length - 1]) {
+    appendPoiRange(poiN);   // 末尾一致: 範囲は poiN..arr.length（pois 以降に増えた分も含めてよい＝全て未索引分）
+    return;
+  }
+  syncPoi();
+};
+/* flush / merge のあとに呼ぶ: 索引があれば増分同期し、無ければ（駅データが揃っていれば）ここで作っておく */
+RG.syncSearchIndex = function () { build(); };
 
 var ZIP = /^\D*(\d{3})-?(\d{4})\D*$/;
 /* 全角英数を半角に。長音「ー」はカタカナの一部なので触らない。
@@ -62,16 +160,21 @@ RG.searchLocal = function (q, limit) {
   var zipm = RG.zipMode && RG.zipMode() ? ZIP.exec(q.replace(/[\s\u3000]/g, "")) : null;   // v118: 郵便番号モードのときだけ
   var zip = zipm ? zipm[1] + "-" + zipm[2] : null;
   var out = [];
-  for (var i = 0; i < IDX.length && out.length < 400; i++) {
-    var r = IDX[i];
-    var hay = r.n + " " + r.k + " " + (r.sub || "") + " " + (r.extra || "");
-    var ok = true;
-    for (var j = 0; j < terms.length; j++) if (hay.indexOf(terms[j]) < 0) { ok = false; break; }
-    if (!ok && zip && (hay.indexOf(zip) >= 0 || hay.replace(/-/g, "").indexOf(zip.replace("-", "")) >= 0)) ok = true;
-    if (!ok) continue;
-    // 前方一致・完全一致を優先
-    var b = r.n === q ? 0 : r.n.indexOf(q) === 0 ? 1 : r.n.indexOf(terms[0]) === 0 ? 2 : 3;
-    out.push({ r: r, score: r.pri * 10 + b + (r.rank != null ? Math.min(6, r.rank / 120) : 0) });
+  if (!SEG) return out;
+  var segs = [SEG.st, SEG.spot, SEG.area, SEG.own, SEG.addr];   // 従来の IDX の並びと同一順
+  for (var s2 = 0; s2 < segs.length && out.length < 400; s2++) {
+    var arr = segs[s2];
+    for (var i = 0; i < arr.length && out.length < 400; i++) {
+      var r = arr[i];
+      var hay = r.hay;
+      var ok = true;
+      for (var j = 0; j < terms.length; j++) if (hay.indexOf(terms[j]) < 0) { ok = false; break; }
+      if (!ok && zip && (hay.indexOf(zip) >= 0 || hay.replace(/-/g, "").indexOf(zip.replace("-", "")) >= 0)) ok = true;
+      if (!ok) continue;
+      // 前方一致・完全一致を優先
+      var b = r.n === q ? 0 : r.n.indexOf(q) === 0 ? 1 : r.n.indexOf(terms[0]) === 0 ? 2 : 3;
+      out.push({ r: r, score: r.pri * 10 + b + (r.rank != null ? Math.min(6, r.rank / 120) : 0) });
+    }
   }
   out.sort(function (a, b2) { return a.score - b2.score; });
   return out.slice(0, limit || 12).map(function (x) { return x.r; });

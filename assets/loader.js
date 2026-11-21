@@ -208,9 +208,9 @@ function flush(urgent, done) {
     keys.forEach(function (k) { if (POI_KEYS[k]) poiKeys.push(k); });
     T2 = [];
     /* whs/grave 等（並び替え・削除を伴い得るキー）は索引を作り直して再投入する（§3.1-1 の例外） */
-    if ((keys.indexOf("whs") >= 0 || keys.indexOf("grave") >= 0) && RG.Map && RG.Map.invalidatePoiIndex) T2.push(function () { RG.Map.invalidatePoiIndex(); });
+    if (keys.indexOf("whs") >= 0 || keys.indexOf("grave") >= 0) T2.push(function () { if (RG.Map && RG.Map.invalidatePoiIndex) RG.Map.invalidatePoiIndex(); if (RG.invalidateSearchPoiIndex) RG.invalidateSearchPoiIndex(); });   // 第6周回段2: 検索索引のスポット区画も作り直し対象にする
     if (RG.Map && RG.Map.rebuildPOI) T2.push(function () { RG.Map.rebuildPOI(); });
-    T2.push(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
+    T2.push(function () { if (RG.syncSearchIndex) RG.syncSearchIndex(); else if (RG.resetSearchIndex) RG.resetSearchIndex(); });   // 第6周回段2: 全再構築ではなく増分同期（増えた POI だけ索引へ足す）
     if (RG.rebuildRail) T2.push(function () { RG.rebuildRail(); });
     if (RG.buildGroupBar) T2.push(function () { RG.buildGroupBar(); });
     /* ↑ T は «merge より前» の列、T2 は «merge より後» の列。以後の push は T2 側へ足す */
@@ -230,7 +230,7 @@ function flush(urgent, done) {
     if (RG.WHS || RG.GRAVES) {
       /* poi の merge と同じ flush のときは、merge 後の rebuildPOI（T2 先頭）で足りるので二重に作り直さない */
       if (!poi && RG.Map && RG.Map.rebuildPOI) pushTask(function () { RG.Map.rebuildPOI(); });
-      pushTask(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
+      pushTask(function () { if (RG.syncSearchIndex) RG.syncSearchIndex(); else if (RG.resetSearchIndex) RG.resetSearchIndex(); });   // 第6周回段2: 増分同期
       if (RG.buildGroupBar) pushTask(function () { RG.buildGroupBar(); });
     }
     pushTask(function () { if (RG.Card && RG.Card.refresh && RG.Card.current && RG.Card.current()) RG.Card.refresh(); });
