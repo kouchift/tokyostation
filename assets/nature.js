@@ -25,8 +25,11 @@ RG.mergeSento = function () {
   if (!RG.SENTO_JP || RG.__sentoMerged) return; RG.__sentoMerged = 1;
   RG.MAPPOI = RG.MAPPOI || [];
   // 東京は東京銭湯マップの最新に置き換える（data/mappois.js の古い 283 件＝閉業した店を含む を外す）
-  if (RG.SENTO_JP.some(function (r) { return r.pf === "東京都" && r.sub === 1; }))
-    for (var j = RG.MAPPOI.length - 1; j >= 0; j--) { var q = RG.MAPPOI[j]; if ((q.g === "sento" || q.g === "onsen") && !q.sento && /1010\.or\.jp\/map/.test(q.url || "")) RG.MAPPOI.splice(j, 1); }
+  if (RG.SENTO_JP.some(function (r) { return r.pf === "東京都" && r.sub === 1; })) {
+    var removedSento = 0;
+    for (var j = RG.MAPPOI.length - 1; j >= 0; j--) { var q = RG.MAPPOI[j]; if ((q.g === "sento" || q.g === "onsen") && !q.sento && /1010\.or\.jp\/map/.test(q.url || "")) { RG.MAPPOI.splice(j, 1); removedSento++; } }
+    if (removedSento && RG.Map && RG.Map.invalidatePoiIndex) RG.Map.invalidatePoiIndex();   // 第6周回 S1: 削除を伴う置き換えは索引を作り直させる
+  }
   RG.SENTO_JP.forEach(function (r, i) {
     var S = SENTO_SUB[r.sub] || SENTO_SUB[2];
     RG.MAPPOI.push({ i: "sj" + i, n: r.n, la: r.la, lo: r.lo, g: r.sub === 1 ? (r.onsen ? "onsen" : "sento") : "bath_x", s: r.sub === 1 ? 3.5 : 3.0, ti: 1,

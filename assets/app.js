@@ -11,6 +11,49 @@ RG.details = {};
 RG.HUB = "中村橋";
 
 /* =========================================================================
+   第6周回 INP是正・共通基盤（design/cycle6-inp-design.md §3.0）
+   長い処理を «50ms ごとに息つぎ» させるための小さな道具。ES5 風・新規構文なし。
+   ・RG.yieldMain() … scheduler.yield があればそれ、無ければ setTimeout(0)
+   ・RG.postTask(fn, priority) … scheduler.postTask があれば優先度付き、無ければ setTimeout
+   ・RG.chunked(items, fn, budgetMs) … 予算（既定50ms）ごとに yield しながら全件処理する Promise
+   既存の runTasks／busy()／whenSettled は置き換えず、タスク内部の分割にだけ使う。
+   ========================================================================= */
+RG.yieldMain = function () {
+  if (global.scheduler && typeof global.scheduler.yield === "function") return global.scheduler.yield();
+  return new Promise(function (res) { setTimeout(res, 0); });
+};
+RG.postTask = function (fn, priority) {
+  if (global.scheduler && typeof global.scheduler.postTask === "function") {
+    return global.scheduler.postTask(fn, { priority: priority || "user-visible" });
+  }
+  return new Promise(function (res, rej) {
+    setTimeout(function () { try { res(fn()); } catch (e) { rej(e); } }, 0);
+  });
+};
+RG.chunked = function (items, fn, budgetMs) {
+  var budget = budgetMs || 50, i = 0, n = items ? items.length : 0;
+  return new Promise(function (res, rej) {
+    function step() {
+      var t0 = performance.now();
+      try {
+        while (i < n) {
+          fn(items[i], i); i++;
+          if ((i & 15) === 0 && performance.now() - t0 >= budget) break;   // 16件ごとに時計を見て、予算を超えたら息つぎ
+        }
+      } catch (e) { rej(e); return; }
+      if (i < n) RG.yieldMain().then(step, rej);
+      else res();
+    }
+    step();
+  });
+};
+/* POI 1件の投影（merge のチャンク内で済ませ、poiIndex 側では二度と投影しない。§3.1-3） */
+RG.projectPoi = function (p) {
+  if (p && p.x == null && RG.project) { var P = RG.project(p.la, p.lo); p.x = P.x; p.y = P.y; }
+  return p;
+};
+
+/* =========================================================================
    地図の «文字と印» の大きさ（画面で何px に見せるか）
 
    ここの数字を変えると、地図の見た目が変わります。
@@ -1239,8 +1282,22 @@ var Map = (function () {
   var gPOI = null, gPOIHost = null, poiOn = null, poiScale = 1;
   var pool = [], POOL_MAX = 420, poiReady = false;
 
+  /* 第6周回 S1: 索引（PIDX）は作り直さず差分追加する。rebuildPOI は描画プールの作り直しだけ。
+     削除・並び替えを伴う取り込み（銭湯の置き換え・一之宮の重複除去・投稿の消去・whs/grave 系）は
+     invalidatePoiIndex() で索引だけを作り直させる（そのキーの分だけ再投入する例外。§3.1-1） */
+  var poiDirty = false, poiFullDirty = false, poiRebuildQueued = false;
+  function invalidatePoiIndex() { PIDX = null; }
+  function markPoiDirty(full) {
+    poiDirty = true; if (full) poiFullDirty = true;
+    if (poiRebuildQueued) return; poiRebuildQueued = true;
+    var run = function () { poiRebuildQueued = false; if (poiDirty) rebuildPOI(); };
+    if (RG.postTask) RG.postTask(run, "background").then(null, function () { setTimeout(run, 0); });
+    else setTimeout(run, 0);
+  }
   function rebuildPOI() {
-    poiReady = false; PIDX = null;
+    poiDirty = false;
+    if (poiFullDirty) { PIDX = null; poiFullDirty = false; }
+    poiReady = false;
     if (gPOI && gPOI.parentNode) gPOI.parentNode.removeChild(gPOI);
     gPOI = null; pool = []; GMAP = null;
     buildPOI(); poiLOD();
@@ -1249,9 +1306,9 @@ var Map = (function () {
     if (poiReady) return;
     gPOI = el("g", { class: "pois" });
     (gPOIHost || svg).appendChild(gPOI);
-    // 自分で追加したスポット・東京都オープンデータを取り込んだあとに座標を計算する
+    // 投影は merge 時のチャンク内で済ませる（RG.projectPoi）。ここでは未投影の残りだけを補う
     (RG.MAPPOI || []).forEach(function (p) {
-      var P = project(p.la, p.lo); p.x = P.x; p.y = P.y;
+      if (p.x == null) { var P = project(p.la, p.lo); p.x = P.x; p.y = P.y; }
     });
     poiReady = true;
   }
@@ -1290,16 +1347,24 @@ var Map = (function () {
   /* v140: スポットの升目索引。«スポットをさがす» のデータ（約 20 万件）を読んだあと、地図を動かすたびに全部をなめていた（遅いスマホで 1 回 0.1〜0.2 秒）。
      地図を 64 の升に切って、注目度（ti）ごとに入れておき、画面のまわりの升だけを見る */
   var PIDX = null;
+  function poiIndexAdd(p, cell, T, all) {
+    if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }   // 通常は merge 時に投影済み。未投影の残りだけここで補う
+    var t = p.ti > 1 ? 2 : p.ti > 0 ? 1 : 0, k = Math.floor(p.x / cell) + "," + Math.floor(p.y / cell);
+    (T[t][k] || (T[t][k] = [])).push(p); all[t].push(p);
+  }
   function poiIndex() {
-    var L = RG.MAPPOI || [];
-    if (PIDX && PIDX.src === L && PIDX.n === L.length) return PIDX;
-    var cell = VB.w / 64, T = [{}, {}, {}], all = [[], [], []];
-    for (var i = 0; i < L.length; i++) {
-      var p = L[i];
-      if (p.x == null) { var PP = project(p.la, p.lo); p.x = PP.x; p.y = PP.y; }
-      var t = p.ti > 1 ? 2 : p.ti > 0 ? 1 : 0, k = Math.floor(p.x / cell) + "," + Math.floor(p.y / cell);
-      (T[t][k] || (T[t][k] = [])).push(p); all[t].push(p);
+    var L = RG.MAPPOI || [], cell = VB.w / 64;
+    if (PIDX && PIDX.src === L && PIDX.cell === cell) {
+      if (PIDX.n === L.length) return PIDX;
+      if (PIDX.n < L.length) {   // 増分構築：増えた分（PIDX.n 以降）だけを升目へ追加する
+        for (var j = PIDX.n; j < L.length; j++) poiIndexAdd(L[j], cell, PIDX.T, PIDX.all);
+        PIDX.n = L.length;
+        return PIDX;
+      }
+      /* 縮んだ（削除・差し替え）ときは作り直しに落とす */
     }
+    var T = [{}, {}, {}], all = [[], [], []];
+    for (var i = 0; i < L.length; i++) poiIndexAdd(L[i], cell, T, all);
     return (PIDX = { src: L, n: L.length, cell: cell, T: T, all: all });
   }
   function poiCandidates(maxTier, allTiers, pad) {
@@ -1537,7 +1602,7 @@ var Map = (function () {
            gotoLatLng: gotoLatLng, fitBox: fitBox,
            paintWatch: paintWatch, paintLandmarks: paintLandmarks, buildLandmarks: buildLandmarks,
            paintMe: paintMe,
-           buildPOI: buildPOI, rebuildPOI: rebuildPOI, setGenres: setGenres, setPoiScale: setPoiScale, poiLOD: poiLOD,
+           buildPOI: buildPOI, rebuildPOI: rebuildPOI, markPoiDirty: markPoiDirty, invalidatePoiIndex: invalidatePoiIndex, setGenres: setGenres, setPoiScale: setPoiScale, poiLOD: poiLOD,
            registerEdgePaths: function (m) { edgeByLine = m; } };
 })();
 RG.Map = Map;
@@ -2377,31 +2442,53 @@ function initSheetDrag() {
 }
 
 var mergedKeys = {};
-function mergeExtraPois(key) {
-  if (!RG.MAPPOI) RG.MAPPOI = [];
-  function once(k, fn) { if (mergedKeys[k]) return; mergedKeys[k] = 1; fn(); }
+/* 第6周回 S1（design/cycle6-inp-design.md §3.1-2）: 取り込みは «仕事の列» に分けてから実行する。
+   job には2種ある: { items, make, after } = POI を作って MAPPOI へ push する仕事、
+   { sync } = ほかの部品の取り込み（従来どおり同期で呼ぶ。順番は変えない）。
+   同期版 mergeExtraPois は列をそのまま全部実行し、非同期版 mergeExtraPoisAsync は
+   RG.chunked（50ms 予算）で push しながら列を進める。仕事の順番・中身は同一で、
+   POI の並び順は変わらない（§6）。投影は push のときに RG.projectPoi で済ませる（§3.1-3）。 */
+function mergeJobs(key) {
+  var jobs = [];
+  function once(k, build) { if (mergedKeys[k]) return; mergedKeys[k] = 1; build(); }
+  function pushJob(items, make, after) { jobs.push({ items: items, make: make, after: after || null }); }
+  function syncJob(fn) { jobs.push({ sync: fn }); }
+  /* 偏差値・道路・地形の作り直しは «merge のたび» だと全件走査が merge 回数ぶん走る（実測で支配的）。
+     非同期実行では末尾に1回だけへ寄せる（最終状態は同じ）。同期実行では従来どおりその場で実行する */
+  function deferJob(name, fn) { jobs.push({ sync: fn, defer: name }); }
+  function flat(obj) {
+    var out = [];
+    Object.keys(obj).forEach(function (gid) {
+      var arr = obj[gid]; if (!Array.isArray(arr)) return;
+      arr.forEach(function (r, i) { out.push({ r: r, gid: gid, i: i }); });
+    });
+    return out;
+  }
   if (!key || key === "od" || key === "od2") {
     if (RG.OD) once("od", function () {
       var A = { museum2: "museum", park2: "park", cycle: "cycle_park" };   // v101: 駐輪場は cycle_park（シェアサイクル cycle と id が重なっていた）
+      var meta = {};
       Object.keys(RG.OD).forEach(function (gid) {
         var g2 = A[gid] || gid;
-        var label = (RG.GENRES.filter(function (x) { return x.id === g2; })[0] || {}).label || g2;
-        RG.OD[gid].forEach(function (r, i) {
-          RG.MAPPOI.push({ i: gid + i, n: r.n, la: r.la, lo: r.lo, g: g2, s: 3.0, ti: 2,
-                           t: label, ad: r.ad || null, no: r.no || null,
-                           st: r.st, sd: r.sd, org: r.org, od: 1 });
-        });
+        meta[gid] = { g2: g2, label: (RG.GENRES.filter(function (x) { return x.id === g2; })[0] || {}).label || g2 };
+      });
+      pushJob(flat(RG.OD), function (it) {
+        var r = it.r, m = meta[it.gid];
+        return { i: it.gid + it.i, n: r.n, la: r.la, lo: r.lo, g: m.g2, s: 3.0, ti: 2,
+                 t: m.label, ad: r.ad || null, no: r.no || null,
+                 st: r.st, sd: r.sd, org: r.org, od: 1 };
       });
     });
     if (RG.OD2) once("od2", function () {
+      var labels = {};
       Object.keys(RG.OD2).forEach(function (gid) {
-        if (!Array.isArray(RG.OD2[gid])) return;
-        var label = (RG.GENRES.filter(function (x) { return x.id === gid; })[0] || {}).label || gid;
-        RG.OD2[gid].forEach(function (r, i) {
-          RG.MAPPOI.push({ i: gid + "b" + i, n: r.n, la: r.la, lo: r.lo, g: gid, s: 3.5, ti: 2,
-                           t: r.kind || label, ad: r.ad || null, url: r.url || null,
-                           river: r.river || null, st: r.st, sd: r.sd, od: 1 });
-        });
+        labels[gid] = (RG.GENRES.filter(function (x) { return x.id === gid; })[0] || {}).label || gid;
+      });
+      pushJob(flat(RG.OD2), function (it) {
+        var r = it.r;
+        return { i: it.gid + "b" + it.i, n: r.n, la: r.la, lo: r.lo, g: it.gid, s: 3.5, ti: 2,
+                 t: r.kind || labels[it.gid], ad: r.ad || null, url: r.url || null,
+                 river: r.river || null, st: r.st, sd: r.sd, od: 1 };
       });
     });
   }
@@ -2411,47 +2498,42 @@ function mergeExtraPois(key) {
     (RG.CHAIN_BRANDS || []).forEach(function (b) { BR[b.i] = b; });
     (RG.CHAIN_CATS || []).forEach(function (c) { CT[c.id] = c; });
     var newLim = RG.cvsNewLimit();
-    RG.CHAIN_ROWS.forEach(function (r, i) {
+    pushJob(RG.CHAIN_ROWS, function (r, i) {
       var b = BR[r[0]];
-      if (!b) return;
-      var c = CT[b.cat] || {};
+      if (!b) return null;
       /* v108: 大手コンビニは公式の店舗検索から（r[6]=開店日 YYYYMMDD・r[7]=公式の店番）。開店から 90 日以内は «新店» */
       var op = r[6] || 0;
-      RG.MAPPOI.push({ i: r[7] ? "cv" + r[0] + "_" + r[7] : "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
-                       s: op >= newLim ? 3.4 : 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
-                       brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null,
-                       open: op || null, shop: r[7] || null, isNew: op >= newLim });   // 店番は shop（p.sid はコメントの spotId に使われるので使わない）
+      return { i: r[7] ? "cv" + r[0] + "_" + r[7] : "ch" + i, n: r[3] ? (r[3].indexOf(b.n) === 0 ? r[3] : b.n + " " + r[3]) : b.n, la: r[1], lo: r[2], g: b.cat,
+               s: op >= newLim ? 3.4 : 2.6, ti: 2, t: b.n, be: b.e, bc: b.c,
+               brand: b.i, chain: 1, cat: b.cat, attrs: r[4] || null, hours: r[5] || null,
+               open: op || null, shop: r[7] || null, isNew: op >= newLim };   // 店番は shop（p.sid はコメントの spotId に使われるので使わない）
     });
   });
 
   if (RG.OSM10) once("osm10", function () {
     var M = RG.OSM10_META || {};
-    Object.keys(RG.OSM10).forEach(function (gid) {
-      var m = M[gid] || {};
-      RG.OSM10[gid].forEach(function (r, i) {
-        RG.MAPPOI.push({ i: gid + "x" + i, n: r.n || m.label, la: r.la, lo: r.lo, g: gid,
-                         s: 3.0, ti: 1, t: m.label, be: m.e, bc: m.c, osm10: r, gid: gid });
-      });
+    pushJob(flat(RG.OSM10), function (it) {
+      var r = it.r, m = M[it.gid] || {};
+      return { i: it.gid + "x" + it.i, n: r.n || m.label, la: r.la, lo: r.lo, g: it.gid,
+               s: 3.0, ti: 1, t: m.label, be: m.e, bc: m.c, osm10: r, gid: it.gid };
     });
   });
   /* v114: «はじめての土地» の 6 ジャンル（全国） */
   if (RG.TRAVEL) once("travel", function () {
     var M = RG.TRAVEL_META || {};
-    Object.keys(RG.TRAVEL).forEach(function (gid) {
-      var m = M[gid] || {};
-      RG.TRAVEL[gid].forEach(function (r, i) {
-        RG.MAPPOI.push({ i: gid + "t" + i, n: r.n || m.label, la: r.la, lo: r.lo, g: gid,
-                         s: 3.0, ti: 1, t: r.kind || m.label, be: m.e, bc: m.c, osm10: r, gid: gid, url: r.webs || null });
-      });
+    pushJob(flat(RG.TRAVEL), function (it) {
+      var r = it.r, m = M[it.gid] || {};
+      return { i: it.gid + "t" + it.i, n: r.n || m.label, la: r.la, lo: r.lo, g: it.gid,
+               s: 3.0, ti: 1, t: r.kind || m.label, be: m.e, bc: m.c, osm10: r, gid: it.gid, url: r.webs || null };
     });
   });
-  if (RG.rebuildHensachi) RG.rebuildHensachi();
+  deferJob("hensachi", function () { if (RG.rebuildHensachi) RG.rebuildHensachi(); });
   // 関東の見どころ
   if (RG.KANTO_LM) once("klm", function () {
-    RG.KANTO_LM.forEach(function (r, i) {
-      RG.MAPPOI.push({ i: "kl" + i, n: r.n, la: r.la, lo: r.lo, g: "klm",
-                       s: 3.0 + Math.min(2, (r.sl || 0) / 20), ti: (r.sl || 0) >= 12 ? 0 : 1,
-                       t: r.t, be: r.e, bc: r.c, sl: r.sl, klm: r });
+    pushJob(RG.KANTO_LM, function (r, i) {
+      return { i: "kl" + i, n: r.n, la: r.la, lo: r.lo, g: "klm",
+               s: 3.0 + Math.min(2, (r.sl || 0) / 20), ti: (r.sl || 0) >= 12 ? 0 : 1,
+               t: r.t, be: r.e, bc: r.c, sl: r.sl, klm: r };
     });
   });
   /* v108: 一之宮は独立ジャンル。«主な神社» と同じ社（Wikidata ID が同じ）は一之宮だけに出す（どちらが先に届いても） */
@@ -2459,93 +2541,139 @@ function mergeExtraPois(key) {
   function ichiQ() { var s = {}; (RG.ICHINOMIYA || []).forEach(function (r) { if (r.q) s[r.q] = 1; }); return s; }
   if (RG.ICHINOMIYA) once("ichinomiya", function () {
     var seenId = {};
-    RG.ICHINOMIYA.forEach(function (r, i) {
+    pushJob(RG.ICHINOMIYA, function (r, i) {
       var k = r.kind || 1, id = "ich" + (r.q || i);
       if (seenId[id]) id += "_" + seenId[id];   // 1記事に2社（都々古別神社の馬場・八槻、若狭彦・若狭姫）
       seenId["ich" + (r.q || i)] = (seenId["ich" + (r.q || i)] || 0) + 1;
-      RG.MAPPOI.push({ i: id, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya",
-                       s: k === 1 ? (r.hist === 0 ? 4.6 : 4.9) : k <= 3 ? 4.5 : 4.0, ti: k === 1 || k === 3 ? 0 : 1,
-                       t: (r.kuni ? r.kuni + " " : "") + ICHI_KIND[k], be: "🎌", bc: "#8B0000", sl: 20,
-                       url: r.web || null, wp: r.wp || null, q: r.q || null, ad: r.ad || r.pf || "", ichi: r,
-                       srcNote: "参拝時間・行事は各社の公式で確認。" });
+      return { i: id, n: r.n, la: r.la, lo: r.lo, g: "ichinomiya",
+               s: k === 1 ? (r.hist === 0 ? 4.6 : 4.9) : k <= 3 ? 4.5 : 4.0, ti: k === 1 || k === 3 ? 0 : 1,
+               t: (r.kuni ? r.kuni + " " : "") + ICHI_KIND[k], be: "🎌", bc: "#8B0000", sl: 20,
+               url: r.web || null, wp: r.wp || null, q: r.q || null, ad: r.ad || r.pf || "", ichi: r,
+               srcNote: "参拝時間・行事は各社の公式で確認。" };
+    }, function () {
+      /* 重複する «主な神社» を外す＝削除を伴うので、索引はこのキーの分だけ作り直させる（§3.1-1 の例外） */
+      var iq = ichiQ(), removed = 0;
+      for (var j = RG.MAPPOI.length - 1; j >= 0; j--) {
+        var p0 = RG.MAPPOI[j];
+        if (p0.g === "shrine_major" && p0.q && iq[p0.q]) { RG.MAPPOI.splice(j, 1); removed++; }
+      }
+      if (removed && RG.Map && RG.Map.invalidatePoiIndex) RG.Map.invalidatePoiIndex();
     });
-    var iq = ichiQ();
-    for (var j = RG.MAPPOI.length - 1; j >= 0; j--) {
-      var p0 = RG.MAPPOI[j];
-      if (p0.g === "shrine_major" && p0.q && iq[p0.q]) RG.MAPPOI.splice(j, 1);
-    }
   });
   if (RG.SHRINE_MAJOR) once("shrines_jp", function () {
     var iq = ichiQ();
-    RG.SHRINE_MAJOR.forEach(function (r, i) {
-      if (r.q && iq[r.q]) return;
-      RG.MAPPOI.push({ i: "shm" + i, n: r.n, la: r.la, lo: r.lo, g: "shrine_major", s: 4.2, ti: 1,
-                       t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null, q: r.q || null,
-                       srcNote: "別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" });
+    pushJob(RG.SHRINE_MAJOR, function (r, i) {
+      if (r.q && iq[r.q]) return null;
+      return { i: "shm" + i, n: r.n, la: r.la, lo: r.lo, g: "shrine_major", s: 4.2, ti: 1,
+               t: r.r, be: "⛩️", bc: "#B7242E", sl: r.sl || 0, url: r.wp || null, q: r.q || null,
+               srcNote: "別表神社・旧官幣大社。参拝時間・行事は各社の公式で確認。" };
     });
-    (RG.TEMPLE_MAJOR || []).forEach(function (r, i) {
-      RG.MAPPOI.push({ i: "tmp" + i, n: r.n, la: r.la, lo: r.lo, g: "temple_major", s: Math.min(5, 3.5 + (r.sl || 0) / 30), ti: (r.sl || 0) >= 20 ? 0 : 1,
-                       t: "寺院", be: "🛕", bc: "#6D4C1E", sl: r.sl || 0, url: r.wp || null,
-                       srcNote: "Wikipedia の言語版数を知名度の目安にしています。拝観時間・料金は公式で確認。" });
+    pushJob(RG.TEMPLE_MAJOR || [], function (r, i) {
+      return { i: "tmp" + i, n: r.n, la: r.la, lo: r.lo, g: "temple_major", s: Math.min(5, 3.5 + (r.sl || 0) / 30), ti: (r.sl || 0) >= 20 ? 0 : 1,
+               t: "寺院", be: "🛕", bc: "#6D4C1E", sl: r.sl || 0, url: r.wp || null,
+               srcNote: "Wikipedia の言語版数を知名度の目安にしています。拝観時間・料金は公式で確認。" };
     });
   });
   if (RG.CAMS_JP) once("cams_jp", function () {
-    RG.CAMS_JP.forEach(function (r, i) {
-      RG.MAPPOI.push({ i: "cj" + i, n: r.n, la: r.la, lo: r.lo, g: "camera", s: 3.8, ti: 1,
-                       t: (r.k || "ライブ") + "カメラ", url: r.url || null,   // v104: 色は genre（赤 LIVE）・印はカメラのスプライトに任せる
-                       yt: r.yt || null, ch: r.ch || null, by: r.by || null, kind: r.k || null,
-                       srcNote: "全国のライブカメラ: 配信元 " + (r.by || "不明") + "（YouTube）。位置はおおよそ。配信は止まる/変わることがあります。" });
+    pushJob(RG.CAMS_JP, function (r, i) {
+      return { i: "cj" + i, n: r.n, la: r.la, lo: r.lo, g: "camera", s: 3.8, ti: 1,
+               t: (r.k || "ライブ") + "カメラ", url: r.url || null,   // v104: 色は genre（赤 LIVE）・印はカメラのスプライトに任せる
+               yt: r.yt || null, ch: r.ch || null, by: r.by || null, kind: r.k || null,
+               srcNote: "全国のライブカメラ: 配信元 " + (r.by || "不明") + "（YouTube）。位置はおおよそ。配信は止まる/変わることがあります。" };
     });
   });
-  if (RG.mergeBuzz) RG.mergeBuzz();
-  if (RG.mergeWHS) RG.mergeWHS();   // v127: 世界遺産
-  if (RG.mergeGraves) RG.mergeGraves();   // v133: 偉人の墓
-  if (RG.mergeViews) RG.mergeViews();
-  if (RG.mergeOnsen) RG.mergeOnsen();
-  if (RG.mergeSento) RG.mergeSento();   // v108: 全国の銭湯
-  if (RG.mergeLevechi) { RG.mergeLevechi(); if (RG.levechiInit) RG.levechiInit(); }
-  if (RG.mergeNearSpecial) RG.mergeNearSpecial();
-  if (RG.mergeMountains) RG.mergeMountains();
-  if (RG.mergeRivers) RG.mergeRivers();
-  if (RG.mergeCastles) RG.mergeCastles();
-  if (RG.mergeOsmExtra) RG.mergeOsmExtra();
-  if (RG.mergeAirports) RG.mergeAirports();
-  if (RG.mergeKaido) RG.mergeKaido();
-  if (RG.mergeYt) RG.mergeYt();
-  if (RG.roadsBuild && (RG.HWY || RG.KOKUDO || RG.KAIDO)) RG.roadsBuild();
-  if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS || RG.RIVER_GEO)) RG.terraBuild();
-  if (RG.mergeEdu) RG.mergeEdu();
-  if (RG.mergeSmoke) RG.mergeSmoke();
-  if (RG.mergeAdult) RG.mergeAdult();
-  if (RG.mergeCamSpot) RG.mergeCamSpot();
+  syncJob(function () { if (RG.mergeBuzz) RG.mergeBuzz(); });
+  syncJob(function () { if (RG.mergeWHS) RG.mergeWHS(); });   // v127: 世界遺産
+  syncJob(function () { if (RG.mergeGraves) RG.mergeGraves(); });   // v133: 偉人の墓
+  syncJob(function () { if (RG.mergeViews) RG.mergeViews(); });
+  syncJob(function () { if (RG.mergeOnsen) RG.mergeOnsen(); });
+  syncJob(function () { if (RG.mergeSento) RG.mergeSento(); });   // v108: 全国の銭湯
+  syncJob(function () { if (RG.mergeLevechi) { RG.mergeLevechi(); if (RG.levechiInit) RG.levechiInit(); } });
+  syncJob(function () { if (RG.mergeNearSpecial) RG.mergeNearSpecial(); });
+  syncJob(function () { if (RG.mergeMountains) RG.mergeMountains(); });
+  syncJob(function () { if (RG.mergeRivers) RG.mergeRivers(); });
+  syncJob(function () { if (RG.mergeCastles) RG.mergeCastles(); });
+  syncJob(function () { if (RG.mergeOsmExtra) RG.mergeOsmExtra(); });
+  syncJob(function () { if (RG.mergeAirports) RG.mergeAirports(); });
+  syncJob(function () { if (RG.mergeKaido) RG.mergeKaido(); });
+  syncJob(function () { if (RG.mergeYt) RG.mergeYt(); });
+  deferJob("roads", function () { if (RG.roadsBuild && (RG.HWY || RG.KOKUDO || RG.KAIDO)) RG.roadsBuild(); });
+  deferJob("terra", function () { if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS || RG.RIVER_GEO)) RG.terraBuild(); });
+  syncJob(function () { if (RG.mergeEdu) RG.mergeEdu(); });
+  syncJob(function () { if (RG.mergeSmoke) RG.mergeSmoke(); });
+  syncJob(function () { if (RG.mergeAdult) RG.mergeAdult(); });
+  syncJob(function () { if (RG.mergeCamSpot) RG.mergeCamSpot(); });
   if (RG.CORP) once("corp", function () {
     var E = RG.CORP_EMOJI || {};
     // 市場区分でランクを分ける：プライム＝寄り始めから見える（ti1）、スタンダード・グロース・非上場＝街まで寄ったら（ti2）
     var MKS = { P: 3.6, S: 3.0, G: 2.8, N: 2.6 };
-    RG.CORP.forEach(function (c, i) {
+    pushJob(RG.CORP, function (c, i) {
       var mk = c.mk || "P";
-      RG.MAPPOI.push({ i: "k" + i, n: c.n, la: c.la, lo: c.lo, g: "corp", s: MKS[mk] || 3.0, ti: mk === "P" ? 1 : 2,
-                       t: (c.i33 || "") + (mk === "P" ? "" : mk === "S" ? "（スタンダード）" : mk === "G" ? "（グロース）" : "（非上場・有報提出）"),
-                       be: E[c.i17] || "🏢", bc: mk === "P" ? "#1B4F9C" : mk === "N" ? "#6B7A8F" : "#3F7CC4",
-                       corp: c, i17: c.i17, i33: c.i33, mk: mk, sl: c.cap ? Math.log10(c.cap + 1) * 4 : 0 });
+      return { i: "k" + i, n: c.n, la: c.la, lo: c.lo, g: "corp", s: MKS[mk] || 3.0, ti: mk === "P" ? 1 : 2,
+               t: (c.i33 || "") + (mk === "P" ? "" : mk === "S" ? "（スタンダード）" : mk === "G" ? "（グロース）" : "（非上場・有報提出）"),
+               be: E[c.i17] || "🏢", bc: mk === "P" ? "#1B4F9C" : mk === "N" ? "#6B7A8F" : "#3F7CC4",
+               corp: c, i17: c.i17, i33: c.i33, mk: mk, sl: c.cap ? Math.log10(c.cap + 1) * 4 : 0 };
     });
   });
   if (RG.CORP_GONE) once("corp_gone", function () {
-    RG.CORP_GONE.forEach(function (c, i) {
-      RG.MAPPOI.push({ i: "kg" + i, n: c.n, la: c.la, lo: c.lo, g: "corp_gone", s: 2.4, ti: 2,
-                       t: (c.yd ? c.yd + "年に消滅" : "消滅した会社"), be: "🏚️", bc: "#9AA0A6", gone: c });
+    pushJob(RG.CORP_GONE, function (c, i) {
+      return { i: "kg" + i, n: c.n, la: c.la, lo: c.lo, g: "corp_gone", s: 2.4, ti: 2,
+               t: (c.yd ? c.yd + "年に消滅" : "消滅した会社"), be: "🏚️", bc: "#9AA0A6", gone: c };
     });
   });
   if (RG.USER_POIS) once("user", function () {
-    RG.USER_POIS.forEach(function (u, i) {
-      if (!u || !u.n) return;
-      RG.MAPPOI.push({ i: "u" + i, n: u.n, la: u.la, lo: u.lo, g: u.g || "spot",
-                       s: u.s || 3, ti: 0, t: u.t || "自分で調べた場所",
-                       img: u.img || null, note: u.note, fee: u.fee, user: 1 });
+    pushJob(RG.USER_POIS, function (u, i) {
+      if (!u || !u.n) return null;
+      return { i: "u" + i, n: u.n, la: u.la, lo: u.lo, g: u.g || "spot",
+               s: u.s || 3, ti: 0, t: u.t || "自分で調べた場所",
+               img: u.img || null, note: u.note, fee: u.fee, user: 1 };
     });
   });
+  return jobs;
+}
+function runMergeJobsSync(jobs) {
+  jobs.forEach(function (job) {
+    if (job.sync) { job.sync(); return; }
+    job.items.forEach(function (it, idx) {
+      var p = job.make(it, idx);
+      if (p) { RG.projectPoi(p); RG.MAPPOI.push(p); }
+    });
+    if (job.after) job.after();
+  });
+}
+var coalescedQueued = {};
+function scheduleCoalesced(name, fn) {
+  if (coalescedQueued[name]) return;
+  coalescedQueued[name] = 1;
+  var run = function () { coalescedQueued[name] = 0; fn(); };
+  if (RG.postTask) RG.postTask(run, "background").then(null, function () { setTimeout(run, 0); });
+  else setTimeout(run, 0);
+}
+function runMergeJobsAsync(jobs) {
+  var chain = Promise.resolve();
+  jobs.forEach(function (job) {
+    chain = chain.then(function () {
+      if (job.defer) { scheduleCoalesced(job.defer, job.sync); return null; }
+      if (job.sync) { job.sync(); return null; }
+      return RG.chunked(job.items, function (it, idx) {
+        var p = job.make(it, idx);
+        if (p) { RG.projectPoi(p); RG.MAPPOI.push(p); }
+      }, 50).then(function () { if (job.after) job.after(); });
+    });
+  });
+  return chain;
+}
+function mergeExtraPois(key) {
+  if (!RG.MAPPOI) RG.MAPPOI = [];
+  runMergeJobsSync(mergeJobs(key));
+}
+function mergeExtraPoisAsync(key) {
+  if (!RG.MAPPOI) RG.MAPPOI = [];
+  return runMergeJobsAsync(mergeJobs(key));
 }
 RG.mergeExtraPois = mergeExtraPois;
+RG.mergeExtraPoisAsync = mergeExtraPoisAsync;
+
 
 /* =========================================================================
    v89: 初回 3 秒の入口 «東京駅から、どこへ行く？»

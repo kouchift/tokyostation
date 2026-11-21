@@ -193,7 +193,10 @@ function flush(urgent, done) {
   keys.forEach(function (k) { if (BASE_KEYS[k]) base = true; if (POI_KEYS[k]) poi = true;
                               if (k.indexOf("histc_") === 0) histc = true;
                               if (k === "poi" || k === "descs" || k === "depth" || k === "shinkansen") card = true; });
-  var T = [];
+  /* 第6周回 S1: T の組み立て順は従来どおり。ただし poi 系の merge は T1（merge より前）と
+     T2（merge より後）の間に挟み、RG.chunked 化した非同期版で «全 merge を終えてから
+     rebuildPOI を末尾に1回だけ» 実行する。非同期版が無い環境では従来の同期 merge で代替する */
+  var T = [], T2 = null, poiKeys = [];
   if (keys.indexOf("geopref") >= 0 && RG.buildGeoPref) T.push(function () { RG.buildGeoPref(); });
   if (keys.indexOf("geomuni") >= 0 && RG.buildGeoMuni) T.push(function () { RG.buildGeoMuni(); });
   if (base) {
@@ -202,34 +205,53 @@ function flush(urgent, done) {
     if (keys.indexOf("jpadm") >= 0 && RG.buildJPAdmin) T.push(function () { RG.buildJPAdmin(); });
   }
   if (poi) {
-    keys.forEach(function (k) { if (POI_KEYS[k] && RG.mergeExtraPois) T.push(function () { RG.mergeExtraPois(k); }); });
-    if (RG.Map && RG.Map.rebuildPOI) T.push(function () { RG.Map.rebuildPOI(); });
-    T.push(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
-    if (RG.rebuildRail) T.push(function () { RG.rebuildRail(); });
-    if (RG.buildGroupBar) T.push(function () { RG.buildGroupBar(); });
+    keys.forEach(function (k) { if (POI_KEYS[k]) poiKeys.push(k); });
+    T2 = [];
+    /* whs/grave 等（並び替え・削除を伴い得るキー）は索引を作り直して再投入する（§3.1-1 の例外） */
+    if ((keys.indexOf("whs") >= 0 || keys.indexOf("grave") >= 0) && RG.Map && RG.Map.invalidatePoiIndex) T2.push(function () { RG.Map.invalidatePoiIndex(); });
+    if (RG.Map && RG.Map.rebuildPOI) T2.push(function () { RG.Map.rebuildPOI(); });
+    T2.push(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
+    if (RG.rebuildRail) T2.push(function () { RG.rebuildRail(); });
+    if (RG.buildGroupBar) T2.push(function () { RG.buildGroupBar(); });
+    /* ↑ T は «merge より前» の列、T2 は «merge より後» の列。以後の push は T2 側へ足す */
   }
-  if (base && RG.Map && RG.Map.lod) T.push(function () { RG.Map.lod(); });   // 作り直した文字に «画面px» の大きさを与える
-  if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) T.push(function () { RG.buildWeekBar(); });
-  if (keys.indexOf("kuni") >= 0) T.push(function () { if (RG.kuniOn && RG.kuniOn()) RG.kuniSet(true); });
-  if (keys.indexOf("support") >= 0 && RG.tipInit) T.push(function () { RG.tipInit(); });
-  if (card) T.push(function () { if (keys.indexOf("poi") >= 0 && RG.Score && RG.Score.reset) RG.Score.reset(); if (RG.Card && RG.Card.refresh) RG.Card.refresh(); });   // 第2周回E: poi が後から届いたら、POIなしで計算済みのスコアを捨てる
-  if (keys.indexOf("landmarks") >= 0) T.push(function () { if (RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks(); });
+  function pushTask(fn) { (T2 || T).push(fn); }
+  if (base && RG.Map && RG.Map.lod) pushTask(function () { RG.Map.lod(); });   // 作り直した文字に «画面px» の大きさを与える
+  if (keys.indexOf("koyomi") >= 0 && RG.buildWeekBar) pushTask(function () { RG.buildWeekBar(); });
+  if (keys.indexOf("kuni") >= 0) pushTask(function () { if (RG.kuniOn && RG.kuniOn()) RG.kuniSet(true); });
+  if (keys.indexOf("support") >= 0 && RG.tipInit) pushTask(function () { RG.tipInit(); });
+  if (card) pushTask(function () { if (keys.indexOf("poi") >= 0 && RG.Score && RG.Score.reset) RG.Score.reset(); if (RG.Card && RG.Card.refresh) RG.Card.refresh(); });   // 第2周回E: poi が後から届いたら、POIなしで計算済みのスコアを捨てる
+  if (keys.indexOf("landmarks") >= 0) pushTask(function () { if (RG.Map && RG.Map.paintLandmarks && RG.applyLandmarks) RG.applyLandmarks(); });
   if (histc) {
     /* 第3周回B: クラスタのコードが届いた。データ（世界遺産・偉人の墓）が先に届いていれば POI に取り込み、
        索引と地図を作り直す（データが後なら、データ側の flush の mergeExtraPois が同じ取り込みをする）。
        開いたままのカードは描き直して、帯（世界遺産・偉人の墓・教科書）や AR ボタンを後から出す */
-    T.push(function () { if (RG.mergeWHS) RG.mergeWHS(); if (RG.mergeGraves) RG.mergeGraves(); });
+    pushTask(function () { if (RG.mergeWHS) RG.mergeWHS(); if (RG.mergeGraves) RG.mergeGraves(); });
     if (RG.WHS || RG.GRAVES) {
-      if (RG.Map && RG.Map.rebuildPOI) T.push(function () { RG.Map.rebuildPOI(); });
-      T.push(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
-      if (RG.buildGroupBar) T.push(function () { RG.buildGroupBar(); });
+      /* poi の merge と同じ flush のときは、merge 後の rebuildPOI（T2 先頭）で足りるので二重に作り直さない */
+      if (!poi && RG.Map && RG.Map.rebuildPOI) pushTask(function () { RG.Map.rebuildPOI(); });
+      pushTask(function () { if (RG.resetSearchIndex) RG.resetSearchIndex(); });
+      if (RG.buildGroupBar) pushTask(function () { RG.buildGroupBar(); });
     }
-    T.push(function () { if (RG.Card && RG.Card.refresh && RG.Card.current && RG.Card.current()) RG.Card.refresh(); });
-    T.push(function () { if (RG.__spotCur && RG.showSpot && document.querySelector(".modal.show .spotcard")) RG.showSpot(RG.__spotCur); });
-    T.push(function () { if (RG.__klmCur && RG.showKantoLM && document.querySelector(".modal.show .smk")) RG.showKantoLM(RG.__klmCur); });
+    pushTask(function () { if (RG.Card && RG.Card.refresh && RG.Card.current && RG.Card.current()) RG.Card.refresh(); });
+    pushTask(function () { if (RG.__spotCur && RG.showSpot && document.querySelector(".modal.show .spotcard")) RG.showSpot(RG.__spotCur); });
+    pushTask(function () { if (RG.__klmCur && RG.showKantoLM && document.querySelector(".modal.show .smk")) RG.showKantoLM(RG.__klmCur); });
   }
-  T.push(function () { document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } })); });
-  runTasks(T, done);
+  pushTask(function () { document.dispatchEvent(new CustomEvent("rg:data", { detail: { keys: keys } })); });
+  if (!poi || !RG.mergeExtraPoisAsync) {
+    if (poi) poiKeys.forEach(function (k) { T.push(function () { if (RG.mergeExtraPois) RG.mergeExtraPois(k); }); });
+    runTasks(T.concat(T2 || []), done);
+    return;
+  }
+  /* merge は chunked 非同期で順に（キーの順序は維持）。全部終わってから T2（rebuildPOI はその先頭で1回だけ） */
+  runTasks(T, function () {
+    var chain = Promise.resolve();
+    poiKeys.forEach(function (k) {
+      chain = chain.then(function () { return RG.mergeExtraPoisAsync(k); })
+                   .then(null, function (e) { if (window.console) console.warn("追加データの反映でつまずきました:", e); });
+    });
+    chain.then(function () { runTasks(T2, done); });
+  });
 }
 
 /* v170: «利用者が触った» か «ms たった» かの早い方で 1 回だけ呼ぶ（裏のタブでは触るまで待つ） */
@@ -253,9 +275,13 @@ function runQueue(items, onEach, done, urgent) {
     load(item.f, item.json).then(function () { refresh(item.key); })
                 .catch(function () { if (!item.opt) { failed++; (RG.dataFailed = RG.dataFailed || []).push(item.f); } /* 無くても動く。ただし数えておく（v97: 通信の失敗を黙らない）。opt はまだ無いファイル */ })
                 .then(function () {
-                  if (urgent) setTimeout(next, 0);
-                  else if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 1500 });
-                  else setTimeout(next, 40);
+                  /* 第6周回 S2: ファイル間に必ず yieldMain を挟み、入力イベントが割り込める隙間を作る（urgent でも同じ） */
+                  var y = RG.yieldMain ? RG.yieldMain() : Promise.resolve();
+                  y.then(function () {
+                    if (urgent) setTimeout(next, 0);
+                    else if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 1500 });
+                    else setTimeout(next, 40);
+                  });
                 });
   }
   next();

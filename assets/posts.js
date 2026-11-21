@@ -943,6 +943,7 @@ RG.postsMapUser = function (u, name, items) {
 RG.postsMapClear = function (quiet) {
   RG.userPostFilter = null;
   if (RG.MAPPOI) for (var j = RG.MAPPOI.length - 1; j >= 0; j--) if (RG.MAPPOI[j].upUid) RG.MAPPOI.splice(j, 1);
+  if (RG.Map && RG.Map.invalidatePoiIndex) RG.Map.invalidatePoiIndex();   // 第6周回 S1: 削除した分は索引からも外す
   if (bar) bar.hidden = true;
   if (!quiet && RG.Map && RG.Map.rebuildPOI) RG.Map.rebuildPOI();
 };
