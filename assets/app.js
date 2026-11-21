@@ -2453,6 +2453,9 @@ function mergeJobs(key) {
   function once(k, build) { if (mergedKeys[k]) return; mergedKeys[k] = 1; build(); }
   function pushJob(items, make, after) { jobs.push({ items: items, make: make, after: after || null }); }
   function syncJob(fn) { jobs.push({ sync: fn }); }
+  /* 偏差値・道路・地形の作り直しは «merge のたび» だと全件走査が merge 回数ぶん走る（実測で支配的）。
+     非同期実行では末尾に1回だけへ寄せる（最終状態は同じ）。同期実行では従来どおりその場で実行する */
+  function deferJob(name, fn) { jobs.push({ sync: fn, defer: name }); }
   function flat(obj) {
     var out = [];
     Object.keys(obj).forEach(function (gid) {
@@ -2524,7 +2527,7 @@ function mergeJobs(key) {
                s: 3.0, ti: 1, t: r.kind || m.label, be: m.e, bc: m.c, osm10: r, gid: it.gid, url: r.webs || null };
     });
   });
-  syncJob(function () { if (RG.rebuildHensachi) RG.rebuildHensachi(); });
+  deferJob("hensachi", function () { if (RG.rebuildHensachi) RG.rebuildHensachi(); });
   // 関東の見どころ
   if (RG.KANTO_LM) once("klm", function () {
     pushJob(RG.KANTO_LM, function (r, i) {
@@ -2594,8 +2597,8 @@ function mergeJobs(key) {
   syncJob(function () { if (RG.mergeAirports) RG.mergeAirports(); });
   syncJob(function () { if (RG.mergeKaido) RG.mergeKaido(); });
   syncJob(function () { if (RG.mergeYt) RG.mergeYt(); });
-  syncJob(function () { if (RG.roadsBuild && (RG.HWY || RG.KOKUDO || RG.KAIDO)) RG.roadsBuild(); });
-  syncJob(function () { if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS || RG.RIVER_GEO)) RG.terraBuild(); });
+  deferJob("roads", function () { if (RG.roadsBuild && (RG.HWY || RG.KOKUDO || RG.KAIDO)) RG.roadsBuild(); });
+  deferJob("terra", function () { if (RG.terraBuild && (RG.RANGES || RG.RIVERS || RG.SEAS || RG.CURRENTS || RG.RIVER_GEO)) RG.terraBuild(); });
   syncJob(function () { if (RG.mergeEdu) RG.mergeEdu(); });
   syncJob(function () { if (RG.mergeSmoke) RG.mergeSmoke(); });
   syncJob(function () { if (RG.mergeAdult) RG.mergeAdult(); });
@@ -2638,10 +2641,19 @@ function runMergeJobsSync(jobs) {
     if (job.after) job.after();
   });
 }
+var coalescedQueued = {};
+function scheduleCoalesced(name, fn) {
+  if (coalescedQueued[name]) return;
+  coalescedQueued[name] = 1;
+  var run = function () { coalescedQueued[name] = 0; fn(); };
+  if (RG.postTask) RG.postTask(run, "background").then(null, function () { setTimeout(run, 0); });
+  else setTimeout(run, 0);
+}
 function runMergeJobsAsync(jobs) {
   var chain = Promise.resolve();
   jobs.forEach(function (job) {
     chain = chain.then(function () {
+      if (job.defer) { scheduleCoalesced(job.defer, job.sync); return null; }
       if (job.sync) { job.sync(); return null; }
       return RG.chunked(job.items, function (it, idx) {
         var p = job.make(it, idx);
