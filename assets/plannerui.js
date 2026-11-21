@@ -462,15 +462,20 @@ RG.showSpot = function (p) {
   if (p.univ != null && RG.showUniv) { RG.showUniv(p.univ); return; }
   if (p.high != null && RG.showHigh) { RG.showHigh(p.high); return; }
   var g = (RG.GENRES || []).filter(function (x) { return x.id === p.g; })[0] || { e: "📍", label: "スポット", c: "#0055AD" };
-  // 最寄り駅とそこまでの徒歩時間
-  var near = [];
-  RG.NET.stations.forEach(function (t) {
-    var km = RG.hav([p.la, p.lo], [t.la, t.lo]);
-    if (km < 2.0) near.push({ t: t, km: km });
-  });
-  near.sort(function (a, b) { return a.km - b.km; });
-  near = near.slice(0, 3);
-  var nb = near[0] || null;
+  // 最寄り駅とそこまでの徒歩時間（S7: 主要部には要らないので、使う節で初めて1回だけ計算する）
+  var nearCache = null;
+  function nearFn() {
+    if (nearCache) return nearCache;
+    var near = [];
+    RG.NET.stations.forEach(function (t) {
+      var km = RG.hav([p.la, p.lo], [t.la, t.lo]);
+      if (km < 2.0) near.push({ t: t, km: km });
+    });
+    near.sort(function (a, b) { return a.km - b.km; });
+    near = near.slice(0, 3);
+    nearCache = { near: near, nb: near[0] || null };
+    return nearCache;
+  }
   var W = RG.CONFIG.modes.walk, DT = RG.CONFIG.detour.walk;
   var q = encodeURIComponent(p.n);
   // 半径400m にある便利施設を数える（トイレ・AED・Wi-Fi・授乳・銭湯）
@@ -491,6 +496,7 @@ RG.showSpot = function (p) {
   }
   function fromHtmlFn() {
   // 出発地からの行き方（出発地が決まっているときだけ）
+  var nb = nearFn().nb;
   var fromHtml = "";
   if (Trip.origin) {
     var km0 = RG.hav(Trip.origin, [p.la, p.lo]);
@@ -542,6 +548,7 @@ RG.showSpot = function (p) {
     cameraBlock(p);
   }
   function stage3Html() {
+    var near = nearFn().near;
     return (RG.wikiIntro ? RG.wikiIntro(p.n) : "") +
     '<div class="exgrid">' +
       exrow("📍 最寄り駅", near.length ? RG.stLabel(near[0].t) : "—",
@@ -559,6 +566,7 @@ RG.showSpot = function (p) {
     "</div>";
   }
   function stage6Html() {
+    var near = nearFn().near;
     return '<div class="lnks">' +
       '<a class="lnk" href="https://ja.wikipedia.org/wiki/' + q + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-book"></use></svg></span>Wikipedia</a>' +
       (p.url ? '<a class="lnk" href="' + esc(p.url) + '" target="_blank" rel="noopener"><span><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-link"></use></svg></span>公式ページ</a>' : "") +

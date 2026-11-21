@@ -2316,6 +2316,7 @@ var Card = (function () {
     if (!fns.length) return;
     var m = opener("🚉 " + RG.stLabel(s), '<div class="card__scroll stcard">' + fns[0]() + "</div>");
     m.__card = id;
+    cur = id;   // opener の modal() が «前の駅カード» の close で cur を null にするため、このカードのものとして戻す（段組みの継続条件）
     var host = m.querySelector(".card__scroll");
     function alive() { return gen === cardGen && cur === id && m.__card === id && host && document.contains(host); }
     function finish() {
