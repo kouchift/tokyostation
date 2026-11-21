@@ -2558,6 +2558,7 @@ function mergeJobs(key) {
         if (p0.g === "shrine_major" && p0.q && iq[p0.q]) { RG.MAPPOI.splice(j, 1); removed++; }
       }
       if (removed && RG.Map && RG.Map.invalidatePoiIndex) RG.Map.invalidatePoiIndex();
+      if (removed && RG.invalidateSearchPoiIndex) RG.invalidateSearchPoiIndex();   // 第6周回段2: 検索索引のスポット区画も作り直す
     });
   });
   if (RG.SHRINE_MAJOR) once("shrines_jp", function () {
@@ -2633,12 +2634,15 @@ function mergeJobs(key) {
 }
 function runMergeJobsSync(jobs) {
   jobs.forEach(function (job) {
-    if (job.sync) { job.sync(); return; }
+    if (job.sync) { job.sync(); if (RG.syncSearchIndexIfBuilt) RG.syncSearchIndexIfBuilt(); return; }
+    var startLen = RG.MAPPOI ? RG.MAPPOI.length : 0;
     job.items.forEach(function (it, idx) {
       var p = job.make(it, idx);
       if (p) { RG.projectPoi(p); RG.MAPPOI.push(p); }
     });
     if (job.after) job.after();
+    /* 第6周回段2 (§3.3-2): 増えた POI だけ検索索引へ append する（全再構築はしない） */
+    if (RG.appendSearchIndex && RG.MAPPOI) RG.appendSearchIndex(RG.MAPPOI.slice(startLen));
   });
 }
 var coalescedQueued = {};
@@ -2654,11 +2658,16 @@ function runMergeJobsAsync(jobs) {
   jobs.forEach(function (job) {
     chain = chain.then(function () {
       if (job.defer) { scheduleCoalesced(job.defer, job.sync); return null; }
-      if (job.sync) { job.sync(); return null; }
+      if (job.sync) { job.sync(); if (RG.syncSearchIndexIfBuilt) RG.syncSearchIndexIfBuilt(); return null; }
+      var startLen = RG.MAPPOI ? RG.MAPPOI.length : 0;
       return RG.chunked(job.items, function (it, idx) {
         var p = job.make(it, idx);
         if (p) { RG.projectPoi(p); RG.MAPPOI.push(p); }
-      }, 50).then(function () { if (job.after) job.after(); });
+      }, 50).then(function () {
+        if (job.after) job.after();
+        /* 第6周回段2 (§3.3-2): チャンクで増えた POI だけ検索索引へ append する */
+        if (RG.appendSearchIndex && RG.MAPPOI) RG.appendSearchIndex(RG.MAPPOI.slice(startLen));
+      });
     });
   });
   return chain;
@@ -2713,7 +2722,7 @@ function selectHeroPlace(r) {
 }
 /* 候補の並び: 駅名の完全一致 → 前方一致 → かな前方一致 → 部分一致 → 路線名。同点は路線の多い駅（大きい駅）を先に。
    スポット（東京タワー・羽田空港ビルなど）は既存の索引（RG.searchLocal）から最大 3 件 */
-RG.heroSearch = function (q, limit) {
+function heroStationRows(q, limit) {
   q = String(q || "").trim(); if (!q) return [];
   var qn = q.replace(/駅$/, "") || q, out = [];
   (RG.NET && RG.NET.stations || []).forEach(function (s) {
@@ -2729,23 +2738,47 @@ RG.heroSearch = function (q, limit) {
   out.sort(function (a, b) { return a.sc - b.sc; });
   var seenName = {};                                                       // 同名で路線の無いもの（分割された «新宿_2» など）は後ろの重複として省く
   out = out.filter(function (r) { if (seenName[r.n] && !r.ls.length) return false; seenName[r.n] = 1; return true; }).slice(0, limit || 8);
+  return out;
+}
+function heroSpotRows(q) {
+  var out = [];
   if (RG.searchLocal) {
     var seen = 0;
     RG.searchLocal(q, 12).forEach(function (r) { if (r.t !== "station" && r.t !== "addr" && seen < 3) { seen++; out.push(r); } });
   }
   return out;
+}
+RG.heroStationRows = heroStationRows;
+RG.heroSpotRows = heroSpotRows;
+RG.heroSearch = function (q, limit) {
+  return heroStationRows(q, limit).concat(heroSpotRows(q));
 };
 RG.initHeroSearch = function () {
   var input = $("#hero-q"), sug = $("#hero-sug"), clear = $("#hero-q-clear"), hero = $("#hero");
   if (!input || !sug) return;
   var last = "";
   function close() { sug.innerHTML = ""; sug.hidden = true; last = ""; }
+  var renderGen = 0;
+  function addHeroRow(r) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");
+      if (r.t === "station") {
+        b.innerHTML = "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>";
+        b.addEventListener("click", function () { input.value = r.n; close(); selectHeroDestination(r.id); });
+      } else {
+        b.innerHTML = "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small><span>" + esc(r.sub || "") + "</span>";
+        b.addEventListener("click", function () { input.value = r.n; close(); selectHeroPlace(r); });
+      }
+      sug.appendChild(b);
+  }
   function render(q) {
     q = (q || "").trim();
     if (clear) clear.hidden = !q;
     if (!q) { close(); return; }
     if (q === last) return; last = q;
-    var rows = RG.heroSearch(q, 8);
+    var gen = ++renderGen;
+    /* 第6周回段2 (§3.3-4): 駅候補は同期で先に描き、スポット走査（searchLocal）は yield の後ろへ回す。
+       最終的な候補の内容・並びは従来の heroSearch(q, 8) と同一（駅 → スポットの順） */
+    var stations = RG.heroStationRows ? RG.heroStationRows(q, 8) : RG.heroSearch(q, 8);
     sug.innerHTML = "";
     var zq = RG.zipMode && RG.zipMode() && /^(\d{3})-?(\d{4})$/.exec(q.replace(/[\s\u3000〒]/g, "").replace(/[‐－ー―−]/g, "-"));   // v118: 郵便番号モード
     if (zq && RG.zipLookup) RG.zipLookup(zq[1] + zq[2], function (hit) {
@@ -2756,19 +2789,18 @@ RG.initHeroSearch = function () {
       if (hit) zb.addEventListener("click", function () { input.value = "〒" + zq[1] + "-" + zq[2]; close(); if (RG.heroFold) RG.heroFold("user"); RG.Map.gotoLatLng(hit.la, hit.lo, 160); if (RG.tripStatus) RG.tripStatus("〒" + zq[1] + "-" + zq[2] + " " + hit.town + " のあたり", "ok", 3500); });
       sug.insertBefore(zb, sug.firstChild); sug.hidden = false;
     });
-    if (!rows.length) { sug.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした。駅名・地名・建物名でお試しください。</div>'; sug.hidden = false; return; }
-    rows.forEach(function (r) {
-      var b = document.createElement("button"); b.type = "button"; b.className = "heroSug heroSug--" + r.t; b.setAttribute("role", "option");
-      if (r.t === "station") {
-        b.innerHTML = "<b><svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-station'></use></svg> " + esc(r.n) + "駅</b><small>" + esc(r.k || "") + "</small><span>" + esc((r.ls || []).slice(0, 3).join(" / ")) + "</span>";
-        b.addEventListener("click", function () { input.value = r.n; close(); selectHeroDestination(r.id); });
-      } else {
-        b.innerHTML = "<b>" + (r.t === "area" ? "🗺️ " : "📍 ") + esc(r.n) + "</b><small></small><span>" + esc(r.sub || "") + "</span>";
-        b.addEventListener("click", function () { input.value = r.n; close(); selectHeroPlace(r); });
+    stations.forEach(addHeroRow);
+    if (stations.length) sug.hidden = false;
+    var spotPhase = function () {
+      if (gen !== renderGen || last !== q) return;   // その後に入力が進んでいたら古い候補は足さない
+      var spots = RG.heroSpotRows ? RG.heroSpotRows(q) : [];
+      spots.forEach(addHeroRow);
+      if (spots.length) sug.hidden = false;
+      if (!stations.length && !spots.length && !zq && !sug.querySelector(".heroSug")) {
+        sug.innerHTML = '<div class="heroSug heroSug--e">見つかりませんでした。駅名・地名・建物名でお試しください。</div>'; sug.hidden = false;
       }
-      sug.appendChild(b);
-    });
-    sug.hidden = false;
+    };
+    if (RG.yieldMain) RG.yieldMain().then(spotPhase); else spotPhase();
   }
   input.addEventListener("input", function () { render(input.value); });
   input.addEventListener("focus", function () { if (input.value.trim()) { last = ""; render(input.value); } });
