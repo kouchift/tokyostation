@@ -713,8 +713,8 @@ body.secret .lbadge{min-width:25px;height:25px;font-size:var(--fs-12);background
 .sp--l5{--l-bg:#FFF3D6;--l-fg:#C8880F}
 .splegend{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
 .spl{font-size:var(--fs-11);padding:2px 8px;border-radius:var(--r-pill);color:#fff}
-.spl--l1{background:#9AA0A6}.spl--l2{background:#57B8FF}.spl--l3{background:var(--brand-2)}
-.spl--l4{background:var(--brand)}.spl--l5{background:#C8880F}
+.spl--l1{background:#9AA0A6}.spl--l2{background:#57B8FF}.spl--l3{background:#0055AD} /* 第6周回AA是正: 白文字で7.23:1（旧 var(--brand-2) #008BF2 は3.51:1）。--brand-2 自体は他要素で使うため触らず、この札だけ濃くする */
+.spl--l4{background:var(--brand)}.spl--l5{background:#926204} /* 第6周回AA是正: 白文字で5.29:1（旧 #C8880F は3.01:1） */
 
 /* =========================================================================
    v7：路線レールの段組み／全駅ランチャー／ランドマークTOP100
@@ -2825,7 +2825,7 @@ button,.lr__i,.tq__amt,.tj__amt{touch-action:manipulation}
 @keyframes cheerpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
 .req{margin:10px 0 2px}
 .req__b{width:100%;display:flex;align-items:center;gap:8px;border:1.5px dashed #b58f3a;background:#fffaf0;border-radius:var(--r-md);padding:8px 10px;cursor:pointer;text-align:left}
-.req__i{font-size:var(--fs-20)}.req__t{font-weight:800;font-size:var(--fs-13);color:#5a3d00}.req__s{font-size:var(--fs-11);color:#8a7a5a;margin-left:auto}
+.req__i{font-size:var(--fs-20)}.req__t{font-weight:800;font-size:var(--fs-13);color:#5a3d00}.req__s{font-size:var(--fs-11);color:#7A6848;margin-left:auto} /* 第6周回AA是正: #fffaf0 上で5.17:1（旧 #8a7a5a は4.03:1） */
 .sec--sk{border:2px solid var(--brand);border-radius:var(--r-lg);padding:10px;background:#f4f8ff}
 .sk__lines{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
 .lchip--sk{color:#fff;border:0;border-radius:var(--r-pill);padding:4px 10px;font-weight:700;font-size:var(--fs-12);cursor:pointer}
@@ -3651,7 +3651,7 @@ a.tq__amt{display:flex;flex-direction:column;align-items:center;justify-content:
 .hdr__brand>span{display:flex;flex-direction:column;min-width:0}
 .hdr__brand strong{font-size:var(--fs-16);font-weight:800;letter-spacing:-.01em;color:var(--text);white-space:nowrap;line-height:1.15}
 .hdr__brand small{font-size:var(--fs-11);color:var(--label);font-weight:600;letter-spacing:.02em;white-space:nowrap}
-.hdr__brandIcon{width:34px;height:34px;border-radius:50%;background:var(--lb600);display:flex;align-items:center;justify-content:center;font-size:var(--fs-18);box-shadow:var(--sh-xs);flex:0 0 auto}
+.hdr__brandIcon{width:34px;height:34px;border-radius:50%;background:#0055AD;display:flex;align-items:center;justify-content:center;font-size:var(--fs-18);box-shadow:var(--sh-xs);flex:0 0 auto} /* 第6周回AA是正: 実効 #eef2f8 on 背景で6.44:1（旧 var(--lb600) 実効 #008BF2 は3.13:1）。--lb600 は共用のため触らず、この印だけ濃くする */
 .hdr__actions{display:flex;align-items:center;gap:4px;margin-left:auto;flex:0 0 auto}
 @media (max-width:720px){ .hdr__mark.hdr__brand>span{display:flex} .hdr__brand strong{font-size:var(--fs-14)} .hdr__brand small{display:none} }
 @media (max-width:360px){ .hdr__brand strong{font-size:var(--fs-13)} }
@@ -4027,7 +4027,7 @@ svg.gic use{pointer-events:none}
 /* たたむボタン（カード見出しの右端） */
 .heroSearch__eyebrow{align-items:center}
 .heroSearch__eyebrow .heroSearch__guide{margin-left:auto}
-.heroSearch__fold{flex:0 0 auto;width:44px;height:44px;margin:-8px -12px -8px 0;border:0;border-radius:50%;background:transparent;color:var(--tsg-ink2);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.heroSearch__fold{flex:0 0 auto;width:44px;height:44px;margin:-8px -12px -8px 0;border:0;border-radius:50%;background:transparent;color:#A0A8B4;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer} /* 第6周回AA是正: 入口カード（暗色面）上の開閉アイコン。実効背景 rgb(40,44,53) で5.83:1（旧 var(--tsg-ink2) #626264 は2.30:1、非テキスト基準3:1も未達だった） */
 .heroSearch__fold:hover{background:var(--tsg-bg);color:var(--tsg-ink)}
 .heroSearch__fold .ms{font-size:var(--fs-22)}
 /* 1 行のピル（mini のときだけ） */
@@ -4824,6 +4824,7 @@ body.gesturing .poipop{visibility:hidden}
 .modal--dark .ex__k,.modal--dark .ex__s,.card--dark .ex__k,.card--dark .ex__s{color:var(--label)}
 .modal--dark .src,.card--dark .src{color:var(--label);border-top-color:var(--grid)}
 .modal--dark .mini,.card--dark .mini{color:var(--label)}
+.modal--dark .mm__empty,.modal--dark .mm__cheerline,.card--dark .mm__empty,.card--dark .mm__cheerline{color:#A9B6CC} /* 第6周回AA是正: 暗色カード上では var(--ink-2) #404751 のままで1.74:1だった（実効背景 rgb(23,32,48)）。#A9B6CC で7.97:1。明色面での基本色は変えない */
 .modal--dark a,.card--dark a{color:var(--link)}
 .modal--dark .stars,.card--dark .stars{color:var(--glass-star)}
 .modal--dark .stars b,.card--dark .stars b{color:var(--text)}

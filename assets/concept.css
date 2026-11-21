@@ -47,7 +47,7 @@
 .heroSug:hover,.heroSug:focus-visible{background:rgba(255,255,255,.07)}
 .heroSug--e{color:#9fb0c9}
 .heroAction{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#eef2f8}
-.heroAction--primary{background:linear-gradient(135deg,#ff8a3c,#ff5a36);border-color:transparent;color:#fff}
+.heroAction--primary{background:linear-gradient(135deg,#D53D00,#BF360C);border-color:transparent;color:#fff} /* 第6周回AA是正: 白文字で両端とも4.5:1以上（旧 #ff8a3c→#ff5a36 は2.35〜3.10:1） */
 .heroAction:hover{filter:brightness(1.13)}
 .heroSearch__popular span{color:#9fb0c9}
 .heroSearch__popular button{background:rgba(255,255,255,.07) !important;border-color:rgba(255,255,255,.16) !important;color:#eef2f8}
@@ -156,7 +156,7 @@
   font-weight:900;font-size:1rem;letter-spacing:.05em;display:inline-flex;align-items:baseline;gap:9px;transition:background-color .2s,color .2s,border-color .2s}
 .cx-tab small{font-family:var(--cx-mono);font-weight:400;font-size:0.6875rem;letter-spacing:.22em}
 .cx-tab[aria-selected="true"]{background:var(--cx-ink);color:#06080d;border-color:var(--cx-ink)}
-.cx-tab[aria-selected="true"] small{color:var(--cx-accent-hot)}
+.cx-tab[aria-selected="true"] small{color:#C63A12} /* 第6周回AA是正: 選択中タブの小文字（旧 --cx-accent-hot #ff5a36 on #f2f4f8 は2.82:1 → 4.75:1）。変数自体は他で使う前提で触らない */
 .cx-panel{background:var(--cx-panel);border:1px solid var(--cx-line);border-radius:20px;padding:clamp(24px,4vw,44px)}
 .cx-panel .cx-p-lead{font-size:clamp(1.05rem,2.6vw,1.35rem);font-weight:700;line-height:1.8;margin:0 0 8px;max-width:44em}
 .cx-panel .cx-p-sub{color:var(--cx-dim);margin:0 0 24px;max-width:46em;font-size:.95rem}
