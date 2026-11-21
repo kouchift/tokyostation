@@ -2634,7 +2634,7 @@ function mergeJobs(key) {
 }
 function runMergeJobsSync(jobs) {
   jobs.forEach(function (job) {
-    if (job.sync) { job.sync(); if (RG.syncSearchIndex) RG.syncSearchIndex(); return; }
+    if (job.sync) { job.sync(); if (RG.syncSearchIndexIfBuilt) RG.syncSearchIndexIfBuilt(); return; }
     var startLen = RG.MAPPOI ? RG.MAPPOI.length : 0;
     job.items.forEach(function (it, idx) {
       var p = job.make(it, idx);
@@ -2658,7 +2658,7 @@ function runMergeJobsAsync(jobs) {
   jobs.forEach(function (job) {
     chain = chain.then(function () {
       if (job.defer) { scheduleCoalesced(job.defer, job.sync); return null; }
-      if (job.sync) { job.sync(); if (RG.syncSearchIndex) RG.syncSearchIndex(); return null; }
+      if (job.sync) { job.sync(); if (RG.syncSearchIndexIfBuilt) RG.syncSearchIndexIfBuilt(); return null; }
       var startLen = RG.MAPPOI ? RG.MAPPOI.length : 0;
       return RG.chunked(job.items, function (it, idx) {
         var p = job.make(it, idx);
