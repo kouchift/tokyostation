@@ -110,9 +110,32 @@ var Rail = (function () {
     if (/新幹線/.test(n)) return { id: "jr", label: "JR" };
     return { id: "priv", label: "私鉄・その他" };
   }
+  /* 第6周回 S6（design/cycle6-inp-design.md §3.6）: build のキャッシュ／dirty 管理と、
+     ジャンル件数の1回走査キャッシュ。件数は refreshGenreCounts と同じ1回走査で数え、
+     build 内のジャンルごとの filter（O(ジャンル数×POI数)）は使わない */
+  var railDirty = true, railBuiltKey = null, railBuildGen = 0, genreCntCache = null;
+  function genreCounts() {
+    var P = RG.MAPPOI || [], G = RG.GENRES || [];
+    if (genreCntCache && genreCntCache.n === P.length && genreCntCache.g === G.length) return genreCntCache.cnt;
+    var cnt = {};
+    for (var i = 0; i < P.length; i++) { var k = P[i].g; cnt[k] = (cnt[k] || 0) + 1; }
+    genreCntCache = { n: P.length, g: G.length, cnt: cnt };
+    return cnt;
+  }
+  function railKey() {
+    var pref = ST.pref || "東京都", G = RG.GENRES || [];
+    return [pref, (RG.NET && RG.NET.lines ? RG.NET.lines.length : 0), (RG.MAPPOI || []).length,
+      G.map(function (g) { return g.id + (g.enabled ? 1 : 0); }).join(","),
+      ST.hideVisited ? 1 : 0, ST.secret ? 1 : 0,
+      pref === "東京都" ? "-" : (prefsOfLines() ? "L" : "-")].join("|");
+  }
   function build() {
     box = $("#linerail");
     pop = $("#linepop");
+    var key = railKey();
+    if (!railDirty && railBuiltKey === key && box && box.querySelector(".lr__bar")) return;   // データも条件も変わっていない開閉では作り直さない
+    railDirty = false; railBuiltKey = key;
+    var myGen = ++railBuildGen;
     var pref = ST.pref || "東京都", LP = pref === "東京都" ? null : prefsOfLines();
     var names;
     if (pref === "東京都" || !LP) {
@@ -142,6 +165,21 @@ var Rail = (function () {
       '</select><span class="lr__hint">都道府県をえらぶと、その県の路線に切り替わり、地図もそこへ寄ります。</span></div>';
     rows = prefSel + rows;
     var genres = (RG.GENRES || []);
+    /* S6: ジャンル行（ボタン群）は yield の後ろで段階的に足す。件数は genreCounts() の1回走査を使い回す */
+    function genreButtonsHtml() {
+      var cnt = genreCounts();
+      return genres.map(function (g) {
+        var n = cnt[g.id] || 0;
+        // v122: 地図の印と同じ絵（RG.gMark）＋ 名前 ＋ 件数。アイコンだけでは何か分からないので名前を必ず出す
+        return '<button class="lr__i lr__i--g lr__i--v2' + (g.enabled ? "" : " off") + '" type="button" ' +
+          'data-genre="' + esc(g.id) + '" style="--lc:' + g.c + '" aria-pressed="false" ' +
+          'data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '" ' +
+          (g.enabled ? "" : "disabled ") + ">" +   // v170: 名前は見える文字（短い名前＋件数）から。aria-label で別の名前にしない
+          (RG.gMark ? RG.gMark(g) : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +
+          '<span class="lr__lbl">' + esc(g.short || g.label) + "</span>" +
+          '<span class="lr__num">' + (!g.enabled ? "データなし" : n ? n.toLocaleString() : g.optIn ? "押すと出る" : "&nbsp;") + "</span>" +
+          (g.optIn ? '<span class="lr__dot">▶</span>' : "") + "</button>"; }).join("");
+    }
     var grow =
       '<div class="lr__ctl">' +
         '<button class="lr__c" type="button" data-gall="1">すべて表示</button>' +
@@ -152,20 +190,11 @@ var Rail = (function () {
         '<span class="lr__cnt" id="lr-gcnt"></span>' +
       "</div>" +
       '<div class="lr__selrow" id="lr-sel"></div>' +
-      '<div class="lr__row lr__row--g">' +
-      genres.map(function (g) {
-        var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
-        // v122: 地図の印と同じ絵（RG.gMark）＋ 名前 ＋ 件数。アイコンだけでは何か分からないので名前を必ず出す
-        return '<button class="lr__i lr__i--g lr__i--v2' + (g.enabled ? "" : " off") + '" type="button" ' +
-          'data-genre="' + esc(g.id) + '" style="--lc:' + g.c + '" aria-pressed="false" ' +
-          'data-tip="' + esc(g.label + (g.desc ? "｜" + g.desc : "")) + '" ' +
-          (g.enabled ? "" : "disabled ") + ">" +   // v170: 名前は見える文字（短い名前＋件数）から。aria-label で別の名前にしない
-          (RG.gMark ? RG.gMark(g) : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +
-          '<span class="lr__lbl">' + esc(g.short || g.label) + "</span>" +
-          '<span class="lr__num">' + (!g.enabled ? "データなし" : n ? n.toLocaleString() : g.optIn ? "押すと出る" : "&nbsp;") + "</span>" +
-          (g.optIn ? '<span class="lr__dot">▶</span>' : "") + "</button>"; }).join("") +
-      "</div>" +
-      '<div class="lr__note"><button class="lr__c" type="button" id="lr-legend">' +
+            '<div class="lr__row lr__row--g" id="lr-genres"></div>' +
+      '<div class="lr__note" id="lr-gnote"></div>';
+    /* 注記の中身（従来の .lr__note の内側そのまま）。段階描画で #lr-gnote へ入れる */
+    var noteInnerHtml =
+      '<button class="lr__c" type="button" id="lr-legend">' +
       "<svg class='uic' aria-hidden='true' focusable='false'><use href='#ui-help'></use></svg> アイコンの意味を見る</button> " +
       '<button class="lr__c" type="button" id="lr-chain"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-store"></use></svg> お店をえらぶ</button> ' +
       '<button class="lr__c" type="button" id="lr-corp"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-building"></use></svg> 業種でえらぶ</button> ' +
@@ -178,7 +207,7 @@ var Rail = (function () {
       '<button class="lr__c lr__c--p" type="button" id="lr-pins"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 自分のピン</button> ' +
       '<button class="lr__c lr__c--p" type="button" id="lr-pin"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 自分のピン</button> ' +
       "アイコンを押すと、そのジャンルだけを地図に残します（<b>いくつでも選べます</b>）。" +
-      "地図の印と同じ絵です。うすいアイコンはデータが取れていないもの、名前の下の数字はいま読み込んである件数です。</div>";
+      "地図の印と同じ絵です。うすいアイコンはデータが取れていないもの、名前の下の数字はいま読み込んである件数です。";
     box.innerHTML =
       '<div class="lr__bar">' +
         '<span class="lr__tabs">' +
@@ -202,6 +231,94 @@ var Rail = (function () {
         pane0.insertBefore(chips, pane0.firstChild); pane0.insertBefore(h, chips);
       }
     }
+    /* S6: ジャンル行と注記は段階描画で後から入るため、その結線は入れた直後に行う */
+    function bindGenrePane() {
+    var pb2 = $("#lr-pin", box);
+    if (pb2) pb2.addEventListener("click", function () {
+      if (RG.openPinFilter) RG.openPinFilter();
+    });
+    var pb = $("#lr-pins", box);
+    if (pb) pb.addEventListener("click", function () {
+      if (RG.openPinFilter) RG.openPinFilter();
+    });
+    var hb3 = $("#lr-hs", box);
+    if (hb3) hb3.addEventListener("click", function () {
+      if (RG.showHensachiEdit) RG.showHensachiEdit();
+    });
+    var sb2 = $("#lr-smoke", box);
+    if (sb2) sb2.addEventListener("click", function () {
+      if (RG.hasSmokeTicket && RG.hasSmokeTicket()) RG.openSmokeFilter();
+      else if (RG.showTicket) RG.showTicket();
+    });
+    var mb = $("#lr-mtrank", box);
+    if (mb) mb.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showMountainRank) RG.showMountainRank(); }); });
+    var hb4 = $("#lr-hanrank", box);
+    if (hb4) hb4.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showHanRank) RG.showHanRank(); }); });
+    var yb = $("#lr-yt", box);
+    if (yb) yb.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showYtList) RG.showYtList(); }); });
+    var ob = $("#lr-onsen", box);
+    if (ob) ob.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("spots", function () { RG.openOnsenFilter(); }); });
+    var cb3 = $("#lr-corp", box);
+    if (cb3) cb3.addEventListener("click", function () {
+      if (RG.openCorpFilter) RG.openCorpFilter();
+    });
+    var cb2 = $("#lr-chain", box);
+    if (cb2) cb2.addEventListener("click", RG.openChains);
+    var lg2 = $("#lr-legend", box);
+    if (lg2) lg2.addEventListener("click", function () {
+      var html = '<p class="set__d">地図に出ているアイコンの意味です。押すとそのジャンルだけ表示します。</p>' +
+        '<div class="legend">' + (RG.GENRES || []).map(function (g) {
+          var n = genreCounts()[g.id] || 0;
+          return '<button class="legend__r' + (g.enabled ? "" : " off") + '" type="button" data-lg="' +
+            esc(g.id) + '"' + (g.enabled ? "" : " disabled") + ">" +
+            (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +   // v122: 地図と同じ印
+            '<span class="legend__t"><b>' + esc(g.label) + "</b>" +
+              "<i>" + esc(g.desc || "") + (g.varies ? "　※ 地図の印は種類で変わります：" + esc(g.varies) : "") + "</i>" +   // v164: 種類別の出し分けを凡例に書く
+              (g.enabled ? "" : '<u><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> ' + esc(g.reason || "データ未取得") + "</u>") + "</span>" +
+            '<span class="legend__n">' + (g.enabled ? n + "件" : "—") + "</span></button>"; }).join("") +
+        "</div>" +
+        '<div class="legend__foot">' +
+          '<button id="lg-all" class="set__b2" type="button">すべて表示</button>' +
+          '<button id="lg-none" class="set__b2" type="button">選択をぜんぶ解除</button></div>' +
+        '<p class="src"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 駅／⭐ 注視駅／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-school"></use></svg> 自分で追加した場所 は、この一覧とは別に地図に出ます。</p>';
+      var mm = RG.openModal("❓ アイコンの意味", html);
+      $$("[data-lg]", mm).forEach(function (b2) {
+        b2.addEventListener("click", function () {
+          ST.genres = [b2.dataset.lg]; save(); syncGenreButtons(); RG.closeModal();
+          RG.tripStatus(b2.querySelector("b").textContent + " だけを地図に表示しています。", "ok", 2800);
+        });
+      });
+      $("#lg-all", mm).addEventListener("click", function () { ST.genres = []; save(); syncGenreButtons(); RG.closeModal(); });
+      $("#lg-none", mm).addEventListener("click", function () { ST.genres = ["__none__"]; save(); syncGenreButtons(); RG.closeModal(); });
+    });
+    $$("[data-genre]", box).forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.dataset.genre === "event" && RG.showEvents) { RG.showEvents(); return; }
+        if (b.dataset.genre === "adult" && RG.adultOn && !RG.adultOn()) {
+          RG.showAdultGate(); return;
+        }
+        if (b.dataset.genre === "smoke" && RG.hasSmokeTicket && !RG.hasSmokeTicket()) {
+          RG.showTicket(); return;
+        }
+        toggleGenre(b.dataset.genre);
+      });
+      b.addEventListener("pointerdown", function () {
+        showGenre(b.dataset.genre, b);
+        clearTimeout(popTimer); popTimer = setTimeout(hide, 4000);
+      });
+      b.addEventListener("mouseleave", hide);                       // v166: 乗せただけでは出さない（押したときだけ・上の pointerdown）
+      b.addEventListener("blur", hide);
+    });
+      syncGenreButtons();
+    }
+    if (RG.yieldMain) RG.yieldMain().then(function () { fillGenrePane(); }); else fillGenrePane();
+    function fillGenrePane() {
+      if (myGen !== railBuildGen) return;   // 作り直しが進んでいたら古い行は足さない
+      var gh = $("#lr-genres", box), nt = $("#lr-gnote", box);
+      if (gh) gh.innerHTML = genreButtonsHtml();
+      if (nt) nt.innerHTML = noteInnerHtml;
+      bindGenrePane();
+    }
     var lastTab = null;
     function showTab(t) {
       ST.railTab = t; save();
@@ -210,7 +327,7 @@ var Rail = (function () {
       $$("[data-pane]", box).forEach(function (p) {
         p.hidden = p.dataset.pane !== t;
         p.classList.remove("lr__rows--in");                                     // v165: 切り替わったことが分かるように、中身を短いフェードで入れ替える
-        if (changed && !p.hidden) { void p.offsetWidth; p.classList.add("lr__rows--in"); }
+        if (changed && !p.hidden) { p.classList.add("lr__rows--in"); }   // S6: 強制リフロー（void offsetWidth）はしない
       });
       moveInd();
       if (changed) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {} }   // Android: ほんの少しの振動（無い端末は何もしない）
@@ -370,64 +487,6 @@ var Rail = (function () {
         b.addEventListener("click", function () { pick(cat, +b.dataset.cb); });
       });
     };
-    var pb2 = $("#lr-pin", box);
-    if (pb2) pb2.addEventListener("click", function () {
-      if (RG.openPinFilter) RG.openPinFilter();
-    });
-    var pb = $("#lr-pins", box);
-    if (pb) pb.addEventListener("click", function () {
-      if (RG.openPinFilter) RG.openPinFilter();
-    });
-    var hb3 = $("#lr-hs", box);
-    if (hb3) hb3.addEventListener("click", function () {
-      if (RG.showHensachiEdit) RG.showHensachiEdit();
-    });
-    var sb2 = $("#lr-smoke", box);
-    if (sb2) sb2.addEventListener("click", function () {
-      if (RG.hasSmokeTicket && RG.hasSmokeTicket()) RG.openSmokeFilter();
-      else if (RG.showTicket) RG.showTicket();
-    });
-    var mb = $("#lr-mtrank", box);
-    if (mb) mb.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showMountainRank) RG.showMountainRank(); }); });
-    var hb4 = $("#lr-hanrank", box);
-    if (hb4) hb4.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showHanRank) RG.showHanRank(); }); });
-    var yb = $("#lr-yt", box);
-    if (yb) yb.addEventListener("click", function () { RG.ensureData("spots", function () { if (RG.showYtList) RG.showYtList(); }); });
-    var ob = $("#lr-onsen", box);
-    if (ob) ob.addEventListener("click", function () { if (RG.ensureData) RG.ensureData("spots", function () { RG.openOnsenFilter(); }); });
-    var cb3 = $("#lr-corp", box);
-    if (cb3) cb3.addEventListener("click", function () {
-      if (RG.openCorpFilter) RG.openCorpFilter();
-    });
-    var cb2 = $("#lr-chain", box);
-    if (cb2) cb2.addEventListener("click", RG.openChains);
-    var lg2 = $("#lr-legend", box);
-    if (lg2) lg2.addEventListener("click", function () {
-      var html = '<p class="set__d">地図に出ているアイコンの意味です。押すとそのジャンルだけ表示します。</p>' +
-        '<div class="legend">' + (RG.GENRES || []).map(function (g) {
-          var n = (RG.MAPPOI || []).filter(function (p) { return p.g === g.id; }).length;
-          return '<button class="legend__r' + (g.enabled ? "" : " off") + '" type="button" data-lg="' +
-            esc(g.id) + '"' + (g.enabled ? "" : " disabled") + ">" +
-            (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge" style="--lc:' + g.c + '">' + g.e + "</span>") +   // v122: 地図と同じ印
-            '<span class="legend__t"><b>' + esc(g.label) + "</b>" +
-              "<i>" + esc(g.desc || "") + (g.varies ? "　※ 地図の印は種類で変わります：" + esc(g.varies) : "") + "</i>" +   // v164: 種類別の出し分けを凡例に書く
-              (g.enabled ? "" : '<u><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> ' + esc(g.reason || "データ未取得") + "</u>") + "</span>" +
-            '<span class="legend__n">' + (g.enabled ? n + "件" : "—") + "</span></button>"; }).join("") +
-        "</div>" +
-        '<div class="legend__foot">' +
-          '<button id="lg-all" class="set__b2" type="button">すべて表示</button>' +
-          '<button id="lg-none" class="set__b2" type="button">選択をぜんぶ解除</button></div>' +
-        '<p class="src"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-pin"></use></svg> 現在地／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-station"></use></svg> 駅／⭐ 注視駅／<svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-school"></use></svg> 自分で追加した場所 は、この一覧とは別に地図に出ます。</p>';
-      var mm = RG.openModal("❓ アイコンの意味", html);
-      $$("[data-lg]", mm).forEach(function (b2) {
-        b2.addEventListener("click", function () {
-          ST.genres = [b2.dataset.lg]; save(); syncGenreButtons(); RG.closeModal();
-          RG.tripStatus(b2.querySelector("b").textContent + " だけを地図に表示しています。", "ok", 2800);
-        });
-      });
-      $("#lg-all", mm).addEventListener("click", function () { ST.genres = []; save(); syncGenreButtons(); RG.closeModal(); });
-      $("#lg-none", mm).addEventListener("click", function () { ST.genres = ["__none__"]; save(); syncGenreButtons(); RG.closeModal(); });
-    });
     var hb = $("[data-hv]", box);
     if (hb) hb.addEventListener("click", function () {
       ST.hideVisited = !ST.hideVisited; save();
@@ -435,24 +494,6 @@ var Rail = (function () {
       RG.tripStatus(ST.hideVisited
         ? "👣 行ったことのある場所を隠しました。未踏の地だけが残ります。"
         : "すべてのスポットを表示に戻しました。", "ok", 2800);
-    });
-    $$("[data-genre]", box).forEach(function (b) {
-      b.addEventListener("click", function () {
-        if (b.dataset.genre === "event" && RG.showEvents) { RG.showEvents(); return; }
-        if (b.dataset.genre === "adult" && RG.adultOn && !RG.adultOn()) {
-          RG.showAdultGate(); return;
-        }
-        if (b.dataset.genre === "smoke" && RG.hasSmokeTicket && !RG.hasSmokeTicket()) {
-          RG.showTicket(); return;
-        }
-        toggleGenre(b.dataset.genre);
-      });
-      b.addEventListener("pointerdown", function () {
-        showGenre(b.dataset.genre, b);
-        clearTimeout(popTimer); popTimer = setTimeout(hide, 4000);
-      });
-      b.addEventListener("mouseleave", hide);                       // v166: 乗せただけでは出さない（押したときだけ・上の pointerdown）
-      b.addEventListener("blur", hide);
     });
     syncGenreButtons();
     function syncMapButtons() {
@@ -489,7 +530,7 @@ var Rail = (function () {
       t.innerHTML = '<span class="ms">' + (ST.railOpen ? "close" : "tune") + '</span><span class="lr__tl">' + (ST.railOpen ? "とじる" : "えらぶ") + "</span>";
     }
     RG.paintRailToggle = paintToggle;
-    function railToggle(force) { ST.railOpen = force == null ? !ST.railOpen : !!force; save(); paintToggle(); }
+    function railToggle(force) { var next = force == null ? !ST.railOpen : !!force; ST.railOpen = next; save(); if (next && railDirty) build(); paintToggle(); }   // S6: 不可視時に溜まった dirty は開くときに1回だけ反映
     RG.railToggle = railToggle;
     $("#lr-toggle", box).addEventListener("click", function () { railToggle(); });
     paintToggle();
@@ -575,7 +616,7 @@ var Rail = (function () {
   var popTimer = null;
   function showGenre(id, anchor) {
     var g = genreMeta(id), r = anchor.getBoundingClientRect();
-    var n = (RG.MAPPOI || []).filter(function (p) { return p.g === id; }).length;
+    var n = genreCounts()[id] || 0;
     pop.innerHTML = '<div class="lp__h">' + (RG.gMark ? RG.gMark(g, "gmk--lg") : '<span class="gbadge gbadge--b" style="--lc:' + g.c + '">' + g.e + "</span>") +
       '<div><b>' + esc(g.label) + "</b></div></div>" +
       '<div class="lp__b">' + esc(g.desc || "") + "</div>" +
@@ -599,8 +640,8 @@ var Rail = (function () {
   }
   /* v122: スポットの種類の件数（データは段階的に届くので、届くたびに数え直す。1 回の走査で全ジャンル分） */
   function refreshGenreCounts() {
-    var cnt = {}, P = RG.MAPPOI || [];
-    for (var i = 0; i < P.length; i++) { var k = P[i].g; cnt[k] = (cnt[k] || 0) + 1; }
+    genreCntCache = null;   // S6: 数え直しは1回走査の集計（genreCounts）に一本化し、build 側も同じ結果を使い回す
+    var cnt = genreCounts();
     $$(".lr__i--v2[data-genre]", box).forEach(function (b) {
       var g = genreMeta(b.dataset.genre), n = cnt[b.dataset.genre] || 0, el = $(".lr__num", b);
       b.classList.toggle("off", !g.enabled); b.disabled = !g.enabled;
@@ -651,7 +692,7 @@ var Rail = (function () {
   }
   RG.lineBadgeText = function (n) { var m = meta(n); return m.k ? "[" + m.k + "] " : ""; };
 
-  return { build: build, meta: meta, isBuilt: function () { return !!box; } };
+  return { build: build, meta: meta, isBuilt: function () { return !!box; }, markDirty: function () { railDirty = true; } };
 })();
 RG.Rail = Rail;
 
@@ -891,7 +932,17 @@ RG.checkSecret = function (v) {
   return h === RG.SECRET_HASH;
 };
 
-RG.rebuildRail = function () { try { build(); } catch (e) {} };
+RG.rebuildRail = function () {
+  try {
+    Rail.markDirty();
+    /* S6: シートが閉じている（不可視の）間は作り直さず dirty だけを立てる。
+       次に開くとき railToggle が1回だけ build する */
+    if (!Rail.isBuilt()) return;
+    var boxEl = document.getElementById("linerail");
+    if (!ST.railOpen || !boxEl || !boxEl.classList.contains("open")) return;
+    build();
+  } catch (e) {}
+};
 /* 押した場所から «一番近いボタン» を探して動かす（作り直しで手が外れないように）。
    地図の上や、作り直されたあとでも確実に効く。 */
 function delegate(root, sel, fn) {
