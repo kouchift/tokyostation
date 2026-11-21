@@ -289,19 +289,28 @@ function railField(from, date) {
 P.railField = railField;
 /* 同じ出発地・時刻なら使い回す（飛行機の案で空港側からも引くため） */
 var fieldCache = [];
+function fieldKey(from, date) {
+  return from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+date / 600000) + "|" + KIDS.aggr + (KIDS.on ? "k" : "") + "|t" + (RG.tinfoVer || 0) + (P.__noBlock ? "nb" : "");
+}
 P.railFieldCached = function (from, date) {
-  var key = from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+date / 600000) + "|" + KIDS.aggr + (KIDS.on ? "k" : "") + "|t" + (RG.tinfoVer || 0) + (P.__noBlock ? "nb" : "");
+  var key = fieldKey(from, date);
   for (var i = 0; i < fieldCache.length; i++) if (fieldCache[i].k === key) return fieldCache[i].f;
   var f = railField(from, date);
   fieldCache.push({ k: key, f: f }); if (fieldCache.length > 8) fieldCache.shift();
   return f;
+};
+/* 第6周回 S5 是正: その出発地・時刻の field が計算済みかどうか（showRoutes が無駄な再計算を始めないため） */
+P.hasFieldCache = function (from, date) {
+  var key = fieldKey(from, date);
+  for (var i = 0; i < fieldCache.length; i++) if (fieldCache[i].k === key) return true;
+  return false;
 };
 P.clearFieldCache = function () { fieldCache = []; };
 /* 計算済みの field を railFieldCached と同じキーでキャッシュへ差し込む（第6周回 S5:
    showRoutes が分割計算した field を estimate の同期経路に warm で渡すため） */
 P.primeFieldCache = function (from, date, f) {
   if (!f) return;
-  var key = from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+date / 600000) + "|" + KIDS.aggr + (KIDS.on ? "k" : "") + "|t" + (RG.tinfoVer || 0) + (P.__noBlock ? "nb" : "");
+  var key = fieldKey(from, date);
   for (var i = 0; i < fieldCache.length; i++) if (fieldCache[i].k === key) { fieldCache[i].f = f; return; }
   fieldCache.push({ k: key, f: f }); if (fieldCache.length > 8) fieldCache.shift();
 };
@@ -328,11 +337,15 @@ function accessPointsAsync(coord, limitMin, kmMax) {
     return out.slice(0, 5);
   });
 }
+var fieldInflight = {};   /* 第6周回 S5 是正: 同じ出発地・時刻の分割計算は1本に束ねる（isochrone と estimate の事前計算が同じ全網計算を二重に走らせて競合しないため） */
 function railFieldAsync(from, date, shouldAbort) {
   var aborted = function () { return !!(shouldAbort && shouldAbort()); };
+  var __key = fieldKey(from, date);
+  for (var __i = 0; __i < fieldCache.length; __i++) if (fieldCache[__i].k === __key) return Promise.resolve(fieldCache[__i].f);   // 計算済みなら即座に返す
+  if (fieldInflight[__key]) return fieldInflight[__key];   // 計算中なら同じ Promise を共有する（呼び手側の破棄判定は解決後に各自で行う）
   var C = RG.CONFIG, T = C.modes.train, kids = KIDS.on, peak = P.hourKind(date) === "peak", xp = xferPref(), DUP = dupLabels();
   var W = C.modes.walk, WD = C.detour.walk;
-  return accessPointsAsync(from, 25, 3.0).then(function (ins) {
+  var __p = accessPointsAsync(from, 25, 3.0).then(function (ins) {
     if (!ins.length) return {};
     if (aborted()) return null;
     var dist = {}, S = {}, heap = new Heap();
@@ -464,6 +477,12 @@ function railFieldAsync(from, date, shouldAbort) {
       });
     });
   });
+  fieldInflight[__key] = __p;
+  __p.then(function (f) {
+    if (fieldInflight[__key] === __p) delete fieldInflight[__key];
+    if (f) P.primeFieldCache(from, date, f);   // 完了した field は同期経路（estimate 等）にも warm で渡す
+  }, function () { if (fieldInflight[__key] === __p) delete fieldInflight[__key]; });
+  return __p;
 }
 P.railFieldAsync = railFieldAsync;
 /* 乗車駅→降車駅の駅列（状態の prev をたどる）。PV 動画や地図の線に使う。

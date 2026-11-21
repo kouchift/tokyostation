@@ -155,9 +155,27 @@ document.addEventListener("rg:icons", function () { var s = $("#t-status"); if (
 RG.tripMapLink = function () {
   return Trip.origin ? RG.mapLinks(Trip.origin, Trip.origin, "transit") : null;
 };
+/* 第6周回 S4（§3.4）: isochrone は background で分割計算する。
+   ハンドラは出発地の表示更新だけを行って即座に返し、計算中は旧表示を維持する。
+   出発地が続けて変わったら世代番号で古い計算を破棄し、最新分だけを paintIso で一括反映する */
+var isoGen = 0, isoReqKey = "";
+function tripKey(from, when) { return from ? from[0].toFixed(4) + "," + from[1].toFixed(4) + "|" + Math.floor(+when / 600000) : ""; }
 function refreshIso() {
   if (!Trip.origin) return;
-  RG.paintIso(RG.Planner.isochrone(Trip.origin, Trip.when));
+  var gen = ++isoGen, from = Trip.origin, when = Trip.when, key = tripKey(from, when);
+  isoReqKey = key;
+  if (!RG.Planner.isochroneAsync) { RG.paintIso(RG.Planner.isochrone(from, when)); return; }
+  RG.__isoPending = true;
+  /* 破棄判定は «出発地の値が変わったか» で行う（同じ出発地の再指定で、共有中の分割計算まで殺さないため） */
+  RG.Planner.isochroneAsync(from, when, function () { return isoReqKey !== key; }).then(function (out) {
+    if (gen !== isoGen) return;                       // 古い計算の結果では上書きしない（pending は新しい計算が持つ）
+    RG.__isoPending = false;
+    if (out) RG.paintIso(out);
+  }, function () {
+    if (gen !== isoGen) return;
+    RG.__isoPending = false;
+    RG.paintIso(RG.Planner.isochrone(from, when));    // 非同期経路が失敗したら従来の同期計算に倒す（結果は同一）
+  });
 }
 
 /* ------------------------------------------------------------- モーダル */
@@ -910,6 +928,7 @@ RG.routeShareUrl = function (destId) {
   return base + (base.indexOf("?") >= 0 ? "&" : "?") + q;
 };
 RG.lastRoute = null;
+var routesGen = 0;   // 第6周回 S5: 殻先行描画の世代番号（古い計算の結果で新しい表示を上書きしないため）
 function showRoutes(destId) {
   if (!Trip.origin) { status("先に出発地を決めてください（📍現在地、または駅カードの「ここから出発」）", "warn"); return; }
   var s = RG.byId[destId]; if (!s) return;
@@ -917,6 +936,33 @@ function showRoutes(destId) {
   if (!RG.AIRPORTS && RG.ensureData && RG.hav(Trip.origin, [s.la, s.lo]) >= 250 && !RG.__airWait) {
     RG.__airWait = 1; RG.ensureData("spots", function () { RG.__airWait = 0; if (document.querySelector(".modal.show .rt__hd")) showRoutes(destId); });
   }
+  /* 第6周回 S5（§3.5）: モーダルの殻（見出し・枠・読み込み中表示）を先に描いて 1 フレーム返し、
+     中身は yield を挟んで段階的に埋める。estimate の cold コストは、先に railField を分割計算して
+     キャッシュへ差し込むことで吸収する（estimate 本体は従来どおり同期版を使い、候補の内容・順序・数値は変えない） */
+  var gen = ++routesGen, from = Trip.origin, when = Trip.when, aggr = Trip.aggr;
+  var mShell = modal("移動手段をくらべる", '<div class="rt__wait" role="status"><div class="enr__sk enr__sk--l"></div><div class="enr__sk enr__sk--l short"></div><p class="rt__waitt">行き方を計算しています…</p></div>');
+  var shellState = { gen: mShell.__gen };   // 中身を差し込むとき modal() が __gen を進めるので、対象世代は finishRoutes 側で差し替える
+  function alive() { return gen === routesGen && M && M.__gen === shellState.gen && M.classList.contains("show") && Trip.origin === from; }
+  function step() {
+    if (!alive()) return;
+    RG.Planner.setAggr(aggr);   // estimate と同じ条件を先に揃える（field のキャッシュキーを一致させるため）
+    if (RG.Planner.hasFieldCache && RG.Planner.hasFieldCache(from, when)) { finishRoutes(destId, s, alive, shellState); return; }   // 計算済みなら事前計算は不要（従来の warm 経路そのまま）
+    /* 事前計算の破棄判定は出発地の値でだけ行う（モーダルを閉じても、共有中の isochrone 計算は殺さない。結果はキャッシュに残して次に使う） */
+    var prime = RG.Planner.railFieldAsync ? RG.Planner.railFieldAsync(from, when, function () { return tripKey(Trip.origin, Trip.when) !== tripKey(from, when); }) : Promise.resolve(null);
+    prime.then(function (field) {
+      if (!alive()) return;
+      if (field && RG.Planner.primeFieldCache) RG.Planner.primeFieldCache(from, when, field);
+      return RG.yieldMain ? RG.yieldMain() : Promise.resolve();
+    }).then(function () {
+      if (alive()) finishRoutes(destId, s, alive, shellState);
+    }, function () {
+      if (alive()) finishRoutes(destId, s, alive, shellState);   // 分割計算が失敗したら従来どおり同期 estimate で開く
+    });
+  }
+  if (RG.yieldMain) RG.yieldMain().then(step); else step();
+}
+/* showRoutes の中身（従来の同期版と同一の計算・同一の HTML）。殻の描画後に呼ばれる */
+function finishRoutes(destId, s, alive, shellState) {
   var r = RG.Planner.estimate(Trip.origin, [s.la, s.lo], Trip.when, Trip.aggr);
   var kl = { day: "日中", peak: "ラッシュ", night: "深夜・早朝" }[r.hourKind];
   var head = '<div class="rt__hd"><div><b>' + esc(Trip.label) + "</b> → <b>" + esc(RG.stLabel(s)) + "</b>" +
@@ -957,11 +1003,27 @@ function showRoutes(destId) {
   RG.lastRoute = { fromId: Trip.id || null, from: Trip.origin, label: Trip.label, toId: s.id, to: s.n, at: Date.now(), rec: recOpt ? { m: recOpt.m.label, e: recOpt.m.emoji, min: recOpt.minutes, yen: recOpt.yen } : null };
   if (RG.heroLastRoute) RG.heroLastRoute();
   var html = head + night + summaryHtml(r, s, recOpt) + axesHtml(ax) + party + pareto(r) + sortBar +
-    '<div class="opts">' + base.map(function (o) { return optCard(o, o.__i, ctx); }).join("") + "</div>" +
+    '<div class="opts"></div>' +
     '<div class="disclaim"><svg class="uic" aria-hidden="true" focusable="false"><use href="#ui-warn"></use></svg> これはモデルによる<b>概算</b>です。時刻表・道路状況・バス系統・シェアサイクルの' +
     "ポート位置は見ていません。前提の数字はすべて <code>data/config.js</code> にあります。" +
     "移動前に各事業者の公式情報で必ず確認してください。</div>";
   var m = modal("移動手段をくらべる", html);
+  if (shellState) shellState.gen = m.__gen;   // 以後の alive() は中身側の世代を見る
+  /* 候補カードは yield を挟んで段階的に差し込む。差し込む順序は base の順序どおり（従来と同一）。
+     全部揃ってからイベントを結ぶ（途中の状態が最終結果に影響しないように） */
+  var optsBox = $(".opts", m);
+  function fillOpts(i) {
+    if (!alive() || !optsBox) return;
+    var t0 = performance.now(), frag = "";
+    while (i < base.length) {
+      frag += optCard(base[i], base[i].__i, ctx); i++;
+      if ((i & 3) === 0 && performance.now() - t0 >= 40) break;
+    }
+    if (frag) { var tmp = document.createElement("div"); tmp.innerHTML = frag; while (tmp.firstChild) optsBox.appendChild(tmp.firstChild); }
+    if (i < base.length) { var y = RG.yieldMain ? RG.yieldMain() : Promise.resolve(); y.then(function () { fillOpts(i); }); return; }
+    bindRouteModal();
+  }
+  function bindRouteModal() {
   var ptT = null;   // v88: ステッパー。連打しても描き直しは少し待ってから 1 回
   function partyChanged() { if (RG.savePlan) RG.savePlan(); clearTimeout(ptT); ptT = setTimeout(function () { showRoutes(destId); }, 350); }
   if (RG.stepperBind) { RG.stepperBind(m, "pt-a", function (v) { RG.Plan.adults = v; partyChanged(); }); RG.stepperBind(m, "pt-k", function (v) { RG.Plan.kids = v; partyChanged(); }); }
@@ -1023,6 +1085,8 @@ function showRoutes(destId) {
     }
     g.addEventListener("mouseenter", on); g.addEventListener("click", on); g.addEventListener("focus", on);
   });
+  }
+  fillOpts(0);
 }
 RG.showRoutes = showRoutes;
 
@@ -1136,6 +1200,14 @@ function openRescue() {
   }
 }
 
-RG.initPlannerUI = function () { initBar(); };
+RG.initPlannerUI = function () {
+  initBar();
+  /* 第6周回 S5: estimate の cold 構築（重複ラベル表など）は idle 時に先に済ませておく */
+  if (RG.Planner.warmupCaches) {
+    var warm = function () { RG.Planner.warmupCaches(); };
+    if (RG.postTask) RG.postTask(warm, "background").then(null, function () {});
+    else setTimeout(warm, 3000);
+  }
+};
 
 })(window.RG);
